@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: laravel_app
+        volumes:
+            - .:/var/www/html
+        ports:
+            - "8000:80"
+        depends_on:
+            - mysql
+        networks:
+            - laravel
+
+    node:
+        build:
+            context: .
+            dockerfile: Dockerfile.node
+        container_name: vue_dev
+        working_dir: /app
+        volumes:
+            - .:/app
+            - /app/node_modules
+        ports:
+            - "5173:5173" # Vite default
+        command: npm run dev
+        networks:
+            - laravel
+
+    mysql:
+        image: mysql:8.0
+        container_name: mysql
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: laravel
+            MYSQL_USER: laravel
+            MYSQL_PASSWORD: secret
+        ports:
+            - "3306:3306"
+        volumes:
+            - mysql_data:/var/lib/mysql
+        networks:
+            - laravel
+
+volumes:
+    mysql_data:
+
+networks:
+    laravel:

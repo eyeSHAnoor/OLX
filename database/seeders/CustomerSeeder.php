@@ -1,0 +1,173 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
+class CustomerSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $now = Carbon::now();
+
+        $customers = [
+            [
+                'name' => 'John Doe',
+                'email' => 'john@example.com',
+                'phone' => '+1 555-1001',
+                'company_name' => 'Doe Industries',
+                'tax_id' => 'TX-5493012',
+                'address' => '123 Main Street',
+                'city' => 'Los Angeles',
+                'state' => 'CA',
+                'country' => 'USA',
+                'postal_code' => '90001',
+                'user_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Sarah Johnson',
+                'email' => 'sarah@example.com',
+                'phone' => '+1 555-1002',
+                'company_name' => 'Johnson & Sons',
+                'tax_id' => 'TX-4928374',
+                'address' => '48 West Road',
+                'city' => 'New York',
+                'state' => 'NY',
+                'country' => 'USA',
+                'postal_code' => '10001',
+                'user_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Ahmed Khan',
+                'email' => 'ahmed@example.com',
+                'phone' => '+92 300 1234567',
+                'company_name' => 'Khan Trading Co.',
+                'tax_id' => 'TX-9384756',
+                'address' => 'Plot 45, Industrial Area',
+                'city' => 'Karachi',
+                'state' => 'Sindh',
+                'country' => 'Pakistan',
+                'postal_code' => '74200',
+                'user_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Emily Smith',
+                'email' => 'emily@example.com',
+                'phone' => '+44 20 5555 1003',
+                'company_name' => 'Smith Consulting',
+                'tax_id' => 'TX-2847592',
+                'address' => '12 Green Avenue',
+                'city' => 'London',
+                'state' => 'London',
+                'country' => 'UK',
+                'postal_code' => 'EC1A 1BB',
+                'user_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Carlos Martinez',
+                'email' => 'carlos@example.com',
+                'phone' => '+34 600 555 2004',
+                'company_name' => 'Martinez Auto Parts',
+                'tax_id' => 'TX-5938475',
+                'address' => 'Av. Libertad 234',
+                'city' => 'Madrid',
+                'state' => 'Madrid',
+                'country' => 'Spain',
+                'postal_code' => '28001',
+                'user_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Hiroshi Tanaka',
+                'email' => 'hiroshi@example.com',
+                'phone' => '+81 3-5555-1005',
+                'company_name' => 'Tanaka Technologies',
+                'tax_id' => 'TX-3029485',
+                'address' => '5-2-1 Minato-ku',
+                'city' => 'Tokyo',
+                'state' => 'Tokyo',
+                'country' => 'Japan',
+                'postal_code' => '105-0001',
+                'user_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Maria Garcia',
+                'email' => 'maria@example.com',
+                'phone' => '+52 55 5555 1006',
+                'company_name' => 'Garcia Logistics',
+                'tax_id' => 'TX-4839201',
+                'address' => 'Calle Reforma 90',
+                'city' => 'Mexico City',
+                'state' => 'Mexico City',
+                'country' => 'Mexico',
+                'postal_code' => '01000',
+                'user_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'David Brown',
+                'email' => 'david@example.com',
+                'phone' => '+1 555-2008',
+                'company_name' => 'Brown Tools',
+                'tax_id' => 'TX-9483729',
+                'address' => '87 North Street',
+                'city' => 'Chicago',
+                'state' => 'IL',
+                'country' => 'USA',
+                'postal_code' => '60007',
+                'user_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Zara Ahmed',
+                'email' => 'zara@example.com',
+                'phone' => '+92 321 5551009',
+                'company_name' => 'Ahmed Group',
+                'tax_id' => 'TX-4839202',
+                'address' => 'Shahrah-e-Faisal',
+                'city' => 'Karachi',
+                'state' => 'Sindh',
+                'country' => 'Pakistan',
+                'postal_code' => '75500',
+                'user_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Oliver Jones',
+                'email' => 'oliver@example.com',
+                'phone' => '+1 555-2010',
+                'company_name' => 'Jones Automotive',
+                'tax_id' => 'TX-4839203',
+                'address' => '221 King Street',
+                'city' => 'Boston',
+                'state' => 'MA',
+                'country' => 'USA',
+                'postal_code' => '02108',
+                'user_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ];
+
+        DB::table('customers')->insert($customers);
+    }
+}

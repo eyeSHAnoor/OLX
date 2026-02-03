@@ -1,0 +1,9 @@
+<?php
+
+return [
+
+    'welcome' => 'Welcome helooooooooo to the Dashboard',
+    'dashboard' => 'This is your dashboard where you can find an overview of your activities.',
+    'logout' => 'Logout',
+
+];

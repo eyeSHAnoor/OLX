@@ -1,0 +1,145 @@
+<?php
+
+return [
+    'details' => [
+        'form' => [
+            'warehouse' => 'Warehouse',
+            'shipment_mode' => 'Shipment Mode',
+            'carrier' => 'Carrier',
+            'tracking_no' => 'Tracking No',
+            'package_type' => 'Package Type',
+            'expected_arrival_time' => 'Expected Arrival Time',
+            'declared_cartons' => 'Declared Cartons',
+            'declared_pallets' => 'Declared Pallets',
+            'declared_weight' => 'Weight',
+            'declared_volume' => 'Volume',
+            'status' => 'Status',
+            'remarks' => 'Remarks',
+            'items' => 'Items',
+            'sku_code' => 'SKU Code',
+            'product_name' => 'Product Name',
+            'qty' => 'Qty.',
+            'unit' => 'Unit',
+            'batch_no' => 'Batch No.',
+            'exp_date' => 'Exp. Date',
+            'serial_no' => 'Serial No.',
+            'add_item' => 'Add Item',
+            'forecast_quantity' => 'Forecast quantity',
+            'quantity_received' => 'Quantity Received',
+            'difference' => 'Difference',
+        ],
+        'placeholders' => [
+            'warehouse' => 'Select warehouse',
+            'shipment_mode' => 'Select mode',
+            'package_type' => 'Select type',
+            'status' => 'Select status',
+            'exp_date' => 'Exp. Date',
+        ],
+        'options' => [
+            'shipment_mode' => [
+                'air' => 'Air',
+                'sea' => 'Sea',
+                'land' => 'Land',
+            ],
+            'package_type' => [
+                'carton' => 'Carton',
+                'pallet' => 'Pallet',
+                'mixed' => 'Mixed',
+            ],
+            'status' => [
+                'draft' => 'Draft',
+                'submitted' => 'Submitted',
+                'confirmed' => 'Confirmed',
+                'arrived' => 'Arrived',
+                'receiving' => 'Receiving',
+                'qc' => 'QC',
+                'putaway' => 'Putaway',
+                'completed' => 'Completed',
+                'exception' => 'Exception',
+            ],
+        ],
+    ],
+
+    'packingList' => [
+        'title' => 'Packing List',
+        'delete_confirm' => [
+            'title' => 'Are you sure to delete?',
+            'description' => 'This will permanently delete the selected PACKING-LIST and its ITEMS.',
+            'confirm' => 'Delete',
+            'cancel' => 'Cancel',
+        ],
+        'list_no' => 'Packing List No. {number}',
+        'add_packing_list' => 'Add Packing List',
+        'fields' => [
+            'container_no' => 'Container No',
+            'container_type' => 'Container Type',
+            'gross_weight' => 'Gross Weight',
+            'net_weight' => 'Net Weight',
+            'length' => 'Length',
+            'width' => 'Width',
+            'height' => 'Height',
+            'seal_no' => 'Seal No',
+            'label_count' => 'Label Count',
+        ],
+        'container_types' => [
+            'carton' => 'Carton',
+            'pallet' => 'Pallet',
+            'loose' => 'Loose',
+        ],
+        'items' => [
+            'title' => 'Items',
+            'add_item' => 'Add Item',
+            'fields' => [
+                'sku_no' => 'SKU No.',
+                'qty' => 'Quantity',
+                'batch_no' => 'Batch No.',
+                'exp_date' => 'Exp. Date',
+                'serials' => 'Serials',
+            ],
+            'placeholders' => [
+                'sku_no' => 'Enter SKU No.',
+                'qty' => 'Enter Quantity',
+                'batch_no' => 'Enter Batch No.',
+                'exp_date' => 'Exp. Date',
+                'serials' => 'Enter Serials',
+            ],
+        ],
+        'buttons' => [
+            'add_packing_list' => 'Add Packing List',
+            'add_item' => 'Add Item',
+        ],
+    ],
+
+    'sheet' => [
+        'title' => 'ASN Order Details - {asn_no}',
+        'title_new' => 'New',
+    ],
+
+    'tabs' => [
+        'overview' => 'Overview',
+        'packing_list' => 'Packing List',
+        'receiving' => 'Receiving Report',
+        'qc' => 'QC Report',
+    ],
+
+    'field_required' => 'This field is required',
+    'all_field_required' => 'Please add at least one product',
+    'all_field_required_before_continue' => 'Please complete all required fields before continuing',
+
+    'stepper' => [
+        'step_1_title' => 'Basic Information',
+        'step_2_title' => 'Products and packaging',
+        'step_3_title' => 'Confirm submission',
+        'prev' => 'Previous',
+        'next' => 'Next',
+        'submit' => 'Submit',
+    ],
+
+    'boxes' => 'Boxes',
+    'products' => 'Products',
+    'items' => 'Items',
+    'items_in_total' => 'Items in total',
+    'packing_details' => 'Packing Details',
+    'basic_information' => 'Basic Information',
+    'logistics_tracking' => 'Logistics tracking',
+];

@@ -1,0 +1,16 @@
+<script setup lang="ts">
+import type { HTMLAttributes } from 'vue'
+import { NumberFieldInput } from 'reka-ui'
+import { cn } from '@/lib/utils'
+
+const props = defineProps<{
+  class?: HTMLAttributes['class']
+}>()
+</script>
+
+<template>
+  <NumberFieldInput
+    data-slot="input"
+    :class="cn('flex bg-input w-full rounded-md border border-input py-1 text-sm pl-2 pr-4 text-input-foreground transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50', props.class)"
+  />
+</template>
