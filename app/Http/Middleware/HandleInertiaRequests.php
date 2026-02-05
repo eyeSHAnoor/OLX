@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use App\Models\Notification;
 use App\Models\Setting;
+use App\Models\Category;
+use App\Data\CategoryData;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -40,46 +42,6 @@ class HandleInertiaRequests extends Middleware
      *
      * @return array<string, mixed>
      */
-    // public function share(Request $request): array
-    // {
-    //     [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
-
-    //     $user = $request->user()->load('preferences');
-
-    //     return [
-    //         ...parent::share($request),
-    //         'name' => config('app.name'),
-    //         'quote' => ['message' => trim($message), 'author' => trim($author)],
-    //         'auth' => [
-    //             'user' => $user ? array_merge(
-    //                 $user->toArray(),
-    //                 ['roles' => $user->getRoleNames()],
-    //                 ['permissions' => $user->getAllPermissions()->pluck('name')],
-    //             ) : null,
-    //         ],
-    //         'ziggy' => [
-    //             ...(new Ziggy)->toArray(),
-    //             'location' => $request->url(),
-    //         ],
-    //         'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-    //         //            'action' => session()->get('action'),
-
-    //         'settings' => Setting::getAll(),
-    //         'flash' => fn() => [
-    //             'success' => session()->get('success'),
-    //             'error' => session()->get('error'),
-    //         ],
-
-    //         'locale' => fn() => App::getLocale(),
-    //         'translations' => function () {
-    //             $locale = App::getLocale();
-    //             $path = lang_path("$locale.json");
-    //             return File::exists($path)
-    //                 ? json_decode(File::get($path), true)
-    //                 : [];
-    //         },
-    //     ];
-    // }
 
     public function share(Request $request): array
     {
@@ -117,15 +79,6 @@ class HandleInertiaRequests extends Middleware
                 ]
                 : [],
 
-            // 'notifications' => fn() => Auth::check() ? [
-            //     'received' => Notification::query()
-            //         ->where('requested_by', Auth::id())
-            //         ->where('type', 'received')
-            //         ->latest()
-            //         ->take(10)
-            //         ->get(['id', 'title', 'message', 'url', 'created_at', 'type']),
-            // ] : [],
-
             'ziggy' => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
@@ -159,6 +112,13 @@ class HandleInertiaRequests extends Middleware
                 // Decode safely
                 return json_decode($content, true, 512, JSON_THROW_ON_ERROR);
             },
+            'topCategories' => function () {
+            $categories = Category::whereNull('parent_id')
+                ->with('files') // eager load images
+                ->get();
+
+            return $categories;
+        },
         ];
     }
 

@@ -23,6 +23,27 @@ const navItems = computed(() => [
                 icon: 'material-symbols:dashboard-outline',
                 isActive: page.url === '/dashboard' || route().current('home') || route().current('dashboard'),
             },
+            {
+                visible: true,
+                title: 'Category',
+                href: '/categories',
+                icon: 'material-symbols:category-outline',
+                isActive: page.url === '/categories' || route().current('categories.*'),
+            },
+            {
+                visible: true,
+                title: 'Brands',
+                href: '/brands',
+                icon: 'material-symbols:badge-outline',
+                isActive: page.url === '/brands' || route().current('brands.*'),
+            },
+            {
+                visible: true,
+                title: 'Ads',
+                href: '/ads',
+                icon: 'material-symbols:inventory-2-outline',
+                isActive: page.url === '/ads' || route().current('ads.*'),
+            },
         ],
     },
 ]);

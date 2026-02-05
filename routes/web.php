@@ -5,18 +5,10 @@ use App\Mail\MyTestEmail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Http\Request;
-Route::get('/trigger', function () {
-    $data = [
-        'message' => "hello ",
-        'time' => now()->toDateTimeString()
-    ];
+use Inertia\Inertia;
+use App\Http\Controllers\CategoryController;
 
-    broadcast(new OrderSent($data));
-
-    return 'Event Sent';
-});
-
-
+Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
 /*
  * cron job is not running on Hostinger due php8.3 version
  * So creating these routes for temporary solution
@@ -25,7 +17,6 @@ Route::get('/artisan-scheduler', function () {
     \Illuminate\Support\Facades\Artisan::call('schedule:run');
     return 'Scheduler triggered at ' . now();
 }); // Scheduler needed when we schedule something in root/console.php
-
 Route::get('/artisan-queue/{token}', function ($token) {
 
     if ($token !== config('app.queue_cron_token')) {
@@ -40,7 +31,6 @@ Route::get('/artisan-queue/{token}', function ($token) {
 
     return 'Queue processed at ' . now();
 });
-
 
 Broadcast::channel('notifications', function () {
     return true; // anyone can listen
@@ -58,26 +48,27 @@ Route::get('/storagelink', function () {
 });
 
 
-Route::get('/', function () {
-    return redirect()->route('dashboard');
-})->name('home');
+// Route::get('/dashboard', function () {
+//     return redirect()->route('dashboard');
+// })->name('dashboard');
 
 
-Route::get('/shopify/install', [\App\Http\Controllers\ShopifyController::class, 'install'])->name('shopify.install');
-Route::get('/shopify/callback', [\App\Http\Controllers\ShopifyController::class, 'callback'])->name('shopify.callback');
 
-Route::get('/tracking-orders/{id}/payment-confirmation', [\App\Http\Controllers\TrackingOrderController::class, 'showUploadPayment'])
-    ->name('tracking.orders.payment-confirmation');
-Route::get('/tracking-orders/{id}/payment-confirmation-verified', [\App\Http\Controllers\TrackingOrderController::class, 'showUploadPaymentVerified'])
-    ->name('tracking.orders.payment-confirmation-verified');
-Route::post('/payment-confirmation/{orderId}/submit', [\App\Http\Controllers\TrackingOrderController::class, 'uploadPaymentConfirmation'])
-    ->name('payment.confirmation.submit');
 Route::middleware([
     'auth',
 ])->group(
         function () {
 
             Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+
+            // Category
+            Route::resource('categories', CategoryController::class);
+            // Brands
+            Route::resource('brands', \App\Http\Controllers\BrandController::class);
+            // Ads
+            Route::resource('ads', \App\Http\Controllers\AdController::class);
+            Route::post('ads/{ad}/set-primary-image', [\App\Http\Controllers\AdController::class, 'setPrimaryImage'])
+                ->name('ads.set-primary-image');
            }
     );
 

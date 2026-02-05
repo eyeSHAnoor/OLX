@@ -2,18 +2,46 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+
+
 
 class Category extends Model
 {
     protected $fillable = [
         'name',
-        'description',
+        'slug',
+        'parent_id',
+        'position'
     ];
 
-    public function products(): HasMany
+    public function parent()
     {
-        return $this->hasMany(Product::class);
+        return $this->belongsTo(Category::class, 'parent_id');
     }
+
+    public function children()
+    {
+        return $this->hasMany(Category::class, 'parent_id');
+    }
+
+    public function childrenRecursive()
+    {
+        return $this->children()->with(['childrenRecursive', 'files']);
+    }
+
+
+
+    public function brands()
+    {
+        return $this->belongsToMany(Brand::class);
+    }
+
+    public function files()
+    {
+        return $this->morphMany(File::class, 'fileable');
+    }
+
+
 }

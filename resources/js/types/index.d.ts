@@ -40,6 +40,55 @@ export interface User {
     updated_at: string;
 }
 
+export interface BrandData {
+    id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+    categories?: CategoryData[];
+}
+
+export interface CategoryData {
+    id: number;
+    name: string;
+    slug: string;
+    parent_id: number | null;
+    position: number;
+    children_recursive?: CategoryData[];
+}
+
+declare global {
+    namespace App.Data {
+        interface AdData {
+            id: number;
+            user_id: number;
+            category_id: number;
+            brand_id: number;
+            ad_title: string;
+            description: string;
+            price: number;
+            location: string;
+            seller_name: string;
+            seller_phone: string;
+            created_at: string;
+            updated_at: string;
+            category?: CategoryData;
+            brand?: BrandData;
+            images?: AdImageData[];
+            primary_image?: AdImageData;
+            images_count?: number;
+        }
+
+        interface AdImageData {
+            id: number;
+            ad_id: number;
+            path: string;
+            is_primary: boolean;
+            created_at: string;
+            updated_at: string;
+        }
+    }
+}
 export type BreadcrumbItemType = BreadcrumbItem;
 
 export interface SharedData extends PageProps {
