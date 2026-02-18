@@ -12,6 +12,7 @@ class AdImage extends Model
     protected $fillable = [
         'ad_id',
         'path',
+        'is_primary',
     ];
 
     public function ad()

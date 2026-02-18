@@ -48,6 +48,11 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return to_route('dashboard');
-    }
+        $user = auth()->user();
+        // dd($user->hasRole('super_admin'));
+        if ($user && $user->hasRole('super_admin')){
+                return redirect()->route('dashboard');
+            }
+        return redirect()->intended(route('home'));
+        }
 }

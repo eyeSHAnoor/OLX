@@ -61,6 +61,7 @@ class HandleInertiaRequests extends Middleware
                     $user->toArray(),
                     ['roles' => method_exists($user, 'getRoleNames') ? $user->getRoleNames() : []],
                     ['permissions' => method_exists($user, 'getAllPermissions') ? $user->getAllPermissions()->pluck('name') : []],
+                    ['subscription_status' => $user->subscriptionStatus()],
                 ) : null,
             ],
             'notifications' => fn() => Auth::check()
@@ -114,11 +115,15 @@ class HandleInertiaRequests extends Middleware
             },
             'topCategories' => function () {
             $categories = Category::whereNull('parent_id')
-                ->with('files') // eager load images
+                ->with([
+                    'childrenRecursive.files', 
+                    'files',                  
+                ]) 
                 ->get();
 
             return $categories;
-        },
+            },
+            'selectedCity' => session('city', 'Pakistan'),
         ];
     }
 

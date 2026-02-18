@@ -26,6 +26,7 @@ return new class extends Migration
         $table->decimal('price', 10, 2)->nullable();
 
         $table->string('location');
+        $table->string('city');
 
         // Seller info (snapshot at posting time)
         $table->string('seller_name');
@@ -33,6 +34,7 @@ return new class extends Migration
 
         $table->boolean('is_active')->default(true);
         $table->boolean('is_featured')->default(false);
+        $table->json('search_keywords')->nullable();
 
         $table->timestamps();
 

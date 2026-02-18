@@ -13,34 +13,19 @@ interface PageProps extends InertiaPageProps {
     ads: PaginatedData<App.Data.AdData>;
     categories: App.Data.CategoryData[];
     brands: App.Data.BrandData[];
-    filters: {
-        global?: string;
-        category_id?: string;
-        brand_id?: string;
-        min_price?: string;
-        max_price?: string;
-    };
 }
 
 const page = usePage<PageProps>();
 const ads = computed(() => page.props.ads);
 const categories = computed(() => page.props.categories);
 const brands = computed(() => page.props.brands);
-const filters = computed(() => page.props.filters);
 
 console.log(page.props);
 
 // Use search filter
 const { form, reset, isFiltered } = useSearchFilter(route('ads.index'));
 
-// Initialize form with existing filters
-form.filter = {
-    global: filters.value.global || '',
-    category_id: filters.value.category_id || '',
-    brand_id: filters.value.brand_id || '',
-    min_price: filters.value.min_price || '',
-    max_price: filters.value.max_price || '',
-};
+
 
 // Columns for data table
 const columns = [
@@ -164,6 +149,8 @@ const clearFilter = (filterKey: string) => {
         preserveScroll: true,
     });
 };
+
+
 </script>
 
 <template>
@@ -177,8 +164,8 @@ const clearFilter = (filterKey: string) => {
                 Manage your marketplace ads
             </template>
             <template #links>
-                <AppButton label="New Ad" icon="radix-icons:plus-circled" class="bg-blue-800"
-                    @click="handleShowModal({})" />
+                <AppButton label="New Ad" icon="radix-icons:plus-circled" class="bg-yellow-500 hover:bg-yellow-600"
+                    @click="router.visit(route('ads.create'))" />
             </template>
         </PageHeading>
 
@@ -238,7 +225,8 @@ const clearFilter = (filterKey: string) => {
                     <template #ad_title-cell="{ row }">
                         <div class="flex items-center gap-2">
                             <div class="size-10 flex-shrink-0 rounded overflow-hidden bg-muted">
-                                <img v-if="row.original.images?.length" :src="`/storage/${row.original.images[0].path}`"
+                                <img v-if="row.original.images?.length"
+                                    :src="`/storage/${row.original.images.find(img => img.is_primary)?.path || row.original.images[0].path}`"
                                     :alt="row.original.ad_title" class="w-full h-full object-cover" />
                                 <div v-else class="w-full h-full flex items-center justify-center">
                                     <Icon icon="lucide:image" class="size-4 text-muted-foreground" />
@@ -295,11 +283,8 @@ const clearFilter = (filterKey: string) => {
 
                     <template #actions-cell="{ row }">
                         <div class="flex items-center justify-end gap-2">
-                            <!-- <AppDataTableActionButton icon="lucide:eye" tooltip="View Details" variant="outline"
-                                @click="$inertia.visit(route('ads.show', row.original.id))"
-                                v-if="route().has('ads.show')" /> -->
                             <AppDataTableActionButton icon="lucide:edit" tooltip="Edit"
-                                @click="handleShowModal(row.original)" />
+                                @click="router.visit(route('ads.edit', row.original))" />
                             <AppDataTableActionButton icon="lucide:trash-2" tooltip="Delete" variant="danger"
                                 @click="handleDeleteAd(row.original)" />
                         </div>

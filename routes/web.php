@@ -9,10 +9,13 @@ use Inertia\Inertia;
 use App\Http\Controllers\CategoryController;
 
 Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
-/*
- * cron job is not running on Hostinger due php8.3 version
- * So creating these routes for temporary solution
- */
+Route::get('/all-items', [App\Http\Controllers\SearchController::class, 'allItems'])->name('all.items');
+Route::post('/set-city', function (\Illuminate\Http\Request $request) {
+    session(['city' => $request->city]);
+
+    return back();
+})->name('set.city');
+
 Route::get('/artisan-scheduler', function () {
     \Illuminate\Support\Facades\Artisan::call('schedule:run');
     return 'Scheduler triggered at ' . now();
@@ -47,15 +50,21 @@ Route::get('/storagelink', function () {
     return back()->with('success', 'Storage Link created');
 });
 
+Route::middleware(['auth'])->group(function () {
 
-// Route::get('/dashboard', function () {
-//     return redirect()->route('dashboard');
-// })->name('dashboard');
+    Route::get('/subscriptions',
+        [App\Http\Controllers\SubscriptionController::class,'index'])
+        ->name('subscriptions.index');
 
+    Route::post('/subscriptions/manual',
+        [App\Http\Controllers\SubscriptionController::class,'submitManual'])
+        ->name('subscriptions.manual');
 
+});
 
 Route::middleware([
     'auth',
+    'super_admin'
 ])->group(
         function () {
 
@@ -65,15 +74,37 @@ Route::middleware([
             Route::resource('categories', CategoryController::class);
             // Brands
             Route::resource('brands', \App\Http\Controllers\BrandController::class);
+            Route::get('/api/brand/{brand}', [\App\Http\Controllers\BrandController::class, 'show']);
+            Route::get('/api/brands', [\App\Http\Controllers\BrandController::class, 'getName']);
             // Ads
             Route::resource('ads', \App\Http\Controllers\AdController::class);
             Route::post('ads/{ad}/set-primary-image', [\App\Http\Controllers\AdController::class, 'setPrimaryImage'])
                 ->name('ads.set-primary-image');
+            Route::get('/api/brands/{category}', [App\Http\Controllers\BrandController::class, 'getByCategory']);
+
+            //PLANS
+            Route::resource('plans', App\Http\Controllers\PlanController::class);
+
+            // Users
+            Route::resource('users', App\Http\Controllers\UserController::class);
+            Route::get('/receipts/{subscription}', [App\Http\Controllers\ReceiptController::class, 'show'])
+                ->name('receipts.show');
+            Route::get('/receipts/{subscription}/download', [App\Http\Controllers\ReceiptController::class, 'download'])
+                ->name('receipts.download');
+
+            
+            Route::post('/subscriptions/{user}/complete', [App\Http\Controllers\SubscriptionController::class, 'complete'])->name('subscriptions.complete');
+            Route::post('/subscriptions/{user}/reject', [App\Http\Controllers\SubscriptionController::class, 'reject'])->name('subscriptions.reject');
+
+
+
            }
     );
 
 
-require __DIR__ . '/settings.php';
+
+
+    require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
 
 Route::post('/locale', function (Request $request) {

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { InertiaPageProps, PaginatedData } from '@/types';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, router, Head } from '@inertiajs/vue3';
 import { computed, onMounted } from 'vue';
 import Layout from '@/layouts/AppLayout.vue';
 import BrandForm from './_partials/BrandForm.vue';
 import { useAlertDialog } from '@/composables/useAlertDialog';
-import { router } from '@inertiajs/vue3';
+import { useBreadcrumb } from '@/composables/useBreadcrumb';
 
 defineOptions({ layout: Layout });
 
@@ -17,7 +17,22 @@ const page = usePage<{
 
 const brands = computed(() => page.props.brands);
 const categories = computed(() => page.props.categories);
+
+console.log(page.props);
+
+// Initialize search filter - check if useSearchFilter returns what you expect
 const { form, reset, isFiltered } = useSearchFilter(route('brands.index'));
+
+// Ensure form has proper structure if useSearchFilter might return null
+if (!form.value) {
+    form.value = {
+        filter: {
+            global: ''
+        },
+        perPage: 10
+    };
+}
+
 // Columns for data table
 const columns = [
     { accessorKey: 'name', header: 'Name', sortable: true, mobileTitle: 'Name' },
@@ -58,7 +73,6 @@ async function handleDeleteBrand(brand: App.Data.BrandData) {
 }
 </script>
 
-
 <template>
     <AppContainer>
 
@@ -67,8 +81,8 @@ async function handleDeleteBrand(brand: App.Data.BrandData) {
         <PageHeading>
             <template #title>Brands</template>
             <template #links>
-                <AppButton label="New Brand" icon="radix-icons:plus-circled" class="bg-blue-800"
-                    @click="handleShowModal({})" />
+                <AppButton label="New Brand" icon="radix-icons:plus-circled" @click="handleShowModal({})"
+                    class="bg-yellow-500 hover:bg-yellow-600" />
             </template>
         </PageHeading>
 

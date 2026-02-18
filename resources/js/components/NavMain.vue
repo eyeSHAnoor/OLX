@@ -25,6 +25,20 @@ const navItems = computed(() => [
             },
             {
                 visible: true,
+                title: 'Users',
+                href: '/users',
+                icon: 'material-symbols:people-outline',
+                isActive: page.url === '/users' || route().current('users.*'),
+            },
+            {
+                visible: true,
+                title: 'Plans',
+                href: '/plans',
+                icon: 'material-symbols:category-outline',
+                isActive: page.url === '/plans' || route().current('plans.*'),
+            },
+            {
+                visible: true,
                 title: 'Category',
                 href: '/categories',
                 icon: 'material-symbols:category-outline',
@@ -58,7 +72,7 @@ const navItems = computed(() => [
                     <SidebarMenuButton v-if="item.visible" :is-active="item.isActive" :tooltip="item.title"
                         :class="[item.isActive && '!bg-(--sidebar-item-active) font-semibold !text-primary-foreground']"
                         as-child>
-                        <Link :href="item.href" class="flex flex-col items-center h-16 leading-none">
+                        <Link :href="item.href" class="flex  items-center h-16 leading-none">
                             <Icon :icon="item.icon" class="!size-6.5" />
                             <span class="text-xs leading-none">{{ item.title }}</span>
                         </Link>

@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Brand;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
+use App\Data\BrandData;
+use App\Data\CategoryData;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -13,31 +17,54 @@ class BrandController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+
+    public function index()
     {
-        $query = Brand::with(['categories' => function ($query) {
-            $query->select('categories.id', 'categories.name');
-        }]);
+        $columns = [
+            'name',
+            'created_at',
+        ];
 
-        // Search filter
-        if ($request->has('filter.global') && $request->input('filter.global')) {
-            $search = $request->input('filter.global');
-            $query->where('name', 'like', "%{$search}%");
-        }
+        // Global search helper (same as products)
+        $globalSearch = getGlobalSearchFilter([...$columns]);
 
-        // Pagination
-        $perPage = $request->input('perPage', 10);
-        $brands = $query->paginate($perPage);
-
-        // Get all categories for dropdown
-        $categories = Category::all();
+        $brands = QueryBuilder::for(Brand::class)
+            ->with([
+                'categories:id,name',
+            ])
+            ->defaultSort('-created_at')
+            ->allowedSorts($columns)
+            ->allowedFilters([
+                $globalSearch,
+            ])
+            ->paginate(getPaginate())   
+            ->withQueryString();
 
         return Inertia::render('brands/Index', [
-            'brands' => $brands,
-            'categories' => $categories,
-            'filters' => $request->only(['filter.global']),
-            'perPage' => $perPage,
+            'brands'     => $brands,
+            'categories' => CategoryData::collect(Category::all()),
         ]);
+    }
+
+    // Get a specific brand by ID
+    public function show(Brand $brand)
+    {
+        $brand->load('categories');
+        return response()->json($brand);
+    }
+
+    // Alternative: Get brands with optional category filter
+    public function getName(Request $request)
+    {
+        $query = Brand::with('categories');
+        
+        if ($request->has('category_id')) {
+            $query->whereHas('categories', function($q) use ($request) {
+                $q->where('categories.id', $request->category_id);
+            });
+        }
+        
+        return response()->json($query->orderBy('name')->get());
     }
 
     /**

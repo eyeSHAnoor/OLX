@@ -16,7 +16,7 @@ class SettingSeeder extends Seeder
     {
         //        Setting::set('tax', 2.5);
 
-        Setting::set('site_name', 'Rivalitas');
+        Setting::set('site_name', 'AMO_MERCATUS');
 
 
         //        SMSTemplate::create([

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
+use App\Services\JazaCashService;
 use Illuminate\Support\ServiceProvider;
 use GuzzleHttp\Client;
 
@@ -14,7 +15,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(JazaCashService::class, function ($app) {
+            return new JazaCashService();
+        });
     }
 
     /**

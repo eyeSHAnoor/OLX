@@ -24,9 +24,9 @@ import AppLogo from './AppLogo.vue';
             <NavMain />
         </SidebarContent>
 
-<!--        <SidebarFooter>-->
-<!--            <NavUser />-->
-<!--        </SidebarFooter>-->
+        <!--        <SidebarFooter>-->
+        <!--            <NavUser />-->
+        <!--        </SidebarFooter>-->
     </Sidebar>
     <slot />
 </template>

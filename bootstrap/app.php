@@ -22,6 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
             \App\Http\Middleware\SetLocale::class,
         ]);
+         $middleware->alias([
+        'super_admin' => \App\Http\Middleware\SuperAdminMiddleware::class,
+        'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+    ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -7,12 +7,14 @@ brand_id: number | null;
 ad_title: string;
 description: string | null;
 price: number | null;
+city: string | null;
 location: string | null;
 seller_name: string | null;
 seller_phone: string | null;
 images: Array<any> | null;
 brand: App.Data.BrandData | null;
 category: any | null;
+search_keywords: Array<any> | null;
 };
 export type AdImageData = {
 id: number;

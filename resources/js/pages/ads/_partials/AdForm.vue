@@ -18,6 +18,7 @@ interface AdFormData {
     description: string;
     price: string | number;
     location: string;
+    city: string;
     seller_name: string;
     seller_phone: string;
     images: File[];
@@ -37,6 +38,7 @@ const getDefaultForm = (item: App.Data.AdData | undefined): AdFormData => ({
     ad_title: item?.ad_title ?? '',
     description: item?.description ?? '',
     price: item?.price ?? '',
+    city: item?.city ?? '',
     location: item?.location ?? '',
     seller_name: item?.seller_name ?? '',
     seller_phone: item?.seller_phone ?? '',
@@ -51,14 +53,15 @@ const model = defineModel();
 const existingImages = ref<AdImageData[]>(ad?.images || []);
 
 const filteredBrands = computed(() => {
-    if (!form.category_id) return [];
+    if (!form.category_id) return []; // no category selected, show empty
 
-    return brands.filter(brand =>
-        brand.categories?.some(
-            (cat: any) => cat.id == form.category_id
-        )
+    // Filter brands that belong to the selected category
+    return brands.filter((brand) =>
+        brand.categories?.some((cat: any) => cat.id == form.category_id)
     );
 });
+
+// Reset brand if category changes
 watch(() => form.category_id, () => {
     form.brand_id = '';
 });
@@ -195,6 +198,7 @@ const submit = () => {
         ad_title: form.ad_title,
         description: form.description,
         price: form.price,
+        city: form.city,
         location: form.location,
         seller_name: form.seller_name,
         seller_phone: form.seller_phone,
@@ -262,6 +266,7 @@ const submitSimpler = () => {
         ad_title: form.ad_title,
         description: form.description,
         price: form.price,
+        city: form.city,
         location: form.location,
         seller_name: form.seller_name,
         seller_phone: form.seller_phone,
@@ -343,32 +348,31 @@ watch(
                             <TextInput label="Ad Title *" v-model="form.ad_title" :error="form.errors.ad_title"
                                 placeholder="Enter ad title" required />
 
-                            <div class="grid grid-cols-2 gap-4">
-                                <SelectInput label="Category *" v-model="form.category_id"
-                                    :error="form.errors.category_id" placeholder="Select category" required>
-                                    <SelectContent>
-                                        <SelectItem v-for="category in categories" :key="category.id"
-                                            :value="category.id">
-                                            {{ category.name }}
-                                        </SelectItem>
-                                    </SelectContent>
-                                </SelectInput>
+                            <SelectInput label="Category *" v-model="form.category_id" :error="form.errors.category_id"
+                                placeholder="Select category" required>
+                                <SelectContent>
+                                    <SelectItem v-for="category in categories" :key="category.id" :value="category.id">
+                                        {{ category.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </SelectInput>
 
-                                <SelectInput label="Brand *" v-model="form.brand_id" :error="form.errors.brand_id"
-                                    placeholder="Select brand" required>
-                                    <SelectContent>
-                                        <SelectItem v-for="brand in filteredBrands" :key="brand.id" :value="brand.id">
-                                            {{ brand.name }}
-                                        </SelectItem>
-                                    </SelectContent>
-                                </SelectInput>
-                            </div>
+                            <SelectInput label="Brand *" v-model="form.brand_id" :error="form.errors.brand_id"
+                                placeholder="Select brand" required>
+                                <SelectContent>
+                                    <SelectItem v-for="brand in filteredBrands" :key="brand.id" :value="brand.id">
+                                        {{ brand.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </SelectInput>
 
                             <TextInput label="Price *" v-model="form.price" :error="form.errors.price" type="number"
                                 placeholder="0.00" required />
 
                             <TextInput label="Location *" v-model="form.location" :error="form.errors.location"
                                 placeholder="Enter location" required />
+                            <TextInput label="City *" v-model="form.city" :error="form.errors.city"
+                                placeholder="Enter City" required />
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -15,7 +15,7 @@ return new class extends Migration
         $table->id();
 
         $table->foreignId('ad_id')->constrained()->cascadeOnDelete();
-
+        $table->boolean('is_primary')->default(false);
         $table->string('path');
 
         $table->timestamps();

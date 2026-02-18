@@ -43,7 +43,7 @@ onMounted(() => {
             <template #links>
                 <div class="flex items-center gap-2">
                     <AppButton label="New Category" icon="radix-icons:plus-circled" size="sm"
-                        @click="handleShowModal({})" />
+                        @click="handleShowModal({})" class="bg-yellow-500 hover:bg-yellow-600" />
                 </div>
             </template>
         </PageHeading>
@@ -71,7 +71,8 @@ onMounted(() => {
                     <p class="text-sm text-muted-foreground mb-4">
                         Get started by creating your first category
                     </p>
-                    <AppButton label="Create Category" icon="radix-icons:plus-circled" @click="handleShowModal({})" />
+                    <AppButton label="Create Category" icon="radix-icons:plus-circled" @click="handleShowModal({})"
+                        class="bg-yellow-500 hover:bg-yellow-600" />
                 </div>
             </CardContent>
         </Card>

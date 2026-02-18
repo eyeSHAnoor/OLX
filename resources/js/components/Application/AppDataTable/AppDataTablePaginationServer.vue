@@ -63,7 +63,7 @@ const model = defineModel<string | number>();
 						<li v-for="(link, key) in paginationData.links" :key="key">
 							<Button v-if="!/.*Previous/.test(link.label) && !/Next .*/.test(link.label)" as-child
 								:variant="link.active ? 'default' : 'outline'" size="sm"
-								:class="['hidden size-8 p-0 lg:flex']" class="bg-blue-800">
+								:class="['hidden size-8 p-0 lg:flex']" class="bg-yellow-500 hover:bg-yellow-600">
 								<Link :href="link.url" v-html="link.label">
 								</Link>
 							</Button>

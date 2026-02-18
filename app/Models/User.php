@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Carbon\Carbon;
 
 class User extends Authenticatable
 {
@@ -62,6 +63,37 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class, 'requested_by');
     }
 
+    public function subscription()
+    {
+        return $this->hasOne(Subscription::class);
+    }
 
+    // Active subscription: payment completed and ends_at is in the future
+    public function activeSubscription()
+    {
+        return $this->hasOne(Subscription::class)
+            ->where('payment_status', 'completed')
+            ->where('ends_at', '>', Carbon::now());
+    }
+
+    // Pending subscription: payment submitted but not completed
+    public function pendingSubscription()
+    {
+        return $this->hasOne(Subscription::class)
+            ->where('payment_status', 'pending');
+    }
+
+    public function subscriptionStatus(): string
+    {
+        if ($this->activeSubscription()->exists()) {
+            return 'active';
+        }
+
+        if ($this->pendingSubscription()->exists()) {
+            return 'pending';
+        }
+
+        return 'none';
+    }
 
 }

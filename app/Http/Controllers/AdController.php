@@ -6,9 +6,13 @@ use App\Models\Ad;
 use App\Models\AdImage;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Data\CategoryData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\LaravelData\DataCollection;
+use Spatie\QueryBuilder\AllowedFilter;
 use Inertia\Inertia;
 
 class AdController extends Controller
@@ -16,71 +20,46 @@ class AdController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+
+    public function index()
     {
-        $query = Ad::with(['brand', 'category', 'images'])
+        // Columns allowed to sort
+        $columns = ['ad_title', 'price','location','seller_name', 'brand', 'city', 'created_at', 'search_keywords'];
+
+        // Global search filter helper
+        $globalSearch = getGlobalSearchFilter([...$columns]);
+        $ads = QueryBuilder::for(Ad::class)
+            ->with(['brand', 'category', 'images'])
             ->withCount('images')
-            ->latest();
+            ->defaultSort('-created_at')
+            ->allowedSorts($columns)
+            ->allowedFilters([
+                $globalSearch,
+                'brand_id',
+                'category_id',
+                AllowedFilter::callback('min_price', fn($query, $value) => $query->where('price', '>=', $value)),
+                AllowedFilter::callback('max_price', fn($query, $value) => $query->where('price', '<=', $value)),
+            ])
+            ->paginate(getPaginate()) // your helper for pagination
+            ->withQueryString();
 
-        // Search filter
-        if ($request->has('filter.global') && $request->input('filter.global')) {
-            $search = $request->input('filter.global');
-            $query->where(function ($q) use ($search) {
-                $q->where('ad_title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('location', 'like', "%{$search}%")
-                  ->orWhere('seller_name', 'like', "%{$search}%")
-                  ->orWhereHas('brand', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('category', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        // Filter by category
-        if ($request->has('filter.category_id') && $request->input('filter.category_id')) {
-            $query->where('category_id', $request->input('filter.category_id'));
-        }
-
-        // Filter by brand
-        if ($request->has('filter.brand_id') && $request->input('filter.brand_id')) {
-            $query->where('brand_id', $request->input('filter.brand_id'));
-        }
-
-        // Price range filter
-        if ($request->has('filter.min_price') && $request->input('filter.min_price')) {
-            $query->where('price', '>=', $request->input('filter.min_price'));
-        }
-        
-        if ($request->has('filter.max_price') && $request->input('filter.max_price')) {
-            $query->where('price', '<=', $request->input('filter.max_price'));
-        }
-
-        // Pagination
-        $perPage = $request->input('perPage', 12);
-        $ads = $query->paginate($perPage);
-
-        // Get filters data
-        $categories = Category::orderBy('name')->get();
-        $brands = Brand::with('categories:id')->orderBy('name')->get();
+        // Categories for filter dropdown
+        $categories = CategoryData::collect(Category::all());
 
         return Inertia::render('ads/Index', [
             'ads' => $ads,
             'categories' => $categories,
-            'brands' => $brands,
-            'filters' => $request->only([
-                'filter.global', 
-                'filter.category_id', 
-                'filter.brand_id',
-                'filter.min_price',
-                'filter.max_price'
-            ]),
-            'perPage' => $perPage,
+            'brands' => [],
         ]);
     }
 
+    public function create(){
+        return Inertia::render('ads/RecordForm', [
+            // 'ads' => $ads,
+            'categories' => CategoryData::collect(Category::all()),
+            'brands' => Brand::with('categories:id,name')->orderBy('name')->get(),
+        ]);
+    }
     /**
      * Store a newly created resource in storage.
      */
@@ -93,13 +72,20 @@ class AdController extends Controller
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
             'location' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
             'seller_name' => 'required|string|max:255',
             'seller_phone' => 'required|string|max:20',
             'images' => 'nullable|array|max:10',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'search_keywords' => 'nullable|array',
+            'search_keywords.*' => 'string|max:50',
         ]);
 
         return DB::transaction(function () use ($request) {
+
+            // ----------------------
+            // Create Ad (model handles keywords merge automatically)
+            // ----------------------
             $ad = Ad::create([
                 'user_id' => auth()->id(),
                 'category_id' => $request->category_id,
@@ -108,21 +94,25 @@ class AdController extends Controller
                 'description' => $request->description,
                 'price' => $request->price,
                 'location' => $request->location,
+                'city' => $request->city,
                 'seller_name' => $request->seller_name,
                 'seller_phone' => $request->seller_phone,
+                'search_keywords' => $request->input('search_keywords', []), // pass frontend keywords
             ]);
 
-            // Handle image uploads
+            // ----------------------
+            // Handle Images
+            // ----------------------
             if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $index => $image) {
-                    $folder = 'ads/images/' . $ad->id; // store images per ad
+                $folder = 'ads/images/' . $ad->id;
+
+                foreach ($request->file('images') as $image) {
                     $path = $image->store($folder, 'public');
 
                     AdImage::create([
                         'ad_id' => $ad->id,
                         'path' => $path,
                     ]);
-
                 }
             }
 
@@ -130,13 +120,31 @@ class AdController extends Controller
         });
     }
 
+
     /**
      * Update the specified resource in storage.
      */
 
+    public function edit(Ad $ad)
+    {
+        // Eager load related category, brand, and images
+        $ad->load([
+            'category',
+            'brand',
+            'images',
+        ]);
+
+        return Inertia::render('ads/RecordForm', [
+            'ad' => $ad,
+            'categories' => CategoryData::collect(Category::all()),
+            'brands' => Brand::with('categories:id,name')
+                ->orderBy('name')
+                ->get(),
+        ]);
+    }
+
     public function update(Request $request, Ad $ad)
     {
-        // dd($request->all());
         $request->validate([
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'required|exists:brands,id',
@@ -144,6 +152,7 @@ class AdController extends Controller
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
             'location' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
             'seller_name' => 'required|string|max:255',
             'seller_phone' => 'required|string|max:20',
 
@@ -152,12 +161,15 @@ class AdController extends Controller
 
             'remove_images' => 'nullable|array',
             'remove_images.*' => 'exists:ad_images,id',
+
+            'search_keywords' => 'nullable|array',
+            'search_keywords.*' => 'string|max:50',
         ]);
 
         return DB::transaction(function () use ($request, $ad) {
 
             // ----------------
-            // Update Ad Fields
+            // Update Ad Fields (pass frontend keywords)
             // ----------------
             $ad->update([
                 'category_id' => $request->category_id,
@@ -166,8 +178,10 @@ class AdController extends Controller
                 'description' => $request->description,
                 'price' => $request->price,
                 'location' => $request->location,
+                'city' => $request->city,
                 'seller_name' => $request->seller_name,
                 'seller_phone' => $request->seller_phone,
+                'search_keywords' => $request->input('search_keywords', []), // model merges automatically
             ]);
 
             // ----------------
@@ -175,7 +189,6 @@ class AdController extends Controller
             // ----------------
             if ($request->filled('remove_images')) {
                 foreach ($request->remove_images as $imageId) {
-
                     $image = AdImage::where('ad_id', $ad->id)
                                     ->where('id', $imageId)
                                     ->first();
@@ -191,11 +204,9 @@ class AdController extends Controller
             // Add New Images
             // ----------------
             if ($request->hasFile('images')) {
-
                 $folder = 'ads/images/' . $ad->id;
 
                 foreach ($request->file('images') as $image) {
-
                     $path = $image->store($folder, 'public');
 
                     AdImage::create([
@@ -210,6 +221,8 @@ class AdController extends Controller
                 ->with('success', 'Ad updated successfully.');
         });
     }
+
+
 
 
     /**
@@ -247,6 +260,6 @@ class AdController extends Controller
             $ad->images()->where('id', $request->image_id)->update(['is_primary' => true]);
         });
 
-        return response()->json(['success' => true]);
+        return redirect()->back()->with('Success','Image is set as Primary or thumbnail');
     }
 }
