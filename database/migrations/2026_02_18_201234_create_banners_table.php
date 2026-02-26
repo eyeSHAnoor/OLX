@@ -16,6 +16,7 @@ return new class extends Migration
             $table->enum('position', ['homepage', 'category', 'sidebar', 'floating'])->default('homepage');
             $table->unsignedBigInteger('target_category_id')->nullable(); // If banner targets a category
             $table->dateTime('start_date')->nullable(); // Start showing banner
+            $table->integer('sort_order')->default(0);
             $table->dateTime('end_date')->nullable();   // End showing banner
             $table->boolean('status')->default(true); // Active or inactive
             $table->timestamps();

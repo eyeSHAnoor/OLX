@@ -16,6 +16,7 @@ class Banner extends Model
         'link',
         'position',
         'target_category_id',
+        'sort_order',
         'start_date',
         'end_date',
         'status',
