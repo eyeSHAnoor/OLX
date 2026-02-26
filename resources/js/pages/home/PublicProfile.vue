@@ -332,7 +332,7 @@ import OlxLayout from '@/layouts/OlxLayout.vue'
 import AdCard from '@/components/AdCard.vue'
 
 const page = usePage()
-
+useForceTheme('light');
 interface Props {
     profileUser: {
         id: number

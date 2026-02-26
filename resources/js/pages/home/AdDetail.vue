@@ -279,6 +279,8 @@ const page = usePage<PageProps>();
 const ad = computed(() => page.props.ad);
 const similarAds = computed(() => page.props.similarAds || []);
 
+useForceTheme('light');
+
 // Image Gallery State
 const currentImageIndex = ref(0);
 const selectedImage = computed(() => {

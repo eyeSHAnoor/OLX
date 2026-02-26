@@ -47,6 +47,8 @@ class AdController extends Controller
         // Categories for filter dropdown
         $categories = CategoryData::collect(Category::all());
 
+        // dd($ads);
+
         return Inertia::render('ads/Index', [
             'ads' => $ads,
             'categories' => $categories,

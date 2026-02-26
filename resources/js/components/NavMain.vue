@@ -81,7 +81,8 @@ const navItems = computed(() => [
                         <Link :href="item.href" class="flex  items-center h-10 leading-none gap-2">
                             <Icon :icon="item.icon" class="!size-6.5 text-brand-blue "
                                 :class="[item.isActive && 'text-white  font-bold']" />
-                            <span class="text-sm leading-none">{{ item.title }}</span>
+                            <span class="text-sm leading-none text-gray-600" :class="[item.isActive && 'text-white']">{{
+                                item.title }}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

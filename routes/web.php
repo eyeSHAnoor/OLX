@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\AdController;
 
 Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/all-items', [App\Http\Controllers\SearchController::class, 'allItems'])->name('all.items');

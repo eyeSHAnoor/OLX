@@ -173,6 +173,7 @@ import CategoryAds from '@/components/CategoryAds.vue'
 import SearchResults from './_partials/SearchResults.vue';
 import { Icon } from '@iconify/vue';
 import type { InertiaPageProps, PaginatedData } from '@/types';
+import { useForceTheme } from '@/composables/useForceTheme'
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css'
 
@@ -195,6 +196,8 @@ const isSearching = computed(() => page.props.isSearching || false)
 // Carousel state
 const currentSlide = ref(0);
 const autoPlayInterval = ref();
+
+useForceTheme('light');
 
 // Filter banners by different positions
 const homepageBanners = computed(() => {

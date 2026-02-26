@@ -18,6 +18,8 @@ const conversationsList = ref(props.conversations || [])
 const showMobileSidebar = ref(false)
 const showMobileChat = ref(false)
 
+useForceTheme('light');
+
 // Scroll to bottom
 const scrollToBottom = () => {
     setTimeout(() => {

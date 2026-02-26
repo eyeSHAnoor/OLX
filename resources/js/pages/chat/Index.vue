@@ -7,7 +7,7 @@ import { Icon } from '@iconify/vue'
 const props = defineProps({
     conversations: Array
 })
-
+useForceTheme('light');
 const conversationsList = ref(props.conversations || [])
 
 // Listen for new messages across all conversations

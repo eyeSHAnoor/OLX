@@ -7,6 +7,8 @@ const props = defineProps({
     plans: Array
 })
 
+useForceTheme('light');
+
 // Get auth user from page props
 const user = computed(() => page.props.auth?.user)
 const page = usePage();
@@ -211,7 +213,7 @@ const canSubscribe = computed(() => {
             <!-- Welcome message with user name -->
             <div class="relative mb-4">
                 <span class="text-sm font-semibold text-blue-600 uppercase tracking-wider">Welcome back, {{ user?.name
-                }}!</span>
+                    }}!</span>
             </div>
 
             <h1
@@ -368,7 +370,7 @@ const canSubscribe = computed(() => {
                                     <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ plan.name }}</h3>
                                     <div class="flex items-baseline">
                                         <span class="text-4xl font-extrabold text-gray-900">{{ formatPrice(plan.price)
-                                        }}</span>
+                                            }}</span>
                                         <span class="text-sm text-gray-500 ml-2">/{{ plan.duration_days }} days</span>
                                     </div>
 
@@ -466,7 +468,7 @@ const canSubscribe = computed(() => {
                                     <div class="text-right">
                                         <p class="text-sm text-gray-500">Amount</p>
                                         <p class="text-2xl font-bold text-blue-600">{{ formatPrice(selectedPlan.price)
-                                        }}</p>
+                                            }}</p>
                                     </div>
                                 </div>
 

@@ -311,6 +311,7 @@ import OlxLayout from '@/layouts/OlxLayout.vue'
 import debounce from 'lodash/debounce'
 
 const page = usePage()
+useForceTheme('light');
 
 // Props from controller
 const props = defineProps<{

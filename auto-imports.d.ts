@@ -74,6 +74,7 @@ declare global {
   const useCssVars: typeof import('vue')['useCssVars']
   const useEnrollmentStore: typeof import('./resources/js/stores/useEnrollmentStore.js')['useEnrollmentStore']
   const useFileInput: typeof import('./resources/js/composables/useFileInput')['useFileInput']
+  const useForceTheme: typeof import('./resources/js/composables/useForceTheme')['useForceTheme']
   const useForm: typeof import('@inertiajs/vue3')['useForm']
   const useHelpers: typeof import('./resources/js/composables/useHelpers.js')['default']
   const useId: typeof import('vue')['useId']

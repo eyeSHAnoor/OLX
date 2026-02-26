@@ -356,6 +356,8 @@ const sortBy = ref(props.filters?.sort || 'newest')
 const showAllCategories = ref(false)
 const initialCategoriesToShow = 5
 
+useForceTheme('light');
+
 // Cities list
 const cities = ref<string[]>(citiesList || [])
 

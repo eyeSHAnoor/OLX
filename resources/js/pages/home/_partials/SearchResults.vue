@@ -232,7 +232,7 @@
 import { ref, computed, watch } from 'vue'
 import AdCard from '@/components/AdCard.vue'
 import AdListItem from '@/components/AdListItem.vue'
-
+useForceTheme('light');
 // Interfaces based on your data structure
 interface Ad {
     id: number
@@ -275,17 +275,17 @@ interface Props {
     categories?: Category[]
 }
 
-const props = withDefaults(defineProps < Props > (), {
+const props = withDefaults(defineProps<Props>(), {
     category: null,
     categories: () => []
 })
 
-const viewMode = ref < 'grid' | 'list' > ('grid')
-const sortBy = ref < string > ('newest')
-const minPrice = ref < number | null > (null)
-const maxPrice = ref < number | null > (null)
-const showMobileFilters = ref < boolean > (false)
-const showAllCategories = ref < boolean > (false)
+const viewMode = ref<'grid' | 'list'>('grid')
+const sortBy = ref<string>('newest')
+const minPrice = ref<number | null>(null)
+const maxPrice = ref<number | null>(null)
+const showMobileFilters = ref<boolean>(false)
+const showAllCategories = ref<boolean>(false)
 
 const activeCategory = computed(() => {
     if (props.category?.ads_count > 0) {

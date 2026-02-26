@@ -52,7 +52,7 @@ class SubscriptionController extends Controller
 
         $receipt = $request->file('receipt')->store(
             'receipts/user_'.$user->id.'/'.now()->format('Y_m'),
-            'public'
+            'private'
         );
 
         Subscription::create([
