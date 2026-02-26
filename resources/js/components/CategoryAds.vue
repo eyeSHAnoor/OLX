@@ -24,8 +24,8 @@
                 </button>
 
                 <!-- View All Button -->
-                <button @click="viewCategoryAds"
-                    class="flex items-center text-sm sm:text-base font-semibold text-white bg-yellow-500 hover:bg-yellow-600 transition-colors px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg shadow-sm hover:shadow">
+                <button @click="navigateToCategory(category)"
+                    class="flex items-center text-sm sm:text-base font-semibold text-white bg-brand-blue hover:bg-brand-teal transition-colors px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg shadow-sm hover:shadow">
                     View All
                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -59,6 +59,13 @@ const props = defineProps({
     category: Object,
     searchTerm: String
 })
+
+// Navigate to category show page
+const navigateToCategory = (category) => {
+    if (category.slug) {
+        router.get(route('category.show', { slug: category.slug }))
+    }
+}
 
 const showAll = ref(false)
 const localSearch = ref(props.searchTerm || '')

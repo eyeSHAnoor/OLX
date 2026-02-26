@@ -43,7 +43,7 @@ onMounted(() => {
             <template #links>
                 <div class="flex items-center gap-2">
                     <AppButton label="New Category" icon="radix-icons:plus-circled" size="sm"
-                        @click="handleShowModal({})" class="bg-yellow-500 hover:bg-yellow-600" />
+                        @click="handleShowModal({})" class="" />
                 </div>
             </template>
         </PageHeading>

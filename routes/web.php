@@ -10,6 +10,10 @@ use App\Http\Controllers\CategoryController;
 
 Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/all-items', [App\Http\Controllers\SearchController::class, 'allItems'])->name('all.items');
+Route::get('/category/{slug?}', [CategoryController::class, 'show'])->name('category.show');
+Route::post('/category/filter', [CategoryController::class, 'filter'])->name('category.filter');
+Route::get('/user/{id}', [App\Http\Controllers\PublicProfileController::class, 'show'])->name('user.profile');
+Route::get('/ads/{ad}', [App\Http\Controllers\AdController::class, 'show'])->name('ads.show');
 Route::post('/set-city', function (\Illuminate\Http\Request $request) {
     session(['city' => $request->city]);
 
@@ -60,6 +64,11 @@ Route::middleware(['auth'])->group(function () {
         [App\Http\Controllers\SubscriptionController::class,'submitManual'])
         ->name('subscriptions.manual');
 
+    Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
+    Route::get('/chat/{conversation}', [App\Http\Controllers\ChatController::class, 'show'])->name('chat.show');
+    Route::post('/chat/send', [App\Http\Controllers\ChatController::class, 'send'])->name('chat.send');
+    Route::post('/chat/start', [App\Http\Controllers\ChatController::class, 'start'])->name('chat.start');
+
 });
 
 Route::middleware([
@@ -77,7 +86,15 @@ Route::middleware([
             Route::get('/api/brand/{brand}', [\App\Http\Controllers\BrandController::class, 'show']);
             Route::get('/api/brands', [\App\Http\Controllers\BrandController::class, 'getName']);
             // Ads
-            Route::resource('ads', \App\Http\Controllers\AdController::class);
+            // Route::resource('ads', \App\Http\Controllers\AdController::class);
+            Route::get('/ads', [AdController::class, 'index'])->name('ads.index');
+            Route::get('/ads/create', [AdController::class, 'create'])->name('ads.create');
+            Route::post('/ads', [AdController::class, 'store'])->name('ads.store');
+            // Route::get('/ads/{ad}', [AdController::class, 'show'])->name('ads.show');
+            Route::get('/ads/{ad}/edit', [AdController::class, 'edit'])->name('ads.edit');
+            Route::put('/ads/{ad}', [AdController::class, 'update'])->name('ads.update');
+            Route::patch('/ads/{ad}', [AdController::class, 'update']); // optional, Laravel accepts both PUT/PATCH
+            Route::delete('/ads/{ad}', [AdController::class, 'destroy'])->name('ads.destroy');
             Route::post('ads/{ad}/set-primary-image', [\App\Http\Controllers\AdController::class, 'setPrimaryImage'])
                 ->name('ads.set-primary-image');
             Route::get('/api/brands/{category}', [App\Http\Controllers\BrandController::class, 'getByCategory']);
@@ -96,6 +113,8 @@ Route::middleware([
             Route::post('/subscriptions/{user}/complete', [App\Http\Controllers\SubscriptionController::class, 'complete'])->name('subscriptions.complete');
             Route::post('/subscriptions/{user}/reject', [App\Http\Controllers\SubscriptionController::class, 'reject'])->name('subscriptions.reject');
 
+            Route::resource('banners', App\Http\Controllers\BannerController::class)->except(['show']);
+            Route::patch('banners/{banner}/toggle-status', [App\Http\Controllers\BannerController::class, 'toggleStatus'])->name('banners.toggle-status');
 
 
            }

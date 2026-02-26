@@ -58,7 +58,7 @@
                         </label>
                         <div class="relative">
                             <input id="email" v-model="form.email" type="email" required placeholder="you@example.com"
-                                class="pl-10 w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all duration-200 text-gray-800 placeholder-gray-400"
+                                class="pl-10 w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all duration-200 text-gray-800 placeholder-gray-400"
                                 :class="{ 'border-red-500': errors.email }" />
                         </div>
                         <p v-if="errors.email" class="mt-1 text-sm text-red-600">
@@ -73,7 +73,7 @@
                         <div class="relative">
                             <input id="password" v-model="form.password" :type="showPassword ? 'text' : 'password'"
                                 required placeholder="••••••••"
-                                class="pl-10 pr-10 w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all duration-200 text-gray-800 placeholder-gray-400"
+                                class="pl-10 pr-10 w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all duration-200 text-gray-800 placeholder-gray-400"
                                 :class="{ 'border-red-500': errors.password }" />
                             <button type="button" @click="showPassword = !showPassword"
                                 class="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -96,19 +96,19 @@
                     <div class="flex items-center justify-between">
                         <label class="flex items-center">
                             <input type="checkbox" v-model="form.remember"
-                                class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded" />
+                                class="h-4 w-4 text-brand-blue focus:ring-brand-blue border-gray-300 rounded" />
                             <span class="ml-2 text-sm text-gray-600">Remember me</span>
                         </label>
 
                         <Link :href="route('password.request')"
-                            class="text-sm font-medium text-yellow-600 hover:text-yellow-700 transition-colors">
+                            class="text-sm font-medium text-brand-blue hover:text-brand-teal transition-colors">
                             Forgot password?
                         </Link>
                     </div>
 
                     <!-- Login Button -->
                     <button type="submit" :disabled="processing"
-                        class="w-full bg-yellow-600 text-white font-semibold py-3.5 px-4 rounded-xl hover:from-yellow-600 hover:to-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="w-full bg-brand-blue text-white font-semibold py-3.5 px-4 rounded-xl hover:from-brand-blue hover:to-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
                         <div class="flex items-center justify-center">
                             {{ processing ? 'Signing in...' : 'Sign in to your account' }}
                         </div>
@@ -120,7 +120,7 @@
                     <p class="text-center text-gray-600">
                         Don't have an account?
                         <Link :href="route('amo.register')"
-                            class="font-semibold text-yellow-600 hover:text-yellow-700 transition-colors ml-1">
+                            class="font-semibold text-brand-blue hover:text-brand-teal transition-colors ml-1">
                             Create account
                         </Link>
                     </p>

@@ -80,4 +80,16 @@ class Ad extends Model
     {
         return $this->belongsTo(Category::class);
     }
+    public function features()
+    {
+        return $this->belongsToMany(Feature::class, 'ad_feature')
+            ->withPivot(['feature_value_id', 'custom_value'])
+            ->withTimestamps();
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
 }

@@ -6,6 +6,7 @@ use App\Models\Ad;
 use App\Models\AdImage;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Feature;
 use App\Data\CategoryData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +30,7 @@ class AdController extends Controller
         // Global search filter helper
         $globalSearch = getGlobalSearchFilter([...$columns]);
         $ads = QueryBuilder::for(Ad::class)
-            ->with(['brand', 'category', 'images'])
+            ->with(['brand', 'category', 'images', 'features.values'])
             ->withCount('images')
             ->defaultSort('-created_at')
             ->allowedSorts($columns)
@@ -58,6 +59,7 @@ class AdController extends Controller
             // 'ads' => $ads,
             'categories' => CategoryData::collect(Category::all()),
             'brands' => Brand::with('categories:id,name')->orderBy('name')->get(),
+            'features' => Feature::with('values')->orderBy('name')->get(),
         ]);
     }
     /**
@@ -65,6 +67,7 @@ class AdController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request->all());
         $request->validate([
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'required|exists:brands,id',
@@ -79,6 +82,10 @@ class AdController extends Controller
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'search_keywords' => 'nullable|array',
             'search_keywords.*' => 'string|max:50',
+            'features' => 'nullable|array',
+            'features.*.feature_id' => 'required|exists:features,id',
+            'features.*.feature_value_id' => 'nullable|exists:feature_values,id',
+            'features.*.custom_value' => 'nullable|string|max:255',
         ]);
 
         return DB::transaction(function () use ($request) {
@@ -116,10 +123,20 @@ class AdController extends Controller
                 }
             }
 
+            if ($request->filled('features')) {
+
+                foreach ($request->features as $feature) {
+
+                    $ad->features()->attach($feature['feature_id'], [
+                        'feature_value_id' => $feature['feature_value_id'] ?? null,
+                        'custom_value' => $feature['custom_value'] ?? null,
+                    ]);
+                }
+            }
+
             return redirect()->route('ads.index')->with('success', 'Ad created successfully.');
         });
     }
-
 
     /**
      * Update the specified resource in storage.
@@ -132,6 +149,7 @@ class AdController extends Controller
             'category',
             'brand',
             'images',
+            'features.values' 
         ]);
 
         return Inertia::render('ads/RecordForm', [
@@ -140,6 +158,7 @@ class AdController extends Controller
             'brands' => Brand::with('categories:id,name')
                 ->orderBy('name')
                 ->get(),
+            'features' => Feature::with('values')->orderBy('name')->get(),
         ]);
     }
 
@@ -164,6 +183,13 @@ class AdController extends Controller
 
             'search_keywords' => 'nullable|array',
             'search_keywords.*' => 'string|max:50',
+
+            'features' => 'nullable|array',
+
+            'features.*.feature_id' => 'required|exists:features,id',
+            'features.*.feature_value_id' => 'nullable|exists:feature_values,id',
+            'features.*.custom_value' => 'nullable|string|max:255',
+
         ]);
 
         return DB::transaction(function () use ($request, $ad) {
@@ -216,14 +242,25 @@ class AdController extends Controller
                 }
             }
 
+            if ($request->has('features')) {
+                $sync = collect($request->features)->mapWithKeys(fn ($f) => [
+                    $f['feature_id'] => [
+                        'feature_value_id' => $f['feature_value_id'] ?? null,
+                        'custom_value' => $f['custom_value'] ?? null,
+                    ]
+                ])->toArray();
+
+                $ad->features()->sync($sync);
+
+            } else {
+                $ad->features()->detach();
+            }
+
             return redirect()
                 ->route('ads.index')
                 ->with('success', 'Ad updated successfully.');
         });
     }
-
-
-
 
     /**
      * Remove the specified resource from storage.
@@ -261,5 +298,21 @@ class AdController extends Controller
         });
 
         return redirect()->back()->with('Success','Image is set as Primary or thumbnail');
+    }
+
+    public function show(Ad $ad)
+    {
+        $ad->load([
+            'user:id,name,email',
+            'images',
+            'category:id,name',
+            'brand:id,name',
+            'features' => function ($q) {
+                $q->withPivot(['feature_value_id', 'custom_value']);
+            }
+        ]);
+        return Inertia::render('home/AdDetail', [
+            'ad' => $ad,
+        ]);
     }
 }

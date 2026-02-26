@@ -21,6 +21,7 @@ const colorMap = {
     inactive: 'danger',
     disabled: 'danger',
 
+    pending: 'warning',
     rejected: 'danger',
     packed: 'warning',
     shipped: 'info',

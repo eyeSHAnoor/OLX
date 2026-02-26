@@ -62,7 +62,7 @@ const iconClasses = computed(() => props.iconSize);
     </Button>
 
     <Button v-else :class="[additionalClasses]" as="button" :size="size" :disabled="processing || disabled"
-        class="flex items-center justify-center">
+        class="flex items-center justify-center bg-brand-blue hover:bg-brand-blue/80 text-white">
         <Icon v-if="!noIcon" :icon="processing ? 'codex:loader' : icon" :class="['size-2', iconClasses]" />
         <span v-if="!noLabel">{{ label }}</span>
     </Button>

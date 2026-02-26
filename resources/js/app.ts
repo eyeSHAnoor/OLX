@@ -1,23 +1,24 @@
 import '../css/app.css';
-import './bootstrap'
+import './bootstrap';
 // import '@vuepic/vue-datepicker/dist/main.css';
-
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import { i18nVue } from 'laravel-vue-i18n';
 import { createPinia } from 'pinia';
 import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
-import PermissionsPlugin from './plugins/permissions'
-import { i18nVue } from 'laravel-vue-i18n';
+import PermissionsPlugin from './plugins/permissions';
 
-import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
+import { configureEcho } from '@laravel/echo-vue';
 
+configureEcho({
+    broadcaster: 'reverb',
+});
 
-const appName = import.meta.env.VITE_APP_NAME || 'WMS-Rivalitas';
+const appName = import.meta.env.VITE_APP_NAME || 'AMO Mercatus';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -38,7 +39,7 @@ createInertiaApp({
                 resolve: async (lang: String) => {
                     const langs = import.meta.glob('../../lang/*.json');
                     return await langs[`../../lang/${lang}.json`]();
-                }
+                },
             })
             .mount(el);
     },

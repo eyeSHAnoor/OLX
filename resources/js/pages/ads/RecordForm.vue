@@ -6,6 +6,7 @@ import Layout from '@/layouts/AppLayout.vue';
 import { useAlertDialog } from '@/composables/useAlertDialog';
 import { useDropZone } from '@vueuse/core';
 import { Plus, X, Tag } from 'lucide-vue-next';
+import CardContent from '@/components/ui/card/CardContent.vue';
 
 defineOptions({ layout: Layout });
 
@@ -19,6 +20,7 @@ const page = usePage<PageProps>();
 const ad = computed(() => page.props.ad);
 const categories = computed(() => page.props.categories);
 const brands = computed(() => page.props.brands);
+const features = computed(() => page.props.features);
 
 interface AdFormData {
     id?: string | number;
@@ -34,6 +36,11 @@ interface AdFormData {
     search_keywords: string[];
     images: File[];
     remove_images: (string | number)[];
+    features: {
+        feature_id: number | '';
+        feature_value_id?: number | '';
+        custom_value?: string;
+    }[];
 }
 
 interface AdImageData {
@@ -56,7 +63,26 @@ const getDefaultForm = (item: App.Data.AdData | undefined): AdFormData => ({
     search_keywords: item?.search_keywords ?? [],
     images: [],
     remove_images: [],
+    features: item?.features?.map((f: any) => ({
+        feature_id: f.id,
+        feature_value_id: f.pivot?.feature_value_id ?? '',
+        custom_value: f.pivot?.custom_value ?? '',
+    })) ?? [],
+
 });
+
+const addFeatureRow = () => {
+    form.features.push({
+        feature_id: '',
+        feature_value_id: '',
+        custom_value: '',
+    });
+};
+
+const removeFeatureRow = (index: number) => {
+    form.features.splice(index, 1);
+};
+
 
 const form = useForm<AdFormData>({ ...getDefaultForm(ad.value) });
 const existingImages = ref<AdImageData[]>(ad.value?.images || []);
@@ -322,7 +348,7 @@ const primaryImage = computed(() => {
                     <AppButton label="Cancel" variant="outline" @click="router.visit(route('ads.index'))"
                         :disabled="form.processing" />
                     <AppButton :label="ad ? 'Update Ad' : 'Create Ad'" icon="lucide:check" :processing="form.processing"
-                        @click="submit" class="bg-yellow-500 hover:bg-yellow-600" />
+                        @click="submit" class="bg-brand-orange hover:bg-brand-orange/80" />
                 </div>
             </div>
         </div>
@@ -455,6 +481,73 @@ const primaryImage = computed(() => {
                         </div>
                     </CardContent>
                 </Card>
+                <Card>
+                    <CardContent>
+                        <!-- Features Section -->
+                        <div class="pt-6 border-t space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-medium">Ad Features</h3>
+                                <AppDataTableActionButton icon="lucide:edit" tooltip="Add Feature"
+                                    @click="addFeatureRow" />
+                            </div>
+
+                            <table class="w-full border rounded-md overflow-hidden">
+                                <thead class="bg-muted">
+                                    <tr class="text-sm">
+                                        <th class="p-2 text-left">Feature</th>
+                                        <th class="p-2 text-left">Value</th>
+                                        <th class="p-2 w-12"></th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <tr v-for="(row, index) in form.features" :key="index" class="border-t">
+                                        <!-- Feature -->
+                                        <td class="p-2">
+                                            <select v-model="row.feature_id" class="w-full border rounded px-2 py-1">
+                                                <option value="">Select</option>
+                                                <option v-for="f in features" :key="f.id" :value="f.id">
+                                                    {{ f.name }}
+                                                </option>
+                                            </select>
+                                        </td>
+
+                                        <!-- Value -->
+                                        <td class="p-2">
+                                            <template v-if="row.feature_id">
+                                                <select v-model="row.feature_value_id"
+                                                    class="w-full border rounded px-2 py-1">
+                                                    <option value="">Custom</option>
+
+                                                    <option
+                                                        v-for="v in features.find(f => f.id === row.feature_id)?.values || []"
+                                                        :key="v.id" :value="v.id">
+                                                        {{ v.value }}
+                                                    </option>
+                                                </select>
+
+                                                <input v-if="!row.feature_value_id" v-model="row.custom_value"
+                                                    placeholder="Enter value"
+                                                    class="mt-1 w-full border rounded px-2 py-1" />
+                                            </template>
+                                        </td>
+
+                                        <!-- Remove -->
+                                        <td class="p-2">
+                                            <button @click="removeFeatureRow(index)">
+                                                <X class="size-4 text-red-500" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <p v-if="form.features.length === 0" class="text-sm text-muted-foreground text-center">
+                                No features added yet
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 <!-- Images Section -->
                 <Card class="mt-6">
@@ -549,7 +642,7 @@ const primaryImage = computed(() => {
                         <div class="flex flex-col gap-2">
                             <AppButton :label="ad ? 'Update Ad' : 'Publish Ad'" icon="lucide:check"
                                 :processing="form.processing" @click="submit"
-                                class="bg-yellow-500 hover:bg-yellow-600 w-full justify-center" />
+                                class="bg-brand-orange hover:bg-brand-orange/80 w-full justify-center" />
 
                             <AppButton label="Cancel" variant="outline" class="w-full justify-center"
                                 @click="router.visit(route('ads.index'))" :disabled="form.processing" />

@@ -1,4 +1,5 @@
 <template>
+    <Link :href="route('ads.show', ad.id)" class="block">
     <div
         class="group bg-white border border-gray-200 rounded-xl hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer">
         <div class="flex flex-col md:flex-row">
@@ -16,7 +17,7 @@
 
                 <!-- Featured Badge (Optional) -->
                 <div v-if="ad.is_featured" class="absolute top-4 left-4">
-                    <span class="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md">
+                    <span class="bg-brand-blue text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md">
                         Featured
                     </span>
                 </div>
@@ -31,7 +32,7 @@
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex-1">
                                 <h3
-                                    class="font-bold text-gray-900 text-xl mb-1 line-clamp-2 group-hover:text-yellow-700 transition-colors">
+                                    class="font-bold text-gray-900 text-xl mb-1 line-clamp-2 group-hover:text-brand-blue transition-colors">
                                     {{ ad.ad_title || 'Untitled' }}
                                 </h3>
                                 <div class="flex items-center space-x-4">
@@ -118,7 +119,7 @@
                             </div>
                         </div>
                         <button
-                            class="px-6 py-2.5 bg-yellow-600 text-white font-medium rounded-lg hover:bg-yellow-700 transition-colors duration-200">
+                            class="px-6 py-2.5 bg-brand-blue text-white font-medium rounded-lg hover:bg-brand-teal transition-colors duration-200">
                             Contact Seller
                         </button>
                     </div>
@@ -126,6 +127,7 @@
             </div>
         </div>
     </div>
+    </Link>
 </template>
 
 <script setup lang="ts">

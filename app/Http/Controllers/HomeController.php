@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Brand;
 use App\Models\Ad;
+use App\Models\Banner;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 
@@ -139,9 +140,22 @@ class HomeController extends Controller
 
         // Get all brands for filters
         $brands = Brand::with(['categories.files'])->get();
+        $banners = Banner::where('position', 'homepage')
+        ->where('status', true)
+        ->where(function($query) {
+            $query->whereNull('start_date')
+                ->orWhere('start_date', '<=', now());
+        })
+        ->where(function($query) {
+            $query->whereNull('end_date')
+                ->orWhere('end_date', '>=', now());
+        })
+        ->orderBy('sort_order', 'asc')
+        ->get();
 
         return Inertia::render('home/Index', [
             'categories' => $categories,
+            'banners' => $banners,
             'brands' => $brands,
             'filters' => [
                 'filter' => [

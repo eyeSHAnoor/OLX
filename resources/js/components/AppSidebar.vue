@@ -7,20 +7,22 @@ import AppLogo from './AppLogo.vue';
 </script>
 
 <template>
-    <Sidebar collapsible="icon" variant="inset" class="">
-        <SidebarHeader>
+    <Sidebar collapsible="icon" variant="inset">
+        <SidebarHeader class="items-start py-8">
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
-                        <Link :href="route('dashboard')">
-                            <AppLogo />
+                    <SidebarMenuButton size="lg" as-child class="p-0">
+                        <Link :href="route('dashboard')" class="block p-0">
+                            <div class="w-30 h-30 flex items-center justify-center overflow-visible">
+                                <AppLogo class="w-20 h-20 object-contain block" />
+                            </div>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarHeader>
 
-        <SidebarContent class="!overflow-hidden">
+        <SidebarContent class="overflow-y-auto ">
             <NavMain />
         </SidebarContent>
 

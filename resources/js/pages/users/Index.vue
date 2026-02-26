@@ -100,8 +100,7 @@ const formatDate = (date: string) => {
         <PageHeading>
             <template #title>Users</template>
             <template #links>
-                <AppButton label="Add User" icon="radix-icons:plus-circled" @click="handleShowModal({})"
-                    class="bg-blue-600 hover:bg-blue-700" />
+                <AppButton label="Add User" icon="radix-icons:plus-circled" @click="handleShowModal({})" class="" />
             </template>
         </PageHeading>
 

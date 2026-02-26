@@ -96,8 +96,7 @@ function formatDuration(days: number): string {
         <PageHeading>
             <template #title>Plans</template>
             <template #links>
-                <AppButton label="New Plan" icon="radix-icons:plus-circled" @click="handleShowModal({})"
-                    class="bg-yellow-500 hover:bg-yellow-600" />
+                <AppButton label="New Plan" icon="radix-icons:plus-circled" @click="handleShowModal({})" class="" />
             </template>
         </PageHeading>
 

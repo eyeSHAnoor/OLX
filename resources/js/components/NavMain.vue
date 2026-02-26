@@ -27,14 +27,14 @@ const navItems = computed(() => [
                 visible: true,
                 title: 'Users',
                 href: '/users',
-                icon: 'material-symbols:people-outline',
+                icon: 'material-symbols:group-outline',
                 isActive: page.url === '/users' || route().current('users.*'),
             },
             {
                 visible: true,
                 title: 'Plans',
                 href: '/plans',
-                icon: 'material-symbols:category-outline',
+                icon: 'material-symbols:inventory-2-outline',
                 isActive: page.url === '/plans' || route().current('plans.*'),
             },
             {
@@ -50,6 +50,13 @@ const navItems = computed(() => [
                 href: '/brands',
                 icon: 'material-symbols:badge-outline',
                 isActive: page.url === '/brands' || route().current('brands.*'),
+            },
+            {
+                visible: true,
+                title: 'Banners',
+                href: '/banners',
+                icon: 'material-symbols:view-carousel-outline',
+                isActive: page.url === '/banners' || route().current('banners.*'),
             },
             {
                 visible: true,
@@ -70,11 +77,11 @@ const navItems = computed(() => [
             <SidebarMenu>
                 <SidebarMenuItem v-for="(item, index) in group.items" :key="index">
                     <SidebarMenuButton v-if="item.visible" :is-active="item.isActive" :tooltip="item.title"
-                        :class="[item.isActive && '!bg-(--sidebar-item-active) font-semibold !text-primary-foreground']"
-                        as-child>
-                        <Link :href="item.href" class="flex  items-center h-16 leading-none">
-                            <Icon :icon="item.icon" class="!size-6.5" />
-                            <span class="text-xs leading-none">{{ item.title }}</span>
+                        :class="[item.isActive && '!bg-brand-blue font-semibold !text-white']" as-child>
+                        <Link :href="item.href" class="flex  items-center h-10 leading-none gap-2">
+                            <Icon :icon="item.icon" class="!size-6.5 text-brand-blue "
+                                :class="[item.isActive && 'text-white  font-bold']" />
+                            <span class="text-sm leading-none">{{ item.title }}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

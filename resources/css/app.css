@@ -3,7 +3,7 @@
 @import 'tailwindcss';
 @plugin "@tailwindcss/typography";
 @import 'tw-animate-css';
-@import "../../node_modules/flag-icons/css/flag-icons.min.css";
+@import '../../node_modules/flag-icons/css/flag-icons.min.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -51,6 +51,11 @@
     --color-chart-3: var(--chart-3);
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
+
+    --color-brand-orange: var(--brand-orange);
+    --color-brand-blue: var(--brand-blue);
+    --color-brand-teal: var(--brand-teal);
+    --color-brand-black: var(--brand-black);
 
     --color-sidebar-dark: var(--sidebar-dark);
     --color-sidebar-dark-foreground: var(--sidebar-dark-foreground);
@@ -106,7 +111,6 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
-
     *,
     ::after,
     ::before,
@@ -117,7 +121,6 @@
 }
 
 @layer utilities {
-
     body,
     html {
         --font-sans: 'Roboto', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
@@ -165,7 +168,12 @@
     --sidebar: hsl(0 0% 98%);
     --sidebar-dark: hsl(227 19% 15%);
     --sidebar-dark-foreground: hsl(228 3% 70%);
-    --sidebar-item-active: rgb(128, 128, 128)
+    --sidebar-item-active: rgb(128, 128, 128);
+
+    --brand-orange: #f26822;
+    --brand-blue: #21428e;
+    --brand-teal: #00a6a0;
+    --brand-black: #000000;
 }
 
 .dark {
@@ -202,6 +210,10 @@
     --sidebar-border: hsl(0 0% 15.9%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
     --sidebar: hsl(240 5.9% 10%);
+    --brand-orange: #f26822;
+    --brand-blue: #3b5fb5;
+    --brand-teal: #00c2bb;
+    --brand-black: #000000;
 }
 
 @layer base {

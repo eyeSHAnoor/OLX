@@ -63,7 +63,7 @@
                         <div class="relative">
                             <Input id="name" type="text" required autofocus :tabindex="1" autocomplete="name"
                                 v-model="form.name" placeholder="Enter your full name"
-                                class="pl-10 w-full border-gray-300 rounded-xl focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200" />
+                                class="pl-10 w-full border-gray-300 rounded-xl focus:border-brand-blue focus:ring-2 focus:ring-brand-blue" />
                         </div>
                         <InputError :message="form.errors.name" />
                     </div>
@@ -76,7 +76,7 @@
                         <div class="relative">
                             <Input id="email" type="email" required :tabindex="2" autocomplete="email"
                                 v-model="form.email" placeholder="you@example.com"
-                                class="pl-10 w-full border-gray-300 rounded-xl focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200" />
+                                class="pl-10 w-full border-gray-300 rounded-xl focus:border-brand-blue focus:ring-2 focus:ring-brand-blue" />
                         </div>
                         <InputError :message="form.errors.email" />
                     </div>
@@ -89,7 +89,7 @@
                         <div class="relative">
                             <Input id="phone" type="tel" required :tabindex="3" autocomplete="tel" v-model="form.phone"
                                 placeholder="+92 300 1234567"
-                                class="pl-10 w-full border-gray-300 rounded-xl focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200" />
+                                class="pl-10 w-full border-gray-300 rounded-xl focus:border-brand-blue focus:ring-2 focus:ring-brand-blue" />
                         </div>
                         <InputError :message="form.errors.phone" />
                     </div>
@@ -103,7 +103,7 @@
                             <Input id="password" :type="showPassword ? 'text' : 'password'" required :tabindex="4"
                                 autocomplete="new-password" v-model="form.password"
                                 placeholder="Create a strong password"
-                                class="pl-10 pr-10 w-full border-gray-300 rounded-xl focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200" />
+                                class="pl-10 pr-10 w-full border-gray-300 rounded-xl focus:border-brand-blue focus:ring-2 focus:ring-brand-blue" />
                             <button type="button" @click="showPassword = !showPassword"
                                 class="absolute inset-y-0 right-0 pr-3 flex items-center">
                                 <svg class="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor"
@@ -151,7 +151,7 @@
                             <Input id="password_confirmation" :type="showConfirmPassword ? 'text' : 'password'" required
                                 :tabindex="5" autocomplete="new-password" v-model="form.password_confirmation"
                                 placeholder="Confirm your password"
-                                class="pl-10 pr-10 w-full border-gray-300 rounded-xl focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200" />
+                                class="pl-10 pr-10 w-full border-gray-300 rounded-xl focus:border-brand-blue focus:ring-2 focus:ring-brand-blue" />
                             <button type="button" @click="showConfirmPassword = !showConfirmPassword"
                                 class="absolute inset-y-0 right-0 pr-3 flex items-center">
                                 <svg class="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor"
@@ -171,15 +171,15 @@
                     <div class="flex items-start">
                         <div class="flex items-center h-5">
                             <input id="terms" type="checkbox" v-model="form.terms" required
-                                class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded" />
+                                class="h-4 w-4 text-brand-blue focus:ring-brand-blue border-gray-300 rounded" />
                         </div>
                         <div class="ml-3 text-sm">
                             <label for="terms" class="text-gray-600">
                                 I agree to the
-                                <a href="#" class="font-medium text-yellow-600 hover:text-yellow-700">Terms of
+                                <a href="#" class="font-medium text-brand-blue hover:text-brand-teal">Terms of
                                     Service</a>
                                 and
-                                <a href="#" class="font-medium text-yellow-600 hover:text-yellow-700">Privacy
+                                <a href="#" class="font-medium text-brand-blue hover:text-brand-teal">Privacy
                                     Policy</a>
                             </label>
                         </div>
@@ -187,7 +187,7 @@
 
                     <!-- Register Button -->
                     <Button type="submit" :disabled="form.processing" :tabindex="6"
-                        class="w-full bg-yellow-600 text-white font-semibold py-3.5 px-4 rounded-xl hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="w-full bg-brand-blue text-white font-semibold py-3.5 px-4 rounded-xl hover:bg-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
                         <div class="flex items-center justify-center">
                             <LoaderCircle v-if="form.processing" class="animate-spin h-5 w-5 mr-2" />
                             {{ form.processing ? 'Processing...' : 'Register' }}
@@ -200,7 +200,7 @@
                     <p class="text-center text-gray-600">
                         Already have an account?
                         <TextLink :href="route('amo.login')"
-                            class="font-semibold text-yellow-600 hover:text-yellow-700 transition-colors ml-1"
+                            class="font-semibold text-brand-blue hover:text-brand-teal transition-colors ml-1"
                             :tabindex="7">
                             Sign in
                         </TextLink>

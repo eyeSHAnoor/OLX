@@ -12,6 +12,10 @@
                                 d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                         </svg>
                         Filters
+                        <span v-if="activeFilterCount > 0"
+                            class="ml-2 bg-yellow-600 text-white text-xs px-2 py-0.5 rounded-full">
+                            {{ activeFilterCount }}
+                        </span>
                     </span>
                     <span class="text-gray-500">
                         {{ showMobileFilters ? '▲' : '▼' }}
@@ -24,12 +28,23 @@
                 <!-- Sidebar - Hidden on mobile unless toggled -->
                 <aside class="lg:col-span-1 space-y-6" :class="showMobileFilters ? 'block' : 'hidden lg:block'">
 
+                    <!-- Close button for mobile -->
+                    <div class="lg:hidden flex items-center justify-between mb-4">
+                        <h2 class="font-bold text-lg">Filters</h2>
+                        <button @click="showMobileFilters = false" class="p-2 hover:bg-gray-100 rounded-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
                     <!-- Category Filter -->
                     <div class="bg-white rounded-xl shadow-sm p-5 md:p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="font-semibold text-base md:text-lg text-gray-800">Categories</h3>
                             <button @click="showAllCategories = !showAllCategories" v-if="categories?.length > 5"
-                                class="text-sm text-yellow-600 hover:text-yellow-700 md:hidden">
+                                class="text-sm text-yellow-600 hover:text-yellow-700">
                                 {{ showAllCategories ? 'Show Less' : 'Show All' }}
                             </button>
                         </div>
@@ -42,10 +57,10 @@
                                     selectedCategoryId === category.id
                                         ? 'bg-yellow-50 text-yellow-600 border-yellow-500'
                                         : 'border-transparent hover:border-yellow-500',
-                                    index >= 5 && !showAllCategories ? 'hidden md:block' : 'block'
+                                    index >= 5 && !showAllCategories ? 'hidden' : 'block'
                                 ]">
                                 {{ category.name }}
-                                <span class="text-xs text-gray-400 ml-1">({{ category.ads_count || 0 }})</span>
+                                <span class="text-xs text-gray-400 ml-1">({{ getCategoryAdCount(category) }})</span>
                             </div>
                         </div>
                     </div>
@@ -56,16 +71,28 @@
                         <div class="space-y-3 md:space-y-4">
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-xs text-gray-500 mb-1">Min</label>
-                                    <input type="number" placeholder="$ Min" v-model="minPrice"
+                                    <label class="block text-xs text-gray-500 mb-1">Min ($)</label>
+                                    <input type="number" placeholder="Min" v-model.number="minPrice"
+                                        @input="debouncedApplyFilters"
                                         class="w-full px-3 md:px-4 py-2.5 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition text-sm md:text-base" />
                                 </div>
                                 <div>
-                                    <label class="block text-xs text-gray-500 mb-1">Max</label>
-                                    <input type="number" placeholder="$ Max" v-model="maxPrice"
+                                    <label class="block text-xs text-gray-500 mb-1">Max ($)</label>
+                                    <input type="number" placeholder="Max" v-model.number="maxPrice"
+                                        @input="debouncedApplyFilters"
                                         class="w-full px-3 md:px-4 py-2.5 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition text-sm md:text-base" />
                                 </div>
                             </div>
+
+                            <!-- Quick price suggestions -->
+                            <div class="flex flex-wrap gap-2">
+                                <button v-for="range in priceRanges" :key="range.label"
+                                    @click="setQuickPriceRange(range.min, range.max)"
+                                    class="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
+                                    {{ range.label }}
+                                </button>
+                            </div>
+
                             <button @click="applyFilters"
                                 class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2.5 md:py-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow text-sm md:text-base">
                                 Apply Filter
@@ -73,23 +100,33 @@
                         </div>
                     </div>
 
-                    <!-- Brand Filter (Optional) -->
+                    <!-- Brand Filter -->
                     <div class="bg-white rounded-xl shadow-sm p-5 md:p-6" v-if="brands?.length">
                         <h3 class="font-semibold text-base md:text-lg text-gray-800 mb-4">Brands</h3>
-                        <div class="space-y-2 max-h-48 overflow-y-auto">
-                            <div v-for="brand in brands" :key="brand.id" @click="toggleBrand(brand.id)" :class="[
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                            <div v-for="brand in filteredBrands" :key="brand.id" @click="toggleBrand(brand.id)" :class="[
                                 'flex items-center justify-between cursor-pointer py-2 px-3 rounded-lg transition-colors',
-                                'hover:bg-gray-50',
+                                'hover:bg-yellow-50',
                                 selectedBrands.includes(brand.id) ? 'bg-yellow-50 text-yellow-600' : ''
                             ]">
                                 <span class="text-sm">{{ brand.name }}</span>
-                                <span class="text-xs text-gray-400">{{ brand.ads_count || 0 }}</span>
+                                <span class="text-xs text-gray-400">{{ getBrandAdCount(brand.id) }}</span>
                             </div>
                         </div>
+
+                        <!-- Show all brands toggle if many -->
+                        <button v-if="brands.length > 10" @click="showAllBrands = !showAllBrands"
+                            class="mt-3 text-sm text-yellow-600 hover:text-yellow-700 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    :d="showAllBrands ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
+                            </svg>
+                            {{ showAllBrands ? 'Show Less' : `Show All (${brands.length})` }}
+                        </button>
                     </div>
 
                     <!-- Mobile Filter Actions -->
-                    <div class="lg:hidden bg-white rounded-xl shadow-sm p-4 border-t border-gray-100">
+                    <div class="lg:hidden bg-white rounded-xl shadow-sm p-4 border-t border-gray-100 sticky bottom-0">
                         <div class="grid grid-cols-2 gap-3">
                             <button @click="resetFilters"
                                 class="py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors text-sm">
@@ -200,19 +237,19 @@
                             </div>
                             <div v-if="minPrice || maxPrice"
                                 class="inline-flex items-center bg-yellow-50 text-yellow-700 text-xs px-3 py-1.5 rounded-full">
-                                Price: {{ minPrice ? `$${minPrice}` : 'Min' }} - {{ maxPrice ? `$${maxPrice}` : 'Max' }}
+                                Price: {{ minPrice ? `$${minPrice}` : '$0' }} - {{ maxPrice ? `$${maxPrice}` : 'Any' }}
                                 <button @click="clearPriceFilter" class="ml-1.5 hover:text-yellow-900">
                                     ×
                                 </button>
                             </div>
                             <div v-if="selectedBrands.length"
                                 class="inline-flex items-center bg-yellow-50 text-yellow-700 text-xs px-3 py-1.5 rounded-full">
-                                Brands: {{ selectedBrands.length }}
+                                {{ selectedBrands.length }} {{ selectedBrands.length === 1 ? 'Brand' : 'Brands' }}
                                 <button @click="clearBrandFilter" class="ml-1.5 hover:text-yellow-900">
                                     ×
                                 </button>
                             </div>
-                            <button @click="resetFilters" class="text-xs text-gray-500 hover:text-gray-700">
+                            <button @click="resetFilters" class="text-xs text-gray-500 hover:text-gray-700 underline">
                                 Clear all
                             </button>
                         </div>
@@ -266,11 +303,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import AdCard from '@/components/AdCard.vue'
 import AdListItem from '@/components/AdListItem.vue'
 import OlxLayout from '@/layouts/OlxLayout.vue'
+import debounce from 'lodash/debounce'
 
 const page = usePage()
 
@@ -302,13 +340,41 @@ const sortBy = ref(props.filters.sort_by || 'newest')
 const minPrice = ref<number | null>(props.filters.min_price || null)
 const maxPrice = ref<number | null>(props.filters.max_price || null)
 const selectedCategoryId = ref<string | null>(props.filters.filter.category || null)
-const selectedBrands = ref<string[]>(props.filters.filter.brand ? [props.filters.filter.brand] : [])
+const selectedBrands = ref<string[]>(props.filters.filter.brand ? props.filters.filter.brand.split(',') : [])
 const showMobileFilters = ref(false)
 const showAllCategories = ref(false)
+const showAllBrands = ref(false)
+
+// Quick price ranges
+const priceRanges = [
+    { label: 'Under $100', min: 0, max: 100 },
+    { label: '$100 - $500', min: 100, max: 500 },
+    { label: '$500 - $1000', min: 500, max: 1000 },
+    { label: '$1000+', min: 1000, max: null }
+]
 
 // Computed properties
 const ads = computed(() => props.ads.data)
 const paginationLinks = computed(() => props.ads.links)
+
+const filteredBrands = computed(() => {
+    let filtered = props.brands
+
+    // Filter brands by selected category if any
+    if (selectedCategoryId.value) {
+        filtered = filtered.filter(brand =>
+            brand.categories?.some((cat: any) => cat.id == selectedCategoryId.value)
+        )
+    }
+
+    // Limit brands if not showing all
+    if (!showAllBrands.value && filtered.length > 10) {
+        filtered = filtered.slice(0, 10)
+    }
+
+    return filtered
+})
+
 const activeFilterCount = computed(() => {
     let count = 0
     if (minPrice.value !== null) count++
@@ -324,12 +390,23 @@ const selectedCategoryName = computed(() => {
     return category?.name || ''
 })
 
+// Helper methods for counts
+const getCategoryAdCount = (category: any) => {
+    return category.ads_count || 0
+}
+
+const getBrandAdCount = (brandId: string) => {
+    return props.ads.data.filter(ad => ad.brand_id == brandId).length || 0
+}
+
 // Methods
 const selectCategory = (category: any) => {
     if (selectedCategoryId.value === category.id) {
         selectedCategoryId.value = null
     } else {
         selectedCategoryId.value = category.id
+        // Reset showAllBrands when category changes
+        showAllBrands.value = false
     }
     applyFilters()
 }
@@ -344,14 +421,25 @@ const toggleBrand = (brandId: string) => {
     applyFilters()
 }
 
+const setQuickPriceRange = (min: number | null, max: number | null) => {
+    minPrice.value = min
+    maxPrice.value = max
+    applyFilters()
+}
+
 const applyFilters = () => {
     const params: any = {}
 
-    if (minPrice.value) params.min_price = minPrice.value
-    if (maxPrice.value) params.max_price = maxPrice.value
+    if (minPrice.value !== null) params.min_price = minPrice.value
+    if (maxPrice.value !== null) params.max_price = maxPrice.value
     if (selectedCategoryId.value) params['filter[category]'] = selectedCategoryId.value
     if (selectedBrands.value.length) params['filter[brand]'] = selectedBrands.value.join(',')
     if (sortBy.value) params.sort_by = sortBy.value
+
+    // Preserve search term if exists
+    if (props.filters.filter.global) {
+        params['filter[global]'] = props.filters.filter.global
+    }
 
     // Auto-close mobile filters after applying
     if (window.innerWidth < 1024) {
@@ -366,16 +454,28 @@ const applyFilters = () => {
     })
 }
 
+const debouncedApplyFilters = debounce(applyFilters, 500)
+
 const resetFilters = () => {
     minPrice.value = null
     maxPrice.value = null
     selectedCategoryId.value = null
     selectedBrands.value = []
     sortBy.value = 'newest'
+    showAllCategories.value = false
+    showAllBrands.value = false
     showMobileFilters.value = false
+
+    const params: any = {}
+
+    // Preserve search term if exists
+    if (props.filters.filter.global) {
+        params['filter[global]'] = props.filters.filter.global
+    }
 
     router.visit(route('all.items'), {
         method: 'get',
+        data: params,
         preserveScroll: true,
         preserveState: true
     })
@@ -407,20 +507,16 @@ onMounted(() => {
 
     window.addEventListener('resize', handleResize)
 
-    // Close mobile filters when clicking outside (optional)
-    const handleClickOutside = (event: MouseEvent) => {
-        const target = event.target as HTMLElement
-        if (!target.closest('aside') && !target.closest('[class*="mobile-filter-toggle"]')) {
-            showMobileFilters.value = false
-        }
-    }
-
-    document.addEventListener('click', handleClickOutside)
-
+    // Cleanup
     return () => {
         window.removeEventListener('resize', handleResize)
-        document.removeEventListener('click', handleClickOutside)
+        debouncedApplyFilters.cancel()
     }
+})
+
+// Watch for sort changes to apply filters
+onUnmounted(() => {
+    debouncedApplyFilters.cancel()
 })
 </script>
 
@@ -460,5 +556,19 @@ onMounted(() => {
     to {
         transform: translateX(0);
     }
+}
+
+/* Custom scrollbar */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #eab308;
+    border-radius: 4px;
 }
 </style>

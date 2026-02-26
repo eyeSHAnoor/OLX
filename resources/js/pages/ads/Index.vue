@@ -164,7 +164,7 @@ const clearFilter = (filterKey: string) => {
                 Manage your marketplace ads
             </template>
             <template #links>
-                <AppButton label="New Ad" icon="radix-icons:plus-circled" class="bg-yellow-500 hover:bg-yellow-600"
+                <AppButton label="New Ad" icon="radix-icons:plus-circled" class=""
                     @click="router.visit(route('ads.create'))" />
             </template>
         </PageHeading>

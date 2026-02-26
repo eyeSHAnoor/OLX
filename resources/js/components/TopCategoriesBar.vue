@@ -12,7 +12,7 @@
             </div>
 
             <!-- DESKTOP: TOP 5 CATEGORIES -->
-            <div v-for="cat in topFive" :key="cat.id" @click="selectCategory(cat.id)"
+            <div v-for="cat in topFive" :key="cat.id" @click="navigateToCategory(cat)"
                 class="whitespace-nowrap cursor-pointer hover:text-yellow-600 flex-shrink-0 hidden md:block">
                 {{ cat.name }}
             </div>
@@ -20,7 +20,7 @@
             <!-- MOBILE/TABLET: Scrollable top categories -->
             <div v-for="cat in topCategories" :key="cat.id"
                 class="whitespace-nowrap cursor-pointer hover:text-yellow-600 flex-shrink-0 md:hidden text-sm"
-                @click="selectCategory(cat.id)">
+                @click="navigateToCategory(cat)">
                 {{ cat.name }}
             </div>
         </div>
@@ -34,7 +34,7 @@
                 <div v-for="cat in topCategories" :key="cat.id" class="border-b sm:border-b-0 pb-4 sm:pb-0">
                     <!-- ROOT CATEGORY -->
                     <h3 class="font-semibold mb-2 md:mb-3 cursor-pointer hover:text-yellow-600 text-sm md:text-base"
-                        @click="selectCategory(cat.id)">
+                        @click="navigateToCategory(cat)">
                         {{ cat.name }}
                     </h3>
 
@@ -42,7 +42,7 @@
                     <ul class="space-y-1 md:space-y-2">
                         <li v-for="child in cat.children_recursive" :key="child.id"
                             class="text-xs md:text-sm text-gray-600 hover:text-yellow-600 cursor-pointer pl-2 md:pl-0"
-                            @click="selectCategory(child.id)">
+                            @click="navigateToCategory(child)">
                             {{ child.name }}
                         </li>
                     </ul>
@@ -65,9 +65,9 @@
     </div>
 
     <!-- BANNER -->
-    <div class="w-full">
+    <!-- <div class="w-full">
         <img src="/images/banner.png" class="w-full h-auto object-cover" alt="Banner" />
-    </div>
+    </div> -->
 </template>
 
 <script setup lang="ts">
@@ -108,17 +108,17 @@ const handleResize = () => {
 // Top 5 categories for desktop top bar
 const topFive = computed(() => topCategories.slice(0, 5))
 
-// Select a category (root or sub) -> navigate and enter search mode
-const selectCategory = (categoryId: number) => {
-    router.visit(route('home'), {
-        data: {
-            filter: {
-                category: categoryId
-            }
-        },
-        preserveScroll: true,
-        preserveState: true,
-    })
+// Navigate to category show page
+const navigateToCategory = (category: any) => {
+    if (category?.slug) {
+        router.get(route('category.show', { slug: category.slug }), {}, {
+            preserveScroll: true,
+            preserveState: false, // Set to false to load fresh category data
+        })
+    } else {
+        // Fallback to home if no slug
+        router.get(route('home'))
+    }
     showMega.value = false
     document.body.style.overflow = 'auto'
 }

@@ -81,8 +81,7 @@ async function handleDeleteBrand(brand: App.Data.BrandData) {
         <PageHeading>
             <template #title>Brands</template>
             <template #links>
-                <AppButton label="New Brand" icon="radix-icons:plus-circled" @click="handleShowModal({})"
-                    class="bg-yellow-500 hover:bg-yellow-600" />
+                <AppButton label="New Brand" icon="radix-icons:plus-circled" @click="handleShowModal({})" class="" />
             </template>
         </PageHeading>
 
