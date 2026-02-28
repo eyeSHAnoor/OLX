@@ -1,5 +1,5 @@
 <template>
-    <OLXLayout>
+    <OlxLayout>
         <div class="max-w-8/10 mx-auto space-y-12 py-10">
             <!-- Subscription Check -->
             <div v-if="!canCreateAd" class="bg-white rounded-lg shadow-sm p-8 text-center">
@@ -69,13 +69,13 @@
                     :features="features" />
             </template>
         </div>
-    </OLXLayout>
+    </OlxLayout>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { usePage, Link } from '@inertiajs/vue3'
-import OLXLayout from '@/Layouts/OLXLayout.vue'
+import OlxLayout from '@/layouts/OlxLayout.vue'
 import CategoryNavigation from './CategoryNavigation.vue'
 import AdDetailsForm from './AdDetailsForm.vue'
 
