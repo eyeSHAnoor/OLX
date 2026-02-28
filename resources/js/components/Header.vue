@@ -138,10 +138,7 @@
                     <Link href="/property" class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">
                         Property
                     </Link>
-                    <Link :href="route('user.ads.create')" class="py-2 space-y-1">
-                        <Icon icon="mdi:plus" class="text-xs" />
-                        SELL
-                    </Link>
+
                 </div>
 
                 <!-- Mobile User Section -->
@@ -150,6 +147,10 @@
                         class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">
                         <Icon icon="mdi:account-outline" class="text-base" />
                         Profile
+                    </Link>
+                    <Link href="/chat" class="flex gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <Icon icon="mdi:chat-outline" class="text-base cursor-pointer hover:text-blue-600" />
+                        Chat
                     </Link>
                     <Link :href="route('my.ads')"
                         class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">
@@ -179,6 +180,7 @@
                     </Link>
                 </div>
 
+
                 <!-- Mobile Login/Sell -->
                 <div v-else class="border-t border-gray-200 pt-3 flex gap-2">
                     <Link :href="route('amo.login')"
@@ -186,12 +188,12 @@
                         <Icon icon="mdi:login" class="text-sm" />
                         Login
                     </Link>
-                    <button
-                        class="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-gradient-to-r from-brand-orange to-brand-teal text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity">
-                        <Icon icon="mdi:plus" class="text-sm" />
-                        SELL
-                    </button>
                 </div>
+                <button
+                    class="flex-1 flex w-full items-center justify-center gap-1 px-3 py-2 bg-brand-teal text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity">
+                    <Icon icon="mdi:plus" class="text-sm" />
+                    SELL
+                </button>
             </div>
         </div>
 

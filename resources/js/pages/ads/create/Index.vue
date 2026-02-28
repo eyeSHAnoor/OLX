@@ -79,6 +79,7 @@ import OlxLayout from '@/layouts/OlxLayout.vue'
 import CategoryNavigation from './CategoryNavigation.vue'
 import AdDetailsForm from './AdDetailsForm.vue'
 
+useForceTheme('light');
 const props = defineProps({
     categories: {
         type: Array,

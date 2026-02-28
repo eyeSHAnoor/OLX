@@ -131,7 +131,7 @@ const clearFilter = (filterKey: string) => {
     });
 };
 
-
+useForceTheme('light');
 </script>
 
 <template>
@@ -201,8 +201,8 @@ const clearFilter = (filterKey: string) => {
                         </template>
 
                         <template #ad_title-cell="{ row }">
-                            <div class="flex items-center gap-2">
-                                <div class="size-10 flex-shrink-0 rounded overflow-hidden bg-muted">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <div class="size-10 flex-shrink-0 rounded overflow-hidden bg-muted hidden sm:visible">
                                     <img v-if="row.original.images?.length"
                                         :src="`/storage/${row.original.images.find(img => img.is_primary)?.path || row.original.images[0].path}`"
                                         :alt="row.original.ad_title" class="w-full h-full object-cover" />

@@ -638,7 +638,7 @@ const deleteAd = () => {
         }
     })
 }
-
+useForceTheme('light');
 // Watch for ad changes (useful if ad data is updated from parent)
 watch(() => props.ad, (newAd) => {
     if (newAd) {

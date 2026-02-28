@@ -275,7 +275,7 @@ const submit = () => {
         });
     }
 };
-
+useForceTheme('light');
 const alert = useAlertDialog();
 const destroy = async () => {
     if (!form.id) return;
