@@ -20,6 +20,7 @@ const showMobileSidebar = ref(false)
 const showMobileChat = ref(false)
 const isTyping = ref(false)
 
+useForceTheme('light');
 // Scroll to bottom
 const scrollToBottom = () => {
     setTimeout(() => {
