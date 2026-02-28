@@ -1,33 +1,23 @@
 <template>
-    <div v-if="category.ads && category.ads.length > 0" class="my-10">
+    <div v-if="category.ads && category.ads.length > 0" class="my-6 sm:my-8">
 
-        <!-- Category Header + Mini Search -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+        <!-- Category Header - Compact -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2 sm:gap-4">
             <!-- Category Name -->
             <div class="flex-1">
-                <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">
                     {{ category.name }}
-                    <span class="text-sm text-gray-500">({{ filteredAds.length }})</span>
+                    <span class="text-[10px] sm:text-xs text-gray-500 ml-1">({{ filteredAds.length }})</span>
                 </h2>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-2 md:gap-3">
-                <!-- Show More/Less Toggle -->
-                <button v-if="filteredAds.length > 4" @click="showAll = !showAll"
-                    class="flex items-center text-sm font-medium text-gray-600 hover:text-yellow-500 transition-colors px-3 py-2 rounded-lg hover:bg-yellow-50">
-                    {{ showAll ? 'Show Less' : `Show ${filteredAds.length - 4} More` }}
-                    <svg class="w-4 h-4 ml-1 transition-transform" :class="showAll ? 'rotate-180' : ''" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </button>
-
+            <!-- Action Buttons - Smaller -->
+            <div class="flex items-center gap-1.5">
                 <!-- View All Button -->
                 <button @click="navigateToCategory(category)"
-                    class="flex items-center text-sm sm:text-base font-semibold text-white bg-brand-blue hover:bg-brand-teal transition-colors px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg shadow-sm hover:shadow">
+                    class="inline-flex items-center text-[10px] sm:text-xs font-medium text-white bg-brand-blue hover:bg-brand-teal transition-colors px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md shadow-sm">
                     View All
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
@@ -35,18 +25,26 @@
             </div>
         </div>
 
-        <!-- No Results Message -->
-        <div v-if="filteredAds.length === 0" class="text-center py-10 text-gray-500">
+        <!-- No Results Message - Compact -->
+        <div v-if="filteredAds.length === 0" class="text-center py-6 sm:py-8 text-gray-500 text-xs sm:text-sm">
             No ads found in "{{ category.name }}" matching "{{ localSearch }}"
         </div>
 
-        <!-- Ads Grid -->
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        <!-- Ads Grid - Tighter spacing -->
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             <AdCard v-for="ad in visibleAds" :key="ad.id" :ad="ad" />
         </div>
 
-        <!-- Divider -->
-        <div v-if="filteredAds.length > 0" class="mt-8 pt-8 border-t border-gray-100"></div>
+        <!-- Show More Button - Optional, if you want to see all ads in this section -->
+        <!-- <div v-if="filteredAds.length > 4" class="flex justify-center mt-4 sm:mt-5">
+            <button @click="showAll = !showAll"
+                class="text-[10px] sm:text-xs font-medium text-brand-blue hover:text-brand-teal transition-colors px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-md">
+                {{ showAll ? 'Show Less' : `Show ${filteredAds.length - 4} More` }}
+            </button>
+        </div> -->
+
+        <!-- Divider - Lighter -->
+        <div v-if="filteredAds.length > 0" class="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-100"></div>
     </div>
 </template>
 

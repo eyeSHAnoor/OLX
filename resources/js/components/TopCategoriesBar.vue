@@ -1,8 +1,8 @@
 <template>
     <!-- TOP BAR -->
-    <div class="w-full bg-white border-t border-b py-2 md:py-4 relative">
+    <div class="w-full bg-white border-t border-b py-1 md:py-2 relative">
         <div
-            class="max-w-9/11 mx-auto px-3 md:px-4 py-2 md:py-4 flex items-center space-x-4 md:space-x-8 overflow-x-auto no-scrollbar text-base md:text-lg">
+            class="max-w-8/10 mx-auto px-3 md:px-4 py-1 md:py-2 flex items-center space-x-4 md:space-x-5 overflow-x-auto no-scrollbar text-base md:text-sm">
 
             <!-- ALL CATEGORIES BUTTON - Visible on all screens -->
             <div @click="toggleMega"
@@ -13,13 +13,13 @@
 
             <!-- DESKTOP: TOP 5 CATEGORIES -->
             <div v-for="cat in topFive" :key="cat.id" @click="navigateToCategory(cat)"
-                class="whitespace-nowrap cursor-pointer hover:text-yellow-600 flex-shrink-0 hidden md:block">
+                class="whitespace-nowrap cursor-pointer hover:text-brand-teal flex-shrink-0 hidden md:block">
                 {{ cat.name }}
             </div>
 
             <!-- MOBILE/TABLET: Scrollable top categories -->
             <div v-for="cat in topCategories" :key="cat.id"
-                class="whitespace-nowrap cursor-pointer hover:text-yellow-600 flex-shrink-0 md:hidden text-sm"
+                class="whitespace-nowrap cursor-pointer hover:text-brand-teal flex-shrink-0 md:hidden text-sm"
                 @click="navigateToCategory(cat)">
                 {{ cat.name }}
             </div>
@@ -33,7 +33,7 @@
 
                 <div v-for="cat in topCategories" :key="cat.id" class="border-b sm:border-b-0 pb-4 sm:pb-0">
                     <!-- ROOT CATEGORY -->
-                    <h3 class="font-semibold mb-2 md:mb-3 cursor-pointer hover:text-yellow-600 text-sm md:text-base"
+                    <h3 class="font-semibold mb-2 md:mb-3 cursor-pointer hover:text-brand-teal text-sm md:text-base"
                         @click="navigateToCategory(cat)">
                         {{ cat.name }}
                     </h3>
@@ -41,7 +41,7 @@
                     <!-- SUB CATEGORIES -->
                     <ul class="space-y-1 md:space-y-2">
                         <li v-for="child in cat.children_recursive" :key="child.id"
-                            class="text-xs md:text-sm text-gray-600 hover:text-yellow-600 cursor-pointer pl-2 md:pl-0"
+                            class="text-xs md:text-sm text-gray-600 hover:text-brand-teal cursor-pointer pl-2 md:pl-0"
                             @click="navigateToCategory(child)">
                             {{ child.name }}
                         </li>

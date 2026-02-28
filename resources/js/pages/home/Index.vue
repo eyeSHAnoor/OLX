@@ -65,7 +65,7 @@
             <!-- Browse Categories -->
             <section class="py-12 bg-gray-50">
                 <div class="max-w-10/12 mx-auto">
-                    <h2 class="text-2xl md:text-3xl font-semibold mb-8 text-center">
+                    <h2 class="text-lg md:text-xl font-semibold mb-8 text-center">
                         Browse Categories
                     </h2>
 
@@ -83,7 +83,7 @@
                                 </div>
                             </div>
                             <span
-                                class="mt-2 text-sm md:text-base font-medium text-center group-hover:text-brand-blue transition-colors">
+                                class="mt-2 text-sm md:text-md font-medium text-center group-hover:text-brand-blue transition-colors">
                                 {{ category.name }}
                                 <span v-if="category.ads_count" class="text-xs text-gray-500">
                                     ({{ category.ads_count }})

@@ -8,11 +8,13 @@ use App\Models\Ad;
 use App\Models\Banner;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class HomeController extends Controller
 {
     public function index(Request $request)
     {
+        log::info('home controller opened');
         $selectedCity = strtolower(session('city', 'Pakistan'));
 
         // Search / filter inputs

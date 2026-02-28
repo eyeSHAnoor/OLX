@@ -24,7 +24,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
   <!-- Non collapsible -->
   <div v-if="collapsible === 'none'" data-slot="sidebar"
     :class="cn('bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col', props.class)"
-    :style="{ '--sidebar-width': '20rem' }" v-bind="$attrs">
+    :style="{ '--sidebar-width': '10rem' }" v-bind="$attrs">
     <slot />
   </div>
 
@@ -32,7 +32,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
   <Sheet v-else-if="isMobile" :open="openMobile" v-bind="$attrs" @update:open="setOpenMobile">
     <SheetContent data-sidebar="sidebar" data-slot="sidebar" data-mobile="true" :side="side"
       class="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
-      :style="{ '--sidebar-width': SIDEBAR_WIDTH_MOBILE }">
+      :style="{ '--sidebar-width': '260px' }">
       <SheetHeader class="sr-only">
         <SheetTitle>Sidebar</SheetTitle>
         <SheetDescription>Displays the mobile sidebar.</SheetDescription>
@@ -55,7 +55,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
       variant === 'floating' || variant === 'inset'
         ? 'group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'
         : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon)',
-    )" :style="{ '--sidebar-width': '20rem' }" />
+    )" :style="{ '--sidebar-width': '10rem' }" />
 
     <!-- Fixed sidebar -->
     <div :class="cn(
@@ -67,7 +67,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
         ? 'group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]'
         : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l',
       props.class,
-    )" :style="{ '--sidebar-width': '20rem' }" v-bind="$attrs">
+    )" :style="{ '--sidebar-width': '10rem' }" v-bind="$attrs">
       <!-- Scrollable container -->
       <div data-sidebar="sidebar"
         class="bg-sidebar-light-foreground shadow-xl text-sidebar-dark flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm">

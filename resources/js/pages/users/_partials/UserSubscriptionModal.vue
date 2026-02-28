@@ -79,7 +79,7 @@ const getStatusIcon = (status: string) => {
 const approveSubscription = () => {
     if (!subscription.value?.id) return;
 
-    form.post(route('subscriptions.complete', subscription.value.id), {
+    form.post(route('subscriptions.complete', user?.id), {
         preserveScroll: true,
         onSuccess: () => {
             model.value = false;
@@ -100,8 +100,10 @@ const rejectSubscription = () => {
 
 const viewReceipt = () => {
     if (subscription.value?.id) {
-        // Open in new tab using the route
-        window.open(route('receipts.show', user?.id), '_blank');
+        window.open(
+            route('receipts.show', subscription.value.id),
+            '_blank'
+        );
     }
 };
 

@@ -26,7 +26,7 @@ class Category extends Model
 
     public function childrenRecursive()
     {
-        return $this->children()->with(['childrenRecursive', 'files']);
+        return $this->children()->with(['childrenRecursive', 'files', 'brands']);
     }
 
     public function ads()

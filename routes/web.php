@@ -70,12 +70,23 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/chat/send', [App\Http\Controllers\ChatController::class, 'send'])->name('chat.send');
     Route::post('/chat/start', [App\Http\Controllers\ChatController::class, 'start'])->name('chat.start');
 
+    Route::get('user/ads/create', [App\Http\Controllers\CreateAdController::class, 'index'])->name('user.ads.create');
+    Route::get('user/ads/edit/{id}', [App\Http\Controllers\CreateAdController::class, 'edit'])->name('user.ads.edit');
+    Route::get('/ads/category-data/{category}', [App\Http\Controllers\CreateAdController::class, 'getCategoryData'])->name('ads.category-data');
+    Route::post('user/ads', [App\Http\Controllers\CreateAdController::class, 'store'])->name('user.ads.store');
+    Route::get('my/ads', [App\Http\Controllers\CreateAdController::class, 'Myads'])->name('my.ads');
+    Route::post('/ads', [AdController::class, 'store'])->name('ads.store');
+    Route::put('/ads/{ad}', [AdController::class, 'update'])->name('ads.update');
+
+    
+
 });
 
 Route::middleware([
     'auth',
     'super_admin'
-])->group(
+]) 
+->group(
         function () {
 
             Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
@@ -90,10 +101,10 @@ Route::middleware([
             // Route::resource('ads', \App\Http\Controllers\AdController::class);
             Route::get('/ads', [AdController::class, 'index'])->name('ads.index');
             Route::get('/ads/create', [AdController::class, 'create'])->name('ads.create');
-            Route::post('/ads', [AdController::class, 'store'])->name('ads.store');
+            // Route::post('/ads', [AdController::class, 'store'])->name('ads.store');
             // Route::get('/ads/{ad}', [AdController::class, 'show'])->name('ads.show');
             Route::get('/ads/{ad}/edit', [AdController::class, 'edit'])->name('ads.edit');
-            Route::put('/ads/{ad}', [AdController::class, 'update'])->name('ads.update');
+            // Route::put('/ads/{ad}', [AdController::class, 'update'])->name('ads.update');
             Route::patch('/ads/{ad}', [AdController::class, 'update']); // optional, Laravel accepts both PUT/PATCH
             Route::delete('/ads/{ad}', [AdController::class, 'destroy'])->name('ads.destroy');
             Route::post('ads/{ad}/set-primary-image', [\App\Http\Controllers\AdController::class, 'setPrimaryImage'])
@@ -125,7 +136,9 @@ Route::middleware([
 
 
     require __DIR__ . '/settings.php';
-require __DIR__ . '/auth.php';
+
+
+    require __DIR__ . '/auth.php';
 
 Route::post('/locale', function (Request $request) {
     $request->validate(['locale' => 'required|string']);

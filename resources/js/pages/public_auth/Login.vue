@@ -1,26 +1,27 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center p-4">
+    <div
+        class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center p-3 sm:p-4">
 
         <!-- Logo -->
-        <div class="mb-8 md:mb-12">
-            <img src="/images/logo.png" alt="OLX Clone Logo" class="h-12 md:h-16 w-auto mx-auto" />
-            <h1 class="mt-3 text-2xl md:text-3xl font-bold text-center text-gray-800">
+        <div class="mb-6 md:mb-8">
+            <img src="/images/logo.png" alt="OLX Clone Logo" class="h-10 md:h-14 w-auto mx-auto" />
+            <h1 class="mt-2 text-xl md:text-2xl font-semibold text-center text-gray-800">
                 Welcome Back
             </h1>
-            <p class="text-gray-600 text-center mt-2">
+            <p class="text-gray-600 text-center mt-1 text-xs md:text-sm">
                 Sign in to continue to your account
             </p>
         </div>
 
         <!-- Login Card -->
         <div class="w-full max-w-md">
-            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+            <div class="bg-white rounded-xl shadow-md p-5 md:p-6">
 
                 <!-- Social Login Buttons -->
-                <div class="space-y-3 mb-8">
+                <div class="space-y-2 mb-5">
                     <button @click="socialLogin('google')"
-                        class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 font-medium py-3.5 px-4 rounded-xl hover:bg-gray-50 transition-all duration-200 active:scale-[0.98]">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24">
+                        class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-medium py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-all duration-200 active:scale-[0.98] text-xs">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="#4285F4"
                                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                             <path fill="#34A853"
@@ -34,8 +35,8 @@
                     </button>
 
                     <button @click="socialLogin('facebook')"
-                        class="w-full flex items-center justify-center gap-3 bg-blue-600 text-white font-medium py-3.5 px-4 rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98]">
-                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                        class="w-full flex items-center justify-center gap-2 bg-brand-blue text-white font-medium py-2.5 px-3 rounded-lg hover:bg-brand-blue/90 transition-all duration-200 active:scale-[0.98] text-xs">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
                             <path
                                 d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                         </svg>
@@ -44,41 +45,41 @@
                 </div>
 
                 <!-- Divider -->
-                <div class="flex items-center my-8">
+                <div class="flex items-center my-4">
                     <div class="flex-1 border-t border-gray-200"></div>
-                    <span class="px-4 text-gray-500 text-sm">Or continue with email</span>
+                    <span class="px-3 text-gray-500 text-[10px]">Or continue with email</span>
                     <div class="flex-1 border-t border-gray-200"></div>
                 </div>
 
                 <!-- Login Form -->
-                <form @submit.prevent="handleLogin" class="space-y-6">
+                <form @submit.prevent="handleLogin" class="space-y-4">
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label for="email" class="block text-xs font-medium text-gray-700 mb-1">
                             Email Address
                         </label>
                         <div class="relative">
                             <input id="email" v-model="form.email" type="email" required placeholder="you@example.com"
-                                class="pl-10 w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all duration-200 text-gray-800 placeholder-gray-400"
+                                class="pl-8 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition-all duration-200 text-gray-800 placeholder-gray-400 text-xs"
                                 :class="{ 'border-red-500': errors.email }" />
                         </div>
-                        <p v-if="errors.email" class="mt-1 text-sm text-red-600">
+                        <p v-if="errors.email" class="mt-1 text-[10px] text-red-600">
                             {{ errors.email }}
                         </p>
                     </div>
 
                     <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label for="password" class="block text-xs font-medium text-gray-700 mb-1">
                             Password
                         </label>
                         <div class="relative">
                             <input id="password" v-model="form.password" :type="showPassword ? 'text' : 'password'"
                                 required placeholder="••••••••"
-                                class="pl-10 pr-10 w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all duration-200 text-gray-800 placeholder-gray-400"
+                                class="pl-8 pr-8 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition-all duration-200 text-gray-800 placeholder-gray-400 text-xs"
                                 :class="{ 'border-red-500': errors.password }" />
                             <button type="button" @click="showPassword = !showPassword"
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                <svg class="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
+                                class="absolute inset-y-0 right-0 pr-2 flex items-center">
+                                <svg class="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
                                     <path v-if="showPassword" stroke-linecap="round" stroke-linejoin="round"
                                         stroke-width="2"
                                         d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -87,7 +88,7 @@
                                 </svg>
                             </button>
                         </div>
-                        <p v-if="errors.password" class="mt-1 text-sm text-red-600">
+                        <p v-if="errors.password" class="mt-1 text-[10px] text-red-600">
                             {{ errors.password }}
                         </p>
                     </div>
@@ -96,19 +97,19 @@
                     <div class="flex items-center justify-between">
                         <label class="flex items-center">
                             <input type="checkbox" v-model="form.remember"
-                                class="h-4 w-4 text-brand-blue focus:ring-brand-blue border-gray-300 rounded" />
-                            <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                                class="h-3.5 w-3.5 text-brand-teal focus:ring-brand-teal border-gray-300 rounded" />
+                            <span class="ml-1.5 text-xs text-gray-600">Remember me</span>
                         </label>
 
                         <Link :href="route('password.request')"
-                            class="text-sm font-medium text-brand-blue hover:text-brand-teal transition-colors">
+                            class="text-xs font-medium text-brand-teal hover:text-brand-teal/80 transition-colors">
                             Forgot password?
                         </Link>
                     </div>
 
                     <!-- Login Button -->
                     <button type="submit" :disabled="processing"
-                        class="w-full bg-brand-blue text-white font-semibold py-3.5 px-4 rounded-xl hover:from-brand-blue hover:to-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="w-full bg-brand-blue text-white font-medium py-2.5 px-3 rounded-lg hover:bg-brand-blue/90 focus:outline-none focus:ring-1 focus:ring-brand-blue focus:ring-offset-1 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-xs">
                         <div class="flex items-center justify-center">
                             {{ processing ? 'Signing in...' : 'Sign in to your account' }}
                         </div>
@@ -116,11 +117,11 @@
                 </form>
 
                 <!-- Sign Up Link -->
-                <div class="mt-8 pt-6 border-t border-gray-100">
-                    <p class="text-center text-gray-600">
+                <div class="mt-4 pt-3 border-t border-gray-100">
+                    <p class="text-center text-gray-600 text-xs">
                         Don't have an account?
                         <Link :href="route('amo.register')"
-                            class="font-semibold text-brand-blue hover:text-brand-teal transition-colors ml-1">
+                            class="font-medium text-brand-teal hover:text-brand-teal/80 transition-colors ml-1 text-xs">
                             Create account
                         </Link>
                     </p>
@@ -128,24 +129,24 @@
             </div>
 
             <!-- App Download Links -->
-            <div class="mt-8 text-center">
-                <p class="text-sm text-gray-600 mb-4">Get the app</p>
-                <div class="flex justify-center space-x-3">
+            <div class="mt-6 text-center">
+                <p class="text-xs text-gray-600 mb-2">Get the app</p>
+                <div class="flex justify-center space-x-2">
                     <a href="#" class="inline-block">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
-                            alt="Google Play" class="h-10">
+                            alt="Google Play" class="h-8">
                     </a>
                     <a href="#" class="inline-block">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
-                            alt="App Store" class="h-10">
+                            alt="App Store" class="h-8">
                     </a>
                 </div>
             </div>
         </div>
 
         <!-- Footer Links -->
-        <div class="mt-8 md:mt-12 text-center">
-            <div class="flex flex-wrap justify-center gap-4 md:gap-6 text-sm text-gray-500">
+        <div class="mt-6 md:mt-8 text-center">
+            <div class="flex flex-wrap justify-center gap-3 text-[10px] text-gray-500">
                 <a href="#" class="hover:text-gray-700 transition-colors">Help</a>
                 <a href="#" class="hover:text-gray-700 transition-colors">Privacy</a>
                 <a href="#" class="hover:text-gray-700 transition-colors">Terms</a>
@@ -153,7 +154,7 @@
                 <a href="#" class="hover:text-gray-700 transition-colors">Careers</a>
                 <a href="#" class="hover:text-gray-700 transition-colors">About</a>
             </div>
-            <p class="mt-4 text-sm text-gray-500">
+            <p class="mt-2 text-[10px] text-gray-500">
                 © {{ new Date().getFullYear() }} OLX Clone. All rights reserved.
             </p>
         </div>
@@ -202,11 +203,10 @@ const handleLogin = () => {
         return
     }
 
-    // Simulate API call (replace with actual API call)
+    // Simulate API call
     setTimeout(() => {
         router.post('/login', form, {
             onSuccess: () => {
-                // Redirect or show success message
                 console.log('Login successful')
             },
             onError: (err) => {
@@ -222,7 +222,6 @@ const handleLogin = () => {
 
 const socialLogin = (provider: string) => {
     console.log(`Logging in with ${provider}`)
-    // Implement social login logic here
     window.location.href = `/auth/${provider}`
 }
 </script>
@@ -235,7 +234,7 @@ const socialLogin = (provider: string) => {
 
 /* Custom focus styles */
 input:focus {
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    box-shadow: 0 0 0 2px rgba(var(--brand-teal-rgb), 0.1);
 }
 
 /* Button hover effects */
@@ -262,20 +261,20 @@ button:not(:disabled):hover {
 
 /* Custom scrollbar for form */
 ::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
 }
 
 ::-webkit-scrollbar-track {
     background: #f1f1f1;
-    border-radius: 3px;
+    border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #fbbf24;
-    border-radius: 3px;
+    background: var(--brand-teal);
+    border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #f59e0b;
+    background: var(--brand-blue);
 }
 </style>

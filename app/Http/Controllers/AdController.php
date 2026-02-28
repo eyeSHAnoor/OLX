@@ -70,9 +70,11 @@ class AdController extends Controller
     public function store(Request $request)
     {
         // dd($request->all());
+        // Log everything to see what's coming through
+        
         $request->validate([
             'category_id' => 'required|exists:categories,id',
-            'brand_id' => 'required|exists:brands,id',
+            'brand_id' => 'nullable|exists:brands,id',
             'ad_title' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
@@ -85,7 +87,7 @@ class AdController extends Controller
             'search_keywords' => 'nullable|array',
             'search_keywords.*' => 'string|max:50',
             'features' => 'nullable|array',
-            'features.*.feature_id' => 'required|exists:features,id',
+            'features.*.feature_id' => 'nullable|exists:features,id',
             'features.*.feature_value_id' => 'nullable|exists:feature_values,id',
             'features.*.custom_value' => 'nullable|string|max:255',
         ]);
@@ -95,6 +97,8 @@ class AdController extends Controller
             // ----------------------
             // Create Ad (model handles keywords merge automatically)
             // ----------------------
+
+            // dd(auth()->id());
             $ad = Ad::create([
                 'user_id' => auth()->id(),
                 'category_id' => $request->category_id,
@@ -136,7 +140,7 @@ class AdController extends Controller
                 }
             }
 
-            return redirect()->route('ads.index')->with('success', 'Ad created successfully.');
+            return redirect()->back()->with('success', 'Ad created successfully.');
         });
     }
 
@@ -166,9 +170,10 @@ class AdController extends Controller
 
     public function update(Request $request, Ad $ad)
     {
+        // dd($request->all());
         $request->validate([
             'category_id' => 'required|exists:categories,id',
-            'brand_id' => 'required|exists:brands,id',
+            'brand_id' => 'nullable|exists:brands,id',
             'ad_title' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
@@ -259,7 +264,7 @@ class AdController extends Controller
             }
 
             return redirect()
-                ->route('ads.index')
+                ->back()
                 ->with('success', 'Ad updated successfully.');
         });
     }
