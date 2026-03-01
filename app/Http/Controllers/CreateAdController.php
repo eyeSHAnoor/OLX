@@ -21,7 +21,7 @@ class CreateAdController extends Controller
     public function index()
     {
         // Get all top-level categories with their children
-        $categories = Category::with(['childrenRecursive', 'brands'])
+        $categories = Category::with(['childrenRecursive', 'brands', 'files'])
             ->whereNull('parent_id')
             ->orderBy('position')
             ->get();

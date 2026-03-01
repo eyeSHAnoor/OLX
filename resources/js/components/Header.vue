@@ -103,24 +103,23 @@
                                 </div>
                             </transition>
                         </div>
+                    </div>
 
-                        <div
-                            class="rounded-full p-[3px] bg-gradient-to-r from-brand-orange via-brand-teal to-brand-blue">
-                            <Link :href="route('user.ads.create')"
-                                class="flex items-center gap-0.5 rounded-full px-3 py-1 text-xs font-medium bg-white hover:shadow transition-shadow">
+                    <div v-else class="flex gap-4">
+                        <div class="rounded-full p-[3px] bg-gradient-to-l from-yellow-400 via-blue-400 to-orange-400">
+                            <Link
+                                class="flex items-center gap-0.5 rounded-full px-3 py-1 text-xs font-medium bg-white hover:shadow transition-shadow"
+                                :href="route('amo.login')">
                                 <Icon icon="mdi:plus" class="text-xs" />
-                                SELL
+                                Login
                             </Link>
                         </div>
                     </div>
-
-                    <div v-else
-                        class="rounded-full p-[3px] bg-gradient-to-l from-yellow-400 via-blue-400 to-orange-400">
-                        <Link
-                            class="flex items-center gap-0.5 rounded-full px-3 py-1 text-xs font-medium bg-white hover:shadow transition-shadow"
-                            :href="route('amo.login')">
+                    <div class="rounded-full p-[3px] bg-gradient-to-r from-brand-orange via-brand-teal to-brand-blue">
+                        <Link :href="route('user.ads.create')"
+                            class="flex items-center gap-0.5 rounded-full px-3 py-1 text-xs font-medium bg-white hover:shadow transition-shadow">
                             <Icon icon="mdi:plus" class="text-xs" />
-                            Login
+                            SELL
                         </Link>
                     </div>
 
@@ -189,11 +188,11 @@
                         Login
                     </Link>
                 </div>
-                <button v-if="user"
+                <Link :href="route('user.ads.create')"
                     class="flex-1 flex w-full items-center justify-center gap-1 px-3 py-2 bg-brand-teal text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity">
                     <Icon icon="mdi:plus" class="text-sm" />
                     SELL
-                </button>
+                </Link>
             </div>
         </div>
 

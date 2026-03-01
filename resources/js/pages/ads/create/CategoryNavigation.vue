@@ -41,9 +41,16 @@
 
                     <div class="flex items-center gap-4">
 
-                        <!-- Category Icon -->
-                        <div class="w-12 h-12 rounded-lg bg-brand-teal/10 flex items-center justify-center">
-                            <Icon :icon="category.icon || 'lucide:folder'" class="size-6 text-brand-teal" />
+                        <!-- Category Icon - Show image if exists, otherwise show default icon -->
+                        <div
+                            class="w-12 h-12 rounded-lg bg-brand-teal/10 flex items-center justify-center overflow-hidden">
+                            <template v-if="category.files && category.files.length > 0">
+                                <img :src="category.files[0].file_url" :alt="category.name"
+                                    class="w-full h-full object-cover" />
+                            </template>
+                            <template v-else>
+                                <Icon icon="lucide:folder" class="size-6 text-brand-teal" />
+                            </template>
                         </div>
 
                         <!-- Name -->

@@ -184,7 +184,7 @@ const errors = reactive({
 
 const processing = ref(false)
 const showPassword = ref(false)
-
+useForceTheme('light');
 const handleLogin = () => {
     processing.value = true
     errors.email = ''

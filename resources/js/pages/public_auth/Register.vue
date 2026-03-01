@@ -236,7 +236,7 @@ const form = useForm({
 
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
-
+useForceTheme('light');
 const submit = () => {
     if (!form.terms) {
         alert('You must agree to the Terms of Service and Privacy Policy.');

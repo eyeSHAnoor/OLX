@@ -20,7 +20,7 @@
                     </a>
                     <Icon icon="lucide:chevron-right" class="size-3 sm:size-3.5 flex-shrink-0" />
                     <span class="text-gray-700 font-medium truncate max-w-[150px] sm:max-w-[300px]">{{ ad.ad_title
-                        }}</span>
+                    }}</span>
                 </nav>
 
                 <!-- Main Content Grid -->
@@ -289,7 +289,7 @@ interface PageProps extends InertiaPageProps {
     categories: App.Data.CategoryData[];
     brands: App.Data.BrandData[];
 }
-
+useForceTheme('light');
 const page = usePage<PageProps>();
 const ad = computed(() => page.props.ad);
 const similarAds = computed(() => page.props.similarAds || []);
