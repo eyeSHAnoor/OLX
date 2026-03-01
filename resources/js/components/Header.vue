@@ -189,7 +189,7 @@
                         Login
                     </Link>
                 </div>
-                <button
+                <button v-if="user"
                     class="flex-1 flex w-full items-center justify-center gap-1 px-3 py-2 bg-brand-teal text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity">
                     <Icon icon="mdi:plus" class="text-sm" />
                     SELL

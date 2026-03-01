@@ -57,6 +57,7 @@ class AdController extends Controller
     }
 
     public function create(){
+        // dd('hello');
         return Inertia::render('ads/RecordForm', [
             // 'ads' => $ads,
             'categories' => CategoryData::collect(Category::all()),

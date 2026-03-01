@@ -149,7 +149,7 @@ const clearFilter = (filterKey: string) => {
         preserveScroll: true,
     });
 };
-
+console.log(route('ads.create'));
 
 </script>
 
@@ -164,8 +164,11 @@ const clearFilter = (filterKey: string) => {
                 Manage your marketplace ads
             </template>
             <template #links>
-                <AppButton label="New Ad" icon="radix-icons:plus-circled" class=""
-                    @click="router.visit(route('ads.create'))" />
+                <Button as-child size="sm">
+                    <Link :href="route('ads.create')">
+                    <Icon icon="radix-icons:plus-circled" class="size-4" /> New
+                    </Link>
+                </Button>
             </template>
         </PageHeading>
 
