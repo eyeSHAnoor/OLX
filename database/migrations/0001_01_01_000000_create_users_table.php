@@ -21,7 +21,7 @@ return new class extends Migration {
             $table->string('status')->default('active'); //
             $table->string('avatar')->nullable();
             $table->integer('warning_count')->default(0);
-            $table->timestamp('suspended_until')->nullable()->after('warning_count');
+            $table->timestamp('suspended_until')->nullable();
 
             $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();
