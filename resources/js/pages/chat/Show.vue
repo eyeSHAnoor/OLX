@@ -5,7 +5,7 @@ import OlxLayout from '@/layouts/OlxLayout.vue'
 import { Icon } from '@iconify/vue'
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios'
-import { useAlertDialog } from '@/Composables/useAlertDialog'
+import { useAlertDialog } from '@/composables/useAlertDialog'
 
 const props = defineProps({
     conversation: Object,
