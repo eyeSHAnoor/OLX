@@ -252,19 +252,6 @@ if (!function_exists('convertWeightToKg')) {
     }
 }
 
-// if (!function_exists('hasPermissions')) {
-//     function hasPermissions($permissions, $message = 'Unauthorized action')
-//     {
-//         if (auth()->user()->hasRole(Role::SupperAdmin)) {
-//             return true;
-//         }
-
-//         if (!auth()->user()->hasPermissionTo($permissions)) {
-//             abort(401, $message);
-//         }
-//     }
-// }
-
 if (!function_exists('hasPermissions')) {
     function hasPermissions($permissions, $message = 'Forbidden')
     {

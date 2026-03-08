@@ -38,6 +38,15 @@ class AuthenticatedSessionController extends Controller
         if ($user && $user->hasRole('super_admin')){
             return redirect()->route('dashboard');
         }
+        if ($user->status === 'banned') {
+            return back()->withErrors(['email' => 'Your account is banned.']);
+        }
+
+        if ($user->status === 'suspended' && $user->suspended_until > now()) {
+            return back()->withErrors([
+                'email' => 'Account suspended until '.$user->suspended_until->format('d M Y')
+            ]);
+        }
        return redirect()->intended(route('home'));
     }
 

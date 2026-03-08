@@ -14,8 +14,8 @@ Route::middleware('auth')->group(function () {
     Route::redirect('settings', '/settings/profile');
 
     /*Profile Settings */
-    Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::post('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    // Route::post('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
 
 
     /*Account Settings */

@@ -30,7 +30,8 @@
                 <!-- Favorite Button - Smaller -->
                 <button @click.stop="toggleFavorite"
                     class="absolute top-3 right-3 bg-white/95 backdrop-blur-sm p-2 rounded-full shadow-md hover:shadow-lg transition-all duration-200 group/fav"
-                    :class="isFavorited ? 'text-red-500' : 'text-gray-400 hover:text-red-400'">
+                    :class="[isFavorited ? 'text-red-500' : 'text-gray-400 hover:text-red-400', isFavoriteLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer']"
+                    :disabled="isFavoriteLoading">
                     <svg v-if="isFavorited" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"
                             d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
@@ -121,6 +122,7 @@ interface Ad {
         name: string
     }
     images?: Array<{ path: string }>
+    is_favorited?: boolean
 }
 
 interface Props {
@@ -129,10 +131,32 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const isFavorited = ref(false)
+// Use the backend value as initial state
+const isFavorited = ref(!!props.ad.is_favorited)
+const isFavoriteLoading = ref(false)
 
-const toggleFavorite = () => {
-    isFavorited.value = !isFavorited.value
+const toggleFavorite = async () => {
+    if (isFavoriteLoading.value) return
+    isFavoriteLoading.value = true
+
+    try {
+        await router.post(`/ads/${props.ad.id}/favorite`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                // Toggle locally after successful request
+                isFavorited.value = !isFavorited.value
+            },
+            onError: (errors) => {
+                console.error('Failed to toggle favorite', errors)
+            },
+            onFinish: () => {
+                isFavoriteLoading.value = false
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        isFavoriteLoading.value = false
+    }
 }
 
 const timeAgo = (date: string) => {

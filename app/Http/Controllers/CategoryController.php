@@ -6,6 +6,7 @@ use App\Data\CategoryData;
 use App\Models\Category;
 use App\Models\Ad;
 use App\Models\Brand;
+use App\Models\Banner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -34,6 +35,16 @@ class CategoryController extends Controller
         $maxPrice = $request->input('filter.max_price', null);
         $sort = $request->input('sort', 'newest');
         $city = $request->input('filter.city', $selectedCity);
+
+        $topBanner = Banner::active()
+            ->where('position', 'category')
+            ->whereNull('target_category_id')
+            ->first();
+
+        $midBanners = Banner::active()
+            ->where('position', 'category')
+            ->orderBy('sort_order')
+            ->get();
 
         // Fetch all root categories for sidebar
         $categories = Category::whereNull('parent_id')
@@ -112,6 +123,8 @@ class CategoryController extends Controller
                     'category' => $selectedCategory,
                     'categories' => $categories,
                     'brands' => $availableBrands,
+                     'banners' => $midBanners,
+                    'topBanner' => $topBanner,
                     'allBrands' => Brand::all(),
                     'filters' => [
                         'filter' => [

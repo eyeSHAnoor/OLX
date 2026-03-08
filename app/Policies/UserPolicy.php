@@ -41,7 +41,7 @@ class UserPolicy
 
     public function delete(User $auth, User $user): bool
     {
-        return !! $auth->hasRole(Role::SupperAdmin);
+        return $auth->id === $user->id;
     }
 
     public function restore(User $auth, User $user): bool

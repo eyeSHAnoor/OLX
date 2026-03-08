@@ -39,7 +39,10 @@ class HomeController extends Controller
 
             if ($selectedCategory) {
                 $adQuery = Ad::with(['images', 'brand', 'category'])
-                    ->when($selectedCity !== 'pakistan', fn($q) => $q->whereRaw('LOWER(city) = ?', [$selectedCity]));
+                    ->when($selectedCity !== 'pakistan', fn($q) => $q->whereRaw('LOWER(city) = ?', [$selectedCity]))
+                    ->withCount(['favoritedBy as is_favorited' => function ($query) {
+                        $query->where('user_id', auth()->id());
+                    }]);
 
                 // If main category (has children), include ads from itself + leaf subcategories
                 if ($selectedCategory->children()->exists()) {
@@ -173,4 +176,9 @@ class HomeController extends Controller
         ]);
     }
 
+    public function account()
+    {
+        return Inertia::render('home/Account');
+
+    }
 }

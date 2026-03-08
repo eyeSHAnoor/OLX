@@ -6,6 +6,7 @@ use App\Models\Message;
 use App\Models\Conversation;
 use App\Events\MessageSent;
 use Illuminate\Http\Request;
+use App\Notifications\NewMessageNotification;
 use Inertia\Inertia;
 
 class ChatController extends Controller
@@ -91,6 +92,7 @@ class ChatController extends Controller
         return redirect()->route('chat.show', $conversation);
     }
 
+
     public function send(Request $request)
     {
         $request->validate([
@@ -118,12 +120,38 @@ class ChatController extends Controller
             'last_message_at' => now()
         ]);
 
-        // Load sender for frontend
         $message->load('sender');
 
+        // Determine receiver
+        $receiverId = auth()->id() == $conversation->buyer_id
+            ? $conversation->seller_id
+            : $conversation->buyer_id;
+
+        $receiver = \App\Models\User::find($receiverId);
+
+        // Send notification
+        if ($receiver && $receiver->id !== auth()->id()) {
+            $receiver->notify(
+                new NewMessageNotification($conversation, $message)
+            );
+        }
+
+        // Broadcast message event
         broadcast(new MessageSent($message))->toOthers();
 
         return redirect()->back();
+    }
+
+    public function deleteMessage(Request $request, Message $message)
+    {
+
+        $conversationId = $message->conversation_id;
+        $message->delete();
+
+        // Broadcast message deleted event
+        // broadcast(new MessageSent('message is deleted'))->toOthers();
+
+        return redirect()->back()->with('success', 'Message deleted successfully');
     }
 }
 

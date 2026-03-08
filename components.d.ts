@@ -164,6 +164,7 @@ declare module 'vue' {
     ListGroupItem: typeof import('./resources/js/components/Application/ListGroup/ListGroupItem.vue')['default']
     ListGroupItems: typeof import('./resources/js/components/Application/ListGroup/ListGroupItems.vue')['default']
     LocaleSelector: typeof import('./resources/js/components/LocaleSelector.vue')['default']
+    MobileBottomNav: typeof import('./resources/js/components/MobileBottomNav.vue')['default']
     MonthDayPickerInput: typeof import('./resources/js/components/MonthDayPickerInput.vue')['default']
     NavFooter: typeof import('./resources/js/components/NavFooter.vue')['default']
     NavigationMenu: typeof import('./resources/js/components/ui/navigation-menu/NavigationMenu.vue')['default']

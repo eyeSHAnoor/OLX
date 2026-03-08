@@ -315,12 +315,44 @@ class AdController extends Controller
             'images',
             'category:id,name',
             'brand:id,name',
+            'ratings.rater',
             'features' => function ($q) {
                 $q->withPivot(['feature_value_id', 'custom_value']);
             }
         ]);
+        
+        // Transform features to send selected value only
+        $ad->features->transform(function ($feature) {
+            $selectedValue = $feature->values
+                ->where('id', $feature->pivot->feature_value_id)
+                ->first();
+
+            return [
+                'id' => $feature->id,
+                'name' => $feature->name,
+                'value' => $selectedValue?->value ?? $feature->pivot->custom_value
+            ];
+        });
+        
+        $seller = $ad->user;
+        $seller->avg_rating = $seller->receivedRatings()->avg('rating');
+        $seller->rating_count = $seller->receivedRatings()->count();
+
+        // Check if the current authenticated user has favorited this ad
+        $isFavorited = false;
+        if (auth()->check()) {
+            $isFavorited = $ad->favoritedBy()
+                ->where('user_id', auth()->id())
+                ->exists();
+        }
+
         return Inertia::render('home/AdDetail', [
             'ad' => $ad,
+            'sellerRating' => [
+                'average' => round($seller->avg_rating, 1),
+                'count' => $seller->rating_count
+            ],
+            'isFavorited' => $isFavorited, // Add this to the props
         ]);
     }
 }

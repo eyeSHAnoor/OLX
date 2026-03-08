@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Carbon\Carbon;
 
 class User extends Authenticatable
@@ -24,11 +25,12 @@ class User extends Authenticatable
         'email',
         'password',
         'status',
-        'phone'
+        'phone',
+        'warning_count',
+        'suspended_until'
     ];
 
-
-    protected $hidden = [
+   protected $hidden = [
         'password',
         'remember_token',
     ];
@@ -39,6 +41,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'suspended_until' => 'datetime',
         ];
     }
 
@@ -60,7 +63,13 @@ class User extends Authenticatable
     // app/Models/User.php
     public function notifications()
     {
-        return $this->hasMany(Notification::class, 'requested_by');
+        return $this->morphMany(\Illuminate\Notifications\DatabaseNotification::class, 'notifiable')
+                    ->orderBy('created_at', 'desc');
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
     }
 
     public function subscription()
@@ -96,4 +105,44 @@ class User extends Authenticatable
         return 'none';
     }
 
-}
+    public function receivedRatings()
+    {
+        return $this->hasMany(Rating::class, 'rated_user_id');
+    }
+
+    public function givenRatings()
+    {
+        return $this->hasMany(Rating::class, 'rater_id');
+    }
+
+    public function averageRating(): float
+    {
+        return round($this->receivedRatings()->avg('rating') ?? 0, 1);
+    }
+
+    public function ratingsCount(): int
+    {
+        return $this->receivedRatings()->count();
+    }
+
+    public function favoriteAds()
+    {
+        return $this->belongsToMany(Ad::class, 'ad_favorites')
+            ->withTimestamps();
+    }
+
+    public function reportsMade(): HasMany
+    {
+        return $this->hasMany(UserReport::class, 'reported_by');
+    }
+
+    public function reportsReceived(): HasMany
+    {
+        return $this->hasMany(UserReport::class, 'reported_user_id');
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->status === 'suspended' && $this->suspended_until > now();
+    }
+}   

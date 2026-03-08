@@ -73,15 +73,16 @@ class CreateAdController extends Controller
         ]);
     }
 
-    public function Myads()
+    public function Myads(Request $request)
     {
         $user = auth()->user();
-        // dd($user);
+        
         // Columns allowed to sort
-        $columns = ['ad_title', 'price','location','seller_name', 'brand', 'city', 'created_at', 'search_keywords'];
+        $columns = ['ad_title', 'price', 'location', 'seller_name', 'brand_id', 'category_id', 'city', 'created_at', 'status'];
 
         // Global search filter helper
         $globalSearch = getGlobalSearchFilter([...$columns]);
+        
         $ads = QueryBuilder::for(Ad::class)
             ->where('user_id', $user->id) 
             ->with(['brand', 'category', 'images', 'features.values'])
@@ -90,23 +91,24 @@ class CreateAdController extends Controller
             ->allowedSorts($columns)
             ->allowedFilters([
                 $globalSearch,
-                'brand_id',
-                'category_id',
+                AllowedFilter::exact('category_id'),
+                AllowedFilter::exact('brand_id'),
+                AllowedFilter::exact('status'),
                 AllowedFilter::callback('min_price', fn($query, $value) => $query->where('price', '>=', $value)),
                 AllowedFilter::callback('max_price', fn($query, $value) => $query->where('price', '<=', $value)),
             ])
             ->paginate(getPaginate()) // your helper for pagination
             ->withQueryString();
 
-        // Categories for filter dropdown
-        $categories = CategoryData::collect(Category::all());
-
-        // dd($ads);
+        // Get categories and brands for filter dropdowns
+        $categories = Category::select('id', 'name')->orderBy('name')->get();
+        $brands = Brand::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('ads/public/Index', [
             'ads' => $ads,
             'categories' => $categories,
-            'brands' => [],
+            'brands' => $brands,
+            'filters' => $request->only(['search', 'category_id', 'brand_id', 'status', 'min_price', 'max_price'])
         ]);
     }
 }

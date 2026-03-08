@@ -1,6 +1,7 @@
 <template>
     <OlxLayout>
-        <div class="max-w-8/10 mx-auto  space-y-12 pb-20">
+        <TopCategoriesBar />
+        <div class="max-w-8/10 mx-auto space-y-12 pb-20">
             <!-- Loading State -->
             <div v-if="!ad" class="flex items-center justify-center min-h-[60vh]">
                 <div class="text-center">
@@ -54,9 +55,14 @@
                                 </div>
 
                                 <!-- Favorite Button -->
-                                <button
-                                    class="absolute top-2 sm:top-4 right-2 sm:right-4 bg-white p-1.5 sm:p-2 rounded-full shadow-md hover:scale-110 transition-transform">
-                                    <Icon icon="lucide:heart" class="size-4 sm:size-5 text-gray-600" />
+                                <button @click="toggleFavorite"
+                                    class="absolute top-2 sm:top-4 right-2 sm:right-4 bg-white p-1.5 sm:p-2 rounded-full shadow-md hover:scale-110 transition-transform"
+                                    :disabled="isFavoriteLoading">
+                                    <Icon :icon="isFavorited ? 'mdi:heart' : 'lucide:heart'"
+                                        class="size-4 sm:size-5 transition-colors" :class="[
+                                            isFavorited ? 'text-red-500' : 'text-gray-600',
+                                            isFavoriteLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                                        ]" />
                                 </button>
                             </div>
 
@@ -179,9 +185,9 @@
                                 </div>
                             </Link>
 
+                            <!-- Action Buttons -->
                             <div class="space-y-2 sm:space-y-2.5">
-
-                                <!-- WhatsApp Button - New -->
+                                <!-- WhatsApp Button -->
                                 <a :href="getWhatsAppLink()" target="_blank" rel="noopener noreferrer"
                                     class="flex items-center justify-between w-full p-2.5 sm:p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
                                     <span class="flex items-center gap-1.5">
@@ -193,7 +199,7 @@
 
                                 <!-- Chat Button -->
                                 <button @click="openChat"
-                                    class="flex bg-brand-blue  gap-1.5 w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg hover:bg-brand-blue/85 cursor-pointer transition-colors text-sm text-white">
+                                    class="flex bg-brand-blue gap-1.5 w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg hover:bg-brand-blue/85 cursor-pointer transition-colors text-sm text-white">
                                     <Icon icon="lucide:message-circle" class="size-4 sm:size-5" />
                                     <span>Chat with Seller</span>
                                 </button>
@@ -204,20 +210,7 @@
                                     <Icon icon="lucide:copy" class="size-4 sm:size-5" />
                                     <span>Copy Phone Number</span>
                                 </button>
-
-
                             </div>
-
-                            <!-- <div class="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t">
-                                <div class="flex items-center justify-between text-xs sm:text-sm">
-                                    <span class="text-gray-500">Ad ID:</span>
-                                    <span class="font-mono">{{ ad.id }}</span>
-                                </div>
-                                <div class="flex items-center justify-between text-xs sm:text-sm mt-1.5">
-                                    <span class="text-gray-500">Views:</span>
-                                    <span class="font-medium">{{ ad.views || 0 }} views</span>
-                                </div>
-                            </div> -->
                         </div>
 
                         <!-- Safety Tips Card -->
@@ -251,11 +244,148 @@
                         </div>
 
                         <!-- Report Ad -->
-                        <button
-                            class="flex items-center justify-center gap-1.5 w-full p-2.5 sm:p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm">
+                        <button @click="openReportModal"
+                            class="flex items-center justify-center gap-1.5 w-full p-2.5 sm:p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm cursor-pointer">
                             <Icon icon="lucide:flag" class="size-4 sm:size-5" />
                             <span>Report this ad</span>
                         </button>
+                    </div>
+                </div>
+
+                <!-- Ad Rating Section - Beautifully designed at the end -->
+                <div class="bg-white rounded-lg sm:rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 mt-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Customer Ratings</h2>
+                        <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
+                            {{ adRatingCount }} {{ adRatingCount === 1 ? 'Rating' : 'Ratings' }}
+                        </span>
+                    </div>
+
+                    <!-- Overall Rating Summary -->
+                    <div
+                        class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-6 pb-6 border-b border-gray-100">
+                        <!-- Average Score -->
+                        <div class="flex flex-col items-center">
+                            <span class="text-4xl sm:text-5xl font-bold text-gray-900">{{ adAvgRating.toFixed(1)
+                                }}</span>
+                            <span class="text-xs text-gray-500 mt-1">out of 5</span>
+                        </div>
+
+                        <!-- Stars and Progress Bars -->
+                        <div class="flex-1 w-full">
+                            <!-- Average Stars Display -->
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="flex gap-1">
+                                    <Icon v-for="i in 5" :key="i" icon="lucide:star" class="size-5"
+                                        :class="i <= Math.round(adAvgRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'" />
+                                </div>
+                                <span class="text-sm text-gray-600">Average Rating</span>
+                            </div>
+
+                            <!-- Rating Distribution Bars -->
+                            <div class="space-y-2">
+                                <div v-for="star in [5, 4, 3, 2, 1]" :key="star"
+                                    class="flex items-center gap-2 text-xs">
+                                    <span class="w-8 text-gray-600">{{ star }} star</span>
+                                    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-yellow-400 rounded-full"
+                                            :style="{ width: `${getRatingPercentage(star)}%` }"></div>
+                                    </div>
+                                    <span class="w-8 text-gray-500">{{ getRatingCount(star) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Your Rating Section -->
+                    <div class="mb-6">
+                        <h3 class="text-sm font-medium text-gray-700 mb-3">Rate this ad</h3>
+
+                        <!-- Logged in user who is not the seller -->
+                        <div v-if="page.props.auth?.user && page.props.auth.user.id !== ad?.user_id"
+                            class="bg-gray-50 rounded-lg p-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                                <div class="flex gap-1">
+                                    <button v-for="star in 5" :key="star" @click="submitRating(star)"
+                                        @mouseover="hoverRating = star" @mouseleave="hoverRating = 0"
+                                        class="focus:outline-none transition-all duration-200 hover:scale-110"
+                                        :disabled="isSubmitting">
+                                        <Icon icon="lucide:star" class="size-6 transition-colors" :class="[
+                                            star <= (hoverRating || userCurrentRating)
+                                                ? 'text-yellow-400 fill-yellow-400'
+                                                : 'text-gray-300 hover:text-yellow-200',
+                                            isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                                        ]" />
+                                    </button>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <span v-if="userCurrentRating > 0" class="text-sm text-gray-600">
+                                        You rated this <span class="font-medium text-gray-900">{{ userCurrentRating
+                                            }}/5</span>
+                                    </span>
+                                    <span v-else class="text-sm text-gray-500">Click a star to rate</span>
+
+                                    <Icon v-if="isSubmitting" icon="lucide:loader-2"
+                                        class="size-5 animate-spin text-primary" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message for logged out users -->
+                        <div v-else-if="!page.props.auth?.user" class="bg-gray-50 rounded-lg p-4 text-center">
+                            <p class="text-sm text-gray-600">
+                                <Link href="/login" class="text-primary font-medium hover:underline">Sign in</Link>
+                                to rate this ad and help others make informed decisions
+                            </p>
+                        </div>
+
+                        <!-- Message for ad owner -->
+                        <div v-else-if="page.props.auth?.user && page.props.auth.user.id === ad?.user_id"
+                            class="bg-gray-50 rounded-lg p-4 text-center">
+                            <p class="text-sm text-gray-600">
+                                <Icon icon="lucide:info" class="size-4 inline-block mr-1 text-gray-400" />
+                                You cannot rate your own ad
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Ratings -->
+                    <div v-if="recentRatings.length > 0">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-medium text-gray-700">Recent ratings</h3>
+                            <Link v-if="adRatingCount > 3" :href="route('ad.ratings', ad?.id)"
+                                class="text-xs text-primary hover:underline">
+                                View all
+                            </Link>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div v-for="rating in recentRatings.slice(0, 3)" :key="rating.id"
+                                class="flex items-start justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <Link :href="route('user.profile', rating.rater?.id)"
+                                            class="font-medium text-sm hover:text-primary transition-colors">
+                                            {{ rating.rater?.name || 'Anonymous' }}
+                                        </Link>
+                                        <span class="text-xs text-gray-500">•</span>
+                                        <span class="text-xs text-gray-500">{{ formatRelativeTime(rating.created_at)
+                                            }}</span>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <Icon v-for="i in 5" :key="i" icon="lucide:star" class="size-3.5"
+                                            :class="i <= rating.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- No ratings yet -->
+                    <div v-else class="text-center py-6">
+                        <Icon icon="lucide:star" class="size-10 text-gray-300 mx-auto mb-2" />
+                        <p class="text-sm text-gray-500">No ratings yet. Be the first to rate this ad!</p>
                     </div>
                 </div>
 
@@ -267,11 +397,18 @@
             </div>
         </div>
 
-        <!-- Toast Notification for Copy -->
+        <!-- Toast Notifications -->
         <div v-if="showCopyToast"
             class="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 bg-gray-800 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm animate-in slide-in-from-bottom">
             Phone number copied to clipboard!
         </div>
+
+        <div v-if="showToast"
+            class="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 bg-gray-800 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm animate-in slide-in-from-bottom">
+            {{ toastMessage }}
+        </div>
+        <!-- Report Modal -->
+        <ReportModal v-model="showReportModal" :ad="ad" :reasons="reportReasons" @submitted="handleReportSubmitted" />
     </OlxLayout>
 </template>
 
@@ -279,20 +416,223 @@
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import { usePage, router } from '@inertiajs/vue3';
 import CategoryAds from '@/components/CategoryAds.vue'
+import TopCategoriesBar from '@/components/TopCategoriesBar.vue'
+import ReportModal from './_partials/ReportModal.vue';
 import { ref, computed, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import { Link } from '@inertiajs/vue3'
 
 interface PageProps extends InertiaPageProps {
-    ad?: App.Data.AdData;
-    similarAds?: App.Data.AdData[];
-    categories: App.Data.CategoryData[];
-    brands: App.Data.BrandData[];
+    ad?: any;
+    similarAds?: any[];
+    categories?: any[];
+    brands?: any[];
+    auth?: {
+        user?: {
+            id: number;
+            name: string;
+        }
+    }
 }
+
+// Theme
+const useForceTheme = (theme: string) => {
+    document.documentElement.setAttribute('data-theme', theme);
+};
 useForceTheme('light');
+
 const page = usePage<PageProps>();
 const ad = computed(() => page.props.ad);
 const similarAds = computed(() => page.props.similarAds || []);
+
+console.log(page.props)
+// Favorite state
+const isFavorited = ref(false)
+const isFavoriteLoading = ref(false)
+
+// Report modal state - use ref for v-model
+const showReportModal = ref(false)
+
+const reportReasons = {
+    scam: 'Scam or Fraud',
+    spam: 'Spam',
+    abusive: 'Abusive Behavior',
+    fake_listing: 'Fake Listing',
+    inappropriate: 'Inappropriate Content',
+    other: 'Other',
+}
+
+const openReportModal = () => {
+    if (!page.props.auth?.user) {
+        router.visit('/login')
+        return
+    }
+    showReportModal.value = true
+}
+
+const handleReportSubmitted = () => {
+    showToastMessage('Report submitted successfully')
+}
+
+// Check if ad is favorited by current user
+const checkIfFavorited = () => {
+    if (!page.props.auth?.user || !ad.value) return false
+    return ad.value?.is_favorited || false
+}
+
+// Initialize favorite state
+onMounted(() => {
+    isFavorited.value = checkIfFavorited()
+
+    if (ad.value?.images?.length) {
+        const primaryIndex = ad.value.images.findIndex((img: any) => img.is_primary);
+        if (primaryIndex !== -1) {
+            currentImageIndex.value = primaryIndex;
+        }
+    }
+})
+
+// Toggle favorite
+const toggleFavorite = () => {
+    if (!page.props.auth?.user) {
+        router.visit('/login')
+        return
+    }
+
+    if (isFavoriteLoading.value) return
+
+    isFavoriteLoading.value = true
+
+    router.post(route('ads.favorite', ad.value?.id), {}, {
+        preserveScroll: true,
+        onSuccess: (response: any) => {
+            isFavorited.value = !isFavorited.value
+            isFavoriteLoading.value = false
+            showToastMessage(isFavorited.value ? 'Added to favorites' : 'Removed from favorites')
+        },
+        onError: (errors) => {
+            isFavoriteLoading.value = false
+            showToastMessage('Failed to update favorite')
+            console.error(errors)
+        }
+    })
+}
+
+// Rating state for ad
+const hoverRating = ref(0)
+const isSubmitting = ref(false)
+
+// Toast state
+const showToast = ref(false)
+const toastMessage = ref('')
+
+// Computed properties for ad ratings
+const adAvgRating = computed(() => {
+    if (!ad.value?.ratings || ad.value.ratings.length === 0) return 0
+    const sum = ad.value.ratings.reduce((acc: number, curr: any) => acc + curr.rating, 0)
+    return sum / ad.value.ratings.length
+})
+
+const adRatingCount = computed(() => {
+    return ad.value?.ratings?.length || 0
+})
+
+// Check if current user has rated this ad
+const userCurrentRating = computed(() => {
+    if (!ad.value?.ratings || !page.props.auth?.user?.id) return 0
+    const userRating = ad.value.ratings.find(
+        (r: any) => r.rater_id === page.props.auth?.user?.id
+    )
+    return userRating?.rating || 0
+})
+
+// Get recent ratings for this ad
+const recentRatings = computed(() => {
+    if (!ad.value?.ratings) return []
+    return [...ad.value.ratings]
+        .sort((a: any, b: any) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+})
+
+// Rating distribution
+const ratingDistribution = computed(() => {
+    if (!ad.value?.ratings) return { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+
+    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    ad.value.ratings.forEach((r: any) => {
+        distribution[r.rating as keyof typeof distribution]++
+    })
+    return distribution
+})
+
+const getRatingPercentage = (star: number) => {
+    if (adRatingCount.value === 0) return 0
+    return (ratingDistribution.value[star as keyof typeof ratingDistribution.value] / adRatingCount.value) * 100
+}
+
+const getRatingCount = (star: number) => {
+    return ratingDistribution.value[star as keyof typeof ratingDistribution.value] || 0
+}
+
+// Submit rating for this ad (no review required)
+const submitRating = (rating: number) => {
+    if (!page.props.auth?.user) {
+        router.visit('/login')
+        return
+    }
+
+    if (page.props.auth.user.id === ad.value?.user_id) {
+        showToastMessage('You cannot rate your own ad')
+        return
+    }
+
+    if (isSubmitting.value) return
+
+    isSubmitting.value = true
+
+    router.post(route('ratings.store'), {
+        rated_user_id: ad.value?.user_id,
+        ad_id: ad.value?.id,
+        rating: rating,
+        review: null
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            hoverRating.value = 0
+            isSubmitting.value = false
+            showToastMessage('Rating submitted successfully!')
+        },
+        onError: (errors) => {
+            isSubmitting.value = false
+            showToastMessage('Failed to submit rating')
+            console.error(errors)
+        }
+    })
+}
+
+// Show toast message
+const showToastMessage = (message: string) => {
+    toastMessage.value = message
+    showToast.value = true
+    setTimeout(() => {
+        showToast.value = false
+    }, 2000)
+}
+
+// Helper function for relative time
+const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+    if (diffInSeconds < 60) return 'just now'
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`
+
+    return formatDate(dateString)
+}
 
 // Image Gallery State
 const currentImageIndex = ref(0);
@@ -332,10 +672,6 @@ const formatMemberSince = (date: string) => {
     });
 };
 
-const formatPhoneNumber = (phone: string) => {
-    return phone;
-};
-
 const getFeatureValue = (feature: any) => {
     if (feature.pivot?.custom_value) {
         return feature.pivot.custom_value;
@@ -361,20 +697,18 @@ const copyPhoneNumber = () => {
 const getWhatsAppLink = () => {
     if (!ad.value?.seller_phone) return '#';
 
-    // Clean the phone number (remove spaces, dashes, etc)
+    // Clean the phone number
     let phoneNumber = ad.value.seller_phone.replace(/[^0-9+]/g, '');
 
-    // Ensure it has country code (default to Pakistan +92 if not present)
+    // Ensure it has country code
     if (phoneNumber.startsWith('0')) {
         phoneNumber = '92' + phoneNumber.substring(1);
     } else if (!phoneNumber.startsWith('+') && !phoneNumber.startsWith('92')) {
         phoneNumber = '92' + phoneNumber;
     }
 
-    // Remove any '+' for WhatsApp URL
     phoneNumber = phoneNumber.replace('+', '');
 
-    // Create message with ad details
     const message = encodeURIComponent(
         `Hi, I'm interested in your ad: ${ad.value.ad_title}\n` +
         `Price: Rs. ${Number(ad.value.price).toLocaleString()}\n` +
@@ -392,23 +726,13 @@ const openChat = () => {
         product_id: ad.value.id
     }, {
         preserveScroll: true,
-        onSuccess: (response) => {
+        onSuccess: (response: any) => {
             if (response.props?.conversation_id) {
                 router.visit(`/chat/${response.props.conversation_id}`)
             }
         }
     })
 }
-
-// Set initial image to primary
-onMounted(() => {
-    if (ad.value?.images?.length) {
-        const primaryIndex = ad.value.images.findIndex(img => img.is_primary);
-        if (primaryIndex !== -1) {
-            currentImageIndex.value = primaryIndex;
-        }
-    }
-});
 </script>
 
 <style scoped>

@@ -11,24 +11,29 @@ class PublicProfileController extends Controller
 {
     public function show(Request $request, $id)
     {
-        // Find the user
-        $user = User::with(['profile', 'files'])->findOrFail($id);
+        $user = User::with(['profile', 'files', 'receivedRatings'])->findOrFail($id);
 
-        // Get selected city from session or default to 'Pakistan'
-        $selectedCity = strtolower(session('city', 'Pakistan'));
+        $viewer = auth()->user();
+        $isOwner = $viewer && $viewer->id === $user->id;
 
-        // Get filter inputs
+        // Only expose profile if public OR owner
+        $profile = null;
+
+        if ($user->profile) {
+            if ($user->profile->is_public || $isOwner) {
+                $profile = $user->profile;
+            }
+        }
+
         $cityFilter = $request->input('city', 'all');
         $sortBy = $request->input('sort_by', 'newest');
 
-        // Base query for user's ads
         $adsQuery = Ad::with(['images', 'category', 'brand'])
             ->where('user_id', $user->id)
             ->when($cityFilter !== 'all', function ($query) use ($cityFilter) {
                 return $query->whereRaw('LOWER(city) = ?', [strtolower($cityFilter)]);
             });
 
-        // Apply sorting
         switch ($sortBy) {
             case 'price_low':
                 $adsQuery->orderBy('price', 'asc');
@@ -39,16 +44,12 @@ class PublicProfileController extends Controller
             case 'oldest':
                 $adsQuery->orderBy('created_at', 'asc');
                 break;
-            case 'newest':
             default:
                 $adsQuery->orderBy('created_at', 'desc');
-                break;
         }
 
-        // Paginate results (10 per page)
         $ads = $adsQuery->paginate(10)->withQueryString();
 
-        // Get unique cities where user has ads
         $userCities = Ad::where('user_id', $user->id)
             ->select('city')
             ->distinct()
@@ -56,32 +57,15 @@ class PublicProfileController extends Controller
             ->pluck('city')
             ->toArray();
 
-        // Get user's avatar or create initials
-        $avatar = null;
-        $initial = strtoupper(substr($user->name, 0, 1));
-
-        if ($user->files && $user->files->isNotEmpty()) {
-            $avatar = $user->files[0]->file_url ?? null;
-        }
-
-        // Stats
-        $totalAds = Ad::where('user_id', $user->id)->count();
-        $totalViews = Ad::where('user_id', $user->id)->sum('views') ?? 0;
-        $memberSince = $user->created_at->format('F Y');
-
         return Inertia::render('home/PublicProfile', [
             'profileUser' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
-                'avatar' => $avatar,
-                'initial' => $initial,
-                'bio' => $user->profile->bio ?? null,
-                'location' => $user->profile->location ?? null,
-                'member_since' => $memberSince,
-                'total_ads' => $totalAds,
-                'total_views' => $totalViews,
+                'avatar' => optional($user->files->first())->file_url,
+                'profile' => $profile,
+                'ratings' => $user->receivedRatings
             ],
             'ads' => $ads,
             'filters' => [

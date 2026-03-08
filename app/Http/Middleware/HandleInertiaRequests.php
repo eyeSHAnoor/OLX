@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Notification;
+// Remove this line: use App\Models\Notification;
 use App\Models\Setting;
 use App\Models\Category;
 use App\Data\CategoryData;
@@ -47,7 +47,7 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
-        $user = $request->user()?->load('preferences');
+        $user = $request->user()?->load('preferences','profile');
 
         return [
             ...parent::share($request),
@@ -62,24 +62,11 @@ class HandleInertiaRequests extends Middleware
                     ['roles' => method_exists($user, 'getRoleNames') ? $user->getRoleNames() : []],
                     ['permissions' => method_exists($user, 'getAllPermissions') ? $user->getAllPermissions()->pluck('name') : []],
                     ['subscription_status' => $user->subscriptionStatus()],
+                    [
+                        'image' => $user->profile
+                    ]
                 ) : null,
             ],
-            'notifications' => fn() => Auth::check()
-                ? [
-                    'received' => Notification::where('requested_by', Auth::id())
-                        ->where('type', 'received')
-                        ->latest('created_at')
-                        ->take(10)
-                        ->get(['id', 'title', 'message', 'url', 'created_at', 'type']),
-
-                    'sent' => Notification::where('requested_by', Auth::id())
-                        ->where('type', 'sent')
-                        ->latest('created_at')
-                        ->take(10)
-                        ->get(['id', 'title', 'message', 'url', 'created_at', 'type']),
-                ]
-                : [],
-
             'ziggy' => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
@@ -124,7 +111,21 @@ class HandleInertiaRequests extends Middleware
             return $categories;
             },
             'selectedCity' => session('city', 'Pakistan'),
+            'notifications' => fn() => $user 
+                ? $user->notifications()->latest()->take(10)->get()->map(function ($notification) {
+                    return [
+                        'id' => $notification->id,
+                        'data' => $notification->data, // No need to json_decode, it's already cast to array
+                        'read_at' => $notification->read_at,
+                        'created_at' => $notification->created_at,
+                        'type' => $notification->type,
+                    ];
+                })
+                : [],
+
+            'unreadCount' => fn() => $user
+                ? $user->unreadNotifications()->count()
+                : 0,
         ];
     }
-
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 
 class Ad extends Model
@@ -26,6 +27,19 @@ class Ad extends Model
     protected $casts = [
         'search_keywords' => 'array',
     ];
+
+    protected $appends = ['is_favorited'];
+
+    public function getIsFavoritedAttribute(): bool
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return false; // not logged in
+        }
+
+        return $this->favoritedBy()->where('user_id', $user->id)->exists();
+    }
 
     protected static function booted()
     {
@@ -92,4 +106,19 @@ class Ad extends Model
         return $this->belongsTo(User::class);
     }
 
-}
+    public function ratings()
+    {
+        return $this->hasMany(Rating::class);
+    }
+
+    public function favoritedBy()
+    {
+        return $this->belongsToMany(User::class, 'ad_favorites')
+            ->withTimestamps();
+    }
+
+    public function reports(): HasMany
+    {
+        return $this->hasMany(UserReport::class);
+    }
+}   

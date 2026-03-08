@@ -14,3 +14,7 @@ Broadcast::channel('conversation.{id}', function ($user, $id) {
               ->orWhere('seller_id', $user->id);
         })->exists();
 });
+
+Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
+    return (int) $user->id === (int) $id;
+});

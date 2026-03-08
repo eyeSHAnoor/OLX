@@ -126,7 +126,7 @@ function goHome() {
 }
 
 function goToDashboard() {
-    router.visit('/dashboard')
+    router.visit('/')
 }
 
 const formatPrice = (price) => {
@@ -177,7 +177,7 @@ const canSubscribe = computed(() => {
                             <div class="mt-2 flex gap-1.5">
                                 <button @click="goHome"
                                     class="px-2.5 py-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-medium rounded hover:from-blue-700 hover:to-blue-800 shadow-sm transition-all">
-                                    Dashboard
+                                    Home
                                 </button>
                                 <button @click="showSuccessMessage = false"
                                     class="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded hover:bg-gray-200 transition-colors">
@@ -268,7 +268,7 @@ const canSubscribe = computed(() => {
                         <button @click="goToDashboard"
                             class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-xs font-medium hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all shadow">
                             <Icon icon="mdi:view-dashboard" class="text-sm" />
-                            Go to Dashboard
+                            Go to Home
                         </button>
 
                         <!-- Show pending details if applicable - Compact -->
@@ -683,7 +683,7 @@ const canSubscribe = computed(() => {
                                     <button @click="goHome"
                                         class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all shadow hover:shadow flex items-center justify-center gap-1">
                                         <Icon icon="mdi:home" class="text-sm" />
-                                        Go to Dashboard
+                                        Go to Home
                                     </button>
                                     <button @click="goBack"
                                         class="w-full bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 py-2 px-3 rounded-lg text-xs font-medium hover:from-gray-200 hover:to-gray-300 transform hover:scale-105 transition-all flex items-center justify-center gap-1">

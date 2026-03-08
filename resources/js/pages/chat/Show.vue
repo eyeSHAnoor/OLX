@@ -4,6 +4,8 @@ import { router, Link } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import { Icon } from '@iconify/vue'
 import { usePage } from '@inertiajs/vue3'
+import axios from 'axios'
+import { useAlertDialog } from '@/Composables/useAlertDialog'
 
 const props = defineProps({
     conversation: Object,
@@ -17,6 +19,25 @@ const messagesEnd = ref(null)
 const conversationsList = ref(props.conversations || [])
 const showMobileSidebar = ref(false)
 const showMobileChat = ref(false)
+const contextMenu = ref({
+    show: false,
+    x: 0,
+    y: 0,
+    message: null
+})
+
+// Alert dialog composable
+const { isOpen, options, show, onConfirm, onCancel } = useAlertDialog()
+
+// Dummy messages for quick replies
+const dummyMessages = [
+    { text: "Hi, is this still available?", icon: "lucide:help-circle" },
+    { text: "What's your best price?", icon: "lucide:tag" },
+    { text: "Can you deliver?", icon: "lucide:truck" },
+    { text: "I'd like to see it in person", icon: "lucide:eye" },
+    { text: "Is the price negotiable?", icon: "lucide:coins" },
+    { text: "When can we meet?", icon: "lucide:calendar" }
+]
 
 useForceTheme('light');
 
@@ -29,13 +50,17 @@ const scrollToBottom = () => {
     }, 100)
 }
 
-// Listen for new messages
+// Listen for new messages and deleted messages
 onMounted(() => {
     if (props.conversation) {
         window.Echo.private(`conversation.${props.conversation.id}`)
             .listen('.message.sent', (e) => {
                 messagesList.value.push(e.message)
                 scrollToBottom()
+            })
+            .listen('.message.deleted', (e) => {
+                // Remove deleted message from the list
+                messagesList.value = messagesList.value.filter(m => m.id !== e.messageId)
             })
 
         // On mobile, show chat when conversation is loaded
@@ -53,10 +78,22 @@ onMounted(() => {
             showMobileSidebar.value = false
             showMobileChat.value = false
         }
+
+        // Hide context menu on resize
+        contextMenu.value.show = false
     }
     window.addEventListener('resize', handleResize)
 
-    return () => window.removeEventListener('resize', handleResize)
+    // Click outside to close context menu
+    const handleClickOutside = () => {
+        contextMenu.value.show = false
+    }
+    window.addEventListener('click', handleClickOutside)
+
+    return () => {
+        window.removeEventListener('resize', handleResize)
+        window.removeEventListener('click', handleClickOutside)
+    }
 })
 
 // Cleanup
@@ -76,6 +113,10 @@ watch(() => props.conversation, (newConv, oldConv) => {
             .listen('.message.sent', (e) => {
                 messagesList.value.push(e.message)
                 scrollToBottom()
+            })
+            .listen('.message.deleted', (e) => {
+                // Remove deleted message from the list
+                messagesList.value = messagesList.value.filter(m => m.id !== e.messageId)
             })
         messagesList.value = props.messages || []
         scrollToBottom()
@@ -101,6 +142,66 @@ const sendMessage = () => {
             newMessage.value = ''
         }
     })
+}
+
+const sendDummyMessage = (messageText) => {
+    if (!props.conversation) return
+
+    router.post('/chat/send', {
+        conversation_id: props.conversation.id,
+        body: messageText
+    }, {
+        preserveScroll: true,
+        preserveState: true
+    })
+}
+
+const handleRightClick = (event, message) => {
+    event.preventDefault()
+
+    // Only allow deleting own messages
+    if (message.sender_id !== page.props.auth.user.id) return
+
+    // Calculate position to show context menu
+    const x = event.clientX
+    const y = event.clientY
+
+    // Adjust if menu would go off screen
+    const menuWidth = 160
+    const menuHeight = 40
+    const windowWidth = window.innerWidth
+    const windowHeight = window.innerHeight
+
+    contextMenu.value = {
+        show: true,
+        x: x + menuWidth > windowWidth ? x - menuWidth : x,
+        y: y + menuHeight > windowHeight ? y - menuHeight : y,
+        message: message
+    }
+}
+
+const deleteMessage = async () => {
+    if (!contextMenu.value.message) return
+
+    // Show confirmation dialog
+    const confirmed = await show({
+        type: 'confirm',
+        title: 'Delete Message',
+        description: 'Are you sure you want to delete this message? This action cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        icon: 'lucide:trash-2'
+    })
+
+    if (confirmed) {
+
+        router.delete(route('chat.message.delete', contextMenu.value.message.id), {
+            preserveScroll: true,
+        });
+    }
+
+    // Hide context menu
+    contextMenu.value.show = false
 }
 
 const formatTime = (date) => {
@@ -146,6 +247,35 @@ const getLastMessage = (conversation) => {
 <template>
     <OlxLayout>
         <div class="h-[calc(100vh-64px)] max-w-9/11 mx-auto px-2 sm:px-4 py-2 sm:py-4">
+            <!-- Alert Dialog Component -->
+            <div v-if="isOpen" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-xl max-w-md w-full p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <Icon v-if="options.icon" :icon="options.icon" class="size-6 text-red-500" />
+                        <h3 class="text-lg font-semibold">{{ options.title }}</h3>
+                    </div>
+                    <p class="text-muted-foreground mb-6">{{ options.description }}</p>
+                    <div class="flex gap-3 justify-end">
+                        <button @click="onCancel" class="px-4 py-2 border rounded-lg hover:bg-gray-50">
+                            {{ options.cancelText }}
+                        </button>
+                        <button @click="onConfirm" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                            {{ options.confirmText }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Context Menu -->
+            <div v-if="contextMenu.show" class="fixed z-50 bg-white rounded-lg shadow-lg border py-1 min-w-[160px]"
+                :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
+                <button @click="deleteMessage"
+                    class="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-red-600">
+                    <Icon icon="lucide:trash-2" class="size-4" />
+                    Delete Message
+                </button>
+            </div>
+
             <!-- Desktop Layout (md and above) -->
             <div class="hidden md:flex gap-6 h-full">
                 <!-- Conversations Sidebar -->
@@ -204,13 +334,26 @@ const getLastMessage = (conversation) => {
                         <h3 class="font-semibold text-lg text-muted-foreground">Select a conversation</h3>
                     </div>
 
+                    <!-- Quick Reply Dummy Messages -->
+                    <div v-if="messagesList.length === 0" class="px-3 py-2 border-b bg-gray-50 overflow-x-auto">
+                        <p class="text-xs text-muted-foreground mb-2">Quick replies to start:</p>
+                        <div class="grid grid-col-2 gap-2">
+                            <button v-for="(dummy, index) in dummyMessages" :key="index"
+                                @click="sendDummyMessage(dummy.text)"
+                                class="flex items-center gap-1 px-3 py-1.5 bg-white border rounded-full text-xs whitespace-nowrap hover:bg-primary hover:text-white transition-colors">
+                                <Icon :icon="dummy.icon" class="size-3" />
+                                <span>{{ dummy.text }}</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Messages -->
                     <div v-if="conversation" class="flex-1 overflow-y-auto p-4 space-y-4">
                         <div v-for="message in messagesList" :key="message.id"
-                            :class="['flex', message.sender_id === $page.props.auth.user.id ? 'justify-end' : 'justify-start']">
+                            :class="['flex group', message.sender_id === $page.props.auth.user.id ? 'justify-end' : 'justify-start']">
 
-                            <div
-                                :class="['max-w-[70%] md:max-w-[60%]', message.sender_id === $page.props.auth.user.id ? 'order-2' : 'order-1']">
+                            <div @contextmenu.prevent="handleRightClick($event, message)" :class="['max-w-[70%] md:max-w-[60%] cursor-context-menu',
+                                message.sender_id === $page.props.auth.user.id ? 'order-2' : 'order-1']">
                                 <div :class="['rounded-2xl p-3 break-words',
                                     message.sender_id === $page.props.auth.user.id
                                         ? 'bg-brand-teal text-white rounded-br-none'
@@ -323,13 +466,25 @@ const getLastMessage = (conversation) => {
                         </div>
                     </div>
 
+                    <!-- Mobile Quick Replies -->
+                    <div class="px-3 py-2 border-b bg-gray-50 overflow-x-auto">
+                        <div class="flex gap-2">
+                            <button v-for="(dummy, index) in dummyMessages" :key="index"
+                                @click="sendDummyMessage(dummy.text)"
+                                class="flex items-center gap-1 px-3 py-1.5 bg-white border rounded-full text-xs whitespace-nowrap hover:bg-primary hover:text-white transition-colors">
+                                <Icon :icon="dummy.icon" class="size-3" />
+                                <span>{{ dummy.text }}</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Mobile Messages -->
                     <div class="flex-1 overflow-y-auto p-3 space-y-3">
                         <div v-for="message in messagesList" :key="message.id"
-                            :class="['flex', message.sender_id === $page.props.auth.user.id ? 'justify-end' : 'justify-start']">
+                            :class="['flex group', message.sender_id === $page.props.auth.user.id ? 'justify-end' : 'justify-start']">
 
-                            <div
-                                :class="['max-w-[85%]', message.sender_id === $page.props.auth.user.id ? 'order-2' : 'order-1']">
+                            <div @contextmenu.prevent="handleRightClick($event, message)"
+                                class="relative max-w-[85%] cursor-context-menu">
                                 <div :class="['rounded-2xl p-3 break-words text-sm',
                                     message.sender_id === $page.props.auth.user.id
                                         ? 'bg-primary text-white rounded-br-none'
@@ -408,5 +563,19 @@ const getLastMessage = (conversation) => {
     .max-w-9\/11 {
         max-width: 100%;
     }
+}
+
+/* Quick replies scroll on mobile */
+.overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+    display: none;
+}
+
+.cursor-context-menu {
+    cursor: context-menu;
 }
 </style>

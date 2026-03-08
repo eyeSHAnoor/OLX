@@ -1,5 +1,6 @@
 <template>
     <OlxLayout>
+        <TopCategoriesBar />
 
         <!-- HERO BANNERS SECTION - Carousel for homepage banners -->
         <section v-if="homepageBanners.length > 0" class="relative bg-gray-100">
@@ -62,40 +63,47 @@
         <!-- NORMAL HOMEPAGE -->
         <template v-if="!isSearching">
 
-            <!-- Browse Categories -->
-            <section class="py-12 bg-gray-50">
+            <!-- Browse Categories - Horizontal Scroll on Mobile, Grid on Desktop -->
+            <section class="pt-12 md:pb-10 pb-0 bg-gray-50">
                 <div class="max-w-10/12 mx-auto">
                     <h2 class="text-lg md:text-xl font-semibold mb-8 text-center">
                         Browse Categories
                     </h2>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-4">
-                        <div v-for="category in categories" :key="category.id"
-                            class="flex flex-col items-center cursor-pointer group"
-                            @click="navigateToCategory(category)">
-                            <div
-                                class="w-28 h-28 md:w-32 md:h-32 rounded-xl overflow-hidden shadow-sm bg-white group-hover:shadow-md transition-all group-hover:scale-105">
-                                <img v-if="category.files?.length" :src="category.files[0].file_url"
-                                    class="w-full h-full object-cover" />
-                                <div v-else
-                                    class="w-full h-full flex items-center justify-center text-xs text-gray-400">
-                                    <Icon icon="mdi:image-off" class="text-3xl" />
+                    <!-- Categories container with horizontal scroll for mobile -->
+                    <div class="relative">
+
+                        <!-- Categories list - Horizontal scroll on mobile, Grid on desktop -->
+                        <div ref="categoriesContainer"
+                            class="grid grid-flow-col md:grid-flow-row auto-cols-[calc(50vw-2rem)] md:auto-cols-auto gap-2 overflow-x-auto md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7 md:overflow-visible pb-4 md:pb-0 scroll-smooth hide-scrollbar"
+                            @scroll="updateScrollButtons">
+                            <div v-for="category in categories" :key="category.id"
+                                class="flex flex-col items-center cursor-pointer group"
+                                @click="navigateToCategory(category)">
+                                <div
+                                    class="w-28 h-28 md:w-32 md:h-32 rounded-xl overflow-hidden shadow-sm bg-white group-hover:shadow-md transition-all group-hover:scale-105">
+                                    <img v-if="category.files?.length" :src="category.files[0].file_url"
+                                        class="w-full h-full object-cover" />
+                                    <div v-else
+                                        class="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                                        <Icon icon="mdi:image-off" class="text-3xl" />
+                                    </div>
                                 </div>
-                            </div>
-                            <span
-                                class="mt-2 text-sm md:text-md font-medium text-center group-hover:text-brand-blue transition-colors">
-                                {{ category.name }}
-                                <span v-if="category.ads_count" class="text-xs text-gray-500">
-                                    ({{ category.ads_count }})
+                                <span
+                                    class="mt-2 text-sm md:text-md font-medium text-center group-hover:text-brand-blue transition-colors">
+                                    {{ category.name }}
+                                    <span v-if="category.ads_count" class="text-xs text-gray-500">
+                                        ({{ category.ads_count }})
+                                    </span>
                                 </span>
-                            </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
             <!-- Promotional Banners - Grid Layout -->
-            <section v-if="promotionalBanners.length > 0" class="py-10">
+            <section v-if="promotionalBanners.length > 0" class="py-5">
                 <div class="max-w-7xl mx-auto px-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <a v-for="banner in promotionalBanners" :key="banner.id" :href="banner.link || '#'"
@@ -119,7 +127,7 @@
             </section>
 
             <!-- Category Ads Sections -->
-            <section class="max-w-8/10 mx-auto  space-y-12 pb-20">
+            <section class="max-w-8/10 mx-auto space-y-12 pb-20">
                 <CategoryAds v-for="cat in topCategories" :key="cat.id" :category="cat"
                     :search-term="form.filter.global" />
             </section>
@@ -197,6 +205,11 @@ const isSearching = computed(() => page.props.isSearching || false)
 const currentSlide = ref(0);
 const autoPlayInterval = ref();
 
+// Categories scroll state
+const categoriesContainer = ref<HTMLElement | null>(null);
+const canScrollLeft = ref(false);
+const canScrollRight = ref(true);
+
 useForceTheme('light');
 
 // Filter banners by different positions
@@ -241,6 +254,30 @@ const stopAutoPlay = () => {
         clearInterval(autoPlayInterval.value);
         autoPlayInterval.value = null;
     }
+};
+
+// Categories scroll functions
+const scrollCategories = (direction: 'left' | 'right') => {
+    if (!categoriesContainer.value) return;
+
+    const container = categoriesContainer.value;
+    // Scroll by approximately 2 columns (adjust based on your design)
+    const scrollAmount = window.innerWidth < 768 ? 350 : 200;
+
+    if (direction === 'left') {
+        container.scrollLeft -= scrollAmount;
+    } else {
+        container.scrollLeft += scrollAmount;
+    }
+};
+
+
+const updateScrollButtons = () => {
+    if (!categoriesContainer.value) return;
+
+    const container = categoriesContainer.value;
+    canScrollLeft.value = container.scrollLeft > 0;
+    canScrollRight.value = container.scrollLeft < (container.scrollWidth - container.clientWidth - 10);
 };
 
 // Initialize search filter
@@ -333,17 +370,41 @@ onMounted(() => {
         carousel.addEventListener('mouseenter', stopAutoPlay);
         carousel.addEventListener('mouseleave', startAutoPlay);
     }
-});
 
-onUnmounted(() => {
-    stopAutoPlay();
+    // Initialize categories scroll buttons
+    setTimeout(() => {
+        updateScrollButtons();
+    }, 100);
 
-    // Clean up event listeners
-    const carousel = document.querySelector('.relative.h-\\[300px\\]');
-    if (carousel) {
-        carousel.removeEventListener('mouseenter', stopAutoPlay);
-        carousel.removeEventListener('mouseleave', startAutoPlay);
+    // Add resize observer to update scroll buttons on resize
+    const resizeObserver = new ResizeObserver(() => {
+        updateScrollButtons();
+    });
+
+    if (categoriesContainer.value) {
+        resizeObserver.observe(categoriesContainer.value);
     }
+
+    // Store for cleanup
+    const categoriesContainerEl = categoriesContainer.value;
+    const resizeObserverInstance = resizeObserver;
+
+    // Clean up on unmount
+    onUnmounted(() => {
+        stopAutoPlay();
+
+        // Clean up carousel event listeners
+        const carousel = document.querySelector('.relative.h-\\[300px\\]');
+        if (carousel) {
+            carousel.removeEventListener('mouseenter', stopAutoPlay);
+            carousel.removeEventListener('mouseleave', startAutoPlay);
+        }
+
+        // Clean up resize observer
+        if (resizeObserverInstance && categoriesContainerEl) {
+            resizeObserverInstance.unobserve(categoriesContainerEl);
+        }
+    });
 });
 </script>
 
@@ -379,5 +440,74 @@ onUnmounted(() => {
 .transition-opacity {
     transition-property: opacity;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+/* Gradient fade on edges for mobile */
+@media (max-width: 768px) {
+    .relative {
+        position: relative;
+    }
+
+    .relative::before,
+    .relative::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    .relative::before {
+        left: 0;
+        background: linear-gradient(to right, rgba(249, 250, 251, 1), rgba(249, 250, 251, 0));
+    }
+
+    .relative::after {
+        right: 0;
+        background: linear-gradient(to left, rgba(249, 250, 251, 1), rgba(249, 250, 251, 0));
+    }
+
+
+    .relative {
+        position: relative;
+    }
+
+    .relative::before,
+    .relative::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 60px;
+        /* Slightly wider for better fade effect */
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    .relative::before {
+        left: 0;
+        background: linear-gradient(to right, rgba(249, 250, 251, 1), rgba(249, 250, 251, 0));
+    }
+
+    .relative::after {
+        right: 0;
+        background: linear-gradient(to left, rgba(249, 250, 251, 1), rgba(249, 250, 251, 0));
+    }
+
 }
 </style>

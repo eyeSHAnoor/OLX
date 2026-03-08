@@ -2,34 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Notification;
-use Inertia\Inertia;
-use Spatie\QueryBuilder\QueryBuilder;
-use Spatie\QueryBuilder\AllowedFilter;
+use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
 
 class NotificationController extends Controller
 {
-
-    public function index()
+    public function markAsRead(DatabaseNotification $notification)
     {
-        $columns = ['title', 'message', 'type', 'created_at'];
+        $this->authorize('update', $notification);
+        $notification->markAsRead();
+        
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        
+        return redirect()->back();
+    }
 
-        // Global search across multiple columns
-        $globalSearch = getGlobalSearchFilter($columns);
-
-        // Build the query
-        $notifications = QueryBuilder::for(Notification::class)
-            ->with(['actionByUser', 'requestedByUser']) // if you have relationships
-            ->defaultSort('-created_at')
-            ->allowedSorts($columns)
-            ->allowedFilters([$globalSearch])
-            ->paginate(getPaginate())
-            ->withQueryString();
-
-        // Render Inertia page
-        return Inertia::render('notification/Index', [
-            'notifications' => $notifications, // or wrap in a resource/transformer
-// Optionally pass related data if needed
-        ]);
+    public function markAllAsRead(Request $request)
+    {
+        $request->user()->unreadNotifications->markAsRead();
+        
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        
+        return redirect()->back();
     }
 }

@@ -1,5 +1,6 @@
 <template>
     <OlxLayout>
+        <TopCategoriesBar />
         <section class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
 
             <!-- Mobile Filter Toggle - Compact -->

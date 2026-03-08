@@ -4,8 +4,12 @@
 
             <!-- Profile Header -->
             <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-4 md:mb-6">
-                <!-- Cover Photo (Optional) -->
-                <div class="h-24 md:h-32 bg-gray-100"></div>
+                <!-- Cover Photo -->
+                <div class="h-24 md:h-32 bg-gray-100 relative overflow-hidden">
+                    <img v-if="profileUser.profile?.cover_image" :src="`/storage/${profileUser.profile.cover_image}`"
+                        :alt="`${profileUser.name}'s cover`" class="w-full h-full object-cover" />
+                    <div v-else class="w-full h-full bg-gradient-to-r from-brand-blue/20 to-brand-teal/20"></div>
+                </div>
 
                 <!-- Profile Info -->
                 <div class="px-4 md:px-6 pb-4 md:pb-6 relative">
@@ -24,18 +28,23 @@
                     <!-- Avatar -->
                     <div class="flex flex-col md:flex-row md:items-end -mt-10 md:-mt-14 mb-3 md:mb-4">
                         <div class="flex items-end space-x-3 md:space-x-4">
-                            <!-- Avatar with Initial -->
+                            <!-- Avatar with Profile Image -->
                             <div class="relative">
-                                <div v-if="profileUser.avatar"
+                                <div v-if="profileUser.profile?.profile_image"
                                     class="w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-white shadow-md overflow-hidden">
-                                    <img :src="profileUser.avatar" :alt="profileUser.name"
+                                    <img :src="`/storage/${profileUser.profile.profile_image}`" :alt="profileUser.name"
                                         class="w-full h-full object-cover" />
                                 </div>
                                 <div v-else
                                     class="w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-white shadow-md bg-brand-blue flex items-center justify-center">
                                     <span class="text-2xl md:text-4xl font-semibold text-white uppercase">
-                                        {{ profileUser.initial }}
+                                        {{ profileUser.name?.charAt(0) || 'U' }}
                                     </span>
+                                </div>
+                                <!-- Username Badge (if set) -->
+                                <div v-if="profileUser.profile?.username"
+                                    class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap">
+                                    @{{ profileUser.profile.username }}
                                 </div>
                             </div>
 
@@ -47,7 +56,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
-                                    Member since {{ profileUser.member_since }}
+                                    Member since {{ formatDate(profileUser.created_at) }}
                                 </p>
                             </div>
                         </div>
@@ -89,8 +98,9 @@
                             </div>
                         </div>
 
-                        <!-- Location if available -->
-                        <div v-if="profileUser.location" class="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
+                        <!-- Location -->
+                        <div v-if="profileUser.profile?.location"
+                            class="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
                             <div
                                 class="w-8 h-8 rounded-full bg-brand-blue/10 flex items-center justify-center flex-shrink-0">
                                 <svg class="w-4 h-4 text-brand-blue" fill="none" stroke="currentColor"
@@ -103,7 +113,28 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-[10px] text-gray-500">Location</p>
-                                <p class="text-xs font-medium text-gray-900 truncate">{{ profileUser.location }}</p>
+                                <p class="text-xs font-medium text-gray-900 truncate">{{ profileUser.profile.location }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Website (if available) -->
+                        <div v-if="profileUser.profile?.website"
+                            class="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
+                            <div
+                                class="w-8 h-8 rounded-full bg-brand-teal/10 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-brand-teal" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[10px] text-gray-500">Website</p>
+                                <a :href="profileUser.profile.website" target="_blank"
+                                    class="text-xs font-medium text-brand-blue hover:underline truncate block">
+                                    {{ formatWebsite(profileUser.profile.website) }}
+                                </a>
                             </div>
                         </div>
 
@@ -121,24 +152,34 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-[10px] text-gray-500">Total Views</p>
-                                <p class="text-xs font-medium text-gray-900">{{ profileUser.total_views }}</p>
+                                <p class="text-xs font-medium text-gray-900">{{ profileUser.total_views || 0 }}</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Bio if available -->
-                    <div v-if="profileUser.bio" class="mt-3 p-3 bg-gray-50 rounded-lg">
-                        <p class="text-xs text-gray-700">{{ profileUser.bio }}</p>
+                    <!-- Bio -->
+                    <div v-if="profileUser.profile?.bio" class="mt-3 p-3 bg-gray-50 rounded-lg">
+                        <p class="text-xs text-gray-700">{{ profileUser.profile.bio }}</p>
+                    </div>
+
+                    <!-- Privacy Badge (only for owner) -->
+                    <div v-if="isOwner && profileUser.profile?.is_public === 0"
+                        class="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full">
+                        <svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span class="text-[10px] font-medium text-gray-600">Private Profile</span>
                     </div>
                 </div>
             </div>
-
             <!-- User's Ads Section -->
             <div class="bg-white rounded-lg shadow-sm p-4 md:p-5">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                     <h2 class="text-lg md:text-xl font-semibold text-gray-900">
                         {{ profileUser.name }}'s Ads
-                        <span class="text-xs font-normal text-gray-500 ml-2">({{ profileUser.total_ads }} total)</span>
+                        <span class="text-xs font-normal text-gray-500 ml-2">({{ ads.total || profileUser.total_ads || 0
+                        }} total)</span>
                     </h2>
 
                     <!-- Filters and Actions -->
@@ -163,7 +204,7 @@
 
                         <!-- Add New Ad Button (only for owner) -->
                         <div v-if="isOwner">
-                            <Link :href="route('ads.create')"
+                            <Link :href="route('user.ads.create')"
                                 class="inline-flex items-center gap-1.5 bg-brand-blue hover:bg-brand-blue/90 text-white px-3 py-1.5 rounded transition-colors text-xs font-medium shadow-sm">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -176,7 +217,7 @@
                 </div>
 
                 <!-- Ads Grid with Edit/Delete for Owner -->
-                <div v-if="ads.data.length > 0"
+                <div v-if="ads.data && ads.data.length > 0"
                     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                     <div v-for="ad in ads.data" :key="ad.id" class="relative group">
                         <AdCard :ad="ad" />
@@ -213,7 +254,7 @@
                     <p class="text-xs text-gray-600">
                         {{ isOwner ? "You haven't posted any ads yet." : "This user hasn't posted any ads yet." }}
                     </p>
-                    <Link v-if="isOwner" :href="route('ads.create')"
+                    <Link v-if="isOwner" :href="route('user.ads.create')"
                         class="inline-block mt-3 bg-brand-blue hover:bg-brand-blue/90 text-white px-4 py-1.5 rounded transition-colors text-xs shadow-sm">
                         Post Your First Ad
                     </Link>
@@ -269,6 +310,58 @@
                     </span>
                 </div>
             </div>
+
+            <!-- Recent Ratings Section -->
+            <div v-if="recentRatings.length > 0" class="bg-white rounded-lg mt-10 shadow-sm p-4 md:p-5 mb-4 md:mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg md:text-xl font-semibold text-gray-900">Recent Ratings</h2>
+                    <Link v-if="totalRatings > 5" :href="route('user.ratings', profileUser.id)"
+                        class="text-xs text-brand-blue hover:underline">
+                        View all ({{ totalRatings }})
+                    </Link>
+                </div>
+
+                <div class="space-y-3">
+                    <!-- Rating Summary Section - Moved to top of contact info -->
+                    <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-sm font-semibold text-gray-700">Seller Rating</h3>
+                            <span class="text-xs text-gray-500">{{ totalRatings }} {{ totalRatings === 1 ? 'rating' :
+                                'ratings' }}</span>
+                        </div>
+
+                        <!-- Average Rating -->
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="flex flex-col items-center">
+                                <span class="text-2xl font-bold text-gray-900">{{ averageRating.toFixed(1) }}</span>
+                                <span class="text-[10px] text-gray-500">out of 5</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex gap-1 mb-1">
+                                    <Icon v-for="i in 5" :key="i" icon="lucide:star" class="size-4"
+                                        :class="i <= Math.round(averageRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'" />
+                                </div>
+                                <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-yellow-400 rounded-full"
+                                        :style="{ width: `${(averageRating / 5) * 100}%` }"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rating Distribution -->
+                        <div class="space-y-1.5">
+                            <div v-for="star in [5, 4, 3, 2, 1]" :key="star" class="flex items-center gap-2 text-xs">
+                                <span class="w-6 text-gray-600">{{ star }}★</span>
+                                <div class="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-yellow-400 rounded-full"
+                                        :style="{ width: `${getRatingPercentage(star)}%` }"></div>
+                                </div>
+                                <span class="w-6 text-gray-500 text-right">{{ getRatingCount(star) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Delete Confirmation Modal -->
@@ -299,7 +392,7 @@
                                     </h3>
                                     <div class="mt-1">
                                         <p class="text-xs text-gray-500">
-                                            Are you sure you want to delete "{{ adToDelete?.ad_title }}"? This action
+                                            Are you sure you want to delete "{{ adToDelete?.title }}"? This action
                                             cannot be undone.
                                         </p>
                                     </div>
@@ -322,27 +415,53 @@
         </Teleport>
     </OlxLayout>
 </template>
+
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { router, Link, usePage } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import AdCard from '@/components/AdCard.vue'
+import { Icon } from '@iconify/vue'
+import CardContent from '@/components/ui/card/CardContent.vue'
 
 const page = usePage()
-useForceTheme('light');
+
 interface Props {
     profileUser: {
         id: number
         name: string
         email: string
         phone: string | null
+        created_at: string
         avatar: string | null
-        initial: string
-        bio: string | null
-        location: string | null
-        member_since: string
-        total_ads: number
-        total_views: number
+        total_ads?: number
+        total_views?: number
+        received_ratings?: Array<{
+            id: number
+            rating: number
+            review: string | null
+            created_at: string
+            ad_id: number
+            rater_id: number
+            rated_user_id: number
+            rater?: {
+                id: number
+                name: string
+            }
+        }>
+        profile?: {
+            id: number
+            user_id: number
+            username: string | null
+            profile_image: string | null
+            cover_image: string | null
+            bio: string | null
+            location: string | null
+            website: string | null
+            is_public: number | boolean
+            created_at: string
+            updated_at: string
+        }
     }
     ads: {
         data: any[]
@@ -364,8 +483,9 @@ interface Props {
     userCities: string[]
     selectedCity: string
 }
-
 const props = defineProps<Props>()
+useForceTheme('light');
+console.log(props.profileUser)
 
 // Check if current user is the profile owner
 const isOwner = computed(() => {
@@ -379,6 +499,67 @@ const sortBy = ref(props.filters.sort_by)
 // Delete modal state
 const showDeleteModal = ref(false)
 const adToDelete = ref<any>(null)
+
+// Rating calculations
+const receivedRatings = computed(() => props.profileUser.received_ratings || [])
+
+const totalRatings = computed(() => receivedRatings.value.length)
+
+const averageRating = computed(() => {
+    if (totalRatings.value === 0) return 0
+    const sum = receivedRatings.value.reduce((acc, curr) => acc + curr.rating, 0)
+    return sum / totalRatings.value
+})
+
+const ratingDistribution = computed(() => {
+    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    receivedRatings.value.forEach((r) => {
+        distribution[r.rating as keyof typeof distribution]++
+    })
+    return distribution
+})
+
+const getRatingPercentage = (star: number) => {
+    if (totalRatings.value === 0) return 0
+    return (ratingDistribution.value[star as keyof typeof ratingDistribution.value] / totalRatings.value) * 100
+}
+
+const getRatingCount = (star: number) => {
+    return ratingDistribution.value[star as keyof typeof ratingDistribution.value] || 0
+}
+
+const recentRatings = computed(() => {
+    return [...receivedRatings.value]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5)
+})
+
+// Helper function to format date
+const formatDate = (dateString: string) => {
+    if (!dateString) return 'Unknown'
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
+
+// Helper function for relative time
+const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+    if (diffInSeconds < 60) return 'just now'
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+// Helper function to format website URL for display
+const formatWebsite = (url: string) => {
+    if (!url) return ''
+    return url.replace(/^https?:\/\//, '')
+}
 
 // Apply filters
 const applyFilters = () => {

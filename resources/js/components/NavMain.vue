@@ -65,6 +65,13 @@ const navItems = computed(() => [
                 icon: 'material-symbols:inventory-2-outline',
                 isActive: page.url === '/ads' || route().current('ads.*'),
             },
+            {
+                visible: true,
+                title: 'Reports',
+                href: '/reports',
+                icon: 'material-symbols:inventory-2-outline',
+                isActive: page.url === '/reports' || route().current('reports.*'),
+            },
         ],
     },
 ]);

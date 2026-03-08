@@ -1,7 +1,296 @@
+<script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue'
+import { router, Link, usePage } from '@inertiajs/vue3'
+import { Icon } from '@iconify/vue'
+import OlxLayout from '@/layouts/OlxLayout.vue'
+import AdCard from '@/components/AdCard.vue'
+import AdListItem from '@/components/AdListItem.vue'
+import debounce from 'lodash/debounce'
+import citiesList from '@/data/cities.json'
+
+// Props definition
+const props = defineProps<{
+    category?: any
+    categories: any[]
+    brands: any[]
+    allBrands?: any[]
+    filters: any
+    priceRange?: { min: number; max: number }
+}>()
+
+// Get page props including banners
+const page = usePage()
+
+// Banner display configuration
+const BANNER_INTERVAL = 9 // Show banner after every 10 ads
+const BANNER_OFFSET = 8     // Start after 9th ad (index 8)
+
+// Get banners from page props
+const banners = computed(() => {
+    const bannerData = (page.props as any).banners
+    return Array.isArray(bannerData) ? bannerData : []
+})
+
+const topBanner = computed(() => {
+    return (page.props as any).topBanner || null
+})
+
+// View state
+const viewMode = ref<'grid' | 'list'>('grid')
+const showMobileFilters = ref(false)
+const currentPage = ref(1)
+const itemsPerPage = 12
+
+// Filter states
+const searchTerm = ref(props.filters?.filter?.global || '')
+const selectedBrands = ref<number[]>([])
+const minPrice = ref<number | null>(props.filters?.filter?.min_price || null)
+const maxPrice = ref<number | null>(props.filters?.filter?.max_price || null)
+const selectedCity = ref(props.filters?.filter?.city || 'Pakistan')
+const sortBy = ref(props.filters?.sort || 'newest')
+
+// Categories view more/less state
+const showAllCategories = ref(false)
+const initialCategoriesToShow = 5
+
+// Cities list
+const cities = ref<string[]>(citiesList || [])
+
+// Quick price ranges
+const priceRanges = [
+    { label: 'Under $100', min: 0, max: 100 },
+    { label: '$100 - $500', min: 100, max: 500 },
+    { label: '$500 - $1000', min: 500, max: 1000 },
+    { label: '$1000+', min: 1000, max: null }
+]
+
+// Computed properties
+const topLevelCategories = computed(() => {
+    return props.categories.filter(cat => !cat.parent_id)
+})
+
+const displayedCategories = computed(() => {
+    if (showAllCategories.value) {
+        return props.categories
+    }
+    return props.categories.filter((cat, index) => {
+        // Always show all subcategories of visible parent categories
+        if (cat.parent_id) {
+            const parentIndex = topLevelCategories.value.findIndex(parent => parent.id === cat.parent_id)
+            return parentIndex < initialCategoriesToShow
+        }
+        // Show only first 5 parent categories
+        const parentIndex = topLevelCategories.value.findIndex(parent => parent.id === cat.id)
+        return parentIndex < initialCategoriesToShow
+    })
+})
+
+const activeFilterCount = computed(() => {
+    let count = 0
+    if (selectedBrands.value.length) count++
+    if (minPrice.value !== null) count++
+    if (maxPrice.value !== null) count++
+    if (selectedCity.value !== 'Pakistan') count++
+    return count
+})
+
+const filteredAds = computed(() => {
+    let ads = props.category?.ads || []
+
+    // Filter by selected brands
+    if (selectedBrands.value.length) {
+        ads = ads.filter(ad => selectedBrands.value.includes(ad.brand_id))
+    }
+
+    // Filter by price
+    if (minPrice.value !== null) {
+        ads = ads.filter(ad => ad.price >= minPrice.value!)
+    }
+    if (maxPrice.value !== null) {
+        ads = ads.filter(ad => ad.price <= maxPrice.value!)
+    }
+
+    // Apply sorting
+    if (sortBy.value === 'price_low') {
+        ads = [...ads].sort((a, b) => a.price - b.price)
+    } else if (sortBy.value === 'price_high') {
+        ads = [...ads].sort((a, b) => b.price - a.price)
+    } else {
+        ads = [...ads].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    }
+
+    return ads
+})
+
+const paginatedAds = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage
+    const end = start + itemsPerPage
+    return filteredAds.value.slice(start, end)
+})
+
+const totalPages = computed(() =>
+    Math.ceil(filteredAds.value.length / itemsPerPage)
+)
+
+const displayedPages = computed(() => {
+    const delta = 2
+    const range = []
+    const rangeWithDots = []
+    let l
+
+    for (let i = 1; i <= totalPages.value; i++) {
+        if (i === 1 || i === totalPages.value || (i >= currentPage.value - delta && i <= currentPage.value + delta)) {
+            range.push(i)
+        }
+    }
+
+    range.forEach((i) => {
+        if (l) {
+            if (i - l === 2) {
+                rangeWithDots.push(l + 1)
+            } else if (i - l !== 1) {
+                rangeWithDots.push('...')
+            }
+        }
+        rangeWithDots.push(i)
+        l = i
+    })
+
+    return rangeWithDots
+})
+
+// Banner methods
+const shouldShowBanner = (index: number) => {
+    if (!banners.value || banners.value.length === 0) return false
+
+    // Show banner after every BANNER_INTERVAL ads, starting from BANNER_OFFSET
+    const position = index + 1 // Convert to 1-based position
+    const isAtInterval = position >= BANNER_OFFSET && position % BANNER_INTERVAL === 0
+    const notAtEnd = index < paginatedAds.value.length - 1 // Don't show at last item
+
+    return isAtInterval && notAtEnd
+}
+
+const getBannerForPosition = (index: number) => {
+    if (!banners.value || banners.value.length === 0) return null
+
+    // Calculate which banner to show based on the position
+    // This rotates through available banners
+    const bannerIndex = Math.floor(index / BANNER_INTERVAL) % banners.value.length
+    return banners.value[bannerIndex]
+}
+
+// Methods
+const toggleCategoriesView = () => {
+    showAllCategories.value = !showAllCategories.value
+}
+
+const getBrandAdCount = (brandId: number) => {
+    return props.category?.ads?.filter((ad: any) => ad.brand_id === brandId).length || 0
+}
+
+const applyFilters = () => {
+    const filters: any = {
+        filter: {
+            global: searchTerm.value,
+            category: props.category?.id,
+            brand: selectedBrands.value.join(','),
+            min_price: minPrice.value,
+            max_price: maxPrice.value,
+            city: selectedCity.value,
+        },
+        sort: sortBy.value,
+    }
+
+    router.get(route('category.show', props.category?.slug), filters, {
+        preserveState: true,
+        preserveScroll: true,
+    })
+
+    showMobileFilters.value = false
+}
+
+const debouncedApplyPriceFilter = debounce(() => {
+    applyFilters()
+}, 500)
+
+const applyBrandFilter = () => {
+    applyFilters()
+}
+
+const applyCityFilter = () => {
+    applyFilters()
+}
+
+const applySort = () => {
+    currentPage.value = 1 // Reset to first page when sorting
+    applyFilters()
+}
+
+const setQuickPriceRange = (min: number | null, max: number | null) => {
+    minPrice.value = min
+    maxPrice.value = max
+    applyFilters()
+}
+
+const clearPriceFilter = () => {
+    minPrice.value = null
+    maxPrice.value = null
+    applyFilters()
+}
+
+const clearBrandFilter = () => {
+    selectedBrands.value = []
+    applyFilters()
+}
+
+const resetCityFilter = () => {
+    selectedCity.value = 'Pakistan'
+    applyFilters()
+}
+
+const resetAllFilters = () => {
+    selectedBrands.value = []
+    minPrice.value = null
+    maxPrice.value = null
+    selectedCity.value = 'Pakistan'
+    sortBy.value = 'newest'
+    applyFilters()
+}
+
+// Watch for page changes
+watch(currentPage, () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+})
+
+// Watch for filter changes to reset pagination
+watch([selectedBrands, minPrice, maxPrice, selectedCity, sortBy], () => {
+    currentPage.value = 1
+})
+
+// Initialize selected brands from URL if present
+onMounted(() => {
+    if (props.filters?.filter?.brand) {
+        selectedBrands.value = props.filters.filter.brand.split(',').map(Number)
+    }
+    console.log('Banners loaded:', banners.value)
+    console.log('Top banner:', topBanner.value)
+})
+</script>
+
 <template>
     <OlxLayout>
+        <TopCategoriesBar />
+        <!-- Top Banner - Above everything -->
+        <div v-if="topBanner" class="relative h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden">
+            <a :href="topBanner.link" target="_blank" rel="noopener noreferrer" class="block">
+                <img :src="topBanner.image_url" :alt="topBanner.title"
+                    class="w-full rounded-lg shadow-sm hover:shadow-md transition-shadow" />
+            </a>
+        </div>
         <div>
             <section class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
+
                 <!-- Mobile Filter Toggle - Compact -->
                 <div class="lg:hidden mb-3">
                     <button @click="showMobileFilters = !showMobileFilters"
@@ -39,7 +328,7 @@
                                 </Link>
                                 <Icon icon="mdi:chevron-right" class="text-gray-400 text-sm" />
                                 <span v-if="category" class="text-gray-900 font-medium text-xs">{{ category.name
-                                }}</span>
+                                    }}</span>
                                 <span v-else class="text-gray-900 font-medium text-xs">All Categories</span>
                             </div>
 
@@ -259,15 +548,46 @@
                             </div>
                         </div>
 
-                        <!-- Results Grid/List -->
+                        <!-- Results Grid/List with Banners -->
                         <template v-if="filteredAds.length">
-                            <div v-if="viewMode === 'grid'"
-                                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
-                                <AdCard v-for="ad in paginatedAds" :key="ad.id" :ad="ad" />
+                            <!-- Grid View with Banners -->
+                            <div v-if="viewMode === 'grid'">
+                                <div
+                                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
+                                    <template v-for="(ad, index) in paginatedAds" :key="ad.id">
+                                        <!-- Ad Card -->
+                                        <AdCard :ad="ad" />
+
+                                        <!-- Insert mid banners after every 9-10 ads -->
+                                        <div v-if="shouldShowBanner(index)" :key="'banner-' + index"
+                                            class="col-span-1 sm:col-span-2 lg:col-span-2 xl:col-span-3 my-2">
+                                            <a :href="getBannerForPosition(index).link" target="_blank"
+                                                rel="noopener noreferrer" class="block">
+                                                <img :src="getBannerForPosition(index).image_url"
+                                                    :alt="getBannerForPosition(index).title"
+                                                    class="w-full rounded-lg shadow-sm hover:shadow-md transition-shadow" />
+                                            </a>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
 
+                            <!-- List View with Banners -->
                             <div v-if="viewMode === 'list'" class="space-y-2 md:space-y-3">
-                                <AdListItem v-for="ad in paginatedAds" :key="ad.id" :ad="ad" />
+                                <template v-for="(ad, index) in paginatedAds" :key="ad.id">
+                                    <!-- Ad List Item -->
+                                    <AdListItem :ad="ad" />
+
+                                    <!-- Insert mid banners after every 9-10 ads -->
+                                    <div v-if="shouldShowBanner(index)" :key="'banner-' + index" class="my-2">
+                                        <a :href="getBannerForPosition(index).link" target="_blank"
+                                            rel="noopener noreferrer" class="block">
+                                            <img :src="getBannerForPosition(index).image_url"
+                                                :alt="getBannerForPosition(index).title"
+                                                class="w-full rounded-lg shadow-sm hover:shadow-md transition-shadow" />
+                                        </a>
+                                    </div>
+                                </template>
                             </div>
 
                             <!-- Pagination - Compact -->
@@ -318,268 +638,3 @@
         </div>
     </OlxLayout>
 </template>
-<script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import { router, Link, usePage } from '@inertiajs/vue3'
-import { Icon } from '@iconify/vue'
-import OlxLayout from '@/layouts/OlxLayout.vue'
-import AdCard from '@/components/AdCard.vue'
-import AdListItem from '@/components/AdListItem.vue'
-import debounce from 'lodash/debounce'
-import citiesList from '@/data/cities.json'
-
-const props = defineProps<{
-    category?: any
-    categories: any[]
-    brands: any[]
-    allBrands?: any[]
-    filters: any
-    priceRange?: { min: number; max: number }
-}>()
-
-// View state
-const viewMode = ref<'grid' | 'list'>('grid')
-const showMobileFilters = ref(false)
-const currentPage = ref(1)
-const itemsPerPage = 12
-
-// Filter states
-const searchTerm = ref(props.filters?.filter?.global || '')
-const selectedBrands = ref<number[]>([])
-const minPrice = ref<number | null>(props.filters?.filter?.min_price || null)
-const maxPrice = ref<number | null>(props.filters?.filter?.max_price || null)
-const selectedCity = ref(props.filters?.filter?.city || 'Pakistan')
-const sortBy = ref(props.filters?.sort || 'newest')
-
-// Categories view more/less state
-const showAllCategories = ref(false)
-const initialCategoriesToShow = 5
-
-useForceTheme('light');
-
-// Cities list
-const cities = ref<string[]>(citiesList || [])
-
-// Quick price ranges
-const priceRanges = [
-    { label: 'Under $100', min: 0, max: 100 },
-    { label: '$100 - $500', min: 100, max: 500 },
-    { label: '$500 - $1000', min: 500, max: 1000 },
-    { label: '$1000+', min: 1000, max: null }
-]
-
-// Computed properties
-const topLevelCategories = computed(() => {
-    return props.categories.filter(cat => !cat.parent_id)
-})
-
-const displayedCategories = computed(() => {
-    if (showAllCategories.value) {
-        return props.categories
-    }
-    return props.categories.filter((cat, index) => {
-        // Always show all subcategories of visible parent categories
-        if (cat.parent_id) {
-            const parentIndex = topLevelCategories.value.findIndex(parent => parent.id === cat.parent_id)
-            return parentIndex < initialCategoriesToShow
-        }
-        // Show only first 5 parent categories
-        const parentIndex = topLevelCategories.value.findIndex(parent => parent.id === cat.id)
-        return parentIndex < initialCategoriesToShow
-    })
-})
-
-const activeFilterCount = computed(() => {
-    let count = 0
-    if (selectedBrands.value.length) count++
-    if (minPrice.value !== null) count++
-    if (maxPrice.value !== null) count++
-    if (selectedCity.value !== 'Pakistan') count++
-    return count
-})
-
-const filteredAds = computed(() => {
-    let ads = props.category?.ads || []
-
-    // Filter by selected brands
-    if (selectedBrands.value.length) {
-        ads = ads.filter(ad => selectedBrands.value.includes(ad.brand_id))
-    }
-
-    // Filter by price
-    if (minPrice.value !== null) {
-        ads = ads.filter(ad => ad.price >= minPrice.value!)
-    }
-    if (maxPrice.value !== null) {
-        ads = ads.filter(ad => ad.price <= maxPrice.value!)
-    }
-
-    return ads
-})
-
-const paginatedAds = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage
-    const end = start + itemsPerPage
-    return filteredAds.value.slice(start, end)
-})
-
-const totalPages = computed(() =>
-    Math.ceil(filteredAds.value.length / itemsPerPage)
-)
-
-const displayedPages = computed(() => {
-    const delta = 2
-    const range = []
-    const rangeWithDots = []
-    let l
-
-    for (let i = 1; i <= totalPages.value; i++) {
-        if (i === 1 || i === totalPages.value || (i >= currentPage.value - delta && i <= currentPage.value + delta)) {
-            range.push(i)
-        }
-    }
-
-    range.forEach((i) => {
-        if (l) {
-            if (i - l === 2) {
-                rangeWithDots.push(l + 1)
-            } else if (i - l !== 1) {
-                rangeWithDots.push('...')
-            }
-        }
-        rangeWithDots.push(i)
-        l = i
-    })
-
-    return rangeWithDots
-})
-
-// Methods
-const toggleCategoriesView = () => {
-    showAllCategories.value = !showAllCategories.value
-}
-
-const getBrandAdCount = (brandId: number) => {
-    return props.category?.ads?.filter((ad: any) => ad.brand_id === brandId).length || 0
-}
-
-const applyFilters = () => {
-    const filters: any = {
-        filter: {
-            global: searchTerm.value,
-            category: props.category?.id,
-            brand: selectedBrands.value.join(','),
-            min_price: minPrice.value,
-            max_price: maxPrice.value,
-            city: selectedCity.value,
-        },
-        sort: sortBy.value,
-    }
-
-    router.get(route('category.show', props.category?.slug), filters, {
-        preserveState: true,
-        preserveScroll: true,
-    })
-
-    showMobileFilters.value = false
-}
-
-const debouncedApplyPriceFilter = debounce(() => {
-    applyFilters()
-}, 500)
-
-const applyBrandFilter = () => {
-    applyFilters()
-}
-
-const applyCityFilter = () => {
-    applyFilters()
-}
-
-const applySort = () => {
-    applyFilters()
-}
-
-const setQuickPriceRange = (min: number | null, max: number | null) => {
-    minPrice.value = min
-    maxPrice.value = max
-    applyFilters()
-}
-
-const clearPriceFilter = () => {
-    minPrice.value = null
-    maxPrice.value = null
-    applyFilters()
-}
-
-const clearBrandFilter = () => {
-    selectedBrands.value = []
-    applyFilters()
-}
-
-const resetCityFilter = () => {
-    selectedCity.value = 'Pakistan'
-    applyFilters()
-}
-
-const resetAllFilters = () => {
-    selectedBrands.value = []
-    minPrice.value = null
-    maxPrice.value = null
-    selectedCity.value = 'Pakistan'
-    sortBy.value = 'newest'
-    applyFilters()
-}
-
-// Watch for page changes
-watch(currentPage, () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-})
-
-// Initialize selected brands from URL if present
-onMounted(() => {
-    if (props.filters?.filter?.brand) {
-        selectedBrands.value = props.filters.filter.brand.split(',').map(Number)
-    }
-})
-</script>
-
-<style scoped>
-.mobile-filter-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: white;
-    z-index: 50;
-    overflow-y: auto;
-    padding: 1rem;
-    margin: 0;
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(-100%);
-    }
-
-    to {
-        transform: translateX(0);
-    }
-}
-
-/* Custom scrollbar for filter sidebar */
-.overflow-y-auto::-webkit-scrollbar {
-    width: 4px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: var(--brand-teal);
-    border-radius: 4px;
-}
-</style>

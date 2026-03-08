@@ -145,12 +145,38 @@ class UserController extends Controller
      * Delete a user.
      */
     public function destroy(User $user)
-    {
+    {   
+           \Log::info('Destroy method called', [
+        'auth_id' => auth()->id(),
+        'user_id' => $user->id,
+        'is_authenticated' => auth()->check(),
+        'can_delete' => auth()->user()?->can('delete', $user)
+    ]);
         DB::transaction(function () use ($user) {
-            $user->roles()->detach();
+
+            // Delete profile
+            $user->profile()?->delete();
+
+            // Delete preferences
+            $user->preferences()?->delete();
+
+            // Delete notification settings
+            $user->notificationSettings()->delete();
+
+            // Delete notifications
+            $user->notifications()->delete();
+
+            // Delete subscription
+            $user->subscription()?->delete();
+
+            // Delete ratings
+            $user->receivedRatings()->delete();
+            $user->givenRatings()->delete();
+
+            // Finally delete user
             $user->delete();
         });
 
-        return redirect()->back()->with('success', 'User deleted successfully.');
+        return redirect()->route('home');
     }
 }

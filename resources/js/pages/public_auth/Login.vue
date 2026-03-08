@@ -101,10 +101,10 @@
                             <span class="ml-1.5 text-xs text-gray-600">Remember me</span>
                         </label>
 
-                        <Link :href="route('password.request')"
+                        <!-- <Link :href="route('password.request')"
                             class="text-xs font-medium text-brand-teal hover:text-brand-teal/80 transition-colors">
                             Forgot password?
-                        </Link>
+                        </Link> -->
                     </div>
 
                     <!-- Login Button -->

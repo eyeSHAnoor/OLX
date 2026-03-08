@@ -263,14 +263,14 @@ const submit = () => {
         })).post(route('ads.update', form.id), {
             preserveScroll: true,
             onSuccess: () => {
-                router.visit(route('my.ads'));
+                router.visit(route('user.ads'));
             },
         });
     } else {
         formData.post(route('ads.store'), {
             preserveScroll: true,
             onSuccess: () => {
-                router.visit(route('my.ads'));
+                router.visit(route('user.ads'));
             },
         });
     }
