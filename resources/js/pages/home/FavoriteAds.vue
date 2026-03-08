@@ -239,7 +239,7 @@
 import { ref, computed, watch } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
-import AdCard from '@/Components/AdCard.vue'
+import AdCard from '@/components/AdCard.vue'
 import axios from 'axios'
 
 interface Props {
