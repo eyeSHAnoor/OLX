@@ -66,6 +66,19 @@ Route::middleware(['auth'])->group(function () {
         [App\Http\Controllers\SubscriptionController::class,'submitManual'])
         ->name('subscriptions.manual');
 
+    Route::post('/subscriptions/jazzcash/initiate', [App\Http\Controllers\SubscriptionController::class, 'initiateJazzCash'])
+    ->name('subscriptions.jazzcash.initiate')
+    ->middleware(['auth']);
+
+    // Route::match(['get', 'post'], '/jazzcash/callback', [App\Http\Controllers\JazzCashController::class, 'callback'])
+    //     ->name('jazzcash.callback');
+
+    // Route::post('/jazzcash/ipn', [App\Http\Controllers\JazzCashController::class, 'ipn'])
+    //     ->name('jazzcash.ipn');
+
+    Route::post('/payment-status', [App\Http\Controllers\JazzCashController::class, 'callback']);
+    Route::post('/payment-ipn', [App\Http\Controllers\JazzCashController::class, 'ipn']);
+
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/{conversation}', [App\Http\Controllers\ChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/send', [App\Http\Controllers\ChatController::class, 'send'])->name('chat.send');

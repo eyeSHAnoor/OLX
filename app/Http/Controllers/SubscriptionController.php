@@ -7,11 +7,13 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\JazzCashService;
 use App\Models\Plan;
 use App\Models\User;
 use App\Models\Subscription;
 use Illuminate\Support\Facades\Route;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -120,5 +122,60 @@ class SubscriptionController extends Controller
         });
 
         return redirect()->back()->with('success', 'User subscription has been rejected.');
+    }
+
+    public function initiateJazzCash(Request $request)
+    {
+        $user = auth()->user();
+        
+        // Check if user already has an active subscription
+        if ($user->activeSubscription()->exists()) {
+            return redirect()->back()->with('error', 'You already have an active subscription.');
+        }
+        
+        if ($user->pendingSubscription()->exists()) {
+            return redirect()->back()->with('error', 'You already have a pending subscription.');
+        }
+        
+        $request->validate([
+            'plan_id' => 'required|exists:plans,id',
+        ]);
+        
+        $plan = Plan::findOrFail($request->plan_id);
+        
+        // Create pending subscription
+        $subscription = Subscription::create([
+            'user_id' => $user->id,
+            'plan_id' => $plan->id,
+            'payment_status' => 'pending',
+            'payment_gateway' => 'jazzcash',
+            'amount_paid' => $plan->price,
+            'payment_data' => [
+                'initiated_at' => now()
+            ]
+        ]);
+        
+        // Prepare JazzCash payment data
+        $jazzCashService = app(JazzCashService::class);
+        $paymentData = $jazzCashService->preparePaymentRequest(
+            $plan, 
+            $user, 
+            $subscription->id
+        );
+
+        Log::info($paymentData);
+        
+        // Store payment data
+        $subscription->update([
+            'payment_data' => array_merge($subscription->payment_data, [
+                'jazzcash_request' => $paymentData
+            ])
+        ]);
+        
+        // Return view with auto-submitting form
+        return Inertia::render('payment/JazzCashRedirect', [
+            'paymentData' => $paymentData,
+            'endpoint' => config('jazzcash.endpoints.' . config('jazzcash.environment'))
+        ]);
     }
 }

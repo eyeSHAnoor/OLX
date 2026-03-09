@@ -9,7 +9,6 @@ use App\Http\Requests\Auth\PublicResetPasswordRequest;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\JazaCashService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,12 +23,6 @@ use Inertia\Response;
 
 class PublicAuthController extends Controller
 {
-    private $jazaCashService;
-
-    public function __construct(JazaCashService $jazaCashService)
-    {
-        $this->jazaCashService = $jazaCashService;
-    }
 
     /**
      * Show AMO login form
@@ -129,39 +122,6 @@ class PublicAuthController extends Controller
 
             return $user;
         });
-
-        // Step 2: Initiate payment with JazaCash
-        $paymentData = [
-            'amount' => $plan->price,
-            'email' => $user->email,
-            'phone' => $user->phone,
-            'order_id' => 'SUB-' . $user->id . '-' . time(),
-            'description' => 'Subscription to ' . $plan->name . ' Plan',
-        ];
-
-        $paymentResponse = $this->jazaCashService->initiatePayment($paymentData);
-
-        if ($paymentResponse['success']) {
-            // Create pending subscription
-            $subscription = Subscription::create([
-                'user_id' => $user->id,
-                'plan_id' => $plan->id,
-                'payment_status' => 'pending',
-                'transaction_id' => $paymentResponse['transaction_id'],
-                'payment_gateway' => 'jazacash',
-                'amount_paid' => $plan->price,
-                'payment_data' => $paymentResponse,
-            ]);
-
-            // Store subscription ID in session for callback
-            $request->session()->put('pending_subscription_id', $subscription->id);
-
-            // Redirect to payment gateway
-            return Inertia::location($paymentResponse['payment_url']);
-        }
-
-        // If payment initiation fails, delete the user and show error
-        $user->delete();
         
         return back()->withErrors([
             'payment' => 'Payment initiation failed: ' . ($paymentResponse['error'] ?? 'Unknown error'),
@@ -205,62 +165,7 @@ class PublicAuthController extends Controller
             ->with('success', 'Registration successful! Welcome to your dashboard.');
     }
 
-    /**
-     * Payment callback from JazaCash
-     */
-    public function paymentCallback(Request $request)
-    {
-        $subscriptionId = $request->session()->get('pending_subscription_id');
-        $transactionId = $request->input('transaction_id');
-        
-        if (!$subscriptionId) {
-            return redirect()->route('amo.register')
-                ->with('error', 'Invalid payment session.');
-        }
-
-        $subscription = Subscription::findOrFail($subscriptionId);
-        
-        // Verify payment with JazaCash
-        $verification = $this->jazaCashService->verifyPayment($transactionId);
-
-        DB::transaction(function () use ($subscription, $verification) {
-            if ($verification['success'] && $verification['status'] === 'completed') {
-                // Update subscription status
-                $subscription->update([
-                    'payment_status' => 'completed',
-                    'starts_at' => now(),
-                    'ends_at' => now()->addDays($subscription->plan->duration_days),
-                    'payment_data' => array_merge(
-                        $subscription->payment_data ?? [],
-                        ['verification_response' => $verification]
-                    ),
-                ]);
-
-                // Login the user
-                Auth::login($subscription->user);
-            } else {
-                // Payment failed
-                $subscription->update([
-                    'payment_status' => 'failed',
-                    'payment_data' => array_merge(
-                        $subscription->payment_data ?? [],
-                        ['verification_response' => $verification]
-                    ),
-                ]);
-            }
-        });
-
-        // Clear session
-        $request->session()->forget(['selected_plan', 'plan_amount', 'pending_subscription_id']);
-
-        if ($subscription->payment_status === 'completed') {
-            return redirect()->route('home')
-                ->with('success', 'Registration successful! Your subscription is now active.');
-        }
-
-        return redirect()->route('amo.login')
-            ->with('error', 'Payment failed. Please try again or contact support.');
-    }
+ 
 
     /**
      * Show payment success page
