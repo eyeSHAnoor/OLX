@@ -65,7 +65,7 @@ function choosePlan(plan) {
     paymentStep.value = 'payment'
     window.scrollTo({ top: 0, behavior: 'smooth' })
 }
-
+useForceTheme('light');
 function submit() {
     if (!form.terms_accepted) {
         return
@@ -175,7 +175,7 @@ const canSubscribe = computed(() => {
 
             <div class="relative mb-2">
                 <span class="text-[10px] font-medium text-blue-600 uppercase tracking-wider">Welcome back, {{ user?.name
-                    }}!</span>
+                }}!</span>
             </div>
 
             <h1
@@ -273,7 +273,7 @@ const canSubscribe = computed(() => {
                                     <h3 class="text-base font-semibold text-gray-900 mb-1">{{ plan.name }}</h3>
                                     <div class="flex items-baseline">
                                         <span class="text-xl font-bold text-gray-900">{{ formatPrice(plan.price)
-                                            }}</span>
+                                        }}</span>
                                         <span class="text-[10px] text-gray-500 ml-1">/{{ plan.duration_days }}d</span>
                                     </div>
 

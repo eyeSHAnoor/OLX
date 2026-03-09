@@ -5,6 +5,7 @@ defineProps({
     message: String,
     transaction_id: String
 })
+useForceTheme('light');
 </script>
 
 <template>

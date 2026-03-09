@@ -39,7 +39,7 @@ class JazzCashService
         
         $data = [
             'pp_Version' => '2.0',
-            'pp_TxnType' => 'MPAY',
+            'pp_TxnType' => 'MWALLET',
             'pp_Language' => config('jazzcash.language'),
             'pp_MerchantID' => $this->merchantId,
             'pp_SubMerchantID' => '',
@@ -69,23 +69,36 @@ class JazzCashService
     /**
      * Calculate secure hash for JazzCash
      */
+    /**
+     * Calculate secure hash for JazzCash
+     * Following JazzCash v2.0 specification exactly
+     */
     protected function calculateSecureHash($data)
     {
-        $hashString = $this->integeritySalt . '&' .
-                     $data['pp_Amount'] . '&' .
-                     $data['pp_BillReference'] . '&' .
-                     $data['pp_Language'] . '&' .
-                     $data['pp_MerchantID'] . '&' .
-                     $data['pp_Password'] . '&' .
-                     $data['pp_ReturnURL'] . '&' .
-                     $data['pp_TxnCurrency'] . '&' .
-                     $data['pp_TxnDateTime'] . '&' .
-                     $data['pp_TxnExpiryDateTime'] . '&' .
-                     $data['pp_TxnRefNo'] . '&' .
-                     $data['pp_TxnType'] . '&' .
-                     $this->integeritySalt;
+        // Remove pp_SecureHash from the data for hash calculation
+        $hashData = $data;
+        unset($hashData['pp_SecureHash']);
         
-        return hash_hmac('sha256', $hashString, $this->integeritySalt);
+        // Sort fields alphabetically as per JazzCash requirements
+        ksort($hashData);
+        
+        // Create hash string: Integrity Salt + & + all values joined with & + Integrity Salt
+        $hashString = $this->integeritySalt . '&';
+        
+        foreach ($hashData as $key => $value) {
+            $hashString .= $value . '&';
+        }
+        
+        $hashString .= $this->integeritySalt;
+        
+        // Remove trailing & if any (though our method shouldn't create one)
+        $hashString = rtrim($hashString, '&');
+        
+        // Generate HMAC SHA-256 hash
+        $hash = hash_hmac('sha256', $hashString, $this->integeritySalt);
+        
+        // Convert to uppercase as JazzCash expects
+        return strtoupper($hash);
     }
     
     /**

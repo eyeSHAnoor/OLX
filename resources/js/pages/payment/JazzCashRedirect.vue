@@ -5,7 +5,7 @@ const props = defineProps({
     paymentData: Object,
     endpoint: String
 })
-
+useForceTheme('light');
 onMounted(() => {
     // Auto-submit the form
     document.getElementById('jazzcash-form').submit()

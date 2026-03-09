@@ -6,6 +6,7 @@ defineProps({
     error_code: String,
     error_message: String
 })
+useForceTheme('light');
 </script>
 
 <template>
