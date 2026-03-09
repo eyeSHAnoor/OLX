@@ -18,11 +18,11 @@ Route::get('/user/{id}', [App\Http\Controllers\PublicProfileController::class, '
 Route::get('/ads/{ad}', [App\Http\Controllers\AdController::class, 'show'])->name('ads.show');
 Route::post('/set-city', function (\Illuminate\Http\Request $request) {
     session(['city' => $request->city]);
-Route::post('/payment-status', [App\Http\Controllers\JazzCashController::class, 'callback']);
-Route::post('/payment-ipn', [App\Http\Controllers\JazzCashController::class, 'ipn']);
-
     return back();
 })->name('set.city');
+
+Route::post('/payment-status', [App\Http\Controllers\JazzCashController::class, 'callback']);
+Route::post('/payment-ipn', [App\Http\Controllers\JazzCashController::class, 'ipn']);
 
 Route::get('/artisan-scheduler', function () {
     \Illuminate\Support\Facades\Artisan::call('schedule:run');
