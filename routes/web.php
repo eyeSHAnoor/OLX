@@ -76,7 +76,7 @@ Route::middleware(['auth'])->group(function () {
     // Route::post('/jazzcash/ipn', [App\Http\Controllers\JazzCashController::class, 'ipn'])
     //     ->name('jazzcash.ipn');
     
-    Route::match(['get', 'post'], '/payment-status', [App\Http\Controllers\JazzCashController::class, 'callback']);
+    Route::post('/payment-status', [App\Http\Controllers\JazzCashController::class, 'callback']);
     Route::post('/payment-ipn', [App\Http\Controllers\JazzCashController::class, 'ipn']);
 
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
