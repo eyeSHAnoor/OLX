@@ -1,11 +1,16 @@
 <script setup>
 import { router } from '@inertiajs/vue3'
 
-defineProps({
-    message: String,
-    transaction_id: String
+const props = defineProps({
+    message: { type: String, required: true },
+    transaction_id: { type: String, default: '' }
 })
-useForceTheme('light');
+
+useForceTheme('light')
+
+// Router actions
+const goHome = () => router.visit('/')
+const viewDashboard = () => router.visit('/dashboard')
 </script>
 
 <template>
@@ -18,19 +23,19 @@ useForceTheme('light');
             </div>
 
             <h1 class="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
-            <p class="text-gray-600 mb-4">{{ message }}</p>
+            <p class="text-gray-600 mb-4">{{ props.message }}</p>
 
-            <div v-if="transaction_id" class="bg-gray-50 rounded-lg p-3 mb-6">
+            <div v-if="props.transaction_id" class="bg-gray-50 rounded-lg p-3 mb-6">
                 <p class="text-xs text-gray-500">Transaction ID</p>
-                <p class="text-sm font-mono font-medium">{{ transaction_id }}</p>
+                <p class="text-sm font-mono font-medium">{{ props.transaction_id }}</p>
             </div>
 
             <div class="space-y-3">
-                <button @click="router.visit('/')"
+                <button @click="goHome"
                     class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all">
                     Go to Home
                 </button>
-                <button @click="router.visit('/dashboard')"
+                <button @click="viewDashboard"
                     class="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-all">
                     View Dashboard
                 </button>

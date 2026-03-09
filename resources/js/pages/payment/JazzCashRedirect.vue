@@ -1,18 +1,26 @@
 <script setup>
 import { onMounted } from 'vue'
 
+// Props from Inertia
 const props = defineProps({
-    paymentData: Object,
-    endpoint: String
+    paymentData: { type: Object, required: true },
+    endpoint: { type: String, required: true }
 })
-useForceTheme('light');
+
+// Optional: force light theme
+useForceTheme('light')
+
+console.log(props)
+// Auto-submit form safely
 onMounted(() => {
-    // Auto-submit the form
-    document.getElementById('jazzcash-form').submit()
+    const form = document.getElementById('jazzcash-form')
+    console.log(form);
+    if (form) form.submit() // safe for CSP
 })
 </script>
 
 <template>
+    <h1>HELLO</h1>
     <div class="min-h-screen bg-gray-50 flex items-center justify-center">
         <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
             <div class="mb-6">
@@ -23,7 +31,9 @@ onMounted(() => {
                     </div>
                 </div>
                 <h2 class="text-xl font-semibold text-gray-900 mb-2">Redirecting to JazzCash</h2>
-                <p class="text-sm text-gray-600">Please wait while we redirect you to secure payment page...</p>
+                <p class="text-sm text-gray-600">
+                    Please wait while we redirect you to secure payment page...
+                </p>
             </div>
 
             <div class="mb-4">
@@ -36,9 +46,9 @@ onMounted(() => {
                 <p class="mt-1">Do not close this window</p>
             </div>
 
-            <!-- Hidden form that auto-submits -->
-            <form id="jazzcash-form" :action="endpoint" method="POST">
-                <input v-for="(value, key) in paymentData" :key="key" type="hidden" :name="key" :value="value" />
+            <!-- Hidden form -->
+            <form id="jazzcash-form" :action="props.endpoint" method="POST">
+                <input v-for="(value, key) in props.paymentData" :key="key" type="hidden" :name="key" :value="value" />
             </form>
         </div>
     </div>

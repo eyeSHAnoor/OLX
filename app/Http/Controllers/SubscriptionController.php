@@ -171,6 +171,7 @@ class SubscriptionController extends Controller
                 'jazzcash_request' => $paymentData
             ])
         ]);
+
         
         // Return view with auto-submitting form
         return Inertia::render('payment/JazzCashRedirect', [

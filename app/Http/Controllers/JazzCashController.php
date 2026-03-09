@@ -30,13 +30,13 @@ class JazzCashController extends Controller
             // 000 means successful transaction
             if ($responseCode === '000') {
                 $this->jazzCashService->processSuccessfulPayment($request->all());
-                return Inertia::render('payment/Success', [
+                return Inertia::render('home/Success', [
                     'message' => 'Payment completed successfully!',
                     'transaction_id' => $request->input('pp_TxnRefNo')
                 ]);
             } else {
                 $this->jazzCashService->processFailedPayment($request->all());
-                return Inertia::render('payment/Failed', [
+                return Inertia::render('home/Failed', [
                     'message' => 'Payment failed. Please try again.',
                     'error_code' => $responseCode,
                     'error_message' => $request->input('pp_ResponseMessage')
@@ -45,7 +45,7 @@ class JazzCashController extends Controller
         }
         
         Log::error('JazzCash: Invalid hash in callback', $request->all());
-        return Inertia::render('payment/Failed', [
+        return Inertia::render('home/Failed', [
             'message' => 'Invalid payment response'
         ]);
     }
