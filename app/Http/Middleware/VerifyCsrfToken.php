@@ -13,7 +13,7 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         // JazzCash callback and IPN routes
-        'payment-status',
-        'payment-ipn',
+        '/payment-status',
+        '/payment-ipn',
     ];
 }
