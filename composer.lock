@@ -4,8 +4,74 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "20e22061bf8c19d8cb0cc52b09fc1bc2",
+    "content-hash": "5fb0f4246624ad9665bd7c8aaeaa950b",
     "packages": [
+        {
+            "name": "aticmatic/laravel-jazzcash",
+            "version": "v1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/AticMatic/JazzCash-Laravel.git",
+                "reference": "a8b750e99959b990b328535c8d449bd79d252f0f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/AticMatic/JazzCash-Laravel/zipball/a8b750e99959b990b328535c8d449bd79d252f0f",
+                "reference": "a8b750e99959b990b328535c8d449bd79d252f0f",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.0",
+                "illuminate/config": "^9.0|^10.0|^11.0|^12.0",
+                "illuminate/http": "^9.0|^10.0|^11.0|^12.0",
+                "illuminate/routing": "^9.0|^10.0|^11.0|^12.0",
+                "illuminate/support": "^9.0|^10.0|^11.0|^12.0",
+                "php": ">=8.0"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^7.0|^8.0|^9.0",
+                "phpunit/phpunit": "^9.0|^10.0|^11.0"
+            },
+            "type": "laravel-package",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "JazzCash": "Aticmatic\\JazzCash\\Facades\\JazzCash"
+                    }
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Aticmatic\\JazzCash\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Aticmatic",
+                    "email": "aticmatic.official@gmail.com"
+                }
+            ],
+            "description": "Laravel package for seamless integration with the JazzCash Mobile Wallet REST API (v2.0).",
+            "keywords": [
+                "api",
+                "gateway",
+                "jazzcash",
+                "laravel",
+                "mobile wallet",
+                "pakistan",
+                "payment",
+                "rest"
+            ],
+            "support": {
+                "issues": "https://github.com/AticMatic/JazzCash-Laravel/issues",
+                "source": "https://github.com/AticMatic/JazzCash-Laravel/tree/v1.0.1"
+            },
+            "time": "2025-05-13T06:11:39+00:00"
+        },
         {
             "name": "barryvdh/laravel-dompdf",
             "version": "v3.1.1",
@@ -9778,63 +9844,6 @@
                 "source": "https://github.com/webmozarts/assert/tree/1.12.1"
             },
             "time": "2025-10-29T15:56:20+00:00"
-        },
-        {
-            "name": "zfhassaan/jazzcash",
-            "version": "v1.0.6",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/zfhassaan/jazzcash.git",
-                "reference": "898db0bdb42ac8759c16fa7176a36943b6ae3eb2"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/zfhassaan/jazzcash/zipball/898db0bdb42ac8759c16fa7176a36943b6ae3eb2",
-                "reference": "898db0bdb42ac8759c16fa7176a36943b6ae3eb2",
-                "shasum": ""
-            },
-            "require": {
-                "guzzlehttp/guzzle": "^7.5",
-                "illuminate/support": "^9.0|^10.0|^11.0|^12.0",
-                "php": "^8.1"
-            },
-            "require-dev": {
-                "orchestra/testbench": "^8.0|^9.0|^10.0",
-                "phpunit/phpunit": "^10.0|^11.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "aliases": {
-                        "jazzcash": "zfhassaan\\JazzCash\\Facade\\JazzcashFacade"
-                    },
-                    "providers": [
-                        "zfhassaan\\jazzcash\\provider\\ServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "zfhassaan\\JazzCash\\": "src/",
-                    "zfhassaan\\jazzcash\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Hassaan Ali",
-                    "email": "zfhassaan@gmail.com"
-                }
-            ],
-            "description": "JazzCash Payment Gateway Package for Laravel 9",
-            "support": {
-                "issues": "https://github.com/zfhassaan/jazzcash/issues",
-                "source": "https://github.com/zfhassaan/jazzcash/tree/v1.0.6"
-            },
-            "time": "2025-12-27T15:30:51+00:00"
         }
     ],
     "packages-dev": [

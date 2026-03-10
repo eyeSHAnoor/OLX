@@ -1,25 +1,20 @@
 <?php
 
-declare(strict_types=1);
-
 return [
-    /*
-    |--------------------------------------------------------------------------
-    | JazzCash API Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configuration for JazzCash Payment Gateway integration.
-    | Set these values in your .env file.
-    |
-    */
-
-    'api_url' => env('JAZZCASH_PRODUCTION_URL', ''),
-    'sandbox_api_url' => env('JAZZCASH_SANDBOX_URL', ''),
-    'merchant_id' => env('JAZZCASH_MERCHANTID', ''),
+    'merchant_id' => env('JAZZCASH_MERCHANT_ID', ''),
     'password' => env('JAZZCASH_PASSWORD', ''),
-    'hash_key' => env('JAZZCASH_HASHKEY', ''),
-    'return_url' => env('JAZZCASH_RETURNURL', ''),
-    'mode' => env('JAZZCASH_PAYMENTMODE', 'sandbox'),
-    'mpin' => env('JAZZCASH_MPIN', ''),
-    'timezone' => env('JAZZCASH_TIMEZONE', 'Asia/Karachi'),
+    'integerity_salt' => env('JAZZCASH_INTEGERITY_SALT', ''),
+    
+    'return_url' => env('JAZZCASH_RETURN_URL', '/jazzcash/callback'),
+    'ipn_url' => env('JAZZCASH_IPN_URL', '/jazzcash/ipn'),
+    
+    'environment' => env('JAZZCASH_ENVIRONMENT', 'sandbox'),
+    
+    'endpoints' => [
+        'sandbox' => 'https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/',
+        'production' => 'https://payments.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/'
+    ],
+    
+    'currency' => 'PKR',
+    'language' => 'EN',
 ];
