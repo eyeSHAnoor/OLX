@@ -123,49 +123,46 @@ class JazzCashService
     public function verifyPaymentResponse(array $response)
     {
         $receivedHash = $response['pp_SecureHash'] ?? null;
+
         if (!$receivedHash) {
             Log::warning('JazzCash: No secure hash in response');
             return false;
         }
-        
-        // Extract all pp_ fields EXCEPT pp_SecureHash and ONLY those with values
+
         $ppFields = [];
+
         foreach ($response as $key => $value) {
-            if (str_starts_with(strtolower($key), 'pp_') && 
-                $key !== 'pp_SecureHash' && 
-                $value !== null && 
-                $value !== '') {
+            if (
+                str_starts_with(strtolower($key), 'pp_') &&
+                $key !== 'pp_SecureHash' &&
+                $value !== null &&
+                $value !== ''
+            ) {
                 $ppFields[$key] = $value;
             }
         }
-        
-        // Log what fields we're including
-        Log::debug('JazzCash Fields for Hash', [
-            'fields' => array_keys($ppFields),
-            'values' => $ppFields
-        ]);
-        
-        // Sort alphabetically by field name
+
         ksort($ppFields, SORT_STRING);
-        
-        // Create hash string: SALT + & + value1&value2&value3...
-        $concatenatedString = implode('&', $ppFields);
+
+        $concatenatedString = '';
+
+        foreach ($ppFields as $value) {
+            $concatenatedString .= $value . '&';
+        }
+
+        $concatenatedString = rtrim($concatenatedString, '&');
+
         $hashString = $this->integeritySalt . '&' . $concatenatedString;
-        
-        Log::debug('JazzCash Hash String for Verification', [
+
+        $calculatedHash = strtoupper(hash_hmac('sha256', $hashString, $this->integeritySalt));
+
+        Log::error('JazzCash Hash Debug', [
+            'received_hash' => $receivedHash,
+            'calculated_hash' => $calculatedHash,
             'hash_string' => $hashString
         ]);
-        
-        // Calculate hash
-        $calculatedHash = strtoupper(hash_hmac('sha256', $hashString, $this->integeritySalt));
-        
-        Log::info('JazzCash Hash Comparison', [
-            'received' => $receivedHash,
-            'calculated' => $calculatedHash,
-            'match' => $receivedHash === $calculatedHash
-        ]);
-        
-        return hash_equals($receivedHash, $calculatedHash);
+
+        return hash_equals(strtoupper($receivedHash), $calculatedHash);
     }
     
     /**
