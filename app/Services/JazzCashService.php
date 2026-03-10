@@ -30,9 +30,9 @@ class JazzCashService
     /**
      * Prepare payment request data for JazzCash
      */
-    public function preparePaymentRequest(Plan $plan, $user, $subscriptionId,$mobileNumber)
+    public function preparePaymentRequest(Plan $plan, $user, $subscriptionId, $mobileNumber)
     {
-        // Convert amount to paisa (multiply by 100) and pad to 12 digits
+        // Convert amount to paisa and pad to 12 digits
         $ppAmount = str_pad((int)($plan->price * 100), 12, "0", STR_PAD_LEFT);
 
         $ppTxnRefNo = 'T' . time() . rand(100, 999);
@@ -59,56 +59,47 @@ class JazzCashService
             'ppmpf_4' => $user->email,
             'ppmpf_5' => $user->name,
         ];
-        if ($mobileNumber) {
-            $data['pp_MobileNumber'] = $mobileNumber;
-        } else {
-            // For sandbox, use default test number
-            $data['pp_MobileNumber'] = '03123456789';
-        }
+
+        // Mobile number (sandbox default if empty)
+        $data['pp_MobileNumber'] = $mobileNumber ?: '03123456789';
+
+        // Calculate secure hash
         $data['pp_SecureHash'] = $this->calculateSecureHash($data);
 
         Log::info('JazzCash Payment Request Prepared', [
             'subscription_id' => $subscriptionId,
             'amount' => $plan->price,
-            'txn_ref' => $ppTxnRefNo
+            'txn_ref' => $ppTxnRefNo,
+            'hash' => $data['pp_SecureHash']
         ]);
 
         return $data;
     }
 
     /**
-     * Calculate secure hash for outgoing requests
+     * Corrected secure hash calculation
      */
     protected function calculateSecureHash(array $data)
     {
+        // Include all pp_ fields except pp_password and pp_securehash
         $ppFields = [];
         foreach ($data as $key => $value) {
-             // Check if key starts with pp_ (case insensitive) AND exclude both securehash and password
             $lowerKey = strtolower($key);
-            if (str_starts_with($lowerKey, 'pp_') && 
-                $lowerKey !== 'pp_securehash' && 
-                $lowerKey !== 'pp_password') {
-                $ppFields[$key] = $value;
+            if (str_starts_with($lowerKey, 'pp_') && $lowerKey !== 'pp_securehash' && $lowerKey !== 'pp_password') {
+                $ppFields[$key] = $value ?? '';
             }
         }
 
+        // Sort alphabetically by field name (ASCII order)
         ksort($ppFields, SORT_STRING);
 
-        $hashString = $this->integeritySalt;
-        foreach ($ppFields as $value) {
-            $hashString .= '&' . $value;
-        }
+        // Concatenate values only, prepend shared secret
+        $hashString = $this->integeritySalt . '&' . implode('&', $ppFields);
 
-        Log::error('JazzCash Request Hash String', [
-            'hash_string' => $hashString,
-            'fields' => array_keys($ppFields)
-        ]);
+        // HMAC-SHA256 using UTF-8 bytes
+        $calculatedHash = hash_hmac('sha256', $hashString, $this->integeritySalt);
 
-        // Apply encoding as per documentation
-        $utf8String = mb_convert_encoding($hashString, 'UTF-8');
-        $isoString = mb_convert_encoding($utf8String, 'ISO-8859-1');
-
-        return strtoupper(hash_hmac('sha256', $isoString, $this->integeritySalt));
+        return strtoupper($calculatedHash); // JazzCash expects uppercase hex
     }
 
     /**

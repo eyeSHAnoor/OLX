@@ -48,11 +48,6 @@ class JazzCashController extends Controller
                 'message' => 'Subscription not found'
             ]);
         }
-
-        // // Verify the response hash
-        // $isValid = $this->jazzCashService->verifyPaymentResponse($data);
-        // Log::debug('JazzCash Verification Result', ['isValid' => $isValid]);
-
         // if ($isValid) {
             $responseCode = $request->input('pp_ResponseCode');
 
