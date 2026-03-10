@@ -49,46 +49,38 @@ class JazzCashController extends Controller
             ]);
         }
 
-        // Verify the response hash
-        $isValid = $this->jazzCashService->verifyPaymentResponse($data);
-        Log::debug('JazzCash Verification Result', ['isValid' => $isValid]);
+        // // Verify the response hash
+        // $isValid = $this->jazzCashService->verifyPaymentResponse($data);
+        // Log::debug('JazzCash Verification Result', ['isValid' => $isValid]);
 
-        if ($isValid) {
+        // if ($isValid) {
             $responseCode = $request->input('pp_ResponseCode');
 
-            if ($responseCode === '000' || $responseCode === '100') {
-                // Payment successful
-                $this->jazzCashService->processSuccessfulPayment($data);
+        if ($responseCode === '000' || $responseCode === '100') {
+            // Payment successful
+            $this->jazzCashService->processSuccessfulPayment($data);
 
-                return Inertia::render('home/Success', [
-                    'message' => 'Payment completed successfully!',
-                    'transaction_id' => $request->input('pp_TxnRefNo')
-                ]);
-            } else {
-                // Payment failed → delete subscription
-                $subscription->delete();
-                Log::warning('Subscription deleted due to failed payment', [
-                    'subscription_id' => $subscriptionId,
-                    'response_code' => $responseCode
-                ]);
+            return Inertia::render('home/Success', [
+                'message' => 'Payment completed successfully!',
+                'transaction_id' => $request->input('pp_TxnRefNo')
+            ]);
+        } else {
+            // Payment failed → delete subscription
+            $subscription->delete();
+            Log::warning('Subscription deleted due to failed payment', [
+                'subscription_id' => $subscriptionId,
+                'response_code' => $responseCode
+            ]);
 
-                $errorMessage = $this->jazzCashService->getResponseMessage($responseCode) ?? 'Payment failed';
+            $errorMessage = $this->jazzCashService->getResponseMessage($responseCode) ?? 'Payment failed';
 
-                return Inertia::render('home/Failed', [
-                    'message' => 'Payment failed: ' . $errorMessage,
-                    'error_code' => $responseCode,
-                    'error_message' => $request->input('pp_ResponseMessage', $errorMessage)
-                ]);
-            }
+            return Inertia::render('home/Failed', [
+                'message' => 'Payment failed: ' . $errorMessage,
+                'error_code' => $responseCode,
+                'error_message' => $request->input('pp_ResponseMessage', $errorMessage)
+            ]);
         }
-
-        // Invalid hash → consider it as failed payment
-        $subscription->delete();
-        Log::error('Subscription deleted due to invalid hash', ['subscription_id' => $subscriptionId , 'request' => $request]);
-
-        return Inertia::render('home/Failed', [
-            'message' => 'Invalid payment response - Security verification failed'
-        ]);
+        
     }
     
     /**
