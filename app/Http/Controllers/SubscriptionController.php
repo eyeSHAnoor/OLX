@@ -164,7 +164,7 @@ class SubscriptionController extends Controller
             // Set required parameters
             $jazzcash->setAmount($plan->price * 100);
             $jazzcash->setBillReference('SUB-' . $subscription->id . '-' . time());
-            $jazzcash->setProductDescription('Subscription: ' . $plan->name);
+            $jazzcash->setProductDescription('Subscription done');
             
             // Optional: Set additional parameters if needed
             // $jazzcash->setEmail($user->email);
