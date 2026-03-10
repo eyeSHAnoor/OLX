@@ -59,14 +59,6 @@ class JazzCashController extends Controller
             if ($responseCode === '000' || $responseCode === '100') {
                 // Payment successful
                 $this->jazzCashService->processSuccessfulPayment($data);
-                $subscription->update([
-                    'payment_status' => 'completed',
-                    'transaction_id' => $txnRefNo,
-                    'payment_gateway' => 'jazzcash',
-                    'payment_data' => $data,
-                    'starts_at' => now(),
-                    'ends_at' => now()->addDays($subscription->plan->duration_days)
-                ]);
 
                 return Inertia::render('home/Success', [
                     'message' => 'Payment completed successfully!',
