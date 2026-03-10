@@ -11,8 +11,8 @@ return [
     'environment' => env('JAZZCASH_ENVIRONMENT', 'sandbox'),
     
     'endpoints' => [
-        'sandbox' => 'https://sandbox.jazzcash.com.pk/ApplicationAPI/API/Payment/DoMWalletTransaction',
-        'production' => 'https://payments.jazzcash.com.pk/ApplicationAPI/API/Payment/DoMWalletTransaction',
+        'sandbox' => 'https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/',
+        'production' => 'https://payments.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/'
     ],
     
     'currency' => 'PKR',
