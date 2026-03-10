@@ -22,7 +22,7 @@ class JazzCashController extends Controller
     public function callback(Request $request)
     {
         $data = $request->all();
-        Log::info('JazzCash Callback received', $data);
+        Log::error('JazzCash Callback received', $request);
         
         // Debug log
         Log::debug('JazzCash Callback Full Data', [
