@@ -71,6 +71,9 @@ class JazzCashService
         return $data;
     }
 
+    /**
+     * Calculate secure hash for outgoing requests
+     */
     protected function calculateSecureHash(array $data)
     {
         $ppFields = [];
@@ -87,72 +90,97 @@ class JazzCashService
             $hashString .= '&' . $value;
         }
 
-        Log::debug('JazzCash Pre-Hash String', [
+        Log::error('JazzCash Request Hash String', [
             'hash_string' => $hashString,
             'fields' => array_keys($ppFields)
         ]);
 
-        return strtoupper(hash_hmac('sha256', $hashString, $this->integeritySalt));
+        // Apply encoding as per documentation
+        $utf8String = mb_convert_encoding($hashString, 'UTF-8');
+        $isoString = mb_convert_encoding($utf8String, 'ISO-8859-1');
+
+        return strtoupper(hash_hmac('sha256', $isoString, $this->integeritySalt));
     }
 
+    /**
+     * Verify hash from JazzCash callback response
+     */
     public function verifyPaymentResponse(array $response)
     {
         $receivedHash = $response['pp_SecureHash'] ?? null;
-        if (!$receivedHash) return false;
+        if (!$receivedHash) {
+            Log::error('JazzCash: No secure hash in response');
+            return false;
+        }
 
-        // Get ALL PP fields including empty ones
+        // Get ALL PP fields including empty ones (case-insensitive)
         $ppFields = [];
         foreach ($response as $key => $value) {
-            if (str_starts_with(strtolower($key), 'pp_') && $key !== 'pp_SecureHash') {
-                // Include even empty values
-                $ppFields[$key] = $value ?? '';
+            if (str_starts_with(strtolower($key), 'pp_') && strtolower($key) !== 'pp_securehash') {
+                // Include even empty values, convert to string
+                $ppFields[$key] = (string)($value ?? '');
             }
         }
 
-        // ADD THIS DEBUG HERE - to see what JazzCash sent
-         Log::debug('JazzCash Fields DEBUG', [
-            'fields_with_values' => $ppFields
+        // Log fields received from JazzCash
+        Log::error('JazzCash Response Fields', [
+            'fields_with_values' => $ppFields,
+            'field_count' => count($ppFields)
         ]);
 
-        // Sort alphabetically by key
+        // Sort alphabetically by key (case-sensitive as per original keys)
         ksort($ppFields, SORT_STRING);
 
-        // Build string with proper format: SALT&value1&value2&value3...
+        // Build hash string: SALT&value1&value2&value3...
         $hashString = $this->integeritySalt;
         foreach ($ppFields as $value) {
-            $hashString .= '&' . ($value ?? '');
+            $hashString .= '&' . $value;
         }
 
-        // Convert to UTF-8 bytes then ISO-8859-1
+        // Apply exact same encoding as calculateSecureHash
         $utf8String = mb_convert_encoding($hashString, 'UTF-8');
         $isoString = mb_convert_encoding($utf8String, 'ISO-8859-1');
 
         // Calculate hash
         $calculatedHash = strtoupper(hash_hmac('sha256', $isoString, $this->integeritySalt));
 
-        Log::error('JazzCash Hash Debug', [
+        // Detailed logging for debugging
+        Log::error('JazzCash Hash Verification', [
             'received_hash' => $receivedHash,
             'calculated_hash' => $calculatedHash,
             'hash_string' => $hashString,
             'fields_count' => count($ppFields),
-            'fields' => array_keys($ppFields)
+            'fields_list' => array_keys($ppFields),
+            'match' => hash_equals($receivedHash, $calculatedHash) ? 'YES' : 'NO'
         ]);
 
         return hash_equals($receivedHash, $calculatedHash);
     }
 
+    /**
+     * Process successful payment from callback
+     */
     public function processSuccessfulPayment($response)
     {
         $subscriptionId = $response['ppmpf_1'] ?? null;
         $txnRefNo = $response['pp_TxnRefNo'] ?? null;
         $responseCode = $response['pp_ResponseCode'] ?? null;
 
-        if (!$subscriptionId) return false;
+        if (!$subscriptionId) {
+            Log::error('JazzCash: No subscription ID in successful payment response');
+            return false;
+        }
 
         $subscription = Subscription::find($subscriptionId);
-        if (!$subscription) return false;
+        if (!$subscription) {
+            Log::error('JazzCash: Subscription not found for ID: ' . $subscriptionId);
+            return false;
+        }
 
-        if ($subscription->payment_status === 'completed') return true;
+        if ($subscription->payment_status === 'completed') {
+            Log::info('JazzCash: Payment already completed for subscription: ' . $subscriptionId);
+            return true;
+        }
 
         $subscription->update([
             'payment_status' => 'completed',
@@ -183,13 +211,19 @@ class JazzCashService
         return true;
     }
 
+    /**
+     * Process failed payment from callback
+     */
     public function processFailedPayment($response)
     {
         $subscriptionId = $response['ppmpf_1'] ?? null;
         $responseCode = $response['pp_ResponseCode'] ?? 'unknown';
         $responseMessage = $response['pp_ResponseMessage'] ?? 'Unknown error';
 
-        if (!$subscriptionId) return false;
+        if (!$subscriptionId) {
+            Log::error('JazzCash: No subscription ID in failed payment response');
+            return false;
+        }
 
         $subscription = Subscription::find($subscriptionId);
 
@@ -217,6 +251,9 @@ class JazzCashService
         return true;
     }
 
+    /**
+     * Get human-readable response message for response code
+     */
     public function getResponseMessage($code)
     {
         $messages = [
