@@ -161,7 +161,7 @@ class SubscriptionController extends Controller
             $plan, 
             $user, 
             $subscription->id,
-            $user->phone
+            $user->phone || '03123456789'
         );
 
         Log::info($paymentData);
