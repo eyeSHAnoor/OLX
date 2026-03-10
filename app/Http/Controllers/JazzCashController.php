@@ -84,7 +84,7 @@ class JazzCashController extends Controller
 
         // Invalid hash → consider it as failed payment
         $subscription->delete();
-        Log::error('Subscription deleted due to invalid hash', ['subscription_id' => $subscriptionId]);
+        Log::error('Subscription deleted due to invalid hash', ['subscription_id' => $subscriptionId , 'responseCode' => $request->input('pp_ResponseCode')]);
 
         return Inertia::render('home/Failed', [
             'message' => 'Invalid payment response - Security verification failed'
