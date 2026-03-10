@@ -125,10 +125,15 @@ class JazzCashService
 
         // Get ALL PP fields including empty ones (case-insensitive)
         $ppFields = [];
-        foreach ($response as $key => $value) {
+         foreach ($response as $key => $value) {
             if (str_starts_with(strtolower($key), 'pp_') && strtolower($key) !== 'pp_securehash') {
-                // Include even empty values, convert to string
-                $ppFields[$key] = (string)($value ?? '');
+                // FIX: Pad amount to 12 digits
+                if (strtolower($key) === 'pp_amount') {
+                    // JazzCash returns unpadded amount, but hash needs 12-digit padded
+                    $ppFields[$key] = str_pad((string)($value ?? ''), 12, "0", STR_PAD_LEFT);
+                } else {
+                    $ppFields[$key] = (string)($value ?? '');
+                }
             }
         }
 
