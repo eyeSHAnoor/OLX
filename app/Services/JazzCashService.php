@@ -78,7 +78,9 @@ class JazzCashService
     {
         $ppFields = [];
         foreach ($data as $key => $value) {
-            if (str_starts_with(strtolower($key), 'pp_') && $key !== 'pp_SecureHash') {
+                if (str_starts_with(strtolower($key), 'pp_') && 
+                $key !== 'pp_SecureHash' && 
+                strtolower($key) !== 'pp_password') {  // ADD THIS
                 $ppFields[$key] = $value;
             }
         }
