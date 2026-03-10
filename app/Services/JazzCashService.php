@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Subscription;
 use App\Models\Plan;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class JazzCashService
@@ -29,33 +28,36 @@ class JazzCashService
     }
     
     /**
-     * Prepare payment request data
+     * Prepare payment request data for JazzCash
      */
     public function preparePaymentRequest(Plan $plan, $user, $subscriptionId)
     {
+        // Convert amount to paisa (multiply by 100) and pad to 12 digits with leading zeros
         $ppAmount = str_pad((int)($plan->price * 100), 12, "0", STR_PAD_LEFT);
+        
+        // Generate unique transaction reference
         $ppTxnRefNo = 'T' . time() . rand(100, 999);
         $ppTxnDateTime = now()->format('YmdHis');
         
+        // Prepare all required fields as per JazzCash documentation
         $data = [
             'pp_Version' => '2.0',
             'pp_TxnType' => 'MWALLET',
-            'pp_Language' => config('jazzcash.language'),
+            'pp_Language' => 'EN',
             'pp_MerchantID' => $this->merchantId,
-            'pp_SubMerchantID' => '',
             'pp_Password' => $this->password,
             'pp_TxnRefNo' => $ppTxnRefNo,
             'pp_TxnDateTime' => $ppTxnDateTime,
             'pp_TxnExpiryDateTime' => now()->addHours(2)->format('YmdHis'),
             'pp_Amount' => $ppAmount,
-            'pp_TxnCurrency' => config('jazzcash.currency'),
+            'pp_TxnCurrency' => 'PKR',
             'pp_TxnDesc' => 'Subscription: ' . $plan->name,
+            'pp_Description' => 'Subscription: ' . $plan->name, // ADDED: Required field
             'pp_BillReference' => 'SUB' . $subscriptionId,
             'pp_ReturnURL' => $this->returnUrl,
-            'pp_SecureHash' => '', // Will be calculated
-            'ppmpf_1' => $subscriptionId,
-            'ppmpf_2' => $user->id,
-            'ppmpf_3' => $plan->id,
+            'ppmpf_1' => (string)$subscriptionId,
+            'ppmpf_2' => (string)$user->id,
+            'ppmpf_3' => (string)$plan->id,
             'ppmpf_4' => $user->email,
             'ppmpf_5' => $user->name,
         ];
@@ -63,67 +65,107 @@ class JazzCashService
         // Calculate secure hash
         $data['pp_SecureHash'] = $this->calculateSecureHash($data);
         
+        Log::info('JazzCash Payment Request Prepared', [
+            'subscription_id' => $subscriptionId,
+            'amount' => $plan->price,
+            'txn_ref' => $ppTxnRefNo
+        ]);
+        
         return $data;
     }
     
     /**
-     * Calculate secure hash for JazzCash
+     * Calculate secure hash for JazzCash according to documentation
+     * 
+     * The SHA-256 HMAC calculation includes all PP fields
+     * All transaction fields are concatenated in alphabetical order with '&' after every field except the last field
+     * Shared Secret is PREPENDED to this concatenated string
+     * String is converted to UTF-8 then ISO-8859-1
+     * Hashed using HMAC-SHA256 with UTF-8 encoded Shared Secret as key
+     * Result is converted to hexadecimal
      */
-    /**
-     * Calculate secure hash for JazzCash
-     * Following JazzCash v2.0 specification exactly
-     */
-    protected function calculateSecureHash($data)
+    protected function calculateSecureHash(array $data)
     {
-        // Remove pp_SecureHash from the data for hash calculation
-        $hashData = $data;
-        unset($hashData['pp_SecureHash']);
-        
-        // Sort fields alphabetically as per JazzCash requirements
-        ksort($hashData);
-        
-        // Create hash string: Integrity Salt + & + all values joined with & + Integrity Salt
-        $hashString = $this->integeritySalt . '&';
-        
-        foreach ($hashData as $key => $value) {
-            $hashString .= $value . '&';
+        // 1. Get all fields starting with 'pp_' (case insensitive)
+        $ppFields = [];
+        foreach ($data as $key => $value) {
+            if (str_starts_with(strtolower($key), 'pp_') && $key !== 'pp_SecureHash') {
+                $ppFields[$key] = $value;
+            }
         }
         
-        $hashString .= $this->integeritySalt;
+        // 2. Sort fields in ascending alphabetical order by field name
+        ksort($ppFields, SORT_STRING);
         
-        // Remove trailing & if any (though our method shouldn't create one)
-        $hashString = rtrim($hashString, '&');
+        // 3. Concatenate values with '&' separator
+        $concatenatedString = '';
+        foreach ($ppFields as $value) {
+            $concatenatedString .= $value . '&';
+        }
+        // Remove trailing '&' (last field doesn't have & after it)
+        $concatenatedString = rtrim($concatenatedString, '&');
         
-        // Generate HMAC SHA-256 hash
+        // 4. PREPEND the shared secret (integeritySalt) with '&'
+        $hashString = $this->integeritySalt . '&' . $concatenatedString;
+        
+        Log::debug('JazzCash Pre-Hash String', [
+            'hash_string' => $hashString,
+            'fields' => array_keys($ppFields)
+        ]);
+        
+        // 5. Convert to UTF-8 bytes then to ISO-8859-1 encoding
         $hash = hash_hmac('sha256', $hashString, $this->integeritySalt);
         
-        // Convert to uppercase as JazzCash expects
+        // 7. Convert to uppercase
         return strtoupper($hash);
     }
-    
-    /**
-     * Verify payment response
-     */
-    public function verifyPaymentResponse($response)
+
+    public function verifyPaymentResponse(array $response)
     {
-        if (!isset($response['pp_SecureHash'])) {
+        $receivedHash = $response['pp_SecureHash'] ?? null;
+        if (!$receivedHash) {
+            Log::warning('JazzCash: No secure hash in response');
             return false;
         }
         
-        $receivedHash = $response['pp_SecureHash'];
+        // Extract all pp_ fields EXCEPT pp_SecureHash and ONLY those with values
+        $ppFields = [];
+        foreach ($response as $key => $value) {
+            if (str_starts_with(strtolower($key), 'pp_') && 
+                $key !== 'pp_SecureHash' && 
+                $value !== null && 
+                $value !== '') {
+                $ppFields[$key] = $value;
+            }
+        }
         
-        // Recalculate hash to verify
-        $hashString = $this->integeritySalt . '&' .
-                     $response['pp_TxnRefNo'] . '&' .
-                     $response['pp_ResponseCode'] . '&' .
-                     $response['pp_ResponseMessage'] . '&' .
-                     $response['pp_AuthCode'] . '&' .
-                     $response['pp_RetreivalReferenceNo'] . '&' .
-                     $response['pp_SecureHash'];
+        // Log what fields we're including
+        Log::debug('JazzCash Fields for Hash', [
+            'fields' => array_keys($ppFields),
+            'values' => $ppFields
+        ]);
         
-        $calculatedHash = hash_hmac('sha256', $hashString, $this->integeritySalt);
+        // Sort alphabetically by field name
+        ksort($ppFields, SORT_STRING);
         
-        return $receivedHash === $calculatedHash;
+        // Create hash string: SALT + & + value1&value2&value3...
+        $concatenatedString = implode('&', $ppFields);
+        $hashString = $this->integeritySalt . '&' . $concatenatedString;
+        
+        Log::debug('JazzCash Hash String for Verification', [
+            'hash_string' => $hashString
+        ]);
+        
+        // Calculate hash
+        $calculatedHash = strtoupper(hash_hmac('sha256', $hashString, $this->integeritySalt));
+        
+        Log::info('JazzCash Hash Comparison', [
+            'received' => $receivedHash,
+            'calculated' => $calculatedHash,
+            'match' => $receivedHash === $calculatedHash
+        ]);
+        
+        return hash_equals($receivedHash, $calculatedHash);
     }
     
     /**
@@ -133,7 +175,7 @@ class JazzCashService
     {
         $subscriptionId = $response['ppmpf_1'] ?? null;
         $txnRefNo = $response['pp_TxnRefNo'] ?? null;
-        $authCode = $response['pp_AuthCode'] ?? null;
+        $responseCode = $response['pp_ResponseCode'] ?? null;
         $amount = $response['pp_Amount'] ?? 0;
         
         if (!$subscriptionId) {
@@ -148,27 +190,42 @@ class JazzCashService
             return false;
         }
         
+        // Check if already processed to avoid duplicates
+        if ($subscription->payment_status === 'completed') {
+            Log::warning('JazzCash: Subscription already completed', [
+                'subscription_id' => $subscriptionId
+            ]);
+            return true;
+        }
+        
         // Update subscription
         $subscription->update([
             'payment_status' => 'completed',
             'transaction_id' => $txnRefNo,
             'payment_gateway' => 'jazzcash',
             'payment_data' => array_merge($subscription->payment_data ?? [], [
-                'auth_code' => $authCode,
-                'response' => $response
+                'auth_code' => $response['pp_AuthCode'] ?? null,
+                'retrieval_ref_no' => $response['pp_RetreivalReferenceNo'] ?? null,
+                'response_code' => $responseCode,
+                'response_message' => $response['pp_ResponseMessage'] ?? null,
+                'bank_id' => $response['pp_BankID'] ?? null,
+                'full_response' => $response
             ]),
             'starts_at' => now(),
             'ends_at' => now()->addDays($subscription->plan->duration_days),
         ]);
         
-        // Update user status if needed
-        $subscription->user->update([
-            'status' => 'active'
-        ]);
+        // Update user status
+        if ($subscription->user) {
+            $subscription->user->update([
+                'subscription_status' => 'active'
+            ]);
+        }
         
-        Log::info('JazzCash: Payment successful', [
+        Log::info('JazzCash: Payment processed successfully', [
             'subscription_id' => $subscriptionId,
-            'txn_ref_no' => $txnRefNo
+            'txn_ref_no' => $txnRefNo,
+            'response_code' => $responseCode
         ]);
         
         return true;
@@ -180,6 +237,8 @@ class JazzCashService
     public function processFailedPayment($response)
     {
         $subscriptionId = $response['ppmpf_1'] ?? null;
+        $responseCode = $response['pp_ResponseCode'] ?? 'unknown';
+        $responseMessage = $response['pp_ResponseMessage'] ?? 'Unknown error';
         
         if (!$subscriptionId) {
             Log::error('JazzCash: No subscription ID in failed response', $response);
@@ -192,16 +251,69 @@ class JazzCashService
             $subscription->update([
                 'payment_status' => 'failed',
                 'payment_data' => array_merge($subscription->payment_data ?? [], [
-                    'error_response' => $response
+                    'error_response' => $response,
+                    'error_code' => $responseCode,
+                    'error_message' => $responseMessage,
+                    'failed_at' => now()->toDateTimeString()
                 ])
             ]);
             
             Log::warning('JazzCash: Payment failed', [
                 'subscription_id' => $subscriptionId,
-                'response_code' => $response['pp_ResponseCode'] ?? 'unknown'
+                'response_code' => $responseCode,
+                'response_message' => $responseMessage
+            ]);
+        } else {
+            Log::error('JazzCash: Subscription not found for failed payment', [
+                'subscription_id' => $subscriptionId
             ]);
         }
         
         return true;
+    }
+    
+    /**
+     * Get response message based on response code
+     */
+    public function getResponseMessage($code)
+    {
+        $messages = [
+            '000' => 'Transaction Successful',
+            '001' => 'Transaction Declined',
+            '002' => 'Transaction Reversed',
+            '003' => 'Transaction Pending',
+            '004' => 'Invalid Amount',
+            '005' => 'Invalid Merchant ID',
+            '006' => 'Invalid Transaction Reference',
+            '007' => 'Invalid Date/Time',
+            '008' => 'Invalid Currency',
+            '009' => 'Invalid Description',
+            '010' => 'Invalid Return URL',
+            '011' => 'Invalid Hash',
+            '012' => 'Duplicate Transaction',
+            '013' => 'Transaction Not Found',
+            '014' => 'Account Blocked',
+            '015' => 'Insufficient Balance',
+            '016' => 'Invalid Account',
+            '017' => 'Transaction Expired',
+            '018' => 'Invalid Response Code',
+            '019' => 'Invalid Secure Hash',
+            '020' => 'Invalid IP',
+            '100' => 'Payment Successful',
+            '101' => 'Payment Pending',
+            '102' => 'Payment Failed',
+            '103' => 'Payment Cancelled',
+            '104' => 'Payment Expired',
+            '105' => 'Payment Declined by Bank',
+            '106' => 'Payment Declined by JazzCash',
+            '107' => 'Invalid Payment Method',
+            '108' => 'Mobile Account Not Active',
+            '109' => 'Mobile Number Not Registered',
+            '110' => 'Invalid Description',
+            '111' => 'Invalid Amount Format',
+            '112' => 'Invalid Bill Reference',
+        ];
+        
+        return $messages[$code] ?? 'Unknown Response Code: ' . $code;
     }
 }

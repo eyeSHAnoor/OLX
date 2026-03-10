@@ -13,6 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__ . '/../routes/web.php',
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
+        then: function () {
+            // Register jazzcash routes with NO middleware
+            Route::middleware([]) // Empty array = no middleware
+                ->group(base_path('routes/jazzcash.php'));
+        }
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);

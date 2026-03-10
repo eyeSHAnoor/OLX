@@ -21,8 +21,11 @@ Route::post('/set-city', function (\Illuminate\Http\Request $request) {
     return back();
 })->name('set.city');
 
-Route::post('/payment-status', [App\Http\Controllers\JazzCashController::class, 'callback']);
-Route::post('/payment-ipn', [App\Http\Controllers\JazzCashController::class, 'ipn']);
+// Route::match(['get', 'post'],'/payment-status', [App\Http\Controllers\JazzCashController::class, 'callback']);
+// Route::post('/payment-ipn', [App\Http\Controllers\JazzCashController::class, 'ipn']);
+
+
+
 
 Route::get('/artisan-scheduler', function () {
     \Illuminate\Support\Facades\Artisan::call('schedule:run');

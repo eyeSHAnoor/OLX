@@ -21,32 +21,65 @@ class JazzCashController extends Controller
      */
     public function callback(Request $request)
     {
-        Log::info('JazzCash Callback received', $request->all());
+        $data = $request->all();
+        Log::info('JazzCash Callback received', $data);
+        
+        // ADD THIS DEBUG LOG
+        Log::debug('JazzCash Callback Full Data', [
+            'all' => $data,
+            'secure_hash' => $data['pp_SecureHash'] ?? 'missing'
+        ]);
         
         // Verify the response
-        if ($this->jazzCashService->verifyPaymentResponse($request->all())) {
+        $isValid = $this->jazzCashService->verifyPaymentResponse($data);
+        
+        // ADD THIS DEBUG LOG
+        Log::debug('JazzCash Verification Result', ['isValid' => $isValid]);
+        
+        if ($isValid) {
             $responseCode = $request->input('pp_ResponseCode');
             
-            // 000 means successful transaction
-            if ($responseCode === '000') {
-                $this->jazzCashService->processSuccessfulPayment($request->all());
+            if ($responseCode === '000' || $responseCode === '100') {
+                $this->jazzCashService->processSuccessfulPayment($data);
+                
+                // Check if the Vue component exists
+                if (!file_exists(resource_path('js/pages/home/Success.vue'))) {
+                    Log::error('Success.vue component not found');
+                    return response()->json(['error' => 'Success page not found'], 500);
+                }
+                
                 return Inertia::render('home/Success', [
                     'message' => 'Payment completed successfully!',
                     'transaction_id' => $request->input('pp_TxnRefNo')
                 ]);
             } else {
-                $this->jazzCashService->processFailedPayment($request->all());
+                $this->jazzCashService->processFailedPayment($data);
+                $errorMessage = $this->jazzCashService->getResponseMessage($responseCode);
+                
+                // Check if the Vue component exists
+                if (!file_exists(resource_path('js/pages/home/Failed.vue'))) {
+                    Log::error('Failed.vue component not found');
+                    return response()->json(['error' => 'Failed page not found'], 500);
+                }
+                
                 return Inertia::render('home/Failed', [
-                    'message' => 'Payment failed. Please try again.',
+                    'message' => 'Payment failed: ' . $errorMessage,
                     'error_code' => $responseCode,
-                    'error_message' => $request->input('pp_ResponseMessage')
+                    'error_message' => $request->input('pp_ResponseMessage', $errorMessage)
                 ]);
             }
         }
         
-        Log::error('JazzCash: Invalid hash in callback', $request->all());
+        Log::error('JazzCash: Invalid hash in callback', $data);
+        
+        // Check if the Vue component exists
+        if (!file_exists(resource_path('js/pages/home/Failed.vue'))) {
+            Log::error('Failed.vue component not found');
+            return response()->json(['error' => 'Failed page not found'], 500);
+        }
+        
         return Inertia::render('home/Failed', [
-            'message' => 'Invalid payment response'
+            'message' => 'Invalid payment response - Security verification failed'
         ]);
     }
     

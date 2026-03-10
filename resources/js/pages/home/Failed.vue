@@ -1,46 +1,33 @@
-<script setup>
-import { router } from '@inertiajs/vue3'
-
-const props = defineProps({
-    message: { type: String, required: true },
-    error_code: { type: String, default: '' },
-    error_message: { type: String, default: '' }
-})
-
-useForceTheme('light')
-
-// Router actions
-const goToSubscriptions = () => router.visit('/subscriptions')
-const contactSupport = () => router.visit('/contact')
-</script>
-
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
-            <div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <div class="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center">
-                    <Icon icon="mdi:close" class="text-4xl text-white" />
-                </div>
-            </div>
-
-            <h1 class="text-2xl font-bold text-gray-900 mb-2">Payment Failed</h1>
-            <p class="text-gray-600 mb-4">{{ props.message }}</p>
-
-            <div v-if="props.error_code" class="bg-red-50 rounded-lg p-3 mb-6">
-                <p class="text-xs text-red-500 mb-1">Error Code: {{ props.error_code }}</p>
-                <p class="text-sm text-red-600">{{ props.error_message }}</p>
-            </div>
-
-            <div class="space-y-3">
-                <button @click="goToSubscriptions"
-                    class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all">
+    <div class="min-h-screen flex items-center justify-center bg-gray-50">
+        <div class="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
+            <div class="text-center">
+                <svg class="mx-auto h-16 w-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+                <h2 class="mt-4 text-2xl font-bold text-gray-900">Payment Failed</h2>
+                <p class="mt-2 text-gray-600">{{ message }}</p>
+                <p v-if="error_code" class="mt-1 text-sm text-red-500">Error Code: {{ error_code }}</p>
+                <p v-if="error_message" class="mt-1 text-sm text-gray-500">{{ error_message }}</p>
+                <button @click="tryAgain" class="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                     Try Again
-                </button>
-                <button @click="contactSupport"
-                    class="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-all">
-                    Contact Support
                 </button>
             </div>
         </div>
     </div>
 </template>
+
+<script setup>
+import { router } from '@inertiajs/vue3'
+
+defineProps({
+    message: String,
+    error_code: String,
+    error_message: String
+})
+
+const tryAgain = () => {
+    router.get('/subscribe') // Adjust this to your subscription page
+}
+</script>

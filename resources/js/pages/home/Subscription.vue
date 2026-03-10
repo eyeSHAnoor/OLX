@@ -175,7 +175,7 @@ const canSubscribe = computed(() => {
 
             <div class="relative mb-2">
                 <span class="text-[10px] font-medium text-blue-600 uppercase tracking-wider">Welcome back, {{ user?.name
-                }}!</span>
+                    }}!</span>
             </div>
 
             <h1
@@ -273,7 +273,7 @@ const canSubscribe = computed(() => {
                                     <h3 class="text-base font-semibold text-gray-900 mb-1">{{ plan.name }}</h3>
                                     <div class="flex items-baseline">
                                         <span class="text-xl font-bold text-gray-900">{{ formatPrice(plan.price)
-                                        }}</span>
+                                            }}</span>
                                         <span class="text-[10px] text-gray-500 ml-1">/{{ plan.duration_days }}d</span>
                                     </div>
 
@@ -456,39 +456,6 @@ const canSubscribe = computed(() => {
                                                 class="text-emerald-500">Cash</span></span>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </transition>
-
-                <!-- Redirecting Page -->
-                <transition mode="out-in" enter-active-class="transition duration-500 ease-out"
-                    enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100">
-                    <div v-if="isRedirecting" class="max-w-md mx-auto">
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden p-8 text-center">
-                            <div class="mb-6">
-                                <div class="w-24 h-24 mx-auto mb-4 relative">
-                                    <div class="absolute inset-0 bg-emerald-500 rounded-full opacity-20 animate-ping">
-                                    </div>
-                                    <div
-                                        class="relative w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center">
-                                        <Icon icon="mdi:cash" class="text-4xl text-white" />
-                                    </div>
-                                </div>
-                                <h2 class="text-xl font-semibold text-gray-900 mb-2">Redirecting to JazzCash</h2>
-                                <p class="text-sm text-gray-600">Please wait while we redirect you to the secure payment
-                                    page...</p>
-                            </div>
-
-                            <div class="mb-4">
-                                <div
-                                    class="animate-spin w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto">
-                                </div>
-                            </div>
-
-                            <div class="text-xs text-gray-500 space-y-2">
-                                <p>You are being redirected to JazzCash payment gateway</p>
-                                <p class="font-medium text-emerald-600">Do not close this window</p>
                             </div>
                         </div>
                     </div>

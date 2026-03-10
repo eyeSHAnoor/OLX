@@ -1,12 +1,12 @@
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
+import i18n from 'laravel-vue-i18n/vite';
 import path from 'path';
-import { defineConfig } from 'vite';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
 import DefineOptions from 'unplugin-vue-define-options/vite';
-import i18n from 'laravel-vue-i18n/vite';
+import { defineConfig } from 'vite';
 import run from 'vite-plugin-run';
 
 export default defineConfig({
@@ -87,6 +87,7 @@ export default defineConfig({
     },
 
     server: {
+        https: true,
         host: true,
         port: 5173,
         watch: {
@@ -94,7 +95,7 @@ export default defineConfig({
         },
         hmr: {
             host: 'localhost',
-            port: 5173
-        }
-    }
+            port: 5173,
+        },
+    },
 });

@@ -178,5 +178,9 @@ class SubscriptionController extends Controller
             'paymentData' => $paymentData,
             'endpoint' => config('jazzcash.endpoints.' . config('jazzcash.environment'))
         ]);
+        // return view('payment.redirect', [
+        // 'endpoint' => config('jazzcash.endpoints.' . config('jazzcash.environment')),
+        // 'data' => $paymentData
+        // ]);
     }
 }

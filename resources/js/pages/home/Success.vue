@@ -1,45 +1,30 @@
-<script setup>
-import { router } from '@inertiajs/vue3'
-
-const props = defineProps({
-    message: { type: String, required: true },
-    transaction_id: { type: String, default: '' }
-})
-
-useForceTheme('light')
-
-// Router actions
-const goHome = () => router.visit('/')
-const viewDashboard = () => router.visit('/dashboard')
-</script>
-
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
-            <div class="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <div class="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center animate-bounce">
-                    <Icon icon="mdi:check" class="text-4xl text-white" />
-                </div>
-            </div>
-
-            <h1 class="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
-            <p class="text-gray-600 mb-4">{{ props.message }}</p>
-
-            <div v-if="props.transaction_id" class="bg-gray-50 rounded-lg p-3 mb-6">
-                <p class="text-xs text-gray-500">Transaction ID</p>
-                <p class="text-sm font-mono font-medium">{{ props.transaction_id }}</p>
-            </div>
-
-            <div class="space-y-3">
-                <button @click="goHome"
-                    class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all">
-                    Go to Home
-                </button>
-                <button @click="viewDashboard"
-                    class="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-all">
-                    View Dashboard
+    <div class="min-h-screen flex items-center justify-center bg-gray-50">
+        <div class="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
+            <div class="text-center">
+                <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <h2 class="mt-4 text-2xl font-bold text-gray-900">Payment Successful!</h2>
+                <p class="mt-2 text-gray-600">{{ message }}</p>
+                <p class="mt-1 text-sm text-gray-500">Transaction ID: {{ transaction_id }}</p>
+                <button @click="goHome" class="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Go to Dashboard
                 </button>
             </div>
         </div>
     </div>
 </template>
+
+<script setup>
+import { router } from '@inertiajs/vue3'
+
+defineProps({
+    message: String,
+    transaction_id: String
+})
+
+const goHome = () => {
+    router.get('/dashboard')
+}
+</script>
