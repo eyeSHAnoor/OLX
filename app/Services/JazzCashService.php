@@ -100,29 +100,40 @@ class JazzCashService
         $receivedHash = $response['pp_SecureHash'] ?? null;
         if (!$receivedHash) return false;
 
+        // Get ALL PP fields including empty ones
         $ppFields = [];
         foreach ($response as $key => $value) {
             if (str_starts_with(strtolower($key), 'pp_') && $key !== 'pp_SecureHash') {
-                $ppFields[$key] = $value;
+                // Include even empty values
+                $ppFields[$key] = $value ?? '';
             }
         }
 
+        // Sort alphabetically by key
         ksort($ppFields, SORT_STRING);
 
+        // Build string with proper format: SALT&value1&value2&value3...
         $hashString = $this->integeritySalt;
         foreach ($ppFields as $value) {
-            $hashString .= '&' . $value;
+            $hashString .= '&' . ($value ?? '');
         }
 
-        $calculatedHash = strtoupper(hash_hmac('sha256', $hashString, $this->integeritySalt));
+        // Convert to UTF-8 bytes then ISO-8859-1
+        $utf8String = mb_convert_encoding($hashString, 'UTF-8');
+        $isoString = mb_convert_encoding($utf8String, 'ISO-8859-1');
 
-        Log::debug('JazzCash Hash Debug', [
+        // Calculate hash
+        $calculatedHash = strtoupper(hash_hmac('sha256', $isoString, $this->integeritySalt));
+
+        Log::error('JazzCash Hash Debug', [
             'received_hash' => $receivedHash,
             'calculated_hash' => $calculatedHash,
-            'hash_string' => $hashString
+            'hash_string' => $hashString,
+            'fields_count' => count($ppFields),
+            'fields' => array_keys($ppFields)
         ]);
 
-        return hash_equals(strtoupper($receivedHash), $calculatedHash);
+        return hash_equals($receivedHash, $calculatedHash);
     }
 
     public function processSuccessfulPayment($response)
