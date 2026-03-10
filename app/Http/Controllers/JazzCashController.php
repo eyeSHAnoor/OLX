@@ -6,9 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use App\Models\Subscription;
-use Zfhassaan\Jazzcash\JazzCash; // Add this import
+use Zfhassaan\jazzcash\JazzCash;
 
-class PaymentController extends Controller
+class JazzCashController extends Controller
 {
     public function callback(Request $request)
     {
@@ -21,8 +21,23 @@ class PaymentController extends Controller
             'secure_hash' => $data['pp_SecureHash'] ?? 'missing'
         ]);
         
-        // Get subscription ID from ppmpf_1 and cast to integer
-        $subscriptionId = isset($data['ppmpf_1']) ? (int) $data['ppmpf_1'] : null;
+        // METHOD 1: Extract subscription ID from bill reference (pp_BillReference)
+        $billReference = $data['pp_BillReference'] ?? '';
+        $subscriptionId = null;
+        
+        if (preg_match('/SUB-(\d+)-/', $billReference, $matches)) {
+            $subscriptionId = (int) $matches[1];
+        }
+        
+        // METHOD 2: Fallback to session
+        if (!$subscriptionId) {
+            $subscriptionId = session('jazzcash_subscription_id');
+        }
+        
+        // METHOD 3: Try ppmpf_1 if available (some packages use this)
+        if (!$subscriptionId && isset($data['ppmpf_1'])) {
+            $subscriptionId = (int) $data['ppmpf_1'];
+        }
 
         if (!$subscriptionId) {
             Log::error('Subscription ID missing in callback', $data);
@@ -40,22 +55,17 @@ class PaymentController extends Controller
             ]);
         }
 
-        // USE THE PACKAGE TO VERIFY THE RESPONSE
-        $jazzcash = new JazzCash();
-        
-        // The package has built-in verification
-        // You can check the response code directly
+        // Check if payment was successful (JazzCash success code is '000')
         $responseCode = $request->input('pp_ResponseCode');
         $responseMessage = $request->input('pp_ResponseMessage', '');
         $transactionRef = $request->input('pp_TxnRefNo', '');
         
-        // Log the verification attempt
         Log::debug('JazzCash Payment Verification', [
             'response_code' => $responseCode,
-            'transaction_ref' => $transactionRef
+            'transaction_ref' => $transactionRef,
+            'subscription_id' => $subscriptionId
         ]);
 
-        // Check if payment was successful (JazzCash success code is '000')
         if ($responseCode === '000') {
             // Payment successful
             $subscription->update([
@@ -78,10 +88,18 @@ class PaymentController extends Controller
             ]);
             
         } else {
-            // Payment failed → delete subscription
-            $subscription->delete();
+            // Payment failed - update status instead of deleting
+            $subscription->update([
+                'payment_status' => 'failed',
+                'payment_data' => array_merge($subscription->payment_data ?? [], [
+                    'error_code' => $responseCode,
+                    'error_message' => $responseMessage,
+                    'failed_at' => now()->toDateTimeString(),
+                    'jazzcash_response' => $data
+                ])
+            ]);
             
-            Log::warning('Subscription deleted due to failed payment', [
+            Log::warning('Payment failed for subscription', [
                 'subscription_id' => $subscriptionId,
                 'response_code' => $responseCode,
                 'response_message' => $responseMessage
@@ -121,5 +139,34 @@ class PaymentController extends Controller
         ];
         
         return $messages[$code] ?? ($defaultMessage ?: 'Payment processing failed');
+    }
+
+    public function ipn(Request $request)
+    {
+        Log::info('JazzCash IPN Received', $request->all());
+        
+        // Process IPN similarly to callback but don't return Inertia views
+        $data = $request->all();
+        $subscriptionId = $data['ppmpf_1'] ?? null;
+        $responseCode = $data['pp_ResponseCode'] ?? null;
+        
+        if ($subscriptionId && $responseCode === '000') {
+            $subscription = Subscription::find($subscriptionId);
+            if ($subscription && $subscription->payment_status === 'pending') {
+                $subscription->update([
+                    'payment_status' => 'completed',
+                    'transaction_id' => $data['pp_TxnRefNo'] ?? null,
+                    'payment_data' => array_merge($subscription->payment_data ?? [], [
+                        'ipn_response' => $data,
+                        'ipn_received_at' => now()
+                    ])
+                ]);
+                
+                $subscription->user->update(['status' => 'active']);
+            }
+        }
+        
+        // Always return success to JazzCash
+        return response()->json(['status' => 'OK']);
     }
 }

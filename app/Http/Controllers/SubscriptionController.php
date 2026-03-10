@@ -16,7 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 // use Zfhassaan\Jazzcash\JazzCash;
-use zfhassaan\JazzCash\JazzCash;
+use zfhassaan\jazzcash\JazzCash;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -169,11 +169,17 @@ class SubscriptionController extends Controller
             // Optional: Set additional parameters if needed
             // $jazzcash->setEmail($user->email);
             // $jazzcash->setMobileNumber($user->phone ?? '03123456789');
-            
+
+            Log::info('JazzCash object created', [
+                'amount' => $plan->price * 100,
+                'bill_reference' => 'SUB-' . $subscription->id . '-' . time(),
+                'subscription_id' => $subscription->id
+            ]);
+                        
             // Store subscription ID in session for later use
             session(['jazzcash_subscription_id' => $subscription->id]);
             
-            // 👇 THIS WILL RETURN THE HTML FORM AND REDIRECT TO JAZZCASH
+            // THIS WILL RETURN THE HTML FORM AND REDIRECT TO JAZZCASH
             return $jazzcash->sendRequest();
             
         } catch (\Exception $e) {
