@@ -12,7 +12,7 @@ class PlanSeeder extends Seeder
         $plans = [
             [
                 'name' => 'Basic',
-                'price' => 500,
+                'price' => 2,
                 'duration_days' => 30,
                 'description' => 'Perfect for individual sellers',
                 'features' => [
@@ -26,7 +26,7 @@ class PlanSeeder extends Seeder
             ],
             [
                 'name' => 'Pro',
-                'price' => 1500,
+                'price' => 3,
                 'duration_days' => 30,
                 'description' => 'For power users and small businesses',
                 'features' => [
@@ -41,7 +41,7 @@ class PlanSeeder extends Seeder
             ],
             [
                 'name' => 'Enterprise',
-                'price' => 5000,
+                'price' => 4,
                 'duration_days' => 30,
                 'description' => 'For businesses and agencies',
                 'features' => [

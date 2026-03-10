@@ -59,7 +59,12 @@ class JazzCashService
             'ppmpf_4' => $user->email,
             'ppmpf_5' => $user->name,
         ];
-
+        if ($mobileNumber) {
+            $data['pp_MobileNumber'] = $mobileNumber;
+        } else {
+            // For sandbox, use default test number
+            $data['pp_MobileNumber'] = '03123456789';
+        }
         $data['pp_SecureHash'] = $this->calculateSecureHash($data);
 
         Log::info('JazzCash Payment Request Prepared', [
@@ -78,9 +83,11 @@ class JazzCashService
     {
         $ppFields = [];
         foreach ($data as $key => $value) {
-                if (str_starts_with(strtolower($key), 'pp_') && 
-                $key !== 'pp_SecureHash' && 
-                strtolower($key) !== 'pp_password') {  // ADD THIS
+             // Check if key starts with pp_ (case insensitive) AND exclude both securehash and password
+            $lowerKey = strtolower($key);
+            if (str_starts_with($lowerKey, 'pp_') && 
+                $lowerKey !== 'pp_securehash' && 
+                $lowerKey !== 'pp_password') {
                 $ppFields[$key] = $value;
             }
         }
