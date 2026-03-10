@@ -24,44 +24,56 @@ class JazzCashController extends Controller
         $data = $request->all();
         Log::info('JazzCash Callback received', $data);
         
-        // ADD THIS DEBUG LOG
+        // Debug log
         Log::debug('JazzCash Callback Full Data', [
             'all' => $data,
             'secure_hash' => $data['pp_SecureHash'] ?? 'missing'
         ]);
         
-        // Verify the response
+        // Get subscription ID from ppmpf_1 and cast to integer
+        $subscriptionId = isset($data['ppmpf_1']) ? (int) $data['ppmpf_1'] : null;
+
+        if (!$subscriptionId) {
+            Log::error('Subscription ID missing in callback', $data);
+            return Inertia::render('home/Failed', [
+                'message' => 'Subscription ID missing in callback'
+            ]);
+        }
+
+        // Find the subscription
+        $subscription = \App\Models\Subscription::find($subscriptionId);
+        if (!$subscription) {
+            Log::error('Subscription not found', ['id' => $subscriptionId]);
+            return Inertia::render('home/Failed', [
+                'message' => 'Subscription not found'
+            ]);
+        }
+
+        // Verify the response hash
         $isValid = $this->jazzCashService->verifyPaymentResponse($data);
-        
-        // ADD THIS DEBUG LOG
         Log::debug('JazzCash Verification Result', ['isValid' => $isValid]);
-        
+
         if ($isValid) {
             $responseCode = $request->input('pp_ResponseCode');
-            
+
             if ($responseCode === '000' || $responseCode === '100') {
+                // Payment successful
                 $this->jazzCashService->processSuccessfulPayment($data);
-                
-                // Check if the Vue component exists
-                if (!file_exists(resource_path('js/pages/home/Success.vue'))) {
-                    Log::error('Success.vue component not found');
-                    return response()->json(['error' => 'Success page not found'], 500);
-                }
-                
+
                 return Inertia::render('home/Success', [
                     'message' => 'Payment completed successfully!',
                     'transaction_id' => $request->input('pp_TxnRefNo')
                 ]);
             } else {
-                $this->jazzCashService->processFailedPayment($data);
-                $errorMessage = $this->jazzCashService->getResponseMessage($responseCode);
-                
-                // Check if the Vue component exists
-                if (!file_exists(resource_path('js/pages/home/Failed.vue'))) {
-                    Log::error('Failed.vue component not found');
-                    return response()->json(['error' => 'Failed page not found'], 500);
-                }
-                
+                // Payment failed → delete subscription
+                $subscription->delete();
+                Log::warning('Subscription deleted due to failed payment', [
+                    'subscription_id' => $subscriptionId,
+                    'response_code' => $responseCode
+                ]);
+
+                $errorMessage = $this->jazzCashService->getResponseMessage($responseCode) ?? 'Payment failed';
+
                 return Inertia::render('home/Failed', [
                     'message' => 'Payment failed: ' . $errorMessage,
                     'error_code' => $responseCode,
@@ -69,15 +81,11 @@ class JazzCashController extends Controller
                 ]);
             }
         }
-        
-        Log::error('JazzCash: Invalid hash in callback', $data);
-        
-        // Check if the Vue component exists
-        if (!file_exists(resource_path('js/pages/home/Failed.vue'))) {
-            Log::error('Failed.vue component not found');
-            return response()->json(['error' => 'Failed page not found'], 500);
-        }
-        
+
+        // Invalid hash → consider it as failed payment
+        $subscription->delete();
+        Log::error('Subscription deleted due to invalid hash', ['subscription_id' => $subscriptionId]);
+
         return Inertia::render('home/Failed', [
             'message' => 'Invalid payment response - Security verification failed'
         ]);
