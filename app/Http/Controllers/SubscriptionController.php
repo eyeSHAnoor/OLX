@@ -158,11 +158,11 @@ class SubscriptionController extends Controller
         ]);
         
         try {
-            // 👇 USE THE PACKAGE DIRECTLY INSTEAD OF YOUR JazzCashService
+            // USE THE PACKAGE DIRECTLY INSTEAD OF YOUR JazzCashService
             $jazzcash = new JazzCash();
             
             // Set required parameters
-            $jazzcash->setAmount($plan->price);
+            $jazzcash->setAmount($plan->price * 100);
             $jazzcash->setBillReference('SUB-' . $subscription->id . '-' . time());
             $jazzcash->setProductDescription('Subscription: ' . $plan->name);
             
