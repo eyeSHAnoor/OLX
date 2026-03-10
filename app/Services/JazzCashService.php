@@ -107,6 +107,7 @@ class JazzCashService
      */
     public function verifyPaymentResponse(array $response)
     {
+        Log::error($response);
         $receivedHash = $response['pp_SecureHash'] ?? null;
         if (!$receivedHash) {
             Log::error('JazzCash: No secure hash in response');
