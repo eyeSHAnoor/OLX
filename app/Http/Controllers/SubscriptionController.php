@@ -160,7 +160,8 @@ class SubscriptionController extends Controller
         $paymentData = $jazzCashService->preparePaymentRequest(
             $plan, 
             $user, 
-            $subscription->id
+            $subscription->id,
+            $user->phone
         );
 
         Log::info($paymentData);

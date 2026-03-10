@@ -30,7 +30,7 @@ class JazzCashService
     /**
      * Prepare payment request data for JazzCash
      */
-    public function preparePaymentRequest(Plan $plan, $user, $subscriptionId)
+    public function preparePaymentRequest(Plan $plan, $user, $subscriptionId,$mobileNumber)
     {
         // Convert amount to paisa (multiply by 100) and pad to 12 digits
         $ppAmount = str_pad((int)($plan->price * 100), 12, "0", STR_PAD_LEFT);
