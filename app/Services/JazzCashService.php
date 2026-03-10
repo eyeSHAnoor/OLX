@@ -109,6 +109,14 @@ class JazzCashService
             }
         }
 
+        // ADD THIS DEBUG HERE - to see what JazzCash sent
+        Log::error('JazzCash RAW Callback Data', [
+            'all_response_keys' => array_keys($response),
+            'pp_fields_found' => array_keys($ppFields),
+            'total_pp_fields' => count($ppFields),
+            'raw_response' => $response
+        ]);
+
         // Sort alphabetically by key
         ksort($ppFields, SORT_STRING);
 

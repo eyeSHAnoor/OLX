@@ -28,6 +28,6 @@ defineProps({
 })
 
 const tryAgain = () => {
-    router.get('/subscribe') // Adjust this to your subscription page
+    router.get('/subscriptions') // Adjust this to your subscription page
 }
 </script>
