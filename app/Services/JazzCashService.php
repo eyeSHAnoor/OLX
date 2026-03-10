@@ -134,9 +134,7 @@ class JazzCashService
         foreach ($response as $key => $value) {
             if (
                 str_starts_with(strtolower($key), 'pp_') &&
-                $key !== 'pp_SecureHash' &&
-                $value !== null &&
-                $value !== ''
+                $key !== 'pp_SecureHash'
             ) {
                 $ppFields[$key] = $value;
             }
