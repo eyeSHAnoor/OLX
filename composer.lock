@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "865d1a2431b42ea666cd76deba519b59",
+    "content-hash": "20e22061bf8c19d8cb0cc52b09fc1bc2",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -9778,6 +9778,63 @@
                 "source": "https://github.com/webmozarts/assert/tree/1.12.1"
             },
             "time": "2025-10-29T15:56:20+00:00"
+        },
+        {
+            "name": "zfhassaan/jazzcash",
+            "version": "v1.0.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zfhassaan/jazzcash.git",
+                "reference": "898db0bdb42ac8759c16fa7176a36943b6ae3eb2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zfhassaan/jazzcash/zipball/898db0bdb42ac8759c16fa7176a36943b6ae3eb2",
+                "reference": "898db0bdb42ac8759c16fa7176a36943b6ae3eb2",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.5",
+                "illuminate/support": "^9.0|^10.0|^11.0|^12.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^8.0|^9.0|^10.0",
+                "phpunit/phpunit": "^10.0|^11.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "jazzcash": "zfhassaan\\JazzCash\\Facade\\JazzcashFacade"
+                    },
+                    "providers": [
+                        "zfhassaan\\jazzcash\\provider\\ServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "zfhassaan\\JazzCash\\": "src/",
+                    "zfhassaan\\jazzcash\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Hassaan Ali",
+                    "email": "zfhassaan@gmail.com"
+                }
+            ],
+            "description": "JazzCash Payment Gateway Package for Laravel 9",
+            "support": {
+                "issues": "https://github.com/zfhassaan/jazzcash/issues",
+                "source": "https://github.com/zfhassaan/jazzcash/tree/v1.0.6"
+            },
+            "time": "2025-12-27T15:30:51+00:00"
         }
     ],
     "packages-dev": [

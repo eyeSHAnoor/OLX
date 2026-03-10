@@ -127,8 +127,16 @@ return [
     ],
 
     'provider' => ServiceProvider::defaultProviders()->merge([
-        App\Providers\AppServiceProvider::class
+        App\Providers\AppServiceProvider::class,
+        \zfhassaan\jazzcash\provider\ServiceProvider::class,
     ]),
+    'aliases' => [
+        // CORRECTED - lowercase 'z', uppercase 'J', lowercase 'f' in facade
+        'Jazzcash' => \zfhassaan\jazzcash\Facade\JazzcashFacade::class,
+        
+        // Keep your other aliases here...
+        'PDF' => Barryvdh\DomPDF\Facade::class,
+    ],
 
     'queue_cron_token' => env('QUEUE_CRON_TOKEN'),
 ];

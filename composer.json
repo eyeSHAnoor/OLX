@@ -27,7 +27,8 @@
         "spatie/simple-excel": "^3.8",
         "tightenco/ziggy": "^2.4",
         "twilio/sdk": "^8.8",
-        "webklex/laravel-imap": "^6.2"
+        "webklex/laravel-imap": "^6.2",
+        "zfhassaan/jazzcash": "^1.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

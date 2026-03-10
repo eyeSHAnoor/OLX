@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+// use Zfhassaan\Jazzcash\JazzCash;
+use zfhassaan\JazzCash\JazzCash;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -155,33 +157,37 @@ class SubscriptionController extends Controller
             ]
         ]);
         
-        // Prepare JazzCash payment data
-        $jazzCashService = app(JazzCashService::class);
-        $paymentData = $jazzCashService->preparePaymentRequest(
-            $plan, 
-            $user, 
-            $subscription->id,
-            $user->phone || '03123456789'
-        );
-
-        Log::info($paymentData);
-        
-        // Store payment data
-        $subscription->update([
-            'payment_data' => array_merge($subscription->payment_data, [
-                'jazzcash_request' => $paymentData
-            ])
-        ]);
-
-        
-        // Return view with auto-submitting form
-        return Inertia::render('payment/JazzCashRedirect', [
-            'paymentData' => $paymentData,
-            'endpoint' => config('jazzcash.endpoints.' . config('jazzcash.environment'))
-        ]);
-        // return view('payment.redirect', [
-        // 'endpoint' => config('jazzcash.endpoints.' . config('jazzcash.environment')),
-        // 'data' => $paymentData
-        // ]);
+        try {
+            // 👇 USE THE PACKAGE DIRECTLY INSTEAD OF YOUR JazzCashService
+            $jazzcash = new JazzCash();
+            
+            // Set required parameters
+            $jazzcash->setAmount($plan->price);
+            $jazzcash->setBillReference('SUB-' . $subscription->id . '-' . time());
+            $jazzcash->setProductDescription('Subscription: ' . $plan->name);
+            
+            // Optional: Set additional parameters if needed
+            // $jazzcash->setEmail($user->email);
+            // $jazzcash->setMobileNumber($user->phone ?? '03123456789');
+            
+            // Store subscription ID in session for later use
+            session(['jazzcash_subscription_id' => $subscription->id]);
+            
+            // 👇 THIS WILL RETURN THE HTML FORM AND REDIRECT TO JAZZCASH
+            return $jazzcash->sendRequest();
+            
+        } catch (\Exception $e) {
+            Log::error('JazzCash Error: ' . $e->getMessage());
+            
+            $subscription->update([
+                'payment_status' => 'failed',
+                'payment_data' => array_merge($subscription->payment_data, [
+                    'error' => $e->getMessage(),
+                    'failed_at' => now()
+                ])
+            ]);
+            
+            return redirect()->back()->with('error', 'Payment initialization failed: ' . $e->getMessage());
+        }
     }
 }

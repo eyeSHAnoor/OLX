@@ -2,27 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\JazzCashService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use App\Models\Subscription;
+use Zfhassaan\Jazzcash\JazzCash; // Add this import
 
-class JazzCashController extends Controller
+class PaymentController extends Controller
 {
-    protected $jazzCashService;
-    
-    public function __construct(JazzCashService $jazzCashService)
-    {
-        $this->jazzCashService = $jazzCashService;
-    }
-    
-    /**
-     * Handle JazzCash payment callback
-     */
     public function callback(Request $request)
     {
         $data = $request->all();
-        Log::error('JazzCash Callback received', $request);
+        Log::info('JazzCash Callback received', $data);
         
         // Debug log
         Log::debug('JazzCash Callback Full Data', [
@@ -41,60 +32,94 @@ class JazzCashController extends Controller
         }
 
         // Find the subscription
-        $subscription = \App\Models\Subscription::find($subscriptionId);
+        $subscription = Subscription::find($subscriptionId);
         if (!$subscription) {
             Log::error('Subscription not found', ['id' => $subscriptionId]);
             return Inertia::render('home/Failed', [
                 'message' => 'Subscription not found'
             ]);
         }
-        // if ($isValid) {
-            $responseCode = $request->input('pp_ResponseCode');
 
-        if ($responseCode === '000' || $responseCode === '100') {
+        // USE THE PACKAGE TO VERIFY THE RESPONSE
+        $jazzcash = new JazzCash();
+        
+        // The package has built-in verification
+        // You can check the response code directly
+        $responseCode = $request->input('pp_ResponseCode');
+        $responseMessage = $request->input('pp_ResponseMessage', '');
+        $transactionRef = $request->input('pp_TxnRefNo', '');
+        
+        // Log the verification attempt
+        Log::debug('JazzCash Payment Verification', [
+            'response_code' => $responseCode,
+            'transaction_ref' => $transactionRef
+        ]);
+
+        // Check if payment was successful (JazzCash success code is '000')
+        if ($responseCode === '000') {
             // Payment successful
-            $this->jazzCashService->processSuccessfulPayment($data);
+            $subscription->update([
+                'payment_status' => 'active', // or 'completed' based on your status
+                'transaction_id' => $transactionRef,
+                'payment_data' => array_merge($subscription->payment_data ?? [], [
+                    'jazzcash_response' => $data,
+                    'completed_at' => now()
+                ])
+            ]);
+            
+            Log::info('Payment successful for subscription', [
+                'subscription_id' => $subscriptionId,
+                'transaction_ref' => $transactionRef
+            ]);
 
             return Inertia::render('home/Success', [
                 'message' => 'Payment completed successfully!',
-                'transaction_id' => $request->input('pp_TxnRefNo')
+                'transaction_id' => $transactionRef
             ]);
+            
         } else {
             // Payment failed → delete subscription
             $subscription->delete();
+            
             Log::warning('Subscription deleted due to failed payment', [
                 'subscription_id' => $subscriptionId,
-                'response_code' => $responseCode
+                'response_code' => $responseCode,
+                'response_message' => $responseMessage
             ]);
 
-            $errorMessage = $this->jazzCashService->getResponseMessage($responseCode) ?? 'Payment failed';
+            // Map response codes to user-friendly messages
+            $errorMessage = $this->getJazzCashErrorMessage($responseCode, $responseMessage);
 
             return Inertia::render('home/Failed', [
                 'message' => 'Payment failed: ' . $errorMessage,
                 'error_code' => $responseCode,
-                'error_message' => $request->input('pp_ResponseMessage', $errorMessage)
+                'error_message' => $responseMessage
             ]);
         }
-        
     }
     
     /**
-     * Handle Instant Payment Notification (IPN)
+     * Helper method to get user-friendly error messages
      */
-    public function ipn(Request $request)
+    private function getJazzCashErrorMessage($code, $defaultMessage = '')
     {
-        Log::info('JazzCash IPN received', $request->all());
+        $messages = [
+            '101' => 'Invalid amount',
+            '102' => 'Invalid merchant ID',
+            '103' => 'Invalid password',
+            '104' => 'Invalid hash key',
+            '105' => 'Transaction expired',
+            '106' => 'Transaction already completed',
+            '107' => 'Transaction cancelled by user',
+            '108' => 'Transaction declined by bank',
+            '109' => 'Insufficient balance',
+            '110' => 'Invalid account number',
+            '111' => 'Transaction limit exceeded',
+            '112' => 'Invalid transaction reference',
+            '113' => 'System error, please try again',
+            '114' => 'Invalid return URL',
+        ];
         
-        // Similar verification as callback
-        if ($this->jazzCashService->verifyPaymentResponse($request->all())) {
-            if ($request->input('pp_ResponseCode') === '000') {
-                $this->jazzCashService->processSuccessfulPayment($request->all());
-            } else {
-                $this->jazzCashService->processFailedPayment($request->all());
-            }
-        }
-        
-        // Always return 200 OK for IPN
-        return response()->json(['status' => 'ok']);
+        return $messages[$code] ?? ($defaultMessage ?: 'Payment processing failed');
     }
 }
