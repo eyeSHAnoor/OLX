@@ -129,35 +129,42 @@ class JazzCashService
             return false;
         }
 
-        $ppFields = [];
+        $fields = [];
 
         foreach ($response as $key => $value) {
+
             if (
-                str_starts_with(strtolower($key), 'pp_') &&
+                (str_starts_with(strtolower($key), 'pp_') || str_starts_with(strtolower($key), 'ppmpf_')) &&
                 $key !== 'pp_SecureHash'
             ) {
-                $ppFields[$key] = $value;
+                $fields[$key] = $value;
             }
+
         }
 
-        ksort($ppFields, SORT_STRING);
+        // Sort alphabetically
+        ksort($fields, SORT_STRING);
 
-        $concatenatedString = '';
+        // Build hash string
+        $concatenated = '';
 
-        foreach ($ppFields as $value) {
-            $concatenatedString .= $value . '&';
+        foreach ($fields as $value) {
+            $concatenated .= $value . '&';
         }
 
-        $concatenatedString = rtrim($concatenatedString, '&');
+        $concatenated = rtrim($concatenated, '&');
 
-        $hashString = $this->integeritySalt . '&' . $concatenatedString;
+        $hashString = $this->integeritySalt . '&' . $concatenated;
 
-        $calculatedHash = strtoupper(hash_hmac('sha256', $hashString, $this->integeritySalt));
+        $calculatedHash = strtoupper(
+            hash_hmac('sha256', $hashString, $this->integeritySalt)
+        );
 
-        Log::error('JazzCash Hash Debug', [
+        Log::debug('JazzCash Hash Debug', [
             'received_hash' => $receivedHash,
             'calculated_hash' => $calculatedHash,
-            'hash_string' => $hashString
+            'hash_string' => $hashString,
+            'fields' => $fields
         ]);
 
         return hash_equals(strtoupper($receivedHash), $calculatedHash);
