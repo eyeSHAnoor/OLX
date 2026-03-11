@@ -64,18 +64,30 @@
         <template v-if="!isSearching">
 
             <!-- Browse Categories - Horizontal Scroll on Mobile, Grid on Desktop -->
+            <!-- Browse Categories - Horizontal Scroll on ALL devices -->
             <section class="pt-12 md:pb-10 pb-0 bg-gray-50">
                 <div class="max-w-10/12 mx-auto">
                     <h2 class="text-lg md:text-xl font-semibold mb-8 text-center">
                         Browse Categories
                     </h2>
 
-                    <!-- Categories container with horizontal scroll for mobile -->
-                    <div class="relative">
+                    <!-- Categories container with horizontal scroll for all devices -->
+                    <div class="relative categories-wrapper">
+                        <!-- Left scroll button (desktop only) -->
+                        <button v-if="canScrollLeft" @click="scrollCategories('left')"
+                            class="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all hover:scale-110 w-10 h-10 items-center justify-center">
+                            <Icon icon="mdi:chevron-left" class="text-2xl" />
+                        </button>
 
-                        <!-- Categories list - Horizontal scroll on mobile, Grid on desktop -->
+                        <!-- Right scroll button (desktop only) -->
+                        <button v-if="canScrollRight" @click="scrollCategories('right')"
+                            class="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all hover:scale-110 w-10 h-10 items-center justify-center">
+                            <Icon icon="mdi:chevron-right" class="text-2xl" />
+                        </button>
+
+                        <!-- Categories list - Horizontal scroll on ALL devices -->
                         <div ref="categoriesContainer"
-                            class="grid grid-flow-col md:grid-flow-row auto-cols-[calc(50vw-2rem)] md:auto-cols-auto gap-2 overflow-x-auto md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7 md:overflow-visible pb-4 md:pb-0 scroll-smooth hide-scrollbar"
+                            class="grid grid-flow-col auto-cols-[calc(50vw-2rem)] md:auto-cols-[180px] lg:auto-cols-[200px] gap-2 overflow-x-auto pb-4 scroll-smooth hide-scrollbar categories-scroll"
                             @scroll="updateScrollButtons">
                             <div v-for="category in categories" :key="category.id"
                                 class="flex flex-col items-center cursor-pointer group"
