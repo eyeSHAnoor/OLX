@@ -87,7 +87,6 @@ export default defineConfig({
     },
 
     server: {
-        https: true,
         host: true,
         port: 5173,
         watch: {

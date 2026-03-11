@@ -122,7 +122,7 @@
                                             <Icon icon="mdi:account-outline" class="text-sm text-gray-500" />
                                             <span>Public Profile</span>
                                         </Link>
-                                        <Link href="/orders"
+                                        <Link href="#" disabled
                                             class="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-700 hover:text-blue-600 transition-colors">
                                             <Icon icon="mdi:package-variant" class="text-sm text-gray-500" />
                                             <span>My Orders</span>

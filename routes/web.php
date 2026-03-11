@@ -21,8 +21,7 @@ Route::post('/set-city', function (\Illuminate\Http\Request $request) {
     return back();
 })->name('set.city');
 
-// Route::match(['get', 'post'],'/payment-status', [App\Http\Controllers\JazzCashController::class, 'callback']);
-// Route::post('/payment-ipn', [App\Http\Controllers\JazzCashController::class, 'ipn']);
+Route::get('/policy/{type}', [App\Http\Controllers\PolicyController::class, 'show'])->name('policy.show');
 
 
 
@@ -73,14 +72,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/subscriptions/jazzcash/initiate', [App\Http\Controllers\SubscriptionController::class, 'initiateJazzCash'])
     ->name('subscriptions.jazzcash.initiate')
-    ->middleware(['auth']);
-
-    // Route::match(['get', 'post'], '/jazzcash/callback', [App\Http\Controllers\JazzCashController::class, 'callback'])
-    //     ->name('jazzcash.callback');
-
-    // Route::post('/jazzcash/ipn', [App\Http\Controllers\JazzCashController::class, 'ipn'])
-    //     ->name('jazzcash.ipn');
-    
+    ->middleware(['auth']); 
 
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/{conversation}', [App\Http\Controllers\ChatController::class, 'show'])->name('chat.show');

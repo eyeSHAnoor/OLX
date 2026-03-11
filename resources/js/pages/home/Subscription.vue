@@ -52,10 +52,10 @@ const currentPaymentMethod = {
     icon: 'mdi:cash',
     description: 'Pay instantly with JazzCash',
     instructions: 'You will be redirected to JazzCash secure payment gateway',
-    color: 'bg-emerald-500',
-    bgColor: 'bg-emerald-50',
-    borderColor: 'border-emerald-200',
-    textColor: 'text-emerald-700',
+    color: 'bg-teal-600',
+    bgColor: 'bg-teal-50',
+    borderColor: 'border-teal-200',
+    textColor: 'text-teal-700',
     isInstant: true
 }
 
@@ -65,7 +65,7 @@ function choosePlan(plan) {
     paymentStep.value = 'payment'
     window.scrollTo({ top: 0, behavior: 'smooth' })
 }
-useForceTheme('light');
+
 function submit() {
     if (!form.terms_accepted) {
         return
@@ -124,105 +124,97 @@ const canSubscribe = computed(() => {
 </script>
 
 <template>
-    <div class="max-w-8/10 mx-auto space-y-12 pb-20 pt-10">
-
+    <div class="min-h-screen bg-gray-50">
         <!-- Success/Error Toast Notification -->
         <transition enter-active-class="transform transition duration-300 ease-out"
             enter-from-class="translate-x-full opacity-0" enter-to-class="translate-x-0 opacity-100"
             leave-active-class="transform transition duration-200 ease-in" leave-from-class="translate-x-0 opacity-100"
             leave-to-class="translate-x-full opacity-0">
             <div v-if="showSuccessMessage"
-                class="fixed top-3 right-3 z-50 w-80 bg-white rounded-lg shadow-xl border-l-4 border-emerald-500 overflow-hidden">
-                <div class="p-3">
+                class="fixed top-4 right-4 z-50 w-96 bg-white rounded-lg shadow-xl border-l-4 border-teal-500 overflow-hidden">
+                <div class="p-4">
                     <div class="flex items-start">
                         <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shadow">
-                                <Icon icon="mdi:check" class="text-lg text-white" />
+                            <div class="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center">
+                                <Icon icon="mdi:check" class="text-xl text-white" />
                             </div>
                         </div>
-                        <div class="ml-2 flex-1">
-                            <p class="text-xs font-medium text-gray-900">Notice</p>
-                            <p class="mt-0.5 text-xs text-gray-600 leading-relaxed">{{ successMessage }}</p>
-                            <div class="mt-2 flex gap-1.5">
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-medium text-gray-900">Notification</p>
+                            <p class="mt-1 text-sm text-gray-600">{{ successMessage }}</p>
+                            <div class="mt-3">
                                 <button @click="showSuccessMessage = false"
-                                    class="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded hover:bg-gray-200 transition-colors">
+                                    class="text-sm font-medium text-teal-600 hover:text-teal-500">
                                     Dismiss
                                 </button>
                             </div>
                         </div>
-                        <button @click="showSuccessMessage = false" class="flex-shrink-0 ml-1">
-                            <Icon icon="mdi:close" class="text-gray-400 hover:text-gray-600 text-sm" />
+                        <button @click="showSuccessMessage = false" class="flex-shrink-0 ml-4">
+                            <Icon icon="mdi:close" class="text-gray-400 hover:text-gray-500" />
                         </button>
                     </div>
                 </div>
-                <div class="h-0.5 bg-emerald-500 animate-progress"></div>
             </div>
         </transition>
 
         <!-- Header Section -->
-        <div class="max-w-6xl mx-auto text-center mb-10 relative">
-            <div class="absolute inset-0 flex items-center justify-center">
-                <div
-                    class="w-48 h-48 bg-blue-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 animate-blob">
-                </div>
-                <div
-                    class="w-48 h-48 bg-emerald-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 animate-blob animation-delay-2000">
-                </div>
-                <div
-                    class="w-48 h-48 bg-purple-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 animate-blob animation-delay-4000">
-                </div>
-            </div>
+        <div class="bg-white border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="text-center">
+                    <div class="mb-4">
+                        <span
+                            class="inline-flex items-center px-3 py-1 text-sm font-medium text-teal-700 bg-teal-50 rounded-full">
+                            Welcome back, {{ user?.name }}
+                        </span>
+                    </div>
 
-            <div class="relative mb-2">
-                <span class="text-[10px] font-medium text-blue-600 uppercase tracking-wider">Welcome back, {{ user?.name
-                    }}!</span>
-            </div>
+                    <h1 class="text-3xl font-bold text-gray-900 sm:text-4xl">
+                        {{ hasActiveSubscription ? 'Your Premium Access' : 'Choose Your Plan' }}
+                    </h1>
 
-            <h1
-                class="relative text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-emerald-500 to-purple-600 sm:text-4xl animate-gradient">
-                {{ hasActiveSubscription ? 'Your Premium Access' : 'Choose Your Perfect Plan' }}
-            </h1>
-            <p class="relative mt-2 text-sm text-gray-600 max-w-3xl mx-auto">
-                {{ hasActiveSubscription ?
-                    'Manage your subscription or explore new features' :
-                    'Unlock premium features with instant JazzCash payment' }}
-            </p>
+                    <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
+                        {{ hasActiveSubscription ?
+                            'Manage your subscription or explore new features' :
+                            'Select the perfect plan for your needs' }}
+                    </p>
 
-            <!-- JazzCash Badge -->
-            <div v-if="canSubscribe" class="relative mt-4 flex flex-wrap items-center justify-center gap-3">
-                <span
-                    class="flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-medium">
-                    <Icon icon="mdi:flash" class="text-sm" />
-                    Instant Activation with JazzCash
-                </span>
+                    <!-- JazzCash Badge -->
+                    <div v-if="canSubscribe" class="mt-6">
+                        <span
+                            class="inline-flex items-center px-4 py-2 bg-teal-50 text-teal-700 rounded-lg text-sm font-medium">
+                            <Icon icon="mdi:flash" class="mr-2 text-teal-500" />
+                            Instant Activation with JazzCash
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="max-w-7xl mx-auto relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <!-- Show blocked message if already subscribed or pending -->
-            <div v-if="!canSubscribe && paymentStep === 'select'" class="text-center">
-                <div class="bg-white rounded-xl shadow-lg p-8 max-w-lg mx-auto">
+            <div v-if="!canSubscribe && paymentStep === 'select'" class="max-w-lg mx-auto">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
                     <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                        :class="hasActiveSubscription ? 'bg-emerald-100' : 'bg-yellow-100'">
+                        :class="hasActiveSubscription ? 'bg-teal-100' : 'bg-blue-100'">
                         <Icon :icon="hasActiveSubscription ? 'mdi:check-decagram' : 'mdi:clock-outline'"
-                            class="text-3xl" :class="hasActiveSubscription ? 'text-emerald-600' : 'text-yellow-600'" />
+                            class="text-3xl" :class="hasActiveSubscription ? 'text-teal-600' : 'text-blue-600'" />
                     </div>
 
-                    <h2 class="text-lg font-semibold text-gray-900 mb-2">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-2">
                         {{ hasActiveSubscription ? 'Active Subscription' : 'Subscription Pending' }}
                     </h2>
 
-                    <p class="text-xs text-gray-600 mb-4 max-w-md mx-auto">
+                    <p class="text-gray-600 mb-6">
                         {{ hasActiveSubscription
                             ? 'You already have an active subscription. Enjoy all the premium features!'
                             : 'Your subscription is being processed.' }}
                     </p>
 
                     <button @click="goToDashboard"
-                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-xs font-medium hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all shadow">
-                        <Icon icon="mdi:view-dashboard" class="text-sm" />
-                        Go to Home
+                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                        <Icon icon="mdi:view-dashboard" class="mr-2" />
+                        Go to Dashboard
                     </button>
                 </div>
             </div>
@@ -231,15 +223,11 @@ const canSubscribe = computed(() => {
             <template v-else-if="canSubscribe">
                 <!-- Back button -->
                 <transition enter-active-class="transition duration-300 ease-out"
-                    enter-from-class="opacity-0 -translate-y-20" enter-to-class="opacity-100 translate-y-0">
+                    enter-from-class="opacity-0 -translate-y-4" enter-to-class="opacity-100 translate-y-0">
                     <button v-if="paymentStep !== 'select'" @click="goBack"
-                        class="mb-4 inline-flex items-center text-gray-600 hover:text-gray-900 group text-xs">
-                        <span
-                            class="w-6 h-6 rounded-full bg-white shadow-sm group-hover:shadow flex items-center justify-center mr-1.5 transition-all">
-                            <Icon icon="mdi:arrow-left"
-                                class="text-sm group-hover:-translate-x-0.5 transition-transform" />
-                        </span>
-                        <span class="font-medium">Back to Plans</span>
+                        class="mb-6 inline-flex items-center text-sm text-gray-600 hover:text-gray-900">
+                        <Icon icon="mdi:arrow-left" class="mr-2 text-lg" />
+                        Back to Plans
                     </button>
                 </transition>
 
@@ -248,69 +236,65 @@ const canSubscribe = computed(() => {
                     enter-from-class="opacity-0 translate-y-4" enter-to-class="opacity-100 translate-y-0"
                     leave-active-class="transition duration-300 ease-in" leave-from-class="opacity-100 translate-y-0"
                     leave-to-class="opacity-0 translate-y-4">
-                    <div v-if="paymentStep === 'select'" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div v-if="paymentStep === 'select'" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div v-for="(plan, index) in plans" :key="plan.id"
-                            class="relative group transform hover:-translate-y-1 transition-all duration-300">
+                            class="relative transform hover:-translate-y-1 transition-all duration-300">
 
                             <!-- Popular Badge -->
                             <div v-if="index === popularPlanIndex"
-                                class="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
-                                <span
-                                    class="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[8px] font-bold px-2 py-1 rounded-full shadow flex items-center gap-0.5">
-                                    <Icon icon="mdi:star" class="text-yellow-300 text-[10px]" />
-                                    POPULAR
-                                    <Icon icon="mdi:star" class="text-yellow-300 text-[10px]" />
+                                class="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                                <span class="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                                    <Icon icon="mdi:star" class="inline mr-1 text-yellow-300" />
+                                    MOST POPULAR
                                 </span>
                             </div>
 
                             <!-- Plan Card -->
-                            <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow duration-300 h-full flex flex-col overflow-hidden border"
-                                :class="index === popularPlanIndex ? 'border-blue-500' : 'border-transparent hover:border-gray-200'">
+                            <div class="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow duration-300 h-full flex flex-col overflow-hidden"
+                                :class="index === popularPlanIndex ? 'border-blue-500' : 'border-gray-200'">
 
                                 <!-- Card Header -->
-                                <div class="p-4 pb-3"
-                                    :class="index === popularPlanIndex ? 'bg-gradient-to-br from-blue-50 to-purple-50' : 'bg-gray-50'">
-                                    <h3 class="text-base font-semibold text-gray-900 mb-1">{{ plan.name }}</h3>
+                                <div class="p-6 border-b border-gray-100"
+                                    :class="index === popularPlanIndex ? 'bg-blue-50' : 'bg-gray-50'">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ plan.name }}</h3>
                                     <div class="flex items-baseline">
-                                        <span class="text-xl font-bold text-gray-900">{{ formatPrice(plan.price)
+                                        <span class="text-3xl font-bold text-gray-900">{{ formatPrice(plan.price)
                                             }}</span>
-                                        <span class="text-[10px] text-gray-500 ml-1">/{{ plan.duration_days }}d</span>
+                                        <span class="text-sm text-gray-500 ml-2">/{{ plan.duration_days }} days</span>
                                     </div>
 
                                     <!-- Savings badge for yearly plans -->
-                                    <div v-if="plan.duration_days >= 360"
-                                        class="mt-1 inline-block px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[8px] font-medium rounded-full">
-                                        Save 20%
+                                    <div v-if="plan.duration_days >= 360" class="mt-3">
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 bg-teal-100 text-teal-700 text-xs font-medium rounded">
+                                            Save 20% with annual plan
+                                        </span>
                                     </div>
                                 </div>
 
                                 <!-- Features List -->
-                                <div class="p-4 flex-1">
-                                    <p class="text-[10px] font-medium text-gray-700 mb-2">What's included:</p>
-                                    <ul class="space-y-2">
-                                        <li v-for="feature in plan.features" :key="feature"
-                                            class="flex items-start group">
+                                <div class="p-6 flex-1">
+                                    <p class="text-sm font-medium text-gray-700 mb-4">What's included:</p>
+                                    <ul class="space-y-3">
+                                        <li v-for="feature in plan.features" :key="feature" class="flex items-start">
                                             <div
-                                                class="flex-shrink-0 w-4 h-4 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center mt-0.5 shadow-sm">
-                                                <Icon icon="mdi:check" class="text-white text-[8px]" />
+                                                class="flex-shrink-0 w-5 h-5 rounded-full bg-teal-100 flex items-center justify-center mt-0.5">
+                                                <Icon icon="mdi:check" class="text-teal-600 text-sm" />
                                             </div>
-                                            <span
-                                                class="ml-2 text-[10px] text-gray-600 group-hover:text-gray-900 transition-colors">{{
-                                                    feature }}</span>
+                                            <span class="ml-3 text-sm text-gray-600">{{ feature }}</span>
                                         </li>
                                     </ul>
                                 </div>
 
                                 <!-- Plan Footer -->
-                                <div class="p-4 pt-0">
+                                <div class="p-6 pt-0">
                                     <button @click="choosePlan(plan)"
-                                        class="w-full py-2 px-3 rounded-lg font-medium text-xs transform hover:scale-105 transition-all duration-200 shadow-sm hover:shadow flex items-center justify-center gap-1"
+                                        class="w-full py-3 px-4 rounded-lg font-medium text-sm transition-colors duration-200 flex items-center justify-center"
                                         :class="index === popularPlanIndex
-                                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
-                                            : 'bg-gradient-to-r from-gray-800 to-gray-900 text-white hover:from-gray-900 hover:to-black'">
-                                        <Icon icon="mdi:cash" class="text-sm" />
+                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                            : 'bg-gray-900 text-white hover:bg-gray-800'">
+                                        <Icon icon="mdi:cash" class="mr-2 text-lg" />
                                         Pay with JazzCash
-                                        <Icon icon="mdi:arrow-right" class="text-sm" />
                                     </button>
                                 </div>
                             </div>
@@ -323,80 +307,93 @@ const canSubscribe = computed(() => {
                     enter-from-class="opacity-0 translate-y-4" enter-to-class="opacity-100 translate-y-0"
                     leave-active-class="transition duration-300 ease-in" leave-from-class="opacity-100 translate-y-0"
                     leave-to-class="opacity-0 translate-y-4">
-                    <div v-if="paymentStep === 'payment' && selectedPlan" class="max-w-md mx-auto">
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div v-if="paymentStep === 'payment' && selectedPlan" class="max-w-2xl mx-auto">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                             <!-- Progress Steps -->
-                            <div class="bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-3">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center flex-1">
-                                        <div class="flex items-center">
-                                            <div
-                                                class="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                                                <span class="text-white text-xs font-bold">1</span>
-                                            </div>
-                                            <div class="ml-2">
-                                                <p class="text-white/60 text-[8px]">Step 1</p>
-                                                <p class="text-white text-[10px] font-medium">Choose Plan</p>
-                                            </div>
+                            <div class="bg-gray-50 border-b border-gray-200 px-6 py-4">
+                                <div class="flex items-center justify-between max-w-md mx-auto">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                            <span class="text-white text-sm font-bold">1</span>
                                         </div>
-                                        <div class="flex-1 mx-2 h-0.5 bg-white/20 relative">
-                                            <div class="absolute inset-0 bg-white rounded-full" style="width: 100%">
-                                            </div>
+                                        <div class="ml-3">
+                                            <p class="text-xs text-gray-500">Step 1</p>
+                                            <p class="text-sm font-medium text-gray-900">Choose Plan</p>
                                         </div>
-                                        <div class="flex items-center">
-                                            <div
-                                                class="w-7 h-7 bg-white rounded-full flex items-center justify-center shadow">
-                                                <span class="text-emerald-600 text-xs font-bold">2</span>
-                                            </div>
-                                            <div class="ml-2">
-                                                <p class="text-white/60 text-[8px]">Step 2</p>
-                                                <p class="text-white text-[10px] font-medium">JazzCash</p>
-                                            </div>
+                                    </div>
+                                    <div class="w-16 h-px bg-gray-300"></div>
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center">
+                                            <span class="text-white text-sm font-bold">2</span>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-xs text-gray-500">Step 2</p>
+                                            <p class="text-sm font-medium text-gray-900">JazzCash Payment</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Payment Form -->
-                            <div class="p-6">
+                            <div class="p-4 sm:p-6 md:p-8">
                                 <!-- Selected Plan Summary -->
-                                <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 mb-6">
-                                    <div class="flex items-center justify-between">
+                                <div class="bg-gray-50 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+                                    <!-- Stack on mobile, side-by-side on larger screens -->
+                                    <div
+                                        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
                                         <div>
-                                            <p class="text-xs text-gray-500">Selected Plan</p>
-                                            <p class="text-lg font-semibold text-gray-900">{{ selectedPlan.name }}</p>
+                                            <p class="text-xs sm:text-sm text-gray-500 mb-1">Selected Plan</p>
+                                            <p
+                                                class="text-base sm:text-lg md:text-xl font-semibold text-gray-900 break-words">
+                                                {{ selectedPlan.name }}
+                                            </p>
                                         </div>
-                                        <div class="text-right">
-                                            <p class="text-xs text-gray-500">Amount</p>
-                                            <p class="text-2xl font-bold text-emerald-600">{{
-                                                formatPrice(selectedPlan.price) }}</p>
+                                        <div class="text-left sm:text-right">
+                                            <p class="text-xs sm:text-sm text-gray-500 mb-1">Total Amount</p>
+                                            <p
+                                                class="text-2xl sm:text-3xl md:text-4xl font-bold text-teal-600 break-words">
+                                                {{ formatPrice(selectedPlan.price) }}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- JazzCash Payment Info -->
-                                <div class="mb-6">
-                                    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                                        <div class="flex items-start gap-3">
-                                            <div
-                                                class="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                                <Icon icon="mdi:cash" class="text-2xl text-white" />
+                                <div class="mb-6 sm:mb-8">
+                                    <div class="bg-teal-50 border border-teal-200 rounded-lg p-4 sm:p-6">
+                                        <!-- Stack vertically on mobile, side-by-side on tablet/desktop -->
+                                        <div class="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-0">
+                                            <!-- Icon - centered on mobile, left-aligned on larger screens -->
+                                            <div class="flex justify-center sm:justify-start">
+                                                <div
+                                                    class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    <Icon icon="mdi:cash" class="text-2xl sm:text-3xl text-white" />
+                                                </div>
                                             </div>
-                                            <div class="flex-1">
-                                                <h4 class="text-sm font-semibold text-emerald-700 mb-1">
+
+                                            <!-- Content - full width on mobile -->
+                                            <div class="sm:ml-4 flex-1">
+                                                <h4
+                                                    class="text-base sm:text-lg md:text-xl font-semibold text-teal-700 mb-2 text-center sm:text-left">
                                                     JazzCash Secure Payment
                                                 </h4>
-                                                <p class="text-xs text-gray-600 mb-2">
+                                                <p
+                                                    class="text-sm sm:text-base text-gray-600 mb-3 text-center sm:text-left">
                                                     You'll be redirected to JazzCash's secure payment gateway to
                                                     complete your transaction instantly.
                                                 </p>
-                                                <div class="flex items-center gap-2 text-[10px] text-emerald-600">
-                                                    <span class="flex items-center gap-1">
-                                                        <Icon icon="mdi:check-circle" class="text-xs" />
+
+                                                <!-- Security badges - stack on mobile, row on larger screens -->
+                                                <div
+                                                    class="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4 text-xs sm:text-sm text-teal-600">
+                                                    <span class="flex items-center">
+                                                        <Icon icon="mdi:check-circle"
+                                                            class="mr-1 text-sm sm:text-base" />
                                                         256-bit SSL
                                                     </span>
-                                                    <span class="flex items-center gap-1">
-                                                        <Icon icon="mdi:check-circle" class="text-xs" />
+                                                    <span class="flex items-center">
+                                                        <Icon icon="mdi:check-circle"
+                                                            class="mr-1 text-sm sm:text-base" />
                                                         PCI Compliant
                                                     </span>
                                                 </div>
@@ -406,21 +403,19 @@ const canSubscribe = computed(() => {
                                 </div>
 
                                 <!-- Terms Checkbox -->
-                                <div class="mb-6">
-                                    <label class="flex items-center gap-2 cursor-pointer group">
-                                        <div class="relative">
-                                            <input type="checkbox" v-model="form.terms_accepted"
-                                                class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" />
-                                        </div>
-                                        <span class="text-xs text-gray-600 group-hover:text-gray-900">
+                                <div class="mb-6 sm:mb-8">
+                                    <label class="flex items-start sm:items-center">
+                                        <input type="checkbox" v-model="form.terms_accepted"
+                                            class="mt-1 sm:mt-0 w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500 flex-shrink-0" />
+                                        <span class="ml-2 sm:ml-3 text-xs sm:text-sm text-gray-600 leading-relaxed">
                                             I agree to the
-                                            <a href="#"
-                                                class="text-emerald-600 hover:text-emerald-700 font-medium hover:underline">Terms
-                                                of Service</a>
+                                            <Link :href="route('policy.show', 'terms')"
+                                                class="text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap">
+                                            Terms of Service</Link>
                                             and
-                                            <a href="#"
-                                                class="text-emerald-600 hover:text-emerald-700 font-medium hover:underline">Privacy
-                                                Policy</a>
+                                            <Link :href="route('policy.show', 'privacy')"
+                                                class="text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap">
+                                            Privacy Policy</Link>
                                         </span>
                                     </label>
                                 </div>
@@ -428,32 +423,33 @@ const canSubscribe = computed(() => {
                                 <!-- Submit Button -->
                                 <button @click="submit"
                                     :disabled="form.processing || !form.terms_accepted || isRedirecting"
-                                    class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white py-3 px-4 rounded-lg font-medium text-sm hover:from-emerald-700 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
-                                    <span v-if="form.processing || isRedirecting" class="flex items-center gap-2">
-                                        <Icon icon="mdi:loading" class="animate-spin text-lg" />
-                                        Redirecting to JazzCash...
+                                    class="w-full bg-teal-600 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-medium text-sm sm:text-base md:text-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center">
+                                    <span v-if="form.processing || isRedirecting" class="flex items-center">
+                                        <Icon icon="mdi:loading"
+                                            class="animate-spin mr-2 text-base sm:text-lg md:text-xl" />
+                                        <span class="truncate">Redirecting to JazzCash...</span>
                                     </span>
-                                    <span v-else class="flex items-center gap-2">
-                                        <Icon icon="mdi:cash" class="text-lg" />
-                                        Pay with JazzCash
-                                        <Icon icon="mdi:arrow-right" class="text-lg" />
+                                    <span v-else class="flex items-center">
+                                        <Icon icon="mdi:cash" class="mr-2 text-base sm:text-lg md:text-xl" />
+                                        <span class="truncate">Pay with JazzCash</span>
                                     </span>
                                 </button>
 
                                 <!-- Security note -->
                                 <p
-                                    class="mt-4 text-[10px] text-center text-gray-400 flex items-center justify-center gap-1">
-                                    <Icon icon="mdi:lock-outline" class="text-xs" />
+                                    class="mt-4 sm:mt-6 text-xs sm:text-sm text-center text-gray-400 flex items-center justify-center">
+                                    <Icon icon="mdi:lock-outline" class="mr-1 sm:mr-2 text-sm sm:text-base" />
                                     Your payment is secure and encrypted
                                 </p>
 
                                 <!-- JazzCash Partner Badge -->
-                                <div class="mt-4 pt-4 border-t border-gray-100 text-center">
-                                    <p class="text-[8px] text-gray-400 mb-1">Powered by</p>
-                                    <div class="flex items-center justify-center gap-1">
-                                        <Icon icon="mdi:cash" class="text-emerald-500 text-base" />
-                                        <span class="text-xs font-semibold text-gray-700">Jazz<span
-                                                class="text-emerald-500">Cash</span></span>
+                                <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-100 text-center">
+                                    <p class="text-xs text-gray-400 mb-2">Powered by</p>
+                                    <div class="flex items-center justify-center">
+                                        <Icon icon="mdi:cash" class="text-teal-600 text-xl sm:text-2xl" />
+                                        <span class="ml-2 text-base sm:text-lg md:text-xl font-semibold text-gray-700">
+                                            Jazz<span class="text-teal-600">Cash</span>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -466,79 +462,7 @@ const canSubscribe = computed(() => {
 </template>
 
 <style scoped>
-@keyframes blob {
-    0% {
-        transform: translate(0px, 0px) scale(1);
-    }
-
-    33% {
-        transform: translate(30px, -50px) scale(1.1);
-    }
-
-    66% {
-        transform: translate(-20px, 20px) scale(0.9);
-    }
-
-    100% {
-        transform: translate(0px, 0px) scale(1);
-    }
-}
-
-@keyframes gradient {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-
-    100% {
-        background-position: 0% 50%;
-    }
-}
-
-@keyframes progress {
-    0% {
-        width: 0%;
-    }
-
-    100% {
-        width: 100%;
-    }
-}
-
-.animate-blob {
-    animation: blob 7s infinite;
-}
-
-.animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient 8s ease infinite;
-}
-
-.animate-progress {
-    animation: progress 5s linear forwards;
-}
-
-.animation-delay-2000 {
-    animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-    animation-delay: 4s;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
-}
-
+/* Only keep essential animations */
 @keyframes spin {
     from {
         transform: rotate(0deg);
@@ -551,5 +475,23 @@ const canSubscribe = computed(() => {
 
 .animate-spin {
     animation: spin 1s linear infinite;
+}
+
+/* Smooth transitions */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .grid {
+        gap: 1rem;
+    }
 }
 </style>

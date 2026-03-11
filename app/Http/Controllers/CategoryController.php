@@ -35,14 +35,41 @@ class CategoryController extends Controller
         $maxPrice = $request->input('filter.max_price', null);
         $sort = $request->input('sort', 'newest');
         $city = $request->input('filter.city', $selectedCity);
+        $selectedCategory = null;
+        // Fetch top banner for the selected category or its children
+        $topBanner = null;
 
-        $topBanner = Banner::active()
-            ->where('position', 'category')
-            ->whereNull('target_category_id')
-            ->first();
+        if ($selectedCategory) {
+            // Check if category has a banner
+            $topBanner = Banner::active()
+                ->where('position', 'category')
+                ->where(function($q) use ($selectedCategory) {
+                    $q->where('target_category_id', $selectedCategory->id)
+                    ->orWhereIn('target_category_id', $selectedCategory->getLeafCategoriesEfficient()->pluck('id'));
+                })
+                ->orderBy('sort_order')
+                ->first();
 
+            // Fallback: generic banner if none for category
+            if (!$topBanner) {
+                $topBanner = Banner::active()
+                    ->where('position', 'category')
+                    ->whereNull('target_category_id')
+                    ->first();
+            }
+        }
+
+        // Mid banners (optional: all banners for this category and children)
         $midBanners = Banner::active()
             ->where('position', 'category')
+            ->where(function($q) use ($selectedCategory) {
+                if ($selectedCategory) {
+                    $q->where('target_category_id', $selectedCategory->id)
+                    ->orWhereIn('target_category_id', $selectedCategory->getLeafCategoriesEfficient()->pluck('id'));
+                } else {
+                    $q->whereNull('target_category_id');
+                }
+            })
             ->orderBy('sort_order')
             ->get();
 
