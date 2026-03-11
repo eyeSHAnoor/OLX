@@ -16,6 +16,7 @@ const paymentStep = ref('select') // select, payment, confirmation
 const showSuccessMessage = ref(false)
 const successMessage = ref('')
 const isRedirecting = ref(false)
+useForceTheme('light');
 
 const form = useForm({
     plan_id: null,

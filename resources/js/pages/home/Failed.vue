@@ -26,7 +26,7 @@ defineProps({
     error_code: String,
     error_message: String
 })
-
+useForceTheme('light');
 const tryAgain = () => {
     router.get('/subscriptions') // Adjust this to your subscription page
 }

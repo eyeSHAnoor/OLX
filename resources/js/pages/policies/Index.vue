@@ -5,7 +5,7 @@ import { router } from '@inertiajs/vue3'
 
 const activeTab = ref('privacy') // privacy, terms, refund
 const lastUpdated = 'March 11, 2026'
-
+useForceTheme('light');
 const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId)
     if (element) {
@@ -46,7 +46,7 @@ const sections = {
     <div class="min-h-screen bg-gray-50">
         <!-- Header with navigation -->
         <div class="bg-white border-b border-gray-200 sticky top-0 z-10">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-8/10 mx-auto">
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center">
                         <button @click="goBack"

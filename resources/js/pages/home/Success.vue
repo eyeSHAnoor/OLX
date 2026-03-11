@@ -25,6 +25,7 @@ defineProps({
 })
 
 const goHome = () => {
-    router.get('/dashboard')
+    router.get('/home')
 }
+useForceTheme('light');
 </script>
