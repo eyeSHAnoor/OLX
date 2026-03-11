@@ -63,52 +63,33 @@
         <!-- NORMAL HOMEPAGE -->
         <template v-if="!isSearching">
 
-            <!-- Browse Categories - Horizontal Scroll on Mobile, Grid on Desktop -->
-            <!-- Browse Categories - Horizontal Scroll on ALL devices -->
             <section class="pt-12 md:pb-10 pb-0 bg-gray-50">
                 <div class="max-w-10/12 mx-auto">
                     <h2 class="text-lg md:text-xl font-semibold mb-8 text-center">
                         Browse Categories
                     </h2>
 
-                    <!-- Categories container with horizontal scroll for all devices -->
-                    <div class="relative categories-wrapper">
-                        <!-- Left scroll button (desktop only) -->
-                        <button v-if="canScrollLeft" @click="scrollCategories('left')"
-                            class="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all hover:scale-110 w-10 h-10 items-center justify-center">
-                            <Icon icon="mdi:chevron-left" class="text-2xl" />
-                        </button>
-
-                        <!-- Right scroll button (desktop only) -->
-                        <button v-if="canScrollRight" @click="scrollCategories('right')"
-                            class="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all hover:scale-110 w-10 h-10 items-center justify-center">
-                            <Icon icon="mdi:chevron-right" class="text-2xl" />
-                        </button>
-
-                        <!-- Categories list - Horizontal scroll on ALL devices -->
-                        <div ref="categoriesContainer"
-                            class="grid grid-flow-col auto-cols-[calc(50vw-2rem)] md:auto-cols-[180px] lg:auto-cols-[200px] gap-2 overflow-x-auto pb-4 scroll-smooth hide-scrollbar categories-scroll"
-                            @scroll="updateScrollButtons">
-                            <div v-for="category in categories" :key="category.id"
-                                class="flex flex-col items-center cursor-pointer group"
-                                @click="navigateToCategory(category)">
-                                <div
-                                    class="w-28 h-28 md:w-32 md:h-32 rounded-xl overflow-hidden shadow-sm bg-white group-hover:shadow-md transition-all group-hover:scale-105">
-                                    <img v-if="category.files?.length" :src="category.files[0].file_url"
-                                        class="w-full h-full object-cover" />
-                                    <div v-else
-                                        class="w-full h-full flex items-center justify-center text-xs text-gray-400">
-                                        <Icon icon="mdi:image-off" class="text-3xl" />
-                                    </div>
+                    <!-- Categories grid - 3 columns on mobile, 6 columns on desktop -->
+                    <div class="grid grid-cols-3 md:grid-cols-7 gap-4 md:gap-6">
+                        <div v-for="category in categories" :key="category.id"
+                            class="flex flex-col items-center cursor-pointer group"
+                            @click="navigateToCategory(category)">
+                            <div
+                                class="w-full aspect-square rounded-xl overflow-hidden shadow-sm bg-white group-hover:shadow-md transition-all group-hover:scale-105">
+                                <img v-if="category.files?.length" :src="category.files[0].file_url"
+                                    class="w-full h-full object-cover" />
+                                <div v-else
+                                    class="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                                    <Icon icon="mdi:image-off" class="text-3xl" />
                                 </div>
-                                <span
-                                    class="mt-2 text-sm md:text-md font-medium text-center group-hover:text-brand-blue transition-colors">
-                                    {{ category.name }}
-                                    <span v-if="category.ads_count" class="text-xs text-gray-500">
-                                        ({{ category.ads_count }})
-                                    </span>
-                                </span>
                             </div>
+                            <span
+                                class="mt-2 text-xs md:text-sm font-medium text-center group-hover:text-brand-blue transition-colors line-clamp-2">
+                                {{ category.name }}
+                                <span v-if="category.ads_count" class="text-xs text-gray-500">
+                                    ({{ category.ads_count }})
+                                </span>
+                            </span>
                         </div>
                     </div>
                 </div>
