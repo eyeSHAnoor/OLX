@@ -4,10 +4,13 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Ad;
+use App\Models\AdImage;
 use App\Models\Category;
 use App\Models\Brand;
 use App\Models\User;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class AdSeeder extends Seeder
 {
@@ -223,11 +226,34 @@ class AdSeeder extends Seeder
         'reasons' => ['Not needed', 'Upgraded', 'Going abroad', 'Need money', 'Duplicate item']
     ];
 
+    // Image placeholders configuration
+    private $imagePlaceholders = [
+        'Mobile Phones' => ['phone', 'mobile', 'smartphone', 'iphone', 'samsung'],
+        'Cars' => ['car', 'vehicle', 'automobile', 'sedan', 'suv'],
+        'Motorcycles' => ['motorcycle', 'bike', 'scooter'],
+        'Houses' => ['house', 'home', 'property', 'building'],
+        'Apartments & Flats' => ['apartment', 'flat', 'condo'],
+        'Clothes' => ['clothing', 'fashion', 'dress', 'apparel'],
+        'Televisions & Accessories' => ['tv', 'television', 'display'],
+        'Computers & Accessories' => ['computer', 'laptop', 'desktop'],
+        'Furniture & Home Decor' => ['furniture', 'sofa', 'chair', 'table'],
+        'Bikes Accessories' => ['helmet', 'bike parts'],
+        'Cars Accessories' => ['car parts', 'accessories'],
+        'Pet Food & Accessories' => ['pet', 'dog', 'cat'],
+        'Toys' => ['toy', 'game'],
+        'Books & Magazines' => ['book', 'reading']
+    ];
+
+    private $defaultImagePlaceholders = ['product', 'item', 'goods'];
+
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
+        // Create storage directory if it doesn't exist
+        Storage::disk('public')->makeDirectory('ads');
+
         // Get or create a test user
         $user = User::firstOrCreate(
             ['email' => 'test@example.com'],
@@ -243,6 +269,8 @@ class AdSeeder extends Seeder
         
         // Get all brands
         $brands = Brand::all();
+
+        $this->command->info('Starting to create 200 ads with images...');
 
         // Create 200 random ads
         for ($i = 0; $i < 200; $i++) {
@@ -277,7 +305,7 @@ class AdSeeder extends Seeder
                 );
 
                 // Create the ad
-                Ad::create([
+                $ad = Ad::create([
                     'user_id' => $user->id,
                     'category_id' => $category->id,
                     'brand_id' => $brand->id,
@@ -291,14 +319,155 @@ class AdSeeder extends Seeder
                     'search_keywords' => $searchKeywords,
                     'created_at' => now()->subDays(rand(0, 30)),
                 ]);
+
+                // Add images to the ad (1-3 images per ad)
+                $this->addImagesToAd($ad, $category->name);
+                
+                if ($i % 20 == 0) {
+                    $this->command->info("Created {$i} ads...");
+                }
                 
             } catch (\Exception $e) {
+                $this->command->error("Error creating ad: " . $e->getMessage());
                 // Continue if there's an error with one ad
                 continue;
             }
         }
 
-        $this->command->info('Created 200 ads with Pakistani regional data and search keywords!');
+        $this->command->info('Created 200 ads with images and Pakistani regional data!');
+    }
+
+    /**
+     * Add placeholder images to an ad
+     */
+    private function addImagesToAd(Ad $ad, string $categoryName): void
+    {
+        // Determine how many images to add (1-3)
+        $imageCount = rand(1, 3);
+        
+        // Get appropriate keywords for this category
+        $keywords = $this->imagePlaceholders[$categoryName] ?? $this->defaultImagePlaceholders;
+        $keyword = $keywords[array_rand($keywords)];
+        
+        for ($i = 0; $i < $imageCount; $i++) {
+            try {
+                // Use different placeholder services for variety
+                $imagePath = $this->downloadPlaceholderImage($ad->id, $i + 1, $keyword);
+                
+                if ($imagePath) {
+                    AdImage::create([
+                        'ad_id' => $ad->id,
+                        'path' => $imagePath,
+                        'is_primary' => ($i === 0), // First image is primary
+                    ]);
+                }
+            } catch (\Exception $e) {
+                $this->command->error("Error adding image to ad {$ad->id}: " . $e->getMessage());
+                // Continue with next image
+                continue;
+            }
+        }
+    }
+
+    /**
+     * Download a placeholder image from a service
+     */
+    private function downloadPlaceholderImage(int $adId, int $imageNumber, string $keyword): ?string
+    {
+        // Randomly choose between different placeholder services
+        $service = rand(1, 3);
+        
+        // Set random image dimensions (variety of sizes)
+        $width = rand(400, 800);
+        $height = rand(300, 600);
+        
+        $imageContent = null;
+        
+        try {
+            switch ($service) {
+                case 1:
+                    // Using Picsum (random photos)
+                    $imageId = rand(1, 1000);
+                    $url = "https://picsum.photos/id/{$imageId}/{$width}/{$height}";
+                    break;
+                    
+                case 2:
+                    // Using PlaceKitten (cute kittens)
+                    $url = "https://placekitten.com/{$width}/{$height}";
+                    break;
+                    
+                case 3:
+                    // Using placeholder.picsum with keyword
+                    $url = "https://picsum.photos/{$width}/{$height}?random=" . rand(1, 10000);
+                    break;
+            }
+            
+            // Download image
+            $imageContent = file_get_contents($url);
+            
+            if ($imageContent === false) {
+                throw new \Exception("Failed to download image from {$url}");
+            }
+            
+            // Generate filename
+            $filename = "ad_{$adId}_img_{$imageNumber}_" . time() . ".jpg";
+            $path = "ads/{$filename}";
+            
+            // Store image
+            Storage::disk('public')->put($path, $imageContent);
+            
+            return $path;
+            
+        } catch (\Exception $e) {
+            // If online placeholder fails, create a simple colored placeholder
+            return $this->createFallbackImage($adId, $imageNumber);
+        }
+    }
+
+    /**
+     * Create a simple colored placeholder image as fallback
+     */
+    private function createFallbackImage(int $adId, int $imageNumber): ?string
+    {
+        try {
+            // Generate a simple colored square
+            $width = 400;
+            $height = 400;
+            $image = imagecreatetruecolor($width, $height);
+            
+            // Random color
+            $r = rand(0, 255);
+            $g = rand(0, 255);
+            $b = rand(0, 255);
+            $color = imagecolorallocate($image, $r, $g, $b);
+            
+            // Fill background
+            imagefill($image, 0, 0, $color);
+            
+            // Add some text
+            $textColor = imagecolorallocate($image, 255, 255, 255);
+            $text = "Ad #{$adId}";
+            imagestring($image, 5, 150, 190, $text, $textColor);
+            
+            // Start output buffering
+            ob_start();
+            imagejpeg($image);
+            $imageContent = ob_get_clean();
+            
+            // Clean up
+            imagedestroy($image);
+            
+            // Save file
+            $filename = "ad_{$adId}_img_{$imageNumber}_fallback_" . time() . ".jpg";
+            $path = "ads/{$filename}";
+            Storage::disk('public')->put($path, $imageContent);
+            
+            return $path;
+            
+        } catch (\Exception $e) {
+            $this->command->error("Failed to create fallback image: " . $e->getMessage());
+            return null;
+        }
     }
 
     /**
