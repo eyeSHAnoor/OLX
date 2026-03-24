@@ -86,43 +86,38 @@ class CategoryController extends Controller
         // CATEGORY SELECTED
         // --------------------------
         if ($categoryFilter) {
-
             $selectedCategory = Category::with(['childrenRecursive', 'files'])
                 ->find($categoryFilter);
 
             if ($selectedCategory) {
-
-                // Get category IDs ONCE
                 $categoryIds = $selectedCategory->getLeafCategoriesEfficient()
                     ->pluck('id')
                     ->push($selectedCategory->id)
                     ->unique();
 
-                // Clone query (important)
                 $adQuery = (clone $baseQuery)
                     ->whereIn('category_id', $categoryIds);
 
-                // PAGINATION (IMPORTANT)
+                // PAGINATION
                 $ads = $adQuery->paginate(10)->withQueryString();
 
                 $selectedCategory->ads = $ads;
                 $selectedCategory->ads_count = $ads->total();
 
-                // Brands (optimized)
-                $brandIds = $adQuery->clone()->distinct()->pluck('brand_id');
+                // Fix DISTINCT error by removing ORDER BY from the query before pluck
+                $brandIds = (clone $adQuery)->reorder()->pluck('brand_id')->unique();
                 $availableBrands = Brand::whereIn('id', $brandIds)->get();
 
-                // Price range (DB level, no memory load)
                 $priceRange = [
-                    'min' => $adQuery->clone()->min('price'),
-                    'max' => $adQuery->clone()->max('price'),
+                    'min' => (clone $adQuery)->min('price'),
+                    'max' => (clone $adQuery)->max('price'),
                 ];
 
                 return Inertia::render('home/Category', [
                     'category' => $selectedCategory,
                     'categories' => $categories,
                     'brands' => $availableBrands,
-                    'banners' => [], // keep as is if needed
+                    'banners' => [],
                     'topBanner' => null,
                     'allBrands' => Brand::select('id', 'name')->get(),
                     'filters' => [
@@ -142,11 +137,9 @@ class CategoryController extends Controller
         }
 
         // --------------------------
-        // NO CATEGORY (OPTIMIZED)
+        // NO CATEGORY
         // --------------------------
-
         $categories->each(function ($category) use ($baseQuery) {
-
             $categoryIds = $category->getLeafCategoriesEfficient()
                 ->pluck('id')
                 ->push($category->id)
@@ -155,7 +148,6 @@ class CategoryController extends Controller
             $query = (clone $baseQuery)
                 ->whereIn('category_id', $categoryIds);
 
-            // LIMIT per category (IMPORTANT)
             $ads = $query->limit(2)->get();
 
             $category->ads = $ads;
