@@ -38,12 +38,23 @@
             </div>
 
             <!-- My Ads -->
-            <Link href="user/my/ads" class="flex flex-col items-center px-3 py-1">
-                <Icon :icon="isActive('myads') ? 'mdi:bullhorn' : 'mdi:bullhorn-outline'" class="text-xl"
-                    :class="isActive('myads') ? 'text-blue-600' : 'text-gray-600'" />
-                <span class="text-xs mt-1" :class="isActive('myads') ? 'text-blue-600 font-medium' : 'text-gray-600'">My
-                    Ads</span>
-            </Link>
+            <div class="relative">
+                <Link href="/notifications" class="flex flex-col items-center px-3 py-1">
+                    <Icon :icon="isActive('notifications') ? 'mdi:bell' : 'mdi:bell-outline'" class="text-xl"
+                        :class="isActive('notifications') ? 'text-blue-600' : 'text-gray-600'" />
+
+                    <span class="text-xs mt-1"
+                        :class="isActive('notifications') ? 'text-blue-600 font-medium' : 'text-gray-600'">
+                        Notifications
+                    </span>
+                </Link>
+
+                <!-- Badge -->
+                <span v-if="unreadCount > 0"
+                    class="absolute -top-1 right-1 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full">
+                    {{ unreadCount }}
+                </span>
+            </div>
 
             <!-- Account -->
             <!-- Account -->
@@ -84,10 +95,12 @@ import { Icon } from '@iconify/vue'
 
 const page = usePage()
 const user = computed(() => page.props.auth?.user)
+const notifications = computed(() => page.props.notifications || [])
+const unreadCount = computed(() => page.props.unreadCount || 0)
 useForceTheme('light');
 // Compute account link based on user authentication
 const accountLink = computed(() => {
-    return user.value ? route('account') : route('amo.login')
+    return user.value ? route('account') : route('login')
 })
 
 // Helper function to determine active route

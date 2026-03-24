@@ -266,6 +266,8 @@ class AdSeeder extends Seeder
 
         // Get all leaf categories (categories without children)
         $leafCategories = Category::whereDoesntHave('children')->get();
+        // $leafCategories = Category::where('id' , 1)->get();
+
         
         // Get all brands
         $brands = Brand::all();

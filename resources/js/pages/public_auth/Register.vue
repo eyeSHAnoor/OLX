@@ -176,7 +176,7 @@
                 <div class="mt-4 pt-3 border-t border-gray-100">
                     <p class="text-center text-gray-600 text-xs">
                         Already have an account?
-                        <TextLink :href="route('amo.login')"
+                        <TextLink :href="route('login')"
                             class="font-medium text-brand-teal hover:text-brand-teal/80 transition-colors ml-1 text-xs">
                             Sign in
                         </TextLink>

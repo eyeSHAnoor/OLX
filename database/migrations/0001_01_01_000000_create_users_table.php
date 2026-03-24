@@ -23,6 +23,11 @@ return new class extends Migration {
             $table->integer('warning_count')->default(0);
             $table->timestamp('suspended_until')->nullable();
 
+            $table->string('verification_code', 6)->nullable();
+            $table->timestamp('verification_code_expires_at')->nullable();
+
+            $table->integer('rank')->default(0);
+
             $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

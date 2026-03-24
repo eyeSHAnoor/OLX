@@ -47,7 +47,7 @@
                             </button>
                         </div>
                         <p v-if="form.errors.cover_image" class="mt-1 text-xs text-red-600">{{ form.errors.cover_image
-                        }}</p>
+                            }}</p>
                     </div>
 
                     <!-- Profile Image Section -->
@@ -85,6 +85,32 @@
                                 </svg>
                             </button>
                         </div>
+                    </div>
+
+                    <!-- Name (Read-only) -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
+                        <input type="text" :value="user.name" disabled
+                            class="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-600 cursor-not-allowed" />
+                        <p class="mt-1 text-xs text-gray-500">Name cannot be changed</p>
+                    </div>
+
+                    <!-- Email (Read-only) -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Email Address</label>
+                        <input type="email" :value="user.email" disabled
+                            class="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-600 cursor-not-allowed" />
+                        <p class="mt-1 text-xs text-gray-500">Email cannot be changed</p>
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Phone Number</label>
+                        <input v-model="form.phone" type="tel"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm"
+                            :class="{ 'border-red-500': form.errors.phone }" placeholder="+92 300 1234567" />
+                        <p v-if="form.errors.phone" class="mt-1 text-xs text-red-600">{{ form.errors.phone }}</p>
+                        <p class="mt-1 text-xs text-gray-500">Enter your contact number (optional)</p>
                     </div>
 
                     <!-- Username with availability check -->
@@ -224,9 +250,6 @@
             </div>
         </div>
     </OlxLayout>
-
-    <!-- Delete Account Confirmation Modal (keep your existing modal) -->
-    <!-- ... -->
 </template>
 
 <script setup lang="ts">
@@ -243,6 +266,7 @@ interface Props {
         id: number
         name: string
         email: string
+        phone: string | null
     }
     userProfile: {
         username: string | null
@@ -257,6 +281,7 @@ interface Props {
 
 const props = defineProps<Props>()
 useForceTheme('light');
+
 // Store original username for comparison
 const originalUsername = ref(props.userProfile.username || '')
 
@@ -269,9 +294,10 @@ const userInitial = computed(() => {
     return props.user.name?.charAt(0) || 'U'
 })
 
-// Form state
+// Form state with phone number
 const form = useForm({
     username: props.userProfile.username || '',
+    phone: props.user.phone || '',
     bio: props.userProfile.bio || '',
     location: props.userProfile.location || '',
     website: props.userProfile.website || '',
@@ -414,21 +440,12 @@ const alert = useAlertDialog();
 const destroy = async () => {
     console.log('button pressed', props.user);
 
-    // const confirmed = await alert.show({
-    //     title: 'Delete Account',
-    //     description: `Are you sure you want to delete "${props.user.name}"? This action cannot be undone.`,
-    //     confirmText: 'Yes, Delete',
-    //     cancelText: 'Cancel',
-    // });
-
-    // if (confirmed) {
     form.delete(route('users.destroy', props.user.id), {
         preserveScroll: true,
         onSuccess: () => {
             router.visit(route('ads.index'));
         },
     });
-    // }
 };
 
 // Clean up preview URLs on component unmount

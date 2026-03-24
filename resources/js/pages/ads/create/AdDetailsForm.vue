@@ -1,10 +1,8 @@
 <template>
     <div class="max-w-full mx-auto">
-        <!-- Remove the {{ features }} debug line -->
-
         <!-- Header -->
         <div class="mb-8">
-            <button @click="$emit('back')"
+            <button @click="handleBack"
                 class="flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -13,8 +11,9 @@
             </button>
 
             <div class="border-b border-gray-200 pb-4">
-                <h2 class="text-3xl font-light text-gray-900">Ad Details</h2>
-                <p class="text-gray-500 mt-1 text-sm">Fill in the information below to create your ad</p>
+                <h2 class="text-3xl font-light text-gray-900">{{ editMode ? 'Edit Ad' : 'Ad Details' }}</h2>
+                <p class="text-gray-500 mt-1 text-sm">{{ editMode ?
+                    'Update your ad information below' : 'Fill in the information below to create your ad' }}</p>
             </div>
         </div>
 
@@ -86,7 +85,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Price <span
                                 class="text-red-500">*</span></label>
                         <div class="relative">
-                            <span class="absolute left-4 top-2.5 text-gray-500">$</span>
+                            <span class="absolute left-4 top-2.5 text-gray-500"></span>
                             <input v-model.number="form.price" type="number" min="0" step="0.01"
                                 class="w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
                                 placeholder="0.00" />
@@ -117,19 +116,27 @@
                             </p>
                         </div>
 
+                        <!-- City Selection - Replace the existing SearchableSelectInput -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">City <span
-                                    class="text-red-500">*</span></label>
-                            <select v-model="form.city"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors bg-white">
-                                <option value="">Select City</option>
-                                <option>Lahore</option>
-                                <option>Karachi</option>
-                                <option>Islamabad</option>
-                                <option>Rawalpindi</option>
-                                <option>Faisalabad</option>
-                                <option>Multan</option>
-                            </select>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                City <span class="text-red-500">*</span>
+                            </label>
+
+                            <!-- Using the optimized select component -->
+                            <SearchableSelectInput v-model="form.city" :items="cityOptions" key-by="id"
+                                :searchable-fields="['name']" placeholder="Select City">
+                                <template #item="{ item }">
+                                    <div
+                                        class="flex w-3/4 cursor-pointer items-center px-3 py-2 text-left text-sm hover:bg-gray-100">
+                                        <span>{{ item.name }}</span>
+                                    </div>
+                                </template>
+
+                                <template #selected="{ item }">
+                                    {{ item?.name ?? 'Select City' }}
+                                </template>
+                            </SearchableSelectInput>
+
                             <p v-if="form.errors.city" class="text-red-500 text-xs mt-1.5">
                                 {{ form.errors.city }}
                             </p>
@@ -195,9 +202,9 @@
                         </button>
                     </div>
 
-                    <!-- Image Preview Grid - Now starts from beginning -->
+                    <!-- Image Preview Grid -->
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        <!-- Existing Images (show first) -->
+                        <!-- Existing Images -->
                         <div v-for="image in existingImages" :key="`existing-${image.id}`" class="relative group">
                             <img :src="`/storage/${image.path}`"
                                 class="w-full aspect-square object-cover rounded-lg border border-gray-200" />
@@ -214,7 +221,7 @@
                             </div>
                         </div>
 
-                        <!-- New Images (show after existing) -->
+                        <!-- New Images -->
                         <div v-for="(preview, index) in imagePreviews" :key="`new-${index}`" class="relative group">
                             <img :src="preview"
                                 class="w-full aspect-square object-cover rounded-lg border border-gray-200" />
@@ -227,7 +234,7 @@
                             </button>
                         </div>
 
-                        <!-- Empty Placeholders (show last) -->
+                        <!-- Empty Placeholders -->
                         <template v-for="n in Math.max(0, 10 - totalImages)" :key="`empty-${n}`">
                             <div
                                 class="aspect-square border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center">
@@ -276,9 +283,7 @@
                             </div>
                             <div class="flex-1">
                                 <template v-if="feature.feature_id">
-                                    <!-- Check if selected feature has values -->
                                     <template v-if="hasFeatureValues(feature.feature_id)">
-                                        <!-- Show dropdown for features with predefined values -->
                                         <select v-model="feature.feature_value_id"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors bg-white text-sm">
                                             <option value="">Select Value</option>
@@ -287,12 +292,10 @@
                                                 {{ v.value }}
                                             </option>
                                         </select>
-                                        <!-- Show custom input only if "Select Value" is chosen -->
                                         <input v-if="feature.feature_value_id === ''" v-model="feature.custom_value"
                                             placeholder="Enter custom value"
                                             class="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors text-sm" />
                                     </template>
-                                    <!-- Show input directly for features without predefined values -->
                                     <template v-else>
                                         <input v-model="feature.custom_value"
                                             :placeholder="`Enter ${getFeatureName(feature.feature_id)}`"
@@ -360,8 +363,8 @@
             <div class="flex justify-end pt-4">
                 <button type="submit" :disabled="form.processing"
                     class="px-8 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium">
-                    <span v-if="form.processing">Posting...</span>
-                    <span v-else>Post Ad</span>
+                    <span v-if="form.processing">{{ editMode ? 'Updating...' : 'Posting...' }}</span>
+                    <span v-else>{{ editMode ? 'Update Ad' : 'Post Ad' }}</span>
                 </button>
             </div>
         </form>
@@ -369,8 +372,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
+import cities from '@/data/cities.json'
 
 const props = defineProps({
     selectedCategory: Object,
@@ -380,80 +384,173 @@ const props = defineProps({
         type: Array,
         default: () => []
     },
-    existingImages: {
-        type: Array,
-        default: () => []
-    }
+    editMode: { type: Boolean, default: false },
+    adData: { type: Object, default: null }
 })
 
-const form = useForm({
-    category_id: null,
-    brand_id: null,
-    ad_title: '',
-    description: '',
-    price: null,
-    location: '',
-    city: '',
-    seller_name: '',
-    seller_phone: '',
-    search_keywords: [],
-    images: [],
-    features: [],
-    remove_images: []
+const STORAGE_KEY = 'ad_form_draft'
+let isSubmitting = false // Flag to prevent draft saving during/after submission
+
+const cityOptions = computed(() => {
+    // Use a Map for faster lookups if needed
+    const citiesList = cities
+        .filter(city => city.country === 'PK')
+        .map(city => ({
+            id: city.name,
+            name: city.name
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name))
+
+    // Freeze the array to prevent reactivity overhead
+    return Object.freeze(citiesList)
 })
+
+const citySearchTerm = ref('')
+
+// Debug logging
+if (props.editMode && props.adData) {
+    console.log('Edit Mode - Ad Data:', props.adData)
+    console.log('Edit Mode - Features raw:', props.adData.features)
+}
+
+// Initialize existing images from adData if in edit mode
+const existingImages = ref(props.editMode && props.adData?.images ? [...props.adData.images] : [])
+
+// Initialize form with saved data or props
+const initializeForm = () => {
+    const savedDraft = localStorage.getItem(STORAGE_KEY)
+    let formData = {}
+
+    if (savedDraft && !props.editMode) {
+        try {
+            formData = JSON.parse(savedDraft)
+            console.log('Restored from draft:', formData)
+        } catch (e) {
+            console.error('Failed to parse saved draft', e)
+        }
+    }
+
+    return {
+        category_id: props.editMode && props.adData ? props.adData.category_id : (formData.category_id || null),
+        brand_id: props.editMode && props.adData ? props.adData.brand_id : (formData.brand_id || null),
+        ad_title: props.editMode && props.adData ? props.adData.ad_title : (formData.ad_title || ''),
+        description: props.editMode && props.adData ? props.adData.description : (formData.description || ''),
+        price: props.editMode && props.adData ? props.adData.price : (formData.price || null),
+        location: props.editMode && props.adData ? props.adData.location : (formData.location || ''),
+        city: props.editMode && props.adData ? props.adData.city : (formData.city || ''),
+        seller_name: props.editMode && props.adData ? props.adData.seller_name : (formData.seller_name || ''),
+        seller_phone: props.editMode && props.adData ? props.adData.seller_phone : (formData.seller_phone || ''),
+        search_keywords: props.editMode && props.adData ? [...props.adData.search_keywords] : (formData.search_keywords || []),
+        images: [],
+        features: [],
+        remove_images: []
+    }
+}
+
+const form = useForm(initializeForm())
+
+// Initialize features after form is created
+if (props.editMode && props.adData?.features) {
+    form.features = props.adData.features.map(f => ({
+        feature_id: f.id,
+        feature_value_id: f.pivot?.feature_value_id || null,
+        custom_value: f.pivot?.custom_value || null
+    }))
+    console.log('Initialized features:', form.features)
+}
+
+// Watch for adData changes to update features
+watch(() => props.adData, (newAdData) => {
+    if (props.editMode && newAdData?.features) {
+        form.features = newAdData.features.map(f => ({
+            feature_id: f.id,
+            feature_value_id: f.pivot?.feature_value_id || null,
+            custom_value: f.pivot?.custom_value || null
+        }))
+        console.log('Updated features from watch:', form.features)
+    }
+}, { immediate: true, deep: true })
+
+// Save draft whenever form data changes (except in edit mode and during submission)
+watch(
+    () => ({
+        category_id: form.category_id,
+        brand_id: form.brand_id,
+        ad_title: form.ad_title,
+        description: form.description,
+        price: form.price,
+        location: form.location,
+        city: form.city,
+        seller_name: form.seller_name,
+        seller_phone: form.seller_phone,
+        search_keywords: form.search_keywords
+    }),
+    (newData) => {
+        // Only save draft if:
+        // 1. Not in edit mode
+        // 2. Not currently submitting
+        // 3. Form has some data (not empty)
+        if (!props.editMode && !isSubmitting && form.ad_title) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(newData))
+            console.log('💾 Draft saved to localStorage')
+        }
+    },
+    { deep: true }
+)
 
 const newKeyword = ref('')
 const imagePreviews = ref([])
-const localSelectedBrand = ref(props.selectedBrand || null)
+const localSelectedBrand = ref(null)
 const fileInput = ref(null)
 
 // Calculate total images for placeholder count
 const totalImages = computed(() => {
-    return (props.existingImages?.length || 0) + form.images.length
+    return (existingImages.value?.length || 0) + form.images.length
 })
 
+// Set initial brand
 watch(() => props.selectedBrand, (val) => {
-    localSelectedBrand.value = val
+    if (val) {
+        localSelectedBrand.value = val
+    }
 }, { immediate: true })
+
+// If in edit mode, set brand from adData
+if (props.editMode && props.adData?.brand_id && props.selectedCategory?.brands) {
+    const brand = props.selectedCategory.brands.find(b => b.id === props.adData.brand_id)
+    if (brand) {
+        localSelectedBrand.value = brand
+    }
+}
 
 const availableBrands = computed(() => props.selectedCategory?.brands || [])
 
-// Improved function to get feature values
 const getFeatureValues = (featureId) => {
     if (!featureId || !props.features || !props.features.length) return []
-
-    // Convert featureId to number for comparison
     const id = Number(featureId)
     const feature = props.features.find(f => Number(f.id) === id)
-
-    // Return values array or empty array
     return feature?.values || []
 }
 
 const hasFeatureValues = (featureId) => {
     if (!featureId || !props.features || !props.features.length) return false
-
     const id = Number(featureId)
     const feature = props.features.find(f => Number(f.id) === id)
-
     return feature?.values && feature.values.length > 0
 }
 
-// Helper function to get feature name
 const getFeatureName = (featureId) => {
     if (!featureId || !props.features || !props.features.length) return 'value'
-
     const id = Number(featureId)
     const feature = props.features.find(f => Number(f.id) === id)
-
     return feature?.name?.toLowerCase() || 'value'
 }
 
 const addFeatureRow = () => {
     form.features.push({
         feature_id: '',
-        feature_value_id: '',
-        custom_value: ''
+        feature_value_id: null,
+        custom_value: null
     })
 }
 
@@ -502,8 +599,50 @@ const removeExistingImage = (imageId) => {
     if (!form.remove_images.includes(imageId)) {
         form.remove_images.push(imageId)
     }
-    // Emit event to parent to update UI
-    emit('remove-existing-image', imageId)
+    const index = existingImages.value.findIndex(img => img.id === imageId)
+    if (index !== -1) {
+        existingImages.value.splice(index, 1)
+    }
+}
+
+// Clear all draft data from localStorage
+const clearDraftData = () => {
+    localStorage.removeItem(STORAGE_KEY)
+    console.log('🗑️ Draft data cleared from localStorage')
+}
+
+// Reset form to initial empty state
+const resetFormState = () => {
+    form.ad_title = ''
+    form.description = ''
+    form.price = null
+    form.location = ''
+    form.city = ''
+    form.seller_name = ''
+    form.seller_phone = ''
+    form.search_keywords = []
+    form.features = []
+    form.images = []
+    form.remove_images = []
+    imagePreviews.value = []
+    localSelectedBrand.value = null
+}
+
+// Handle back button
+const handleBack = () => {
+    if (!props.editMode) {
+        const hasData = localStorage.getItem(STORAGE_KEY)
+        if (hasData) {
+            const confirmClear = confirm('You have unsaved changes. Do you want to discard them?')
+            if (confirmClear) {
+                clearDraftData()
+            } else {
+                emit('back')
+                return
+            }
+        }
+    }
+    emit('back')
 }
 
 const handleSubmit = () => {
@@ -512,23 +651,162 @@ const handleSubmit = () => {
         return
     }
 
-    form.transform(data => ({
-        ...data,
+    // Set submitting flag to prevent draft saving
+    isSubmitting = true
+
+    const submitData = {
         category_id: props.selectedCategory.id,
-        brand_id: localSelectedBrand.value?.id ?? null
-    })).post(route('ads.store'), {
-        forceFormData: true,
-        preserveScroll: true,
-        onSuccess: () => {
-            form.reset()
-            imagePreviews.value = []
-            router.visit(route('user.profile', props.user.id))
-        }
+        brand_id: localSelectedBrand.value?.id ?? null,
+        ad_title: form.ad_title,
+        description: form.description,
+        price: form.price,
+        location: form.location,
+        city: form.city,
+        seller_name: form.seller_name,
+        seller_phone: form.seller_phone,
+        search_keywords: form.search_keywords,
+        features: form.features.filter(f => f.feature_id),
+        remove_images: form.remove_images
+    }
+
+    console.log('Submitting:', {
+        editMode: props.editMode,
+        submitData: submitData,
+        imagesCount: form.images.length,
+        removeImages: form.remove_images
     })
+
+    if (props.editMode) {
+        const formData = new FormData()
+
+        Object.keys(submitData).forEach(key => {
+            if (key === 'features') {
+                if (submitData[key] && submitData[key].length > 0) {
+                    submitData[key].forEach((feature, index) => {
+                        formData.append(`features[${index}][feature_id]`, feature.feature_id)
+                        formData.append(`features[${index}][feature_value_id]`, feature.feature_value_id || '')
+                        formData.append(`features[${index}][custom_value]`, feature.custom_value || '')
+                    })
+                }
+            } else if (key === 'search_keywords') {
+                if (submitData[key] && submitData[key].length > 0) {
+                    submitData[key].forEach((keyword, index) => {
+                        formData.append(`search_keywords[${index}]`, keyword)
+                    })
+                }
+            } else if (key === 'remove_images') {
+                if (submitData[key] && submitData[key].length > 0) {
+                    submitData[key].forEach((imageId, index) => {
+                        formData.append(`remove_images[${index}]`, imageId)
+                    })
+                }
+            } else if (submitData[key] !== null && submitData[key] !== undefined) {
+                formData.append(key, submitData[key])
+            }
+        })
+
+        form.images.forEach((image, index) => {
+            formData.append(`images[${index}]`, image)
+        })
+
+        formData.append('_method', 'PUT')
+
+        router.post(route('ads.update', props.adData.id), formData, {
+            forceFormData: true,
+            preserveScroll: true,
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            },
+            onSuccess: () => {
+                console.log('✅ Update successful')
+                clearDraftData()
+                isSubmitting = false
+                router.visit(route('user.profile', props.user?.id))
+            },
+            onError: (errors) => {
+                console.error('Update errors:', errors)
+                isSubmitting = false
+                if (errors && typeof errors === 'object') {
+                    Object.assign(form.errors, errors)
+                }
+                alert('Error updating ad. Please check the form for errors.')
+            }
+        })
+    } else {
+        const formData = new FormData()
+
+        Object.keys(submitData).forEach(key => {
+            if (key === 'features') {
+                if (submitData[key] && submitData[key].length > 0) {
+                    submitData[key].forEach((feature, index) => {
+                        formData.append(`features[${index}][feature_id]`, feature.feature_id)
+                        formData.append(`features[${index}][feature_value_id]`, feature.feature_value_id || '')
+                        formData.append(`features[${index}][custom_value]`, feature.custom_value || '')
+                    })
+                }
+            } else if (key === 'search_keywords') {
+                if (submitData[key] && submitData[key].length > 0) {
+                    submitData[key].forEach((keyword, index) => {
+                        formData.append(`search_keywords[${index}]`, keyword)
+                    })
+                }
+            } else if (submitData[key] !== null && submitData[key] !== undefined) {
+                formData.append(key, submitData[key])
+            }
+        })
+
+        form.images.forEach((image, index) => {
+            formData.append(`images[${index}]`, image)
+        })
+
+        console.log('Sending request to store ad...')
+
+        router.post(route('ads.store'), formData, {
+            forceFormData: true,
+            preserveScroll: true,
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            },
+            onSuccess: (response) => {
+                console.log('✅ Create successful! Clearing draft data...')
+                clearDraftData()
+                resetFormState()
+                isSubmitting = false
+                router.visit(route('user.profile', props.user?.id))
+            },
+            onError: (errors) => {
+                console.error('Create errors:', errors)
+                isSubmitting = false
+                if (errors && typeof errors === 'object') {
+                    Object.assign(form.errors, errors)
+                }
+                alert('Error creating ad. Please check the form for errors.')
+            }
+        })
+    }
 }
 
-// Emit for removing existing images
-const emit = defineEmits(['back', 'remove-existing-image'])
+const handleBeforeUnload = (e) => {
+    // Only warn if there's unsaved data in create mode and not submitting
+    if (!props.editMode && !isSubmitting && localStorage.getItem(STORAGE_KEY)) {
+        e.preventDefault()
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?'
+        return e.returnValue
+    }
+}
+
+onMounted(() => {
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    if (!props.editMode && localStorage.getItem(STORAGE_KEY)) {
+        console.log('📝 Draft data exists on mount')
+    }
+})
+
+onUnmounted(() => {
+    window.removeEventListener('beforeunload', handleBeforeUnload)
+})
+
+const emit = defineEmits(['back'])
 </script>
 
 <style scoped>

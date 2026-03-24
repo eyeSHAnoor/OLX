@@ -1,98 +1,187 @@
 <template>
     <OlxLayout>
         <div class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
-
-            <!-- Profile Header -->
-            <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-4 md:mb-6">
-                <!-- Cover Photo -->
-                <div class="h-24 md:h-32 bg-gray-100 relative overflow-hidden">
-                    <img v-if="profileUser.profile?.cover_image" :src="`/storage/${profileUser.profile.cover_image}`"
-                        :alt="`${profileUser.name}'s cover`" class="w-full h-full object-cover" />
-                    <div v-else class="w-full h-full bg-gradient-to-r from-brand-blue/20 to-brand-teal/20"></div>
-                </div>
-
-                <!-- Profile Info -->
-                <div class="px-4 md:px-6 pb-4 md:pb-6 relative">
-                    <!-- Edit Profile Button (only for owner) -->
-                    <div v-if="isOwner" class="absolute top-3 right-3 md:top-4 md:right-4">
-                        <Link :href="route('profile.edit')"
-                            class="inline-flex items-center gap-1.5 bg-white hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200 border border-gray-200 text-xs">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            <!-- Rank Banner -->
+            <!-- Rank Badge - Professional Minimal Style -->
+            <div v-if="profileUser.rank !== null" class="mb-4 md:mb-5">
+                <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div class="px-4 py-3 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M9.049 2.927C9.469 1.638 10.531 1.638 10.951 2.927l.7 2.153a1 1 0 00.95.69h2.263c1.356 0 1.92 1.736.822 2.54l-1.83 1.33a1 1 0 00-.364 1.118l.7 2.153c.42 1.289-.99 2.36-2.088 1.556l-1.83-1.33a1 1 0 00-1.176 0l-1.83 1.33c-1.098.804-2.508-.267-2.088-1.556l.7-2.153a1 1 0 00-.364-1.118l-1.83-1.33c-1.098-.804-.534-2.54.822-2.54h2.263a1 1 0 00.95-.69l.7-2.153z" />
                             </svg>
-                            Edit Profile
-                        </Link>
+                            <span class="text-xs font-medium text-gray-600 uppercase tracking-wide">Rank</span>
+                        </div>
+                        <span class="text-xl font-semibold text-gray-900">#{{ profileUser.rank }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Statistics - Clean Dashboard Style -->
+            <div v-if="profileUser.orderStats" class="mb-5">
+                <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-100">
+                        <h3 class="text-sm font-semibold text-gray-900">Order Statistics</h3>
                     </div>
 
-                    <!-- Avatar -->
-                    <div class="flex flex-col md:flex-row md:items-end -mt-10 md:-mt-14 mb-3 md:mb-4">
-                        <div class="flex items-end space-x-3 md:space-x-4">
-                            <!-- Avatar with Profile Image -->
-                            <div class="relative">
-                                <div v-if="profileUser.profile?.profile_image"
-                                    class="w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-white shadow-md overflow-hidden">
-                                    <img :src="`/storage/${profileUser.profile.profile_image}`" :alt="profileUser.name"
-                                        class="w-full h-full object-cover" />
+                    <div class="p-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                            <!-- Total Orders -->
+                            <div class="text-left">
+                                <div class="text-2xl font-semibold text-gray-900">
+                                    {{ profileUser.orderStats.total_orders || 0 }}
                                 </div>
-                                <div v-else
-                                    class="w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-white shadow-md bg-brand-blue flex items-center justify-center">
-                                    <span class="text-2xl md:text-4xl font-semibold text-white uppercase">
-                                        {{ profileUser.name?.charAt(0) || 'U' }}
-                                    </span>
+                                <div class="text-xs text-gray-500 mt-1">Total Orders</div>
+                            </div>
+
+                            <!-- Completed Orders -->
+                            <div class="text-left">
+                                <div class="text-2xl font-semibold text-gray-900">
+                                    {{ profileUser.orderStats.completed_orders || 0 }}
                                 </div>
-                                <!-- Username Badge (if set) -->
-                                <div v-if="profileUser.profile?.username"
-                                    class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap">
-                                    @{{ profileUser.profile.username }}
+                                <div class="text-xs text-gray-500 mt-1">Completed</div>
+                            </div>
+
+                            <!-- Total Amount -->
+                            <div class="text-left">
+                                <div class="text-lg font-semibold text-gray-900">
+                                    Rs. {{ formatAmount(profileUser.orderStats.completed_amount || 0) }}
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Total Spent</div>
+                            </div>
+
+                            <!-- Completion Rate with Progress Bar -->
+                            <div class="text-left">
+                                <div class="text-2xl font-semibold text-gray-900">
+                                    {{ profileUser.orderStats.completion_rate || 0 }}%
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Completion Rate</div>
+                                <div class="w-full bg-gray-100 rounded h-1 mt-2">
+                                    <div class="h-1 rounded bg-gray-700 transition-all duration-300"
+                                        :style="{ width: `${profileUser.orderStats.completion_rate || 0}%` }">
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Name and basic info -->
-                            <div class="mb-1">
-                                <h1 class="text-xl md:text-2xl font-semibold text-gray-900">{{ profileUser.name }}</h1>
-                                <p class="text-gray-600 text-xs md:text-sm flex items-center gap-1.5 mt-0.5">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                    Member since {{ formatDate(profileUser.created_at) }}
-                                </p>
+                            <!-- Cancelled Orders -->
+                            <div class="text-left">
+                                <div class="text-2xl font-semibold text-gray-900">
+                                    {{ profileUser.orderStats.cancelled_orders || 0 }}
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    Cancelled ({{ profileUser.orderStats.cancel_rate || 0 }}%)
+                                </div>
+                                <div class="w-full bg-gray-100 rounded h-1 mt-2">
+                                    <div class="h-1 rounded bg-gray-400 transition-all duration-300"
+                                        :style="{ width: `${profileUser.orderStats.cancel_rate || 0}%` }">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rating Summary -->
+                        <div v-if="averageRating > 0" class="mt-4 pt-4 border-t border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-gray-600">Average Rating</span>
+                                    <span class="text-sm font-medium text-gray-900">{{ averageRating.toFixed(1) }} /
+                                        5.0</span>
+                                </div>
+                                <span class="text-xs text-gray-500">{{ totalRatings }} {{ totalRatings === 1 ? 'rating'
+                                    : 'ratings' }}</span>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Contact Info Grid -->
+            <!-- Profile Header - Professional Layout -->
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden mb-6">
+                <!-- Cover Photo - Subtle Gradient -->
+                <div class="h-28 md:h-36 bg-gradient-to-r from-gray-100 to-gray-50 relative overflow-hidden">
+                    <img v-if="profileUser.profile?.cover_image" :src="`/storage/${profileUser.profile.cover_image}`"
+                        :alt="`${profileUser.name}'s cover`" class="w-full h-full object-cover" />
+                </div>
+
+                <!-- Profile Content -->
+                <div class="px-5 pb-5 relative">
+                    <!-- Edit Button -->
+                    <div v-if="isOwner" class="absolute top-0 right-5">
+                        <Link :href="route('profile.edit')"
+                            class="inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            Edit
+                        </Link>
+                    </div>
+
+                    <!-- Avatar and Primary Info -->
+                    <div class="flex items-end -mt-12 md:-mt-14 mb-4">
+                        <div class="relative">
+                            <!-- Avatar -->
+                            <div v-if="profileUser.profile?.profile_image"
+                                class="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white shadow-sm overflow-hidden bg-white">
+                                <img :src="`/storage/${profileUser.profile.profile_image}`" :alt="profileUser.name"
+                                    class="w-full h-full object-cover" />
+                            </div>
+                            <div v-else
+                                class="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white shadow-sm bg-gray-100 flex items-center justify-center">
+                                <span class="text-3xl md:text-4xl font-medium text-gray-600 uppercase">
+                                    {{ profileUser.name?.charAt(0) || 'U' }}
+                                </span>
+                            </div>
+
+                            <!-- Username Badge -->
+                            <div v-if="profileUser.profile?.username"
+                                class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[11px] px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                                @{{ profileUser.profile.username }}
+                            </div>
+                        </div>
+
+                        <div class="ml-4 mb-1">
+                            <h1 class="text-xl md:text-2xl font-semibold text-gray-900">{{ profileUser.name }}</h1>
+                            <p class="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                Member since {{ formatDate(profileUser.created_at) }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information Grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                         <!-- Email -->
-                        <div class="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-                            <div
-                                class="w-8 h-8 rounded-full bg-brand-blue/10 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-brand-blue" fill="none" stroke="currentColor"
+                        <div class="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-[10px] text-gray-500">Email</p>
-                                <p class="text-xs font-medium text-gray-900 truncate">{{ profileUser.email }}</p>
+                                <p class="text-[11px] text-gray-500 uppercase tracking-wide">Email</p>
+                                <p class="text-sm text-gray-900 truncate">{{ profileUser.email }}</p>
                             </div>
                         </div>
 
                         <!-- Phone -->
-                        <div class="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-                            <div
-                                class="w-8 h-8 rounded-full bg-brand-teal/10 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-brand-teal" fill="none" stroke="currentColor"
+                        <div class="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                 </svg>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-[10px] text-gray-500">Phone</p>
-                                <p class="text-xs font-medium text-gray-900 truncate">
+                                <p class="text-[11px] text-gray-500 uppercase tracking-wide">Phone</p>
+                                <p class="text-sm text-gray-900 truncate">
                                     {{ profileUser.phone || 'Not provided' }}
                                 </p>
                             </div>
@@ -100,10 +189,9 @@
 
                         <!-- Location -->
                         <div v-if="profileUser.profile?.location"
-                            class="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-                            <div
-                                class="w-8 h-8 rounded-full bg-brand-blue/10 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-brand-blue" fill="none" stroke="currentColor"
+                            class="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -112,37 +200,34 @@
                                 </svg>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-[10px] text-gray-500">Location</p>
-                                <p class="text-xs font-medium text-gray-900 truncate">{{ profileUser.profile.location }}
-                                </p>
+                                <p class="text-[11px] text-gray-500 uppercase tracking-wide">Location</p>
+                                <p class="text-sm text-gray-900 truncate">{{ profileUser.profile.location }}</p>
                             </div>
                         </div>
 
-                        <!-- Website (if available) -->
+                        <!-- Website -->
                         <div v-if="profileUser.profile?.website"
-                            class="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-                            <div
-                                class="w-8 h-8 rounded-full bg-brand-teal/10 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-brand-teal" fill="none" stroke="currentColor"
+                            class="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                                 </svg>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-[10px] text-gray-500">Website</p>
+                                <p class="text-[11px] text-gray-500 uppercase tracking-wide">Website</p>
                                 <a :href="profileUser.profile.website" target="_blank"
-                                    class="text-xs font-medium text-brand-blue hover:underline truncate block">
+                                    class="text-sm text-gray-900 hover:text-gray-700 truncate block">
                                     {{ formatWebsite(profileUser.profile.website) }}
                                 </a>
                             </div>
                         </div>
 
-                        <!-- Stats -->
-                        <div class="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-                            <div
-                                class="w-8 h-8 rounded-full bg-brand-teal/10 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-brand-teal" fill="none" stroke="currentColor"
+                        <!-- Profile Views -->
+                        <div class="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -151,35 +236,39 @@
                                 </svg>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-[10px] text-gray-500">Total Views</p>
-                                <p class="text-xs font-medium text-gray-900">{{ profileUser.total_views || 0 }}</p>
+                                <p class="text-[11px] text-gray-500 uppercase tracking-wide">Profile Views</p>
+                                <p class="text-sm font-medium text-gray-900">{{ profileUser.total_views || 0 }}</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Bio -->
-                    <div v-if="profileUser.profile?.bio" class="mt-3 p-3 bg-gray-50 rounded-lg">
-                        <p class="text-xs text-gray-700">{{ profileUser.profile.bio }}</p>
+                    <!-- Bio Section -->
+                    <div v-if="profileUser.profile?.bio" class="mt-4 p-3 bg-gray-50 rounded-lg">
+                        <p class="text-sm text-gray-700 leading-relaxed">{{ profileUser.profile.bio }}</p>
                     </div>
 
-                    <!-- Privacy Badge (only for owner) -->
-                    <div v-if="isOwner && profileUser.profile?.is_public === 0"
-                        class="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full">
-                        <svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        <span class="text-[10px] font-medium text-gray-600">Private Profile</span>
+                    <!-- Privacy Status -->
+                    <div v-if="isOwner && profileUser.profile?.is_public === 0" class="mt-3">
+                        <div class="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            <span>Private Profile</span>
+                        </div>
                     </div>
                 </div>
             </div>
+
+
+
             <!-- User's Ads Section -->
             <div class="bg-white rounded-lg shadow-sm p-4 md:p-5">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                     <h2 class="text-lg md:text-xl font-semibold text-gray-900">
                         {{ profileUser.name }}'s Ads
                         <span class="text-xs font-normal text-gray-500 ml-2">({{ ads.total || profileUser.total_ads || 0
-                        }} total)</span>
+                            }} total)</span>
                     </h2>
 
                     <!-- Filters and Actions -->
@@ -422,7 +511,6 @@ import { router, Link, usePage } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import AdCard from '@/components/AdCard.vue'
 import { Icon } from '@iconify/vue'
-import CardContent from '@/components/ui/card/CardContent.vue'
 
 const page = usePage()
 
@@ -432,10 +520,19 @@ interface Props {
         name: string
         email: string
         phone: string | null
+        rank: number
         created_at: string
         avatar: string | null
         total_ads?: number
         total_views?: number
+        orderStats?: {
+            total_orders: number
+            completed_orders: number
+            completed_amount: number
+            cancelled_orders: number
+            completion_rate: number
+            cancel_rate: number
+        }
         received_ratings?: Array<{
             id: number
             rating: number
@@ -483,9 +580,20 @@ interface Props {
     userCities: string[]
     selectedCity: string
 }
+
 const props = defineProps<Props>()
-useForceTheme('light');
-console.log(props.profileUser)
+
+console.log(page.props)
+
+// Helper function to format amount
+const formatAmount = (amount: number) => {
+    if (amount >= 100000) {
+        return (amount / 100000).toFixed(1) + 'L'
+    } else if (amount >= 1000) {
+        return (amount / 1000).toFixed(1) + 'K'
+    }
+    return amount.toString()
+}
 
 // Check if current user is the profile owner
 const isOwner = computed(() => {

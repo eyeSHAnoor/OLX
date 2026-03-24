@@ -59,7 +59,7 @@ onMounted(() => {
     resetList();
     set([
         { label: 'Dashboard', href: '/dashboard' },
-        { label: 'Reports', href: route('admin.reports.index') }
+        { label: 'Reports', href: route('reports.index') }
     ]);
 });
 

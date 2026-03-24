@@ -8,8 +8,10 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Feature;
 use App\Data\CategoryData;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\LaravelData\DataCollection;
@@ -285,7 +287,7 @@ class AdController extends Controller
             $ad->delete();
         });
 
-        return redirect()->route('ads.index')->with('success', 'Ad deleted successfully.');
+        return redirect()->back()->with('success', 'Ad deleted successfully.');
     }
 
     /**
@@ -333,6 +335,8 @@ class AdController extends Controller
                 'value' => $selectedValue?->value ?? $feature->pivot->custom_value
             ];
         });
+
+        // Log::info($ad);
         
         $seller = $ad->user;
         $seller->avg_rating = $seller->receivedRatings()->avg('rating');
@@ -346,6 +350,14 @@ class AdController extends Controller
                 ->exists();
         }
 
+        $hasOrdered = false;
+
+        if (auth()->check()) {
+            $hasOrdered = Order::where('buyer_id', auth()->id())
+                ->where('ad_id', $ad->id)
+                ->exists();
+        }
+
         return Inertia::render('home/AdDetail', [
             'ad' => $ad,
             'sellerRating' => [
@@ -353,6 +365,7 @@ class AdController extends Controller
                 'count' => $seller->rating_count
             ],
             'isFavorited' => $isFavorited, // Add this to the props
+            'hasOrdered' => $hasOrdered
         ]);
     }
 }

@@ -18,6 +18,8 @@
 
         <!-- Mobile Bottom Navigation - Sticky Footer -->
         <MobileBottomNav />
+        <!-- Global Alert Dialog -->
+        <ShadcnAlertDialog />
     </div>
 </template>
 
@@ -27,4 +29,5 @@ import Footer from '../components/Footer.vue'
 import TopCategoriesBar from '../components/TopCategoriesBar.vue'
 import MobileBottomNav from '../components/MobileBottomNav.vue'
 import ValidationErrors from '@/components/ValidationErrors.vue';
+import ShadcnAlertDialog from '@/components/ShadcnAlertDialog.vue'
 </script>

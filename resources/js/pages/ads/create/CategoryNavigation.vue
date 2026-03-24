@@ -36,12 +36,13 @@
         <!-- Categories Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div v-for="category in currentCategories" :key="category.id" @click="handleClick(category)"
-                class="group bg-white border rounded-xl p-5 cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-brand-teal">
+                class="group bg-white border rounded-xl p-5 cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-brand-teal"
+                :class="{ 'border-brand-teal bg-brand-teal/5': isSelectedCategory(category) }">
                 <div class="flex items-center justify-between">
 
                     <div class="flex items-center gap-4">
 
-                        <!-- Category Icon - Show image if exists, otherwise show default icon -->
+                        <!-- Category Icon -->
                         <div
                             class="w-12 h-12 rounded-lg bg-brand-teal/10 flex items-center justify-center overflow-hidden">
                             <template v-if="category.files && category.files.length > 0">
@@ -67,6 +68,8 @@
                     <!-- Arrow if not leaf -->
                     <Icon v-if="!isLeaf(category)" icon="lucide:chevron-right"
                         class="size-5 text-gray-400 group-hover:text-brand-teal transition-colors" />
+                    <Icon v-else-if="isSelectedCategory(category)" icon="lucide:check-circle"
+                        class="size-5 text-brand-teal" />
                 </div>
             </div>
         </div>
@@ -92,18 +95,27 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 
 const props = defineProps({
     categories: {
         type: Array,
         required: true
+    },
+    selectedCategory: {
+        type: Object,
+        default: null
+    },
+    categoryPath: {
+        type: Array,
+        default: () => []
     }
 })
 
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'next'])
 
+const STORAGE_KEY = 'ad_form_draft'
 const currentParentId = ref(null)
 const breadcrumbs = ref([])
 const selectedLeaf = ref(null)
@@ -126,6 +138,10 @@ const currentTitle = computed(() => {
 const isLeaf = (category) =>
     !category.children_recursive || category.children_recursive.length === 0
 
+const isSelectedCategory = (category) => {
+    return selectedLeaf.value?.id === category.id
+}
+
 const findById = (id, list = props.categories) => {
     for (const item of list) {
         if (item.id === id) return item
@@ -137,18 +153,99 @@ const findById = (id, list = props.categories) => {
     return null
 }
 
+const findPathToCategory = (categoryId, currentPath = [], list = props.categories) => {
+    for (const item of list) {
+        if (item.id === categoryId) {
+            return [...currentPath, item]
+        }
+        if (item.children_recursive) {
+            const found = findPathToCategory(categoryId, [...currentPath, item], item.children_recursive)
+            if (found) return found
+        }
+    }
+    return null
+}
+
+const autoSelectCategory = () => {
+    if (props.selectedCategory) {
+        const path = findPathToCategory(props.selectedCategory.id)
+
+        if (path && path.length > 0) {
+            breadcrumbs.value = path
+            const leafCategory = path[path.length - 1]
+            selectedLeaf.value = leafCategory
+
+            if (isLeaf(leafCategory)) {
+                currentParentId.value = leafCategory.id
+                emit('select', leafCategory)
+            } else {
+                currentParentId.value = leafCategory.id
+            }
+        }
+    }
+}
+
+const restoreFromSavedData = () => {
+    const savedDraft = localStorage.getItem(STORAGE_KEY)
+    if (savedDraft && !props.selectedCategory) {
+        try {
+            const formData = JSON.parse(savedDraft)
+            if (formData.category_id) {
+                const category = findById(formData.category_id)
+                if (category) {
+                    // Restore the category UI
+                    const path = findPathToCategory(category.id)
+                    if (path && path.length > 0) {
+                        breadcrumbs.value = path
+                        const leafCategory = path[path.length - 1]
+                        selectedLeaf.value = leafCategory
+                        currentParentId.value = leafCategory.id
+
+                        // Emit to parent to update form
+                        setTimeout(() => {
+                            emit('select', leafCategory)
+                        }, 0)
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Failed to restore category from draft', e)
+        }
+    }
+}
+
 const handleClick = (category) => {
     if (isLeaf(category)) {
         selectedLeaf.value = category
         breadcrumbs.value.push(category)
 
-        // Emit and immediately move to next step
+        // Save category to draft immediately
+        saveCategoryToDraft(category.id)
+
         emit('select', category)
         return
     }
 
     currentParentId.value = category.id
     breadcrumbs.value.push(category)
+    selectedLeaf.value = null
+}
+
+// Save only the category ID to draft (not the whole form)
+const saveCategoryToDraft = (categoryId) => {
+    const savedDraft = localStorage.getItem(STORAGE_KEY)
+    let draftData = {}
+
+    if (savedDraft) {
+        try {
+            draftData = JSON.parse(savedDraft)
+        } catch (e) {
+            console.error('Failed to parse saved draft', e)
+        }
+    }
+
+    draftData.category_id = categoryId
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(draftData))
 }
 
 const navigateTo = (index) => {
@@ -163,4 +260,18 @@ const resetToRoot = () => {
     breadcrumbs.value = []
     selectedLeaf.value = null
 }
+
+onMounted(() => {
+    if (props.selectedCategory) {
+        autoSelectCategory()
+    } else {
+        restoreFromSavedData()
+    }
+})
+
+watch(() => props.selectedCategory, (newCategory) => {
+    if (newCategory) {
+        autoSelectCategory()
+    }
+}, { immediate: true })
 </script>

@@ -150,7 +150,7 @@ const goBackToSidebar = () => {
 <template>
     <OlxLayout>
         <div class="h-[calc(100vh-73px)] bg-gray-50">
-            <div class="h-full max-w-8/10 mx-auto px-2 sm:px-4 py-2 sm:py-4">
+            <div class="h-full max-w-8/10 mx-auto px-6 sm:px-4 py-2 sm:py-4">
                 <!-- Desktop Layout -->
                 <div class="hidden md:flex h-full bg-white rounded-xl shadow-sm overflow-hidden">
                     <!-- Conversations Sidebar -->

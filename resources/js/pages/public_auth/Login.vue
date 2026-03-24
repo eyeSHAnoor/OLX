@@ -120,7 +120,7 @@
                 <div class="mt-4 pt-3 border-t border-gray-100">
                     <p class="text-center text-gray-600 text-xs">
                         Don't have an account?
-                        <Link :href="route('amo.register')"
+                        <Link :href="route('register')"
                             class="font-medium text-brand-teal hover:text-brand-teal/80 transition-colors ml-1 text-xs">
                             Create account
                         </Link>

@@ -207,6 +207,10 @@
                                     <span v-if="selectedCategoryId" class="text-brand-teal">
                                         in {{ selectedCategoryName }}
                                     </span>
+                                    <span v-if="allLoadedAds.length > 0 && allLoadedAds.length < totalAds"
+                                        class="text-brand-teal ml-1">
+                                        • Showing {{ allLoadedAds.length }} of {{ totalAds }}
+                                    </span>
                                 </p>
                             </div>
 
@@ -276,21 +280,37 @@
                     </div>
 
                     <!-- Results -->
-                    <div v-if="ads.length > 0">
+                    <div v-if="allLoadedAds.length > 0">
                         <div v-if="viewMode === 'grid'"
                             class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                            <AdCard v-for="ad in ads" :key="ad.id" :ad="ad" />
+                            <AdCard v-for="ad in allLoadedAds" :key="ad.id" :ad="ad" />
                         </div>
 
                         <div v-if="viewMode === 'list'" class="space-y-2 md:space-y-3">
-                            <AdListItem v-for="ad in ads" :key="ad.id" :ad="ad" />
+                            <AdListItem v-for="ad in allLoadedAds" :key="ad.id" :ad="ad" />
                         </div>
 
-                        <!-- Pagination - Compact -->
-                        <div v-if="ads.length > 0 && totalAds > ads.length" class="mt-6">
-                            <div class="flex justify-center">
-                                <Pagination :links="paginationLinks" />
-                            </div>
+                        <!-- Loading indicator for infinite scroll -->
+                        <div v-if="loading" class="text-center py-4">
+                            <svg class="animate-spin w-6 h-6 text-brand-teal mx-auto" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            <p class="text-xs text-gray-500 mt-2">Loading more ads...</p>
+                        </div>
+
+                        <!-- Infinite scroll trigger - only show if there are more pages -->
+                        <div ref="loadMoreTrigger" v-if="hasMorePages && !loading && allLoadedAds.length > 0"
+                            class="h-10"></div>
+
+                        <!-- No more items message -->
+                        <div v-if="!hasMorePages && allLoadedAds.length > 0 && allLoadedAds.length === totalAds"
+                            class="text-center py-4">
+                            <p class="text-xs text-gray-400">You've seen all {{ totalAds }} ads</p>
                         </div>
                     </div>
 
@@ -364,227 +384,7 @@
     background: var(--brand-teal);
     border-radius: 4px;
 }
-</style>
-<script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { router, usePage } from '@inertiajs/vue3'
-import AdCard from '@/components/AdCard.vue'
-import AdListItem from '@/components/AdListItem.vue'
-import OlxLayout from '@/layouts/OlxLayout.vue'
-import debounce from 'lodash/debounce'
 
-const page = usePage()
-useForceTheme('light');
-
-// Props from controller
-const props = defineProps<{
-    ads: {
-        data: any[]
-        links: any[]
-        total: number
-    }
-    categories: any[]
-    brands: any[]
-    filters: {
-        filter: {
-            global?: string
-            category?: string
-            brand?: string
-        }
-        min_price?: number
-        max_price?: number
-        sort_by?: string
-    }
-    totalAds: number
-}>()
-
-// Reactive state
-const viewMode = ref<'grid' | 'list'>('grid')
-const sortBy = ref(props.filters.sort_by || 'newest')
-const minPrice = ref<number | null>(props.filters.min_price || null)
-const maxPrice = ref<number | null>(props.filters.max_price || null)
-const selectedCategoryId = ref<string | null>(props.filters.filter.category || null)
-const selectedBrands = ref<string[]>(props.filters.filter.brand ? props.filters.filter.brand.split(',') : [])
-const showMobileFilters = ref(false)
-const showAllCategories = ref(false)
-const showAllBrands = ref(false)
-
-// Quick price ranges
-const priceRanges = [
-    { label: 'Under $100', min: 0, max: 100 },
-    { label: '$100 - $500', min: 100, max: 500 },
-    { label: '$500 - $1000', min: 500, max: 1000 },
-    { label: '$1000+', min: 1000, max: null }
-]
-
-// Computed properties
-const ads = computed(() => props.ads.data)
-const paginationLinks = computed(() => props.ads.links)
-
-const filteredBrands = computed(() => {
-    let filtered = props.brands
-
-    // Filter brands by selected category if any
-    if (selectedCategoryId.value) {
-        filtered = filtered.filter(brand =>
-            brand.categories?.some((cat: any) => cat.id == selectedCategoryId.value)
-        )
-    }
-
-    // Limit brands if not showing all
-    if (!showAllBrands.value && filtered.length > 10) {
-        filtered = filtered.slice(0, 10)
-    }
-
-    return filtered
-})
-
-const activeFilterCount = computed(() => {
-    let count = 0
-    if (minPrice.value !== null) count++
-    if (maxPrice.value !== null) count++
-    if (selectedCategoryId.value) count++
-    if (selectedBrands.value.length) count++
-    return count
-})
-
-const selectedCategoryName = computed(() => {
-    if (!selectedCategoryId.value) return ''
-    const category = props.categories.find(c => c.id == selectedCategoryId.value)
-    return category?.name || ''
-})
-
-// Helper methods for counts
-const getCategoryAdCount = (category: any) => {
-    return category.ads_count || 0
-}
-
-const getBrandAdCount = (brandId: string) => {
-    return props.ads.data.filter(ad => ad.brand_id == brandId).length || 0
-}
-
-// Methods
-const selectCategory = (category: any) => {
-    if (selectedCategoryId.value === category.id) {
-        selectedCategoryId.value = null
-    } else {
-        selectedCategoryId.value = category.id
-        // Reset showAllBrands when category changes
-        showAllBrands.value = false
-    }
-    applyFilters()
-}
-
-const toggleBrand = (brandId: string) => {
-    const index = selectedBrands.value.indexOf(brandId)
-    if (index > -1) {
-        selectedBrands.value.splice(index, 1)
-    } else {
-        selectedBrands.value.push(brandId)
-    }
-    applyFilters()
-}
-
-const setQuickPriceRange = (min: number | null, max: number | null) => {
-    minPrice.value = min
-    maxPrice.value = max
-    applyFilters()
-}
-
-const applyFilters = () => {
-    const params: any = {}
-
-    if (minPrice.value !== null) params.min_price = minPrice.value
-    if (maxPrice.value !== null) params.max_price = maxPrice.value
-    if (selectedCategoryId.value) params['filter[category]'] = selectedCategoryId.value
-    if (selectedBrands.value.length) params['filter[brand]'] = selectedBrands.value.join(',')
-    if (sortBy.value) params.sort_by = sortBy.value
-
-    // Preserve search term if exists
-    if (props.filters.filter.global) {
-        params['filter[global]'] = props.filters.filter.global
-    }
-
-    // Auto-close mobile filters after applying
-    if (window.innerWidth < 1024) {
-        showMobileFilters.value = false
-    }
-
-    router.visit(route('all.items'), {
-        method: 'get',
-        data: params,
-        preserveScroll: true,
-        preserveState: true
-    })
-}
-
-const debouncedApplyFilters = debounce(applyFilters, 500)
-
-const resetFilters = () => {
-    minPrice.value = null
-    maxPrice.value = null
-    selectedCategoryId.value = null
-    selectedBrands.value = []
-    sortBy.value = 'newest'
-    showAllCategories.value = false
-    showAllBrands.value = false
-    showMobileFilters.value = false
-
-    const params: any = {}
-
-    // Preserve search term if exists
-    if (props.filters.filter.global) {
-        params['filter[global]'] = props.filters.filter.global
-    }
-
-    router.visit(route('all.items'), {
-        method: 'get',
-        data: params,
-        preserveScroll: true,
-        preserveState: true
-    })
-}
-
-const clearPriceFilter = () => {
-    minPrice.value = null
-    maxPrice.value = null
-    applyFilters()
-}
-
-const clearCategoryFilter = () => {
-    selectedCategoryId.value = null
-    applyFilters()
-}
-
-const clearBrandFilter = () => {
-    selectedBrands.value = []
-    applyFilters()
-}
-
-// Auto-close mobile filters on larger screens
-onMounted(() => {
-    const handleResize = () => {
-        if (window.innerWidth >= 1024) {
-            showMobileFilters.value = false
-        }
-    }
-
-    window.addEventListener('resize', handleResize)
-
-    // Cleanup
-    return () => {
-        window.removeEventListener('resize', handleResize)
-        debouncedApplyFilters.cancel()
-    }
-})
-
-// Watch for sort changes to apply filters
-onUnmounted(() => {
-    debouncedApplyFilters.cancel()
-})
-</script>
-
-<style scoped>
 /* Custom breakpoint for very small screens */
 @media (min-width: 475px) {
     .xs\:grid-cols-2 {
@@ -621,18 +421,338 @@ onUnmounted(() => {
         transform: translateX(0);
     }
 }
-
-/* Custom scrollbar */
-.overflow-y-auto::-webkit-scrollbar {
-    width: 4px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #eab308;
-    border-radius: 4px;
-}
 </style>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { router, usePage } from '@inertiajs/vue3'
+import AdCard from '@/components/AdCard.vue'
+import AdListItem from '@/components/AdListItem.vue'
+import OlxLayout from '@/layouts/OlxLayout.vue'
+import debounce from 'lodash/debounce'
+
+const page = usePage()
+
+// Props from controller
+const props = defineProps<{
+    ads: {
+        data: any[]
+        links: any[]
+        current_page: number
+        last_page: number
+        total: number
+    }
+    categories: any[]
+    brands: any[]
+    filters: {
+        filter: {
+            global?: string
+            category?: string
+            brand?: string
+        }
+        min_price?: number
+        max_price?: number
+        sort_by?: string
+    }
+    totalAds: number
+}>()
+
+// Reactive state
+const viewMode = ref<'grid' | 'list'>('grid')
+const sortBy = ref(props.filters.sort_by || 'newest')
+const minPrice = ref<number | null>(props.filters.min_price || null)
+const maxPrice = ref<number | null>(props.filters.max_price || null)
+const selectedCategoryId = ref<string | null>(props.filters.filter.category || null)
+const selectedBrands = ref<string[]>(props.filters.filter.brand ? props.filters.filter.brand.split(',') : [])
+const showMobileFilters = ref(false)
+const showAllCategories = ref(false)
+const showAllBrands = ref(false)
+
+// Infinite scroll state
+const allLoadedAds = ref<any[]>([])
+const currentPage = ref(1)
+const totalPages = ref(1)
+const loading = ref(false)
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
+
+// Computed properties
+const totalAds = computed(() => props.totalAds)
+
+const filteredBrands = computed(() => {
+    let filtered = props.brands
+
+    // Filter brands by selected category if any
+    if (selectedCategoryId.value) {
+        filtered = filtered.filter(brand =>
+            brand.categories?.some((cat: any) => cat.id == selectedCategoryId.value)
+        )
+    }
+
+    // Limit brands if not showing all
+    if (!showAllBrands.value && filtered.length > 10) {
+        filtered = filtered.slice(0, 10)
+    }
+
+    return filtered
+})
+
+const activeFilterCount = computed(() => {
+    let count = 0
+    if (minPrice.value !== null) count++
+    if (maxPrice.value !== null) count++
+    if (selectedCategoryId.value) count++
+    if (selectedBrands.value.length) count++
+    return count
+})
+
+const selectedCategoryName = computed(() => {
+    if (!selectedCategoryId.value) return ''
+    const category = props.categories.find(c => c.id == selectedCategoryId.value)
+    return category?.name || ''
+})
+
+const hasMorePages = computed(() => currentPage.value < totalPages.value)
+
+// Watch for initial ads data
+watch(() => props.ads, (newAds) => {
+    if (newAds) {
+        // For first load or filter change, replace all ads
+        if (newAds.current_page === 1) {
+            allLoadedAds.value = [...newAds.data]
+        } else {
+            // For subsequent pages, append new ads
+            allLoadedAds.value = [...allLoadedAds.value, ...newAds.data]
+        }
+        currentPage.value = newAds.current_page
+        totalPages.value = newAds.last_page
+    }
+}, { immediate: true, deep: true })
+
+// Setup Intersection Observer for infinite scroll
+const setupObserver = () => {
+    if (observer) {
+        observer.disconnect()
+    }
+
+    observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && !loading.value && hasMorePages.value) {
+            loadMore()
+        }
+    }, { threshold: 0.1, rootMargin: '100px' })
+
+    if (loadMoreTrigger.value) {
+        observer.observe(loadMoreTrigger.value)
+    }
+}
+
+// Load more ads
+const loadMore = () => {
+    if (loading.value || !hasMorePages.value) return
+
+    const nextPage = currentPage.value + 1
+    if (nextPage > totalPages.value) {
+        loading.value = false
+        return
+    }
+
+    loading.value = true
+
+    const params: any = {
+        page: nextPage
+    }
+
+    // Add all filter parameters
+    if (minPrice.value !== null) params.min_price = minPrice.value
+    if (maxPrice.value !== null) params.max_price = maxPrice.value
+    if (selectedCategoryId.value) params['filter[category]'] = selectedCategoryId.value
+    if (selectedBrands.value.length) params['filter[brand]'] = selectedBrands.value.join(',')
+    if (sortBy.value) params.sort_by = sortBy.value
+
+    // Preserve search term if exists
+    if (props.filters.filter.global) {
+        params['filter[global]'] = props.filters.filter.global
+    }
+
+    router.visit(route('all.items'), {
+        method: 'get',
+        data: params,
+        preserveState: true,
+        preserveScroll: true,
+        only: ['ads'], // Only update the ads prop
+        onSuccess: () => {
+            loading.value = false
+            // Re-setup observer after new content loads
+            setTimeout(() => {
+                setupObserver()
+            }, 100)
+        },
+        onError: () => {
+            loading.value = false
+        }
+    })
+}
+
+// Helper methods for counts
+const getCategoryAdCount = (category: any) => {
+    return category.ads_count || 0
+}
+
+const getBrandAdCount = (brandId: string) => {
+    return allLoadedAds.value.filter(ad => ad.brand_id == brandId).length || 0
+}
+
+// Filter methods
+const selectCategory = (category: any) => {
+    if (selectedCategoryId.value === category.id) {
+        selectedCategoryId.value = null
+    } else {
+        selectedCategoryId.value = category.id
+        // Reset showAllBrands when category changes
+        showAllBrands.value = false
+    }
+    applyFilters()
+}
+
+const toggleBrand = (brandId: string) => {
+    const index = selectedBrands.value.indexOf(brandId)
+    if (index > -1) {
+        selectedBrands.value.splice(index, 1)
+    } else {
+        selectedBrands.value.push(brandId)
+    }
+    applyFilters()
+}
+
+const setQuickPriceRange = (min: number | null, max: number | null) => {
+    minPrice.value = min
+    maxPrice.value = max
+    applyFilters()
+}
+
+const applyFilters = () => {
+    // Reset all loaded ads and pagination when filters change
+    allLoadedAds.value = []
+    currentPage.value = 1
+
+    const params: any = {}
+
+    if (minPrice.value !== null) params.min_price = minPrice.value
+    if (maxPrice.value !== null) params.max_price = maxPrice.value
+    if (selectedCategoryId.value) params['filter[category]'] = selectedCategoryId.value
+    if (selectedBrands.value.length) params['filter[brand]'] = selectedBrands.value.join(',')
+    if (sortBy.value) params.sort_by = sortBy.value
+
+    // Preserve search term if exists
+    if (props.filters.filter.global) {
+        params['filter[global]'] = props.filters.filter.global
+    }
+
+    // Auto-close mobile filters after applying
+    if (window.innerWidth < 1024) {
+        showMobileFilters.value = false
+    }
+
+    router.visit(route('all.items'), {
+        method: 'get',
+        data: params,
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+            loading.value = false
+        }
+    })
+}
+
+const debouncedApplyFilters = debounce(applyFilters, 500)
+
+const resetFilters = () => {
+    minPrice.value = null
+    maxPrice.value = null
+    selectedCategoryId.value = null
+    selectedBrands.value = []
+    sortBy.value = 'newest'
+    showAllCategories.value = false
+    showAllBrands.value = false
+    showMobileFilters.value = false
+
+    // Reset loaded ads
+    allLoadedAds.value = []
+    currentPage.value = 1
+
+    const params: any = {}
+
+    // Preserve search term if exists
+    if (props.filters.filter.global) {
+        params['filter[global]'] = props.filters.filter.global
+    }
+
+    router.visit(route('all.items'), {
+        method: 'get',
+        data: params,
+        preserveScroll: true,
+        preserveState: true
+    })
+}
+
+const clearPriceFilter = () => {
+    minPrice.value = null
+    maxPrice.value = null
+    applyFilters()
+}
+
+const clearCategoryFilter = () => {
+    selectedCategoryId.value = null
+    applyFilters()
+}
+
+const clearBrandFilter = () => {
+    selectedBrands.value = []
+    applyFilters()
+}
+
+const priceRanges = [
+    { label: 'Under $100', min: 0, max: 100 },
+    { label: '$100 - $500', min: 100, max: 500 },
+    { label: '$500 - $1000', min: 500, max: 1000 },
+    { label: '$1000+', min: 1000, max: null }
+]
+
+// Watch for ads changes to re-setup observer
+watch(allLoadedAds, () => {
+    if (hasMorePages.value && allLoadedAds.value.length > 0) {
+        setTimeout(() => {
+            setupObserver()
+        }, 100)
+    }
+}, { deep: true })
+
+// Lifecycle hooks
+onMounted(() => {
+    // Setup infinite scroll observer after DOM is ready
+    setTimeout(() => {
+        setupObserver()
+    }, 100)
+
+    // Handle resize to close mobile filters
+    const handleResize = () => {
+        if (window.innerWidth >= 1024) {
+            showMobileFilters.value = false
+        }
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    // Cleanup
+    onUnmounted(() => {
+        window.removeEventListener('resize', handleResize)
+        if (observer) observer.disconnect()
+        debouncedApplyFilters.cancel()
+    })
+})
+
+onUnmounted(() => {
+    if (observer) observer.disconnect()
+    debouncedApplyFilters.cancel()
+})
+</script>

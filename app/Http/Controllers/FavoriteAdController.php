@@ -17,54 +17,128 @@ class FavoriteAdController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        
-        // Start building the query for favorite ads
-        $query = $user->favoriteAds()
-            ->with(['images', 'category', 'brand', 'user']);
-        
-        // Apply search filter - using ad_title instead of title
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('ad_title', 'like', "%{$search}%")  // Changed from 'title' to 'ad_title'
-                ->orWhere('description', 'like', "%{$search}%")
-                ->orWhere('location', 'like', "%{$search}%");
+
+        // --------------------------
+        // FILTERS
+        // --------------------------
+        $searchTerm = $request->input('filter.global');
+        $categoryId = $request->input('filter.category');
+        $brand = $request->input('filter.brand');
+        $minPrice = $request->input('filter.min_price');
+        $maxPrice = $request->input('filter.max_price');
+        $sort = $request->input('sort', 'newest');
+
+        // --------------------------
+        // BASE QUERY
+        // --------------------------
+        $baseQuery = $user->favoriteAds()
+            ->with(['images', 'category.parent', 'brand', 'user']);
+
+        // --------------------------
+        // SEARCH
+        // --------------------------
+        if ($searchTerm) {
+            $search = strtolower($searchTerm);
+            $baseQuery->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(ad_title) LIKE ?', ["%{$search}%"])
+                ->orWhereRaw('LOWER(description) LIKE ?', ["%{$search}%"])
+                ->orWhereRaw('LOWER(location) LIKE ?', ["%{$search}%"])
+                ->orWhereHas('brand', fn($b) =>
+                        $b->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                );
             });
         }
-        
-        // Apply category filter
-        if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
-        }
-        
-        // Apply brand filter
-        if ($request->filled('brand')) {
-            $query->where('brand_id', $request->brand);
-        }
-        
-        // Apply price range filters
-        if ($request->filled('min_price')) {
-            $query->where('price', '>=', $request->min_price);
-        }
-        
-        if ($request->filled('max_price')) {
-            $query->where('price', '<=', $request->max_price);
-        }
-        
-        // Get filtered favorite ads
-        $favoriteAds = $query->latest()
-            ->paginate(12)
-            ->withQueryString();
 
-        // Get categories and brands for filtering
-        $categories = Category::select('id', 'name')->orderBy('name')->get();
-        $brands = Brand::select('id', 'name')->orderBy('name')->get();
+        // --------------------------
+        // CATEGORY FILTER (INCLUDES CHILDREN)
+        // --------------------------
+        $categoryIds = [];
+        $selectedCategory = null;
+
+        if ($categoryId) {
+            $selectedCategory = Category::with(['childrenRecursive'])->find($categoryId);
+
+            if ($selectedCategory) {
+                // Get all leaf categories + selected category
+                $categoryIds = $selectedCategory
+                    ->getLeafCategoriesEfficient()
+                    ->pluck('id')
+                    ->push($selectedCategory->id)
+                    ->unique()
+                    ->toArray();
+
+                $baseQuery->whereIn('category_id', $categoryIds);
+            }
+        }
+
+        // --------------------------
+        // OTHER FILTERS
+        // --------------------------
+        $baseQuery
+            ->when($brand, fn($q) => $q->where('brand_id', $brand))
+            ->when($minPrice, fn($q) => $q->where('price', '>=', $minPrice))
+            ->when($maxPrice, fn($q) => $q->where('price', '<=', $maxPrice));
+
+        // --------------------------
+        // SORTING
+        // --------------------------
+        match ($sort) {
+            'price_low' => $baseQuery->orderBy('price', 'asc'),
+            'price_high' => $baseQuery->orderBy('price', 'desc'),
+            default => $baseQuery->latest(),
+        };
+
+        // --------------------------
+        // PAGINATION
+        // --------------------------
+        $favoriteAds = $baseQuery->paginate(12)->withQueryString();
+
+        // --------------------------
+        // CATEGORIES (only parents)
+        // --------------------------
+        $categories = Category::whereNull('parent_id')
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        // --------------------------
+        // BRANDS (ONLY FOR SELECTED CATEGORY + CHILDREN)
+        // --------------------------
+        $brands = collect();
+        if ($selectedCategory && count($categoryIds) > 0) {
+            $brands = Brand::whereHas('categories', function ($q) use ($categoryIds) {
+                $q->whereIn('categories.id', $categoryIds);
+            })
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+        }
+
+        // --------------------------
+        // PRICE RANGE
+        // --------------------------
+        $priceRange = [
+            'min' => (clone $baseQuery)->min('price'),
+            'max' => (clone $baseQuery)->max('price'),
+        ];
 
         return Inertia::render('home/FavoriteAds', [
             'favoriteAds' => $favoriteAds,
             'categories' => $categories,
             'brands' => $brands,
-            'filters' => $request->only(['search', 'category', 'brand', 'min_price', 'max_price'])
+
+            'filters' => [
+                'filter' => [
+                    'global' => $searchTerm,
+                    'category' => $categoryId,
+                    'brand' => $brand,
+                    'min_price' => $minPrice,
+                    'max_price' => $maxPrice,
+                ],
+                'sort' => $sort,
+            ],
+
+            'priceRange' => $priceRange,
         ]);
     }
 

@@ -86,7 +86,49 @@
 
                         <!-- Ad Details Card -->
                         <div class="bg-white rounded-lg sm:rounded-xl shadow-sm p-4 sm:p-5 lg:p-6">
-                            <h1 class="text-md sm:text-lg lg:text-xl font-semibold mb-3 sm:mb-4">{{ ad.ad_title }}</h1>
+                            <div class="flex items-start justify-between gap-3 mb-3 sm:mb-4">
+                                <h1 class="text-md sm:text-lg lg:text-xl font-semibold mb-3 sm:mb-4">{{ ad.ad_title }}
+                                </h1>
+
+                                <div class="flex items-center gap-2 sm:gap-3">
+                                    <button @click="!hasOrdered && handleShowModal()" :disabled="hasOrdered"
+                                        class="group relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-200 shadow-md"
+                                        :class="hasOrdered
+                                            ? 'bg-gray-200 cursor-not-allowed opacity-60'
+                                            : 'hover:bg-gray-200 hover:scale-105 active:scale-95 hover:shadow-lg'">
+                                        <Icon icon="lucide:shopping-cart" class="size-4 sm:size-5" />
+                                        <span class="text-xs sm:text-sm font-medium hidden sm:inline">Order</span>
+                                        <!-- Tooltip for mobile -->
+                                        <span
+                                            class="sm:hidden absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                            Order Now
+                                        </span>
+                                    </button>
+                                    <button @click="toggleFavorite"
+                                        class="group relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white border-2 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
+                                        :class="[
+                                            isFavorited
+                                                ? 'border-red-200 bg-red-50 hover:bg-red-100'
+                                                : 'border-gray-200 hover:border-red-200 hover:bg-red-50',
+                                            isFavoriteLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                                        ]" :disabled="isFavoriteLoading">
+                                        <Icon :icon="isFavorited ? 'mdi:heart' : 'lucide:heart'"
+                                            class="size-4 sm:size-5 transition-colors" :class="[
+                                                isFavorited ? 'text-red-500' : 'text-gray-500 group-hover:text-red-500'
+                                            ]" />
+                                        <span class="text-xs sm:text-sm font-medium hidden sm:inline" :class="[
+                                            isFavorited ? 'text-red-600' : 'text-gray-600 group-hover:text-red-600'
+                                        ]">
+                                            {{ isFavorited ? 'Saved' : 'Save' }}
+                                        </span>
+                                        <!-- Tooltip for mobile -->
+                                        <span
+                                            class="sm:hidden absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                            {{ isFavorited ? 'Remove from favorites' : 'Add to favorites' }}
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
 
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-5">
                                 <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -143,7 +185,7 @@
                                         <div>
                                             <p class="text-xs text-gray-500">{{ feature.name }}</p>
                                             <p class="text-sm font-medium">
-                                                {{ getFeatureValue(feature) }}
+                                                {{ feature.value }}
                                             </p>
                                         </div>
                                     </div>
@@ -409,6 +451,8 @@
         </div>
         <!-- Report Modal -->
         <ReportModal v-model="showReportModal" :ad="ad" :reasons="reportReasons" @submitted="handleReportSubmitted" />
+        <OrderModal v-model="showModal" :ad="ad" @order-placed="handleOrderPlaced"
+            @success="showToastMessage('Order placed successfully! The seller has been notified.')" />
     </OlxLayout>
 </template>
 
@@ -421,6 +465,7 @@ import ReportModal from './_partials/ReportModal.vue';
 import { ref, computed, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import { Link } from '@inertiajs/vue3'
+import OrderModal from './_partials/OrderModal.vue'
 
 interface PageProps extends InertiaPageProps {
     ad?: any;
@@ -444,7 +489,13 @@ useForceTheme('light');
 const page = usePage<PageProps>();
 const ad = computed(() => page.props.ad);
 const similarAds = computed(() => page.props.similarAds || []);
+const hasOrdered = computed(() => page.props.hasOrdered || false)
+const { handleShowModal, showModal, selectedItem } = useModal();
 
+const handleOrderPlaced = () => {
+    // Optional: Do something specific when order is placed
+    console.log('Order placed successfully');
+}
 console.log(page.props)
 // Favorite state
 const isFavorited = ref(false)
@@ -732,6 +783,27 @@ const openChat = () => {
             }
         }
     })
+}
+
+const orderAd = () => {
+    if (!page.props.auth?.user) {
+        router.visit('/login');
+        return;
+    }
+
+    router.post(route('orders.store'), {
+        ad_id: ad.value?.id,
+        qty: 1 // optional, you can make it dynamic later
+    }, {
+        preserveScroll: true,
+        onSuccess: (response) => {
+            showToastMessage('Item is ordered! Owner has been notified.');
+        },
+        onError: (errors) => {
+            console.error(errors);
+            showToastMessage('Failed to place order.');
+        }
+    });
 }
 </script>
 

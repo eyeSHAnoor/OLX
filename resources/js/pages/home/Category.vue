@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { router, Link, usePage } from '@inertiajs/vue3'
 import { Icon } from '@iconify/vue'
 import OlxLayout from '@/layouts/OlxLayout.vue'
@@ -8,7 +8,7 @@ import AdListItem from '@/components/AdListItem.vue'
 import debounce from 'lodash/debounce'
 import citiesList from '@/data/cities.json'
 
-// Props definition
+// Props
 const props = defineProps<{
     category?: any
     categories: any[]
@@ -18,14 +18,14 @@ const props = defineProps<{
     priceRange?: { min: number; max: number }
 }>()
 
-// Get page props including banners
 const page = usePage()
 
-// Banner display configuration
-const BANNER_INTERVAL = 9 // Show banner after every 10 ads
-const BANNER_OFFSET = 8     // Start after 9th ad (index 8)
+// ----------------------
+// BANNERS
+// ----------------------
+const BANNER_INTERVAL = 9
+const BANNER_OFFSET = 8
 
-// Get banners from page props
 const banners = computed(() => {
     const bannerData = (page.props as any).banners
     return Array.isArray(bannerData) ? bannerData : []
@@ -35,13 +35,13 @@ const topBanner = computed(() => {
     return (page.props as any).topBanner || null
 })
 
-// View state
+// ----------------------
+// STATE
+// ----------------------
 const viewMode = ref<'grid' | 'list'>('grid')
 const showMobileFilters = ref(false)
-const currentPage = ref(1)
-const itemsPerPage = 12
 
-// Filter states
+// Filters
 const searchTerm = ref(props.filters?.filter?.global || '')
 const selectedBrands = ref<number[]>([])
 const minPrice = ref<number | null>(props.filters?.filter?.min_price || null)
@@ -49,42 +49,96 @@ const maxPrice = ref<number | null>(props.filters?.filter?.max_price || null)
 const selectedCity = ref(props.filters?.filter?.city || 'Pakistan')
 const sortBy = ref(props.filters?.sort || 'newest')
 
-// Categories view more/less state
+// Categories UI
 const showAllCategories = ref(false)
 const initialCategoriesToShow = 5
 
-// Cities list
 const cities = ref<string[]>(citiesList || [])
 
-// Quick price ranges
-const priceRanges = [
-    { label: 'Under $100', min: 0, max: 100 },
-    { label: '$100 - $500', min: 100, max: 500 },
-    { label: '$500 - $1000', min: 500, max: 1000 },
-    { label: '$1000+', min: 1000, max: null }
-]
+// ----------------------
+// PAGINATION (FROM BACKEND)
+// ----------------------
+const adsData = computed(() => props.category?.ads || null)
 
-// Computed properties
+// Store all loaded ads (accumulated from all pages)
+const allLoadedAds = ref<any[]>([])
+const currentPage = ref(1)
+const totalPages = ref(1)
+const totalAds = ref(0)
+
+// Update all loaded ads when initial data arrives
+watch(adsData, (newData) => {
+    if (newData) {
+        // For first load or filter change, replace all ads
+        if (newData.current_page === 1) {
+            allLoadedAds.value = [...newData.data]
+        } else {
+            // For subsequent pages, append new ads
+            allLoadedAds.value = [...allLoadedAds.value, ...newData.data]
+        }
+        currentPage.value = newData.current_page
+        totalPages.value = newData.last_page
+        totalAds.value = newData.total
+    }
+}, { immediate: true, deep: true })
+
+// Computed ads for display (all loaded ads)
+const ads = computed(() => allLoadedAds.value)
+
+const hasMorePages = computed(() => currentPage.value < totalPages.value)
+
+// ----------------------
+// INFINITE SCROLL
+// ----------------------
+const loading = ref(false)
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
+
+// Function to setup observer
+const setupObserver = () => {
+    if (observer) {
+        observer.disconnect()
+    }
+
+    observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && !loading.value && hasMorePages.value) {
+            loadMore()
+        }
+    }, { threshold: 0.1, rootMargin: '100px' })
+
+    if (loadMoreTrigger.value) {
+        observer.observe(loadMoreTrigger.value)
+    }
+}
+
+// Check if we have ads
+const hasAds = computed(() => {
+    return ads.value && ads.value.length > 0
+})
+
+// ----------------------
+// CATEGORIES
+// ----------------------
 const topLevelCategories = computed(() => {
     return props.categories.filter(cat => !cat.parent_id)
 })
 
 const displayedCategories = computed(() => {
-    if (showAllCategories.value) {
-        return props.categories
-    }
-    return props.categories.filter((cat, index) => {
-        // Always show all subcategories of visible parent categories
+    if (showAllCategories.value) return props.categories
+
+    return props.categories.filter((cat) => {
         if (cat.parent_id) {
-            const parentIndex = topLevelCategories.value.findIndex(parent => parent.id === cat.parent_id)
+            const parentIndex = topLevelCategories.value.findIndex(p => p.id === cat.parent_id)
             return parentIndex < initialCategoriesToShow
         }
-        // Show only first 5 parent categories
-        const parentIndex = topLevelCategories.value.findIndex(parent => parent.id === cat.id)
+        const parentIndex = topLevelCategories.value.findIndex(p => p.id === cat.id)
         return parentIndex < initialCategoriesToShow
     })
 })
 
+// ----------------------
+// FILTER COUNT
+// ----------------------
 const activeFilterCount = computed(() => {
     let count = 0
     if (selectedBrands.value.length) count++
@@ -94,103 +148,33 @@ const activeFilterCount = computed(() => {
     return count
 })
 
-const filteredAds = computed(() => {
-    let ads = props.category?.ads || []
-
-    // Filter by selected brands
-    if (selectedBrands.value.length) {
-        ads = ads.filter(ad => selectedBrands.value.includes(ad.brand_id))
-    }
-
-    // Filter by price
-    if (minPrice.value !== null) {
-        ads = ads.filter(ad => ad.price >= minPrice.value!)
-    }
-    if (maxPrice.value !== null) {
-        ads = ads.filter(ad => ad.price <= maxPrice.value!)
-    }
-
-    // Apply sorting
-    if (sortBy.value === 'price_low') {
-        ads = [...ads].sort((a, b) => a.price - b.price)
-    } else if (sortBy.value === 'price_high') {
-        ads = [...ads].sort((a, b) => b.price - a.price)
-    } else {
-        ads = [...ads].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    }
-
-    return ads
-})
-
-const paginatedAds = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage
-    const end = start + itemsPerPage
-    return filteredAds.value.slice(start, end)
-})
-
-const totalPages = computed(() =>
-    Math.ceil(filteredAds.value.length / itemsPerPage)
-)
-
-const displayedPages = computed(() => {
-    const delta = 2
-    const range = []
-    const rangeWithDots = []
-    let l
-
-    for (let i = 1; i <= totalPages.value; i++) {
-        if (i === 1 || i === totalPages.value || (i >= currentPage.value - delta && i <= currentPage.value + delta)) {
-            range.push(i)
-        }
-    }
-
-    range.forEach((i) => {
-        if (l) {
-            if (i - l === 2) {
-                rangeWithDots.push(l + 1)
-            } else if (i - l !== 1) {
-                rangeWithDots.push('...')
-            }
-        }
-        rangeWithDots.push(i)
-        l = i
-    })
-
-    return rangeWithDots
-})
-
-// Banner methods
+// ----------------------
+// BANNERS LOGIC
+// ----------------------
 const shouldShowBanner = (index: number) => {
-    if (!banners.value || banners.value.length === 0) return false
+    if (!banners.value.length) return false
 
-    // Show banner after every BANNER_INTERVAL ads, starting from BANNER_OFFSET
-    const position = index + 1 // Convert to 1-based position
-    const isAtInterval = position >= BANNER_OFFSET && position % BANNER_INTERVAL === 0
-    const notAtEnd = index < paginatedAds.value.length - 1 // Don't show at last item
-
-    return isAtInterval && notAtEnd
+    const position = index + 1
+    return position >= BANNER_OFFSET &&
+        position % BANNER_INTERVAL === 0 &&
+        index < ads.value.length - 1
 }
 
 const getBannerForPosition = (index: number) => {
-    if (!banners.value || banners.value.length === 0) return null
-
-    // Calculate which banner to show based on the position
-    // This rotates through available banners
+    if (!banners.value.length) return null
     const bannerIndex = Math.floor(index / BANNER_INTERVAL) % banners.value.length
     return banners.value[bannerIndex]
 }
 
-// Methods
-const toggleCategoriesView = () => {
-    showAllCategories.value = !showAllCategories.value
-}
-
-const getBrandAdCount = (brandId: number) => {
-    return props.category?.ads?.filter((ad: any) => ad.brand_id === brandId).length || 0
-}
-
+// ----------------------
+// ROUTER ACTIONS
+// ----------------------
 const applyFilters = () => {
-    const filters: any = {
+    // Reset all loaded ads and pagination when filters change
+    allLoadedAds.value = []
+    currentPage.value = 1
+
+    router.get(route('category.show', props.category?.slug), {
         filter: {
             global: searchTerm.value,
             category: props.category?.id,
@@ -200,31 +184,121 @@ const applyFilters = () => {
             city: selectedCity.value,
         },
         sort: sortBy.value,
-    }
-
-    router.get(route('category.show', props.category?.slug), filters, {
+        page: 1, // Reset to first page
+    }, {
         preserveState: true,
         preserveScroll: true,
+        onSuccess: () => {
+            loading.value = false
+        }
     })
 
     showMobileFilters.value = false
 }
 
-const debouncedApplyPriceFilter = debounce(() => {
-    applyFilters()
-}, 500)
+const loadMore = () => {
+    // Don't load if already loading or no more pages
+    if (loading.value || !hasMorePages.value) return
 
-const applyBrandFilter = () => {
-    applyFilters()
+    // Check if next page exists
+    const nextPage = currentPage.value + 1
+    if (nextPage > totalPages.value) {
+        loading.value = false
+        return
+    }
+
+    loading.value = true
+
+    const params = {
+        ...props.filters,
+        page: nextPage
+    }
+
+    // Ensure filter parameters are properly structured
+    if (params.filter) {
+        params.filter = {
+            ...params.filter,
+            global: searchTerm.value,
+            category: props.category?.id,
+            brand: selectedBrands.value.join(','),
+            min_price: minPrice.value,
+            max_price: maxPrice.value,
+            city: selectedCity.value,
+        }
+    }
+
+    params.sort = sortBy.value
+
+    // Use router.visit to preserve existing data
+    router.visit(route('category.show', props.category?.slug), {
+        method: 'get',
+        data: params,
+        preserveState: true,
+        preserveScroll: true,
+        only: ['category'], // Only update the category prop
+        onSuccess: () => {
+            loading.value = false
+            // Re-setup observer after new content loads
+            setTimeout(() => {
+                setupObserver()
+            }, 100)
+        },
+        onError: () => {
+            loading.value = false
+        }
+    })
 }
 
-const applyCityFilter = () => {
-    applyFilters()
+const goToPage = (page: number) => {
+    if (page < 1 || page > totalPages.value) return
+
+    // Reset loaded ads when manually changing page
+    allLoadedAds.value = []
+    currentPage.value = page
+
+    router.get(route('category.show', props.category?.slug), {
+        ...props.filters,
+        page: page
+    }, {
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            loading.value = false
+        }
+    })
 }
+
+// ----------------------
+// FILTER HANDLERS
+// ----------------------
+const debouncedApplyPriceFilter = debounce(applyFilters, 500)
+
+const applyBrandFilter = () => applyFilters()
+const applyCityFilter = () => applyFilters()
 
 const applySort = () => {
-    currentPage.value = 1 // Reset to first page when sorting
-    applyFilters()
+    // Reset loaded ads when sorting changes
+    allLoadedAds.value = []
+    currentPage.value = 1
+
+    router.get(route('category.show', props.category?.slug), {
+        filter: {
+            global: searchTerm.value,
+            category: props.category?.id,
+            brand: selectedBrands.value.join(','),
+            min_price: minPrice.value,
+            max_price: maxPrice.value,
+            city: selectedCity.value,
+        },
+        sort: sortBy.value,
+        page: 1,
+    }, {
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            loading.value = false
+        }
+    })
 }
 
 const setQuickPriceRange = (min: number | null, max: number | null) => {
@@ -258,23 +332,58 @@ const resetAllFilters = () => {
     applyFilters()
 }
 
-// Watch for page changes
-watch(currentPage, () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-})
+// ----------------------
+// HELPERS
+// ----------------------
+const getBrandAdCount = (brandId: number) => {
+    return ads.value.filter((ad: any) => ad.brand_id === brandId).length
+}
 
-// Watch for filter changes to reset pagination
-watch([selectedBrands, minPrice, maxPrice, selectedCity, sortBy], () => {
-    currentPage.value = 1
-})
-
-// Initialize selected brands from URL if present
+// ----------------------
+// INIT
+// ----------------------
 onMounted(() => {
     if (props.filters?.filter?.brand) {
         selectedBrands.value = props.filters.filter.brand.split(',').map(Number)
     }
-    console.log('Banners loaded:', banners.value)
-    console.log('Top banner:', topBanner.value)
+
+    // Setup infinite scroll observer after DOM is ready
+    setTimeout(() => {
+        setupObserver()
+    }, 100)
+})
+
+// Watch for ads changes to re-setup observer
+watch(ads, (newAds) => {
+    // Re-setup observer after DOM updates if there are more pages
+    if (hasMorePages.value && newAds.length > 0) {
+        setTimeout(() => {
+            setupObserver()
+        }, 100)
+    }
+}, { deep: true })
+
+onUnmounted(() => {
+    if (observer) observer.disconnect()
+})
+
+const toggleCategoriesView = () => {
+    showAllCategories.value = !showAllCategories.value
+}
+
+const priceRanges = [
+    { label: 'Under $100', min: 0, max: 100 },
+    { label: '$100 - $500', min: 100, max: 500 },
+    { label: '$500 - $1000', min: 500, max: 1000 },
+    { label: 'Above $1000', min: 1000, max: null }
+]
+
+const displayedPages = computed(() => {
+    const pages = []
+    for (let i = 1; i <= totalPages.value; i++) {
+        pages.push(i)
+    }
+    return pages
 })
 </script>
 
@@ -328,7 +437,7 @@ onMounted(() => {
                                 </Link>
                                 <Icon icon="mdi:chevron-right" class="text-gray-400 text-sm" />
                                 <span v-if="category" class="text-gray-900 font-medium text-xs">{{ category.name
-                                    }}</span>
+                                }}</span>
                                 <span v-else class="text-gray-900 font-medium text-xs">All Categories</span>
                             </div>
 
@@ -449,7 +558,8 @@ onMounted(() => {
                                 <select v-model="selectedCity" @change="applyCityFilter"
                                     class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none appearance-none bg-white text-xs">
                                     <option value="Pakistan">All Pakistan</option>
-                                    <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
+                                    <option v-for="city in cities" :key="city.lng" :value="city.name">{{ city.name }}
+                                    </option>
                                 </select>
                                 <Icon icon="mdi:chevron-down"
                                     class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
@@ -509,9 +619,12 @@ onMounted(() => {
                                         {{ category?.name || 'All Categories' }}
                                     </h1>
                                     <p class="text-gray-600 text-xs md:text-sm flex items-center gap-1.5">
-                                        <span>{{ filteredAds.length }} ads found</span>
+                                        <span>{{ totalAds }} ads found</span>
                                         <span v-if="selectedCity !== 'Pakistan'" class="text-brand-teal">• in {{
                                             selectedCity }}</span>
+                                        <span v-if="allLoadedAds.length > 0" class="text-brand-teal">• Showing {{
+                                            allLoadedAds.length }} of
+                                            {{ totalAds }}</span>
                                     </p>
                                 </div>
                             </div>
@@ -549,12 +662,12 @@ onMounted(() => {
                         </div>
 
                         <!-- Results Grid/List with Banners -->
-                        <template v-if="filteredAds.length">
+                        <template v-if="hasAds">
                             <!-- Grid View with Banners -->
                             <div v-if="viewMode === 'grid'">
                                 <div
                                     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
-                                    <template v-for="(ad, index) in paginatedAds" :key="ad.id">
+                                    <template v-for="(ad, index) in ads" :key="ad.id">
                                         <!-- Ad Card -->
                                         <AdCard :ad="ad" />
 
@@ -574,7 +687,7 @@ onMounted(() => {
 
                             <!-- List View with Banners -->
                             <div v-if="viewMode === 'list'" class="space-y-2 md:space-y-3">
-                                <template v-for="(ad, index) in paginatedAds" :key="ad.id">
+                                <template v-for="(ad, index) in ads" :key="ad.id">
                                     <!-- Ad List Item -->
                                     <AdListItem :ad="ad" />
 
@@ -590,25 +703,19 @@ onMounted(() => {
                                 </template>
                             </div>
 
-                            <!-- Pagination - Compact -->
-                            <div v-if="totalPages > 1" class="mt-6 flex justify-center">
-                                <div class="flex items-center gap-1.5">
-                                    <button @click="currentPage--" :disabled="currentPage === 1"
-                                        class="w-8 h-8 flex items-center justify-center rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        <Icon icon="mdi:chevron-left" class="text-sm" />
-                                    </button>
+                            <!-- Loading indicator for infinite scroll -->
+                            <div v-if="loading" class="text-center py-4">
+                                <Icon icon="mdi:loading" class="animate-spin text-2xl text-brand-teal mx-auto" />
+                                <p class="text-xs text-gray-500 mt-2">Loading more ads...</p>
+                            </div>
 
-                                    <button v-for="page in displayedPages" :key="page" @click="currentPage = page"
-                                        class="w-8 h-8 rounded text-xs transition-colors"
-                                        :class="[currentPage === page ? 'bg-brand-blue text-white' : 'hover:bg-gray-50']">
-                                        {{ page }}
-                                    </button>
+                            <!-- Infinite scroll trigger - only show if there are more pages -->
+                            <div ref="loadMoreTrigger" v-if="hasMorePages && !loading && hasAds" class="h-10"></div>
 
-                                    <button @click="currentPage++" :disabled="currentPage === totalPages"
-                                        class="w-8 h-8 flex items-center justify-center rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        <Icon icon="mdi:chevron-right" class="text-sm" />
-                                    </button>
-                                </div>
+                            <!-- No more items message - only show if we have ads and no more pages -->
+                            <div v-if="!hasMorePages && hasAds && allLoadedAds.length === totalAds"
+                                class="text-center py-4">
+                                <p class="text-xs text-gray-400">You've seen all {{ totalAds }} ads</p>
                             </div>
                         </template>
 
@@ -621,10 +728,10 @@ onMounted(() => {
                                     Try adjusting your filters or browse other categories
                                 </p>
                                 <div class="flex flex-col sm:flex-row gap-2 justify-center">
-                                    <button @click="resetAllFilters"
+                                    <Link :href="route('home')"
                                         class="px-4 py-2 bg-brand-blue text-white font-medium rounded hover:bg-brand-blue/90 transition-colors text-xs shadow-sm">
-                                        Clear Filters
-                                    </button>
+                                        Go To Home
+                                    </Link>
                                     <Link :href="route('home')"
                                         class="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded hover:bg-gray-50 transition-colors text-xs">
                                         Browse All

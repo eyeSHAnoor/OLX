@@ -13,6 +13,9 @@ class Kernel extends ConsoleKernel
         $schedule->job(new CheckLowStockProductsJob)
             ->everyTwoHours()
             ->withoutOverlapping();
+
+        $schedule->command('verifications:clean')->daily();
+        $schedule->command('subscriptions:expire')->hourly();
     }
 
     

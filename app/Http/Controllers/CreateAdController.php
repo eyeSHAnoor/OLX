@@ -55,60 +55,145 @@ class CreateAdController extends Controller
     public function edit($id)
     {
         // Find the ad by ID
-        $ad = Ad::with(['category', 'features', 'images'])->findOrFail($id);
+        $ad = Ad::with(['category', 'features', 'images', 'features.values', 'brand'])->findOrFail($id);
 
         // Get all top-level categories with their children
-        $categories = Category::with(['childrenRecursive', 'brands'])
-            ->whereNull('parent_id')
-            ->orderBy('position')
-            ->get();
-
-        // Get all features with their values
-        $features = Feature::with('values')->orderBy('name')->get();
-
-        return Inertia::render('ads/public/RecordForm', [
+        return Inertia::render('ads/create/Index', [
             'ad' => $ad,
-            'categories' => $categories,
-            'features' => $features,
+            'categories' => Category::with(['childrenRecursive', 'brands', 'files'])
+                            ->whereNull('parent_id')
+                            ->orderBy('position')
+                            ->get(),
+            'brands' => Brand::with('categories:id,name')
+                ->orderBy('name')
+                ->get(),
+            'features' => Feature::with('values')->orderBy('name')->get(),
         ]);
     }
 
     public function Myads(Request $request)
     {
         $user = auth()->user();
-        
-        // Columns allowed to sort
-        $columns = ['ad_title', 'price', 'location', 'seller_name', 'brand_id', 'category_id', 'city', 'created_at', 'status'];
 
-        // Global search filter helper
-        $globalSearch = getGlobalSearchFilter([...$columns]);
-        
-        $ads = QueryBuilder::for(Ad::class)
-            ->where('user_id', $user->id) 
-            ->with(['brand', 'category', 'images', 'features.values'])
-            ->withCount('images')
-            ->defaultSort('-created_at')
-            ->allowedSorts($columns)
-            ->allowedFilters([
-                $globalSearch,
-                AllowedFilter::exact('category_id'),
-                AllowedFilter::exact('brand_id'),
-                AllowedFilter::exact('status'),
-                AllowedFilter::callback('min_price', fn($query, $value) => $query->where('price', '>=', $value)),
-                AllowedFilter::callback('max_price', fn($query, $value) => $query->where('price', '<=', $value)),
-            ])
-            ->paginate(getPaginate()) // your helper for pagination
-            ->withQueryString();
+        // --------------------------
+        // FILTERS
+        // --------------------------
+        $searchTerm = $request->input('filter.global');
+        $categoryId = $request->input('filter.category');
+        $brand = $request->input('filter.brand');
+        $minPrice = $request->input('filter.min_price');
+        $maxPrice = $request->input('filter.max_price');
+        $sort = $request->input('sort', 'newest');
 
-        // Get categories and brands for filter dropdowns
-        $categories = Category::select('id', 'name')->orderBy('name')->get();
-        $brands = Brand::select('id', 'name')->orderBy('name')->get();
+        // --------------------------
+        // BASE QUERY
+        // --------------------------
+        $baseQuery = Ad::where('user_id', $user->id)
+            ->with(['images', 'category.parent', 'brand', 'features.values']);
+
+        // --------------------------
+        // SEARCH
+        // --------------------------
+        if ($searchTerm) {
+            $search = strtolower($searchTerm);
+            $baseQuery->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(ad_title) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(description) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(location) LIKE ?', ["%{$search}%"])
+                    ->orWhereHas('brand', fn($b) =>
+                        $b->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                    );
+            });
+        }
+
+        // --------------------------
+        // CATEGORY FILTER (INCLUDES CHILDREN)
+        // --------------------------
+        $categoryIds = [];
+        $selectedCategory = null;
+
+        if ($categoryId) {
+            $selectedCategory = Category::with(['childrenRecursive'])->find($categoryId);
+
+            if ($selectedCategory) {
+                // Get all leaf categories + selected category
+                $categoryIds = $selectedCategory
+                    ->getLeafCategoriesEfficient()
+                    ->pluck('id')
+                    ->push($selectedCategory->id)
+                    ->unique()
+                    ->toArray();
+
+                $baseQuery->whereIn('category_id', $categoryIds);
+            }
+        }
+
+        // --------------------------
+        // OTHER FILTERS
+        // --------------------------
+        $baseQuery
+            ->when($brand, fn($q) => $q->where('brand_id', $brand))
+            ->when($minPrice, fn($q) => $q->where('price', '>=', $minPrice))
+            ->when($maxPrice, fn($q) => $q->where('price', '<=', $maxPrice));
+
+        // --------------------------
+        // SORTING
+        // --------------------------
+        match ($sort) {
+            'price_low' => $baseQuery->orderBy('price', 'asc'),
+            'price_high' => $baseQuery->orderBy('price', 'desc'),
+            default => $baseQuery->latest(),
+        };
+
+        // --------------------------
+        // PAGINATION
+        // --------------------------
+        $ads = $baseQuery->paginate(12)->withQueryString();
+
+        // --------------------------
+        // CATEGORIES (only parents)
+        // --------------------------
+        $categories = Category::whereNull('parent_id')
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        // --------------------------
+        // BRANDS (ONLY FOR SELECTED CATEGORY + CHILDREN)
+        // --------------------------
+        $brands = collect();
+        if ($selectedCategory && count($categoryIds) > 0) {
+            $brands = Brand::whereHas('categories', function ($q) use ($categoryIds) {
+                $q->whereIn('categories.id', $categoryIds);
+            })
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+        }
+
+        // --------------------------
+        // PRICE RANGE
+        // --------------------------
+        $priceRange = [
+            'min' => (clone $baseQuery)->min('price'),
+            'max' => (clone $baseQuery)->max('price'),
+        ];
 
         return Inertia::render('ads/public/Index', [
             'ads' => $ads,
             'categories' => $categories,
             'brands' => $brands,
-            'filters' => $request->only(['search', 'category_id', 'brand_id', 'status', 'min_price', 'max_price'])
+            'filters' => [
+                'filter' => [
+                    'global' => $searchTerm,
+                    'category' => $categoryId,
+                    'brand' => $brand,
+                    'min_price' => $minPrice,
+                    'max_price' => $maxPrice,
+                ],
+                'sort' => $sort,
+            ],
+            'priceRange' => $priceRange,
         ]);
     }
 }

@@ -27,7 +27,10 @@ class User extends Authenticatable
         'status',
         'phone',
         'warning_count',
-        'suspended_until'
+        'suspended_until',
+        'verification_code',
+        'verification_code_expires_at',
+        'rank'
     ];
 
    protected $hidden = [
@@ -42,7 +45,42 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'suspended_until' => 'datetime',
+            'verification_code_expires_at' => 'datetime',
         ];
+    }
+
+    // Add method to generate verification code
+     public function generateVerificationCode(): string
+    {
+        $this->verification_code = sprintf("%06d", mt_rand(1, 999999));
+        $this->verification_code_expires_at = now()->addMinutes(2); // 2 minutes expiration
+        $this->save();
+        
+        return $this->verification_code;
+    }
+
+    // Add method to verify code
+    public function verifyCode(string $code): bool
+    {
+        return $this->verification_code === $code && 
+            $this->verification_code_expires_at && 
+            $this->verification_code_expires_at->isFuture();
+    }
+
+    /**
+     * Clear verification code and mark email as verified
+     */
+    public function markEmailAsVerified(): void
+    {
+        $this->verification_code = null;
+        $this->verification_code_expires_at = null;
+        $this->email_verified_at = now();
+        $this->save();
+    }
+
+    public function hasVerifiedEmail(): bool
+    {
+        return !is_null($this->email_verified_at);
     }
 
     public function profile(): HasOne
@@ -144,5 +182,27 @@ class User extends Authenticatable
     public function isSuspended(): bool
     {
         return $this->status === 'suspended' && $this->suspended_until > now();
+    }
+
+    public function sellerOrders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'seller_id');
+    }
+
+    public function orderStats()
+    {
+        return Order::sellerStats($this->id);
+    }
+
+    public function completedOrdersCount(): int
+    {
+        return $this->sellerOrders()
+            ->where('status', 'completed')
+            ->count();
+    }
+
+    public function calculateRank(): int
+    {
+        return floor($this->completedOrdersCount() / 10);
     }
 }   

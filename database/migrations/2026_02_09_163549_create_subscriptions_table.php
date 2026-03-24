@@ -26,6 +26,7 @@ return new class extends Migration {
             $table->string('receipt_image')->nullable();
             $table->string('payment_method')->nullable();
             $table->enum('payment_status',['pending','completed','rejected','expired'])->default('pending');
+            $table->string('status')->default('active');
 
             // pending | completed | failed
 

@@ -32,7 +32,7 @@
                 </div>
             </div>
 
-            <!-- Ad Creation Flow (only shown if user can create ads) -->
+            <!-- Ad Creation/Edit Flow -->
             <template v-else>
                 <!-- Progress Steps -->
                 <div class="mb-8">
@@ -66,24 +66,29 @@
                 <!-- Step 2: Ad Details Form -->
                 <AdDetailsForm v-else-if="currentStep === 2" :selected-category="selectedCategory"
                     :selected-brand="selectedBrand" @back="goToPreviousStep" @submit="handleSubmit" :user="user"
-                    :features="features" />
+                    :features="features" :edit-mode="!!ad" :ad-data="ad" />
             </template>
         </div>
     </OlxLayout>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { usePage, Link } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import CategoryNavigation from './CategoryNavigation.vue'
 import AdDetailsForm from './AdDetailsForm.vue'
 
 useForceTheme('light');
+
 const props = defineProps({
     categories: {
         type: Array,
         required: true
+    },
+    ad: {
+        type: Object,
+        default: null
     }
 })
 
@@ -103,52 +108,44 @@ const features = computed(() => page.props.features)
 // Check if user can create ads based on subscription status
 const canCreateAd = computed(() => {
     if (!user.value) return false
-
-    // Allow if subscription status is 'active' or 'completed' (adjust based on your status values)
     const allowedStatuses = ['active', 'completed', 'approved', 'subscribed']
     return allowedStatuses.includes(user.value.subscription_status)
 })
+
+// Helper function to find category by ID from the full categories list
+const findCategoryById = (categories, id) => {
+    for (const category of categories) {
+        if (category.id === id) {
+            return category
+        }
+        if (category.children_recursive && category.children_recursive.length > 0) {
+            const found = findCategoryById(category.children_recursive, id)
+            if (found) return found
+        }
+    }
+    return null
+}
 
 // Check if category is leaf (no children)
 const isLeafCategory = (category) => {
     return !category.children_recursive || category.children_recursive.length === 0
 }
 
-// Get available brands based on selected category
-const availableBrands = computed(() => {
-    if (!selectedCategory.value) return []
-    return selectedCategory.value.brands || []
-})
-
-// Update category path when selected category changes
-watch(selectedCategory, (newCategory) => {
-    if (newCategory) {
-        updateCategoryPath(newCategory)
-    }
-})
-
 const updateCategoryPath = (category) => {
-    // This would need the full category tree to build the path
-    // For now, we'll just show the current category
     categoryPath.value = [category]
 }
 
 const handleCategorySelect = (category) => {
     selectedCategory.value = category
-    selectedBrand.value = null // Reset brand when category changes
+    selectedBrand.value = null
 
     if (isLeafCategory(category)) {
         currentStep.value = 2
     }
 }
 
-const handleBrandSelect = (brand) => {
-    selectedBrand.value = brand
-}
-
 const goToNextStep = () => {
     if (currentStep.value === 1) {
-        // Validate that we have a leaf category selected
         if (!selectedCategory.value || !isLeafCategory(selectedCategory.value)) {
             alert('Please select a final subcategory (leaf category)')
             return
@@ -167,7 +164,51 @@ const goToPreviousStep = () => {
 }
 
 const handleSubmit = (adData) => {
-    // Handle ad submission
     console.log('Ad submitted:', adData)
 }
+
+// On mounted, handle edit mode
+onMounted(() => {
+    if (props.ad && props.ad.category) {
+        // Find the FULL category object from categories list (which includes brands)
+        const fullCategory = findCategoryById(props.categories, props.ad.category.id)
+
+        if (fullCategory) {
+            selectedCategory.value = fullCategory
+            console.log('Found full category:', fullCategory.name)
+            console.log('Category has brands:', fullCategory.brands?.length || 0, 'brands')
+
+            // Also set the selected brand from ad data
+            if (props.ad.brand_id && fullCategory.brands) {
+                const brand = fullCategory.brands.find(b => b.id === props.ad.brand_id)
+                if (brand) {
+                    selectedBrand.value = brand
+                    console.log('Auto-selected brand:', brand.name)
+                } else {
+                    console.log('Brand not found in category brands')
+                }
+            }
+        } else {
+            // Fallback to the category from ad data (won't have brands)
+            selectedCategory.value = props.ad.category
+            console.log('Using category from ad data (may not have brands)')
+        }
+
+        // Auto-advance to step 2 since category is already selected
+        if (selectedCategory.value && isLeafCategory(selectedCategory.value)) {
+            currentStep.value = 2
+        }
+    }
+
+    // Debug: Log when selectedCategory changes
+    watch(selectedCategory, (newCategory) => {
+        if (newCategory) {
+            console.log('Selected category changed to:', newCategory.name)
+            console.log('Available brands count:', newCategory.brands?.length || 0)
+            if (newCategory.brands && newCategory.brands.length > 0) {
+                console.log('First few brands:', newCategory.brands.slice(0, 3).map(b => b.name))
+            }
+        }
+    }, { immediate: true })
+})
 </script>

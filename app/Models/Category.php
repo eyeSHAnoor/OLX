@@ -52,6 +52,11 @@ class Category extends Model
         return $this->children()->count() === 0;
     }
 
+    public function allChildrenIds()
+    {
+        return $this->descendantsAndSelf()->pluck('id');
+    }
+
     /**
      * Recursively get all leaf categories
      */

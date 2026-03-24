@@ -9,154 +9,148 @@ use App\Models\Banner;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        log::info('home controller opened');
+        Log::info('home controller opened');
+
         $selectedCity = strtolower(session('city', 'Pakistan'));
 
-        // Search / filter inputs
-        $searchTerm = $request->input('filter.global', null);
-        $categoryFilter = $request->input('filter.category', null);
-        $brandFilter = $request->input('filter.brand', null);
-        $sort = $request->input('sort', 'created_at');
-        $startDate = $request->input('start_date', null);
-        $endDate = $request->input('end_date', null);
+        // Filters
+        $searchTerm    = $request->input('filter.global');
+        $categoryFilter = $request->input('filter.category');
+        $brandFilter   = $request->input('filter.brand');
+        $sort          = $request->input('sort', '-created_at');
+        $startDate     = $request->input('start_date');
+        $endDate       = $request->input('end_date');
 
-        $isSearching = !empty($searchTerm) || !empty($categoryFilter) || !empty($brandFilter) || !empty($startDate) || !empty($endDate);
+        $isSearching = $searchTerm || $categoryFilter || $brandFilter || $startDate || $endDate;
 
-        // Fetch all root categories with their recursive children and files
-        $categories = Category::whereNull('parent_id')
-            ->with(['childrenRecursive', 'files'])
+        /*
+        |--------------------------------------------------------------------------
+        | STEP 1: Load ALL categories once
+        |--------------------------------------------------------------------------
+        */
+        $allCategories = Category::select('id', 'parent_id', 'name', 'slug', 'position')
             ->orderBy('position')
             ->get();
 
-        // Case 1: Category filter is applied
-        if (!empty($categoryFilter)) {
-            $selectedCategory = Category::with(['childrenRecursive', 'files'])->find($categoryFilter);
+        /*
+        |--------------------------------------------------------------------------
+        | STEP 2: Build parent → children map (FAST)
+        |--------------------------------------------------------------------------
+        */
+        $tree = $allCategories->groupBy('parent_id');
+
+        /*
+        |--------------------------------------------------------------------------
+        | STEP 3: Recursive function (in-memory, NO DB calls)
+        |--------------------------------------------------------------------------
+        */
+        $getAllChildIds = function ($categoryId) use (&$getAllChildIds, $tree) {
+            $ids = [$categoryId];
+
+            if (isset($tree[$categoryId])) {
+                foreach ($tree[$categoryId] as $child) {
+                    $ids = array_merge($ids, $getAllChildIds($child->id));
+                }
+            }
+
+            return $ids;
+        };
+
+        /*
+        |--------------------------------------------------------------------------
+        | STEP 4: ROOT categories only
+        |--------------------------------------------------------------------------
+        */
+        $categories = $allCategories
+            ->whereNull('parent_id')
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | CASE 1: CATEGORY FILTER APPLIED
+        |--------------------------------------------------------------------------
+        */
+        if ($categoryFilter) {
+
+            $selectedCategory = $allCategories->firstWhere('id', $categoryFilter);
 
             if ($selectedCategory) {
-                $adQuery = Ad::with(['images', 'brand', 'category'])
-                    ->when($selectedCity !== 'pakistan', fn($q) => $q->whereRaw('LOWER(city) = ?', [$selectedCity]))
-                    ->withCount(['favoritedBy as is_favorited' => function ($query) {
-                        $query->where('user_id', auth()->id());
-                    }]);
 
-                // If main category (has children), include ads from itself + leaf subcategories
-                if ($selectedCategory->children()->exists()) {
-                    $categoryIds = $selectedCategory->getLeafCategoriesEfficient()->pluck('id')->toArray();
-                    $categoryIds[] = $selectedCategory->id;
-                    $adQuery->whereIn('category_id', $categoryIds);
-                } else {
-                    // Subcategory → exact match
-                    $adQuery->where('category_id', $categoryFilter);
-                }
+                $ids = $getAllChildIds($selectedCategory->id);
 
-                // Apply global search
-                if (!empty($searchTerm)) {
-                    $searchTermLower = strtolower($searchTerm);
-                    $adQuery->where(function ($q) use ($searchTermLower) {
-                        $q->whereRaw('LOWER(ad_title) LIKE ?', ["%{$searchTermLower}%"])
-                          ->orWhereRaw('LOWER(description) LIKE ?', ["%{$searchTermLower}%"])
-                          ->orWhereHas('brand', fn($b) => $b->whereRaw('LOWER(name) LIKE ?', ["%{$searchTermLower}%"]))
-                          ->orWhereHas('category', fn($c) => $c->whereRaw('LOWER(name) LIKE ?', ["%{$searchTermLower}%"]));
-                    });
-                }
+                $ads = $this->buildAdQuery(
+                    $ids,
+                    $selectedCity,
+                    $searchTerm,
+                    $brandFilter,
+                    $startDate,
+                    $endDate,
+                    $sort
+                )->get();
 
-                // Brand filter
-                if (!empty($brandFilter)) {
-                    $adQuery->where('brand_id', $brandFilter);
-                }
+                $selectedCategory->ads = $ads;
+                $selectedCategory->ads_count = $ads->count();
 
-                // Date filters
-                if (!empty($startDate)) {
-                    $adQuery->whereDate('created_at', '>=', $startDate);
-                }
-                if (!empty($endDate)) {
-                    $adQuery->whereDate('created_at', '<=', $endDate);
-                }
-
-                // Sorting
-                if ($sort) {
-                    if (str_starts_with($sort, '-')) {
-                        $adQuery->orderByDesc(substr($sort, 1));
-                    } else {
-                        $adQuery->orderBy($sort);
-                    }
-                } else {
-                    $adQuery->latest();
-                }
-
-                $selectedCategory->ads = $adQuery->get();
-                $selectedCategory->ads_count = $selectedCategory->ads->count();
-
-                // Wrap the category in a collection to pass to the frontend
                 $categories = collect([$selectedCategory]);
             }
         }
-        // Case 2: No category filter → fetch ads for all root categories + their subcategories
+
+        /*
+        |--------------------------------------------------------------------------
+        | CASE 2: HOME PAGE (ALL ROOT CATEGORIES)
+        |--------------------------------------------------------------------------
+        */
         else {
-            $categories->each(function ($category) use ($selectedCity, $searchTerm, $brandFilter, $startDate, $endDate, $sort) {
-                $leafCategories = $category->getLeafCategoriesEfficient();
-                $categoryIds = $leafCategories->pluck('id')->toArray();
-                $categoryIds[] = $category->id;
 
-                $adQuery = Ad::with(['images', 'brand', 'category'])
-                    ->whereIn('category_id', $categoryIds)
-                    ->when($selectedCity !== 'pakistan', fn($q) => $q->whereRaw('LOWER(city) = ?', [$selectedCity]));
+            $categories = $categories->map(function ($category) use (
+                $getAllChildIds,
+                $selectedCity,
+                $searchTerm,
+                $brandFilter,
+                $startDate,
+                $endDate,
+                $sort
+            ) {
 
-                if (!empty($searchTerm)) {
-                    $searchTermLower = strtolower($searchTerm);
-                    $adQuery->where(function ($q) use ($searchTermLower) {
-                        $q->whereRaw('LOWER(ad_title) LIKE ?', ["%{$searchTermLower}%"])
-                          ->orWhereRaw('LOWER(description) LIKE ?', ["%{$searchTermLower}%"])
-                          ->orWhereHas('brand', fn($b) => $b->whereRaw('LOWER(name) LIKE ?', ["%{$searchTermLower}%"]))
-                          ->orWhereHas('category', fn($c) => $c->whereRaw('LOWER(name) LIKE ?', ["%{$searchTermLower}%"]));
-                    });
-                }
+                $ids = $getAllChildIds($category->id);
 
-                if (!empty($brandFilter)) {
-                    $adQuery->where('brand_id', $brandFilter);
-                }
+                $ads = $this->buildAdQuery(
+                    $ids,
+                    $selectedCity,
+                    $searchTerm,
+                    $brandFilter,
+                    $startDate,
+                    $endDate,
+                    $sort
+                )
+                ->limit(4) // ✅ ONLY 4 ADS
+                ->get();
 
-                if (!empty($startDate)) {
-                    $adQuery->whereDate('created_at', '>=', $startDate);
-                }
-                if (!empty($endDate)) {
-                    $adQuery->whereDate('created_at', '<=', $endDate);
-                }
+                $category->ads = $ads;
 
-                if ($sort) {
-                    if (str_starts_with($sort, '-')) {
-                        $adQuery->orderByDesc(substr($sort, 1));
-                    } else {
-                        $adQuery->orderBy($sort);
-                    }
-                } else {
-                    $adQuery->latest();
-                }
-
-                $category->ads = $adQuery->get();
-                $category->ads_count = $category->ads->count();
+                return $category;
             });
         }
 
-        // Get all brands for filters
+        /*
+        |--------------------------------------------------------------------------
+        | OTHER DATA
+        |--------------------------------------------------------------------------
+        */
         $brands = Brand::with(['categories.files'])->get();
+
         $banners = Banner::where('position', 'homepage')
-        ->where('status', true)
-        ->where(function($query) {
-            $query->whereNull('start_date')
-                ->orWhere('start_date', '<=', now());
-        })
-        ->where(function($query) {
-            $query->whereNull('end_date')
-                ->orWhere('end_date', '>=', now());
-        })
-        ->orderBy('sort_order', 'asc')
-        ->get();
+            ->where('status', true)
+            ->where(fn($q) => $q->whereNull('start_date')->orWhere('start_date', '<=', now()))
+            ->where(fn($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', now()))
+            ->orderBy('sort_order')
+            ->get();
 
         return Inertia::render('home/Index', [
             'categories' => $categories,
@@ -176,9 +170,58 @@ class HomeController extends Controller
         ]);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | REUSABLE AD QUERY (CLEAN)
+    |--------------------------------------------------------------------------
+    */
+    private function buildAdQuery($categoryIds, $city, $searchTerm, $brandFilter, $startDate, $endDate, $sort)
+    {
+        return Ad::with(['images', 'brand', 'category'])
+            ->whereIn('category_id', $categoryIds)
+            ->excludeReportedBy(Auth::id())
+            ->when($city !== 'pakistan', fn($q) =>
+                $q->whereRaw('LOWER(city) = ?', [$city])
+            )
+
+            ->when($searchTerm, function ($q) use ($searchTerm) {
+                $term = strtolower($searchTerm);
+
+                $q->where(function ($q) use ($term) {
+                    $q->whereRaw('LOWER(ad_title) LIKE ?', ["%{$term}%"])
+                      ->orWhereRaw('LOWER(description) LIKE ?', ["%{$term}%"])
+                      ->orWhereHas('brand', fn($b) =>
+                          $b->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
+                      )
+                      ->orWhereHas('category', fn($c) =>
+                          $c->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
+                      );
+                });
+            })
+
+            ->when($brandFilter, fn($q) =>
+                $q->where('brand_id', $brandFilter)
+            )
+
+            ->when($startDate, fn($q) =>
+                $q->whereDate('created_at', '>=', $startDate)
+            )
+
+            ->when($endDate, fn($q) =>
+                $q->whereDate('created_at', '<=', $endDate)
+            )
+
+            ->when($sort, function ($q) use ($sort) {
+                if (str_starts_with($sort, '-')) {
+                    $q->orderByDesc(substr($sort, 1));
+                } else {
+                    $q->orderBy($sort);
+                }
+            }, fn($q) => $q->latest());
+    }
+
     public function account()
     {
         return Inertia::render('home/Account');
-
     }
 }

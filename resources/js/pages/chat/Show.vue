@@ -246,7 +246,7 @@ const getLastMessage = (conversation) => {
 
 <template>
     <OlxLayout>
-        <div class="h-[calc(100vh-64px)] max-w-9/11 mx-auto px-2 sm:px-4 py-2 sm:py-4">
+        <div class="h-[calc(100vh-64px)] max-w-9/11 mx-auto px-6 sm:px-4 py-2 sm:py-4">
             <!-- Alert Dialog Component -->
             <div v-if="isOpen" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                 <div class="bg-white rounded-xl max-w-md w-full p-6">

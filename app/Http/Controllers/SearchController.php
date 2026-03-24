@@ -16,14 +16,14 @@ class SearchController extends Controller
         $selectedCity = strtolower(session('city', 'Pakistan'));
 
         // Search / filter inputs
-        $searchTerm = $request->input('filter.global', null);
+        $searchTerm = trim($request->input('filter.global', ''));
         $categoryFilter = $request->input('filter.category', null);
         $brandFilter = $request->input('filter.brand', null);
         $minPrice = $request->input('min_price', null);
         $maxPrice = $request->input('max_price', null);
         $sortBy = $request->input('sort_by', 'newest');
 
-        // Get all categories with their children for sidebar
+        // Categories for sidebar
         $categories = Category::whereNull('parent_id')
             ->with(['childrenRecursive', 'files'])
             ->orderBy('position')
@@ -33,138 +33,45 @@ class SearchController extends Controller
         $adQuery = Ad::with(['images', 'brand', 'category'])
             ->when($selectedCity !== 'pakistan', fn($q) => $q->whereRaw('LOWER(city) = ?', [$selectedCity]));
 
-        // Apply global search with intelligent word handling
+        // Apply global search
         if (!empty($searchTerm)) {
-            $searchTerm = trim($searchTerm);
             $searchTermLower = strtolower($searchTerm);
-            
-            $adQuery->where(function ($q) use ($searchTerm, $searchTermLower) {
-                // Get database connection type
-                $connection = config('database.default');
-                $isMySQL = ($connection === 'mysql' || $connection === 'mariadb');
-                
-                // 1. FIRST PRIORITY: Search in search_keywords (JSON array)
+            $connection = config('database.default');
+            $isMySQL = ($connection === 'mysql' || $connection === 'mariadb');
+
+            $adQuery->where(function ($q) use ($searchTermLower, $isMySQL) {
+                // Search keywords
                 if ($isMySQL) {
-                    // MySQL/MariaDB version using JSON functions
-                    $q->orWhere(function ($keywordQ) use ($searchTermLower) {
-                        // Search for exact match in search_keywords
-                        $keywordQ->where(function ($exactQ) use ($searchTermLower) {
-                            $exactQ->whereRaw(
-                                "JSON_SEARCH(LOWER(JSON_UNQUOTE(search_keywords)), 'one', ?) IS NOT NULL",
-                                [$searchTermLower]
-                            );
-                        });
-                        
-                        // Also search for individual words if the search term has multiple words
-                        if (str_contains($searchTermLower, ' ')) {
-                            $words = explode(' ', $searchTermLower);
-                            foreach ($words as $word) {
-                                $word = trim($word);
-                                if (!empty($word) && strlen($word) >= 2) {
-                                    $keywordQ->orWhere(function ($wordQ) use ($word) {
-                                        $wordQ->whereRaw(
-                                            "JSON_SEARCH(LOWER(JSON_UNQUOTE(search_keywords)), 'one', ?) IS NOT NULL",
-                                            [$word]
-                                        );
-                                    });
-                                }
-                            }
-                        }
-                    });
+                    $q->orWhereRaw("JSON_SEARCH(LOWER(JSON_UNQUOTE(search_keywords)), 'one', ?) IS NOT NULL", [$searchTermLower]);
                 } else {
-                    // SQLite version using LIKE (since SQLite doesn't have JSON functions)
-                    $q->orWhere(function ($keywordQ) use ($searchTermLower) {
-                        $keywordQ->whereRaw("LOWER(search_keywords) LIKE ?", ["%\"{$searchTermLower}\"%"]);
-                        
-                        // Also search for individual words if the search term has multiple words
-                        if (str_contains($searchTermLower, ' ')) {
-                            $words = explode(' ', $searchTermLower);
-                            foreach ($words as $word) {
-                                $word = trim($word);
-                                if (!empty($word) && strlen($word) >= 2) {
-                                    $keywordQ->orWhereRaw("LOWER(search_keywords) LIKE ?", ["%\"{$word}\"%"]);
-                                }
-                            }
-                        }
-                    });
+                    $q->orWhereRaw("LOWER(search_keywords) LIKE ?", ["%\"{$searchTermLower}\"%"]);
                 }
 
-                // 2. SECOND PRIORITY: Search in ad_title (case-insensitive)
+                // Search ad_title
                 $q->orWhereRaw('LOWER(ad_title) LIKE ?', ["%{$searchTermLower}%"]);
-                
-                // If search term has spaces, also search for individual words in ad_title
-                if (str_contains($searchTermLower, ' ')) {
-                    $words = explode(' ', $searchTermLower);
-                    foreach ($words as $word) {
-                        $word = trim($word);
-                        if (!empty($word) && strlen($word) >= 2) {
-                            $q->orWhereRaw('LOWER(ad_title) LIKE ?', ["%{$word}%"]);
-                        }
-                    }
-                }
-                
-                // 3. THIRD PRIORITY: Search in description (case-insensitive)
+                // Search description
                 $q->orWhereRaw('LOWER(description) LIKE ?', ["%{$searchTermLower}%"]);
-                
-                // Individual words in description
-                if (str_contains($searchTermLower, ' ')) {
-                    $words = explode(' ', $searchTermLower);
-                    foreach ($words as $word) {
-                        $word = trim($word);
-                        if (!empty($word) && strlen($word) >= 2) {
-                            $q->orWhereRaw('LOWER(description) LIKE ?', ["%{$word}%"]);
-                        }
-                    }
-                }
-                
-                // 4. Search in brands (case-insensitive)
-                $q->orWhereHas('brand', function ($brandQ) use ($searchTermLower) {
-                    $brandQ->whereRaw('LOWER(name) LIKE ?', ["%{$searchTermLower}%"]);
-                    
-                    // Individual brand words
-                    if (str_contains($searchTermLower, ' ')) {
-                        $words = explode(' ', $searchTermLower);
-                        foreach ($words as $word) {
-                            $word = trim($word);
-                            if (!empty($word) && strlen($word) >= 2) {
-                                $brandQ->orWhereRaw('LOWER(name) LIKE ?', ["%{$word}%"]);
-                            }
-                        }
-                    }
-                });
-                
-                // 5. Search in categories (case-insensitive)
-                $q->orWhereHas('category', function ($catQ) use ($searchTermLower) {
-                    $catQ->whereRaw('LOWER(name) LIKE ?', ["%{$searchTermLower}%"]);
-                    
-                    // Individual category words
-                    if (str_contains($searchTermLower, ' ')) {
-                        $words = explode(' ', $searchTermLower);
-                        foreach ($words as $word) {
-                            $word = trim($word);
-                            if (!empty($word) && strlen($word) >= 2) {
-                                $catQ->orWhereRaw('LOWER(name) LIKE ?', ["%{$word}%"]);
-                            }
-                        }
-                    }
-                });
-                
-                // 6. Handle common variations and synonyms
+
+                // Search in brand
+                $q->orWhereHas('brand', fn($brandQ) => $brandQ->whereRaw('LOWER(name) LIKE ?', ["%{$searchTermLower}%"]));
+                // Search in category
+                $q->orWhereHas('category', fn($catQ) => $catQ->whereRaw('LOWER(name) LIKE ?', ["%{$searchTermLower}%"]));
+
+                // Add search variations
                 $this->addSearchVariations($q, $searchTermLower, $isMySQL);
             });
         }
 
-        // Category filter (optional)
-        if (!empty($categoryFilter)) {
-            $selectedCategory = Category::find($categoryFilter);
-            if ($selectedCategory) {
-                if ($selectedCategory->children()->exists()) {
-                    $categoryIds = $selectedCategory->getLeafCategoriesEfficient()->pluck('id')->toArray();
-                    $categoryIds[] = $selectedCategory->id;
-                    $adQuery->whereIn('category_id', $categoryIds);
-                } else {
-                    $adQuery->where('category_id', $categoryFilter);
-                }
+        // Category filter
+        if (!empty($categoryFilter) && $category = Category::find($categoryFilter)) {
+            $categoryIds = $category->children()->exists()
+                ? $category->getLeafCategoriesEfficient()->pluck('id')->toArray()
+                : [];
+            if (!empty($categoryIds)) {
+                $categoryIds[] = $category->id;
+                $adQuery->whereIn('category_id', $categoryIds);
+            } else {
+                $adQuery->where('category_id', $category->id);
             }
         }
 
@@ -173,24 +80,17 @@ class SearchController extends Controller
             $adQuery->where('brand_id', $brandFilter);
         }
 
-        // Price filters
-        if (!empty($minPrice)) {
-            $adQuery->where('price', '>=', $minPrice);
-        }
-        if (!empty($maxPrice)) {
-            $adQuery->where('price', '<=', $maxPrice);
-        }
+        // Price filter
+        if (!empty($minPrice)) $adQuery->where('price', '>=', $minPrice);
+        if (!empty($maxPrice)) $adQuery->where('price', '<=', $maxPrice);
 
-        // Get database connection type for sorting
+        // Sorting
         $connection = config('database.default');
         $isMySQL = ($connection === 'mysql' || $connection === 'mariadb');
 
-        // Sorting - Add relevance sorting for search results
-        if (!empty($searchTerm)) {
-            $searchTermLower = strtolower(trim($searchTerm));
-            
+        if (!empty($searchTerm) && $sortBy === 'relevance') {
+            // Relevance sorting for search
             if ($isMySQL) {
-                // MySQL/MariaDB version with JSON functions
                 $adQuery->orderByRaw("
                     CASE 
                         WHEN JSON_SEARCH(LOWER(JSON_UNQUOTE(search_keywords)), 'one', ?) IS NOT NULL THEN 1
@@ -199,13 +99,8 @@ class SearchController extends Controller
                         ELSE 4
                     END,
                     created_at DESC
-                ", [
-                    $searchTermLower,
-                    "%{$searchTermLower}%",
-                    "%{$searchTermLower}%"
-                ]);
+                ", [$searchTermLower, "%{$searchTermLower}%", "%{$searchTermLower}%"]);
             } else {
-                // SQLite version without JSON functions
                 $adQuery->orderByRaw("
                     CASE 
                         WHEN LOWER(search_keywords) LIKE ? THEN 1
@@ -214,14 +109,10 @@ class SearchController extends Controller
                         ELSE 4
                     END,
                     created_at DESC
-                ", [
-                    "%\"{$searchTermLower}\"%",
-                    "%{$searchTermLower}%",
-                    "%{$searchTermLower}%"
-                ]);
+                ", ["%\"{$searchTermLower}\"%", "%{$searchTermLower}%", "%{$searchTermLower}%"]);
             }
         } else {
-            // Default sorting when no search
+            // User-selected sorting
             switch ($sortBy) {
                 case 'price_low':
                     $adQuery->orderBy('price', 'asc');
@@ -239,7 +130,7 @@ class SearchController extends Controller
         // Pagination
         $ads = $adQuery->paginate(24)->withQueryString();
 
-        // Get all brands for filters
+        // Brands for filters
         $brands = Brand::with(['categories.files'])->get();
 
         return Inertia::render('home/AllItems', [

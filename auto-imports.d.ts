@@ -85,6 +85,7 @@ declare global {
   const usePage: typeof import('@inertiajs/vue3')['usePage']
   const usePermissions: typeof import('./resources/js/composables/usePermissions.js')['default']
   const useSearchFilter: typeof import('./resources/js/composables/useSearchFilter.js')['default']
+  const useShadcnAlert: typeof import('./resources/js/composables/useShadcnAlert')['useShadcnAlert']
   const useSlots: typeof import('vue')['useSlots']
   const useStorage: typeof import('@vueuse/core')['useStorage']
   const useTemplateRef: typeof import('vue')['useTemplateRef']

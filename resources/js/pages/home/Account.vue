@@ -59,7 +59,7 @@
                         </Link>
 
                         <!-- Orders -->
-                        <Link href="#"
+                        <Link href="/orders"
                             class="flex items-center gap-3 p-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
                             <div class="w-10 h-10 rounded-full bg-brand-teal/10 flex items-center justify-center">
                                 <Icon icon="mdi:package-variant" class="text-xl text-brand-teal" />
@@ -148,7 +148,7 @@
 
                 <!-- Login Section for Guests -->
                 <div v-if="!user" class="space-y-3">
-                    <Link :href="route('amo.login')"
+                    <Link :href="route('login')"
                         class="w-full flex items-center justify-center gap-2 p-4 bg-gradient-to-r from-brand-teal to-brand-blue text-white rounded-xl font-medium hover:opacity-90 transition-opacity">
                         <Icon icon="mdi:login" class="text-lg" />
                         Login

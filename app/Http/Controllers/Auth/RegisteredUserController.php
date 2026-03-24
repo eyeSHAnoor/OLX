@@ -1,14 +1,15 @@
 <?php
+// app/Http/Controllers/Auth/RegisteredUserController.php
 
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\VerificationCodeMail;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,8 +26,6 @@ class RegisteredUserController extends Controller
 
     /**
      * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
@@ -37,22 +36,26 @@ class RegisteredUserController extends Controller
             'phone' => 'nullable|string|max:20',
         ]);
 
+        // Create user but don't mark email as verified
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
+            'email_verified_at' => null, // Not verified yet
         ]);
 
-        event(new Registered($user));
+        // Generate and save verification code (expires in 2 minutes)
+        $code = $user->generateVerificationCode();
+        
+        // Send verification email
+        Mail::to($user->email)->send(new VerificationCodeMail($user, $code, 2)); // Pass 2 minutes to email
 
-        Auth::login($user);
+        // Store user ID in session for verification
+        $request->session()->put('pending_verification_user_id', $user->id);
+        $request->session()->put('verification_started_at', now());
 
-        $user = auth()->user();
-        // dd($user->hasRole('super_admin'));
-        if ($user && $user->hasRole('super_admin')){
-                return redirect()->route('dashboard');
-            }
-        return redirect()->intended(route('home'));
-        }
+        // Redirect to verification page
+        return redirect()->route('verification.show');
+    }
 }

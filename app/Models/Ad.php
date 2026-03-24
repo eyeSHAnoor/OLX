@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 
 class Ad extends Model
@@ -74,6 +75,19 @@ class Ad extends Model
                 ->toArray();
 
             $ad->search_keywords = $merged;
+        });
+    }
+
+    public function scopeExcludeReportedBy($query, $userId = null)
+    {
+        $userId = $userId ?? Auth::id();
+
+        if (!$userId) {
+            return $query; // no user logged in, return all
+        }
+
+        return $query->whereDoesntHave('reports', function ($q) use ($userId) {
+            $q->where('reported_by', $userId);
         });
     }
 

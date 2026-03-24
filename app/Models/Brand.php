@@ -14,5 +14,10 @@ class Brand extends Model
     {
         return $this->belongsToMany(Category::class);
     }
+
+    public function ads()
+    {
+        return $this->hasMany(\App\Models\Ad::class);
+    }
 }
 

@@ -51,6 +51,7 @@
         "concurrently": "^9.0.1",
         "date-fns": "^4.1.0",
         "flag-icons": "^7.5.0",
+        "js-countries-states-cities": "^1.0.3",
         "jsbarcode": "^3.12.3",
         "laravel-vite-plugin": "^1.0",
         "laravel-vue-i18n": "^2.8.0",

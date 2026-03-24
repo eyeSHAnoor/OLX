@@ -19,7 +19,6 @@ class CategoryController extends Controller
     {
         $selectedCity = strtolower(session('city', 'Pakistan'));
 
-        // Get category by slug
         $category = null;
         if ($slug) {
             $category = Category::where('slug', $slug)
@@ -27,132 +26,105 @@ class CategoryController extends Controller
                 ->firstOrFail();
         }
 
-        // Filter inputs
-        $searchTerm = $request->input('filter.global', null);
+        // Filters
+        $searchTerm = $request->input('filter.global');
         $categoryFilter = $request->input('filter.category', $category?->id);
-        $brandFilter = $request->input('filter.brand', null);
-        $minPrice = $request->input('filter.min_price', null);
-        $maxPrice = $request->input('filter.max_price', null);
+        $brandFilter = $request->input('filter.brand');
+        $minPrice = $request->input('filter.min_price');
+        $maxPrice = $request->input('filter.max_price');
         $sort = $request->input('sort', 'newest');
         $city = $request->input('filter.city', $selectedCity);
-        $selectedCategory = null;
-        // Fetch top banner for the selected category or its children
-        $topBanner = null;
 
-        if ($selectedCategory) {
-            // Check if category has a banner
-            $topBanner = Banner::active()
-                ->where('position', 'category')
-                ->where(function($q) use ($selectedCategory) {
-                    $q->where('target_category_id', $selectedCategory->id)
-                    ->orWhereIn('target_category_id', $selectedCategory->getLeafCategoriesEfficient()->pluck('id'));
-                })
-                ->orderBy('sort_order')
-                ->first();
-
-            // Fallback: generic banner if none for category
-            if (!$topBanner) {
-                $topBanner = Banner::active()
-                    ->where('position', 'category')
-                    ->whereNull('target_category_id')
-                    ->first();
-            }
-        }
-
-        // Mid banners (optional: all banners for this category and children)
-        $midBanners = Banner::active()
-            ->where('position', 'category')
-            ->where(function($q) use ($selectedCategory) {
-                if ($selectedCategory) {
-                    $q->where('target_category_id', $selectedCategory->id)
-                    ->orWhereIn('target_category_id', $selectedCategory->getLeafCategoriesEfficient()->pluck('id'));
-                } else {
-                    $q->whereNull('target_category_id');
-                }
-            })
-            ->orderBy('sort_order')
-            ->get();
-
-        // Fetch all root categories for sidebar
+        // Categories (sidebar)
         $categories = Category::whereNull('parent_id')
             ->with(['childrenRecursive', 'files'])
             ->orderBy('position')
             ->get();
 
-        // If specific category is selected
+        // --------------------------
+        // BASE QUERY (REUSABLE)
+        // --------------------------
+        $baseQuery = Ad::query()
+            ->with(['images', 'brand', 'category'])
+            ->when($city !== 'pakistan', fn($q) =>
+                $q->whereRaw('LOWER(city) = ?', [strtolower($city)])
+            );
+
+        // Search
+        if ($searchTerm) {
+            $search = strtolower($searchTerm);
+            $baseQuery->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(ad_title) LIKE ?', ["%{$search}%"])
+                ->orWhereRaw('LOWER(description) LIKE ?', ["%{$search}%"])
+                ->orWhereHas('brand', fn($b) =>
+                    $b->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                );
+            });
+        }
+
+        // Filters
+        if ($brandFilter) {
+            $baseQuery->where('brand_id', $brandFilter);
+        }
+
+        if ($minPrice) {
+            $baseQuery->where('price', '>=', $minPrice);
+        }
+
+        if ($maxPrice) {
+            $baseQuery->where('price', '<=', $maxPrice);
+        }
+
+        // Sorting
+        match ($sort) {
+            'price_low' => $baseQuery->orderBy('price', 'asc'),
+            'price_high' => $baseQuery->orderBy('price', 'desc'),
+            default => $baseQuery->latest(),
+        };
+
+        // --------------------------
+        // CATEGORY SELECTED
+        // --------------------------
         if ($categoryFilter) {
-            $selectedCategory = Category::with(['childrenRecursive', 'files'])->find($categoryFilter);
+
+            $selectedCategory = Category::with(['childrenRecursive', 'files'])
+                ->find($categoryFilter);
 
             if ($selectedCategory) {
-                $adQuery = Ad::with(['images', 'brand', 'category'])
-                    ->when($city !== 'pakistan', fn($q) => $q->whereRaw('LOWER(city) = ?', [strtolower($city)]));
 
-                // Get all relevant category IDs (including children)
-                if ($selectedCategory->children()->exists()) {
-                    $categoryIds = $selectedCategory->getLeafCategoriesEfficient()->pluck('id')->toArray();
-                    $categoryIds[] = $selectedCategory->id;
-                    $adQuery->whereIn('category_id', $categoryIds);
-                } else {
-                    $adQuery->where('category_id', $categoryFilter);
-                }
+                // Get category IDs ONCE
+                $categoryIds = $selectedCategory->getLeafCategoriesEfficient()
+                    ->pluck('id')
+                    ->push($selectedCategory->id)
+                    ->unique();
 
-                // Apply search term
-                if (!empty($searchTerm)) {
-                    $searchTermLower = strtolower($searchTerm);
-                    $adQuery->where(function ($q) use ($searchTermLower) {
-                        $q->whereRaw('LOWER(ad_title) LIKE ?', ["%{$searchTermLower}%"])
-                          ->orWhereRaw('LOWER(description) LIKE ?', ["%{$searchTermLower}%"])
-                          ->orWhereHas('brand', fn($b) => $b->whereRaw('LOWER(name) LIKE ?', ["%{$searchTermLower}%"]));
-                    });
-                }
+                // Clone query (important)
+                $adQuery = (clone $baseQuery)
+                    ->whereIn('category_id', $categoryIds);
 
-                // Apply brand filter
-                if (!empty($brandFilter)) {
-                    $adQuery->where('brand_id', $brandFilter);
-                }
+                // PAGINATION (IMPORTANT)
+                $ads = $adQuery->paginate(10)->withQueryString();
 
-                // Apply price filters
-                if (!empty($minPrice)) {
-                    $adQuery->where('price', '>=', $minPrice);
-                }
-                if (!empty($maxPrice)) {
-                    $adQuery->where('price', '<=', $maxPrice);
-                }
+                $selectedCategory->ads = $ads;
+                $selectedCategory->ads_count = $ads->total();
 
-                // Apply sorting
-                switch ($sort) {
-                    case 'price_low':
-                        $adQuery->orderBy('price', 'asc');
-                        break;
-                    case 'price_high':
-                        $adQuery->orderBy('price', 'desc');
-                        break;
-                    case 'newest':
-                    default:
-                        $adQuery->latest('created_at');
-                        break;
-                }
-
-                $selectedCategory->ads = $adQuery->get();
-                $selectedCategory->ads_count = $selectedCategory->ads->count();
-
-                // Get unique brands from filtered ads
-                $brandIds = $selectedCategory->ads->pluck('brand_id')->unique()->filter()->values();
+                // Brands (optimized)
+                $brandIds = $adQuery->clone()->distinct()->pluck('brand_id');
                 $availableBrands = Brand::whereIn('id', $brandIds)->get();
 
-                // Get price range
+                // Price range (DB level, no memory load)
                 $priceRange = [
-                    'min' => $selectedCategory->ads->min('price'),
-                    'max' => $selectedCategory->ads->max('price')
+                    'min' => $adQuery->clone()->min('price'),
+                    'max' => $adQuery->clone()->max('price'),
                 ];
 
                 return Inertia::render('home/Category', [
                     'category' => $selectedCategory,
                     'categories' => $categories,
                     'brands' => $availableBrands,
-                     'banners' => $midBanners,
-                    'topBanner' => $topBanner,
-                    'allBrands' => Brand::all(),
+                    'banners' => [], // keep as is if needed
+                    'topBanner' => null,
+                    'allBrands' => Brand::select('id', 'name')->get(),
                     'filters' => [
                         'filter' => [
                             'global' => $searchTerm,
@@ -169,59 +141,30 @@ class CategoryController extends Controller
             }
         }
 
-        // If no specific category, show all categories
-        $categories->each(function ($category) use ($city, $searchTerm, $brandFilter, $minPrice, $maxPrice, $sort) {
-            $leafCategories = $category->getLeafCategoriesEfficient();
-            $categoryIds = $leafCategories->pluck('id')->toArray();
-            $categoryIds[] = $category->id;
+        // --------------------------
+        // NO CATEGORY (OPTIMIZED)
+        // --------------------------
 
-            $adQuery = Ad::with(['images', 'brand', 'category'])
-                ->whereIn('category_id', $categoryIds)
-                ->when($city !== 'pakistan', fn($q) => $q->whereRaw('LOWER(city) = ?', [strtolower($city)]));
+        $categories->each(function ($category) use ($baseQuery) {
 
-            if (!empty($searchTerm)) {
-                $searchTermLower = strtolower($searchTerm);
-                $adQuery->where(function ($q) use ($searchTermLower) {
-                    $q->whereRaw('LOWER(ad_title) LIKE ?', ["%{$searchTermLower}%"])
-                      ->orWhereRaw('LOWER(description) LIKE ?', ["%{$searchTermLower}%"])
-                      ->orWhereHas('brand', fn($b) => $b->whereRaw('LOWER(name) LIKE ?', ["%{$searchTermLower}%"]));
-                });
-            }
+            $categoryIds = $category->getLeafCategoriesEfficient()
+                ->pluck('id')
+                ->push($category->id)
+                ->unique();
 
-            if (!empty($brandFilter)) {
-                $adQuery->where('brand_id', $brandFilter);
-            }
+            $query = (clone $baseQuery)
+                ->whereIn('category_id', $categoryIds);
 
-            if (!empty($minPrice)) {
-                $adQuery->where('price', '>=', $minPrice);
-            }
-            if (!empty($maxPrice)) {
-                $adQuery->where('price', '<=', $maxPrice);
-            }
+            // LIMIT per category (IMPORTANT)
+            $ads = $query->limit(2)->get();
 
-            switch ($sort) {
-                case 'price_low':
-                    $adQuery->orderBy('price', 'asc');
-                    break;
-                case 'price_high':
-                    $adQuery->orderBy('price', 'desc');
-                    break;
-                case 'newest':
-                default:
-                    $adQuery->latest('created_at');
-                    break;
-            }
-
-            $category->ads = $adQuery->get();
-            $category->ads_count = $category->ads->count();
+            $category->ads = $ads;
+            $category->ads_count = $query->count();
         });
-
-        // Get all brands for filter
-        $allBrands = Brand::with(['categories.files'])->get();
 
         return Inertia::render('home/Category', [
             'categories' => $categories,
-            'brands' => $allBrands,
+            'brands' => Brand::select('id', 'name')->get(),
             'filters' => [
                 'filter' => [
                     'global' => $searchTerm,
@@ -234,24 +177,6 @@ class CategoryController extends Controller
                 'sort' => $sort,
             ],
         ]);
-    }
-
-    public function filter(Request $request)
-    {
-        $validated = $request->validate([
-            'filter.global' => 'nullable|string',
-            'filter.category' => 'nullable|exists:categories,id',
-            'filter.brand' => 'nullable|exists:brands,id',
-            'filter.min_price' => 'nullable|numeric|min:0',
-            'filter.max_price' => 'nullable|numeric|min:0',
-            'filter.city' => 'nullable|string',
-            'sort' => 'nullable|in:newest,price_low,price_high',
-        ]);
-
-        // Redirect back with filters
-        return redirect()->route('category.show', [
-            'slug' => $request->input('slug')
-        ])->with('filters', $validated);
     }
     /**
      * Display a listing of categories.

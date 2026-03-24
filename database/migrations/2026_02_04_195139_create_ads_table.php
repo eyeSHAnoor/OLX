@@ -31,6 +31,7 @@ return new class extends Migration
         // Seller info (snapshot at posting time)
         $table->string('seller_name');
         $table->string('seller_phone');
+        $table->string('status')->default('active');
 
         $table->boolean('is_active')->default(true);
         $table->boolean('is_featured')->default(false);

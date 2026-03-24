@@ -35,10 +35,12 @@ class UserProfileController extends Controller
 
     public function update(Request $request)
     {
+        // dd($request->all());
         $user = Auth::user();
         
         $validated = $request->validate([
             'username' => 'nullable|string|max:255|unique:user_profiles,username,' . $user->id . ',user_id',
+            'phone' => 'nullable|string|max:20|unique:users,phone',
             'bio' => 'nullable|string|max:500',
             'location' => 'nullable|string|max:255',
             'website' => 'nullable|url|max:255',
@@ -46,6 +48,12 @@ class UserProfileController extends Controller
             'profile_image' => 'nullable|image|max:2048',
             'cover_image' => 'nullable|image|max:5120',
         ]);
+
+        if (isset($validated['phone'])) {
+                $user->update([
+                    'phone' => $validated['phone']
+                ]);
+            }
 
         $profile = UserProfile::updateOrCreate(
             ['user_id' => $user->id],

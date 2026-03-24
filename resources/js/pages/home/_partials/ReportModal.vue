@@ -70,7 +70,7 @@ watch(model, (isOpen) => {
 <template>
     <Dialog v-model:open="model">
         <DialogContent class="flex max-h-[90vh] w-full max-w-[90vw] flex-col sm:max-w-[500px]">
-            <DialogHeader class="px-6 pt-6 pb-0">
+            <DialogHeader class=" pb-0">
                 <DialogTitle class="flex items-center gap-2 text-lg font-semibold sm:text-xl">
                     <div class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
                         <Icon icon="lucide:flag" class="h-4 w-4 text-red-600" />
@@ -80,7 +80,7 @@ watch(model, (isOpen) => {
             </DialogHeader>
 
             <!-- Reported Item Summary -->
-            <div v-if="ad || user" class="mx-6 mt-4 rounded-lg bg-muted/30 p-4">
+            <div v-if="ad || user" class=" rounded-lg bg-muted/30 pt-3">
                 <div class="flex items-center gap-3">
                     <div
                         class="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-200">
@@ -103,7 +103,7 @@ watch(model, (isOpen) => {
             </div>
 
             <!-- Form Content with Scroll -->
-            <div class="flex-1 overflow-y-auto px-6 py-4">
+            <div class="flex-1 overflow-y-auto py-4">
                 <form @submit.prevent="submitReport" class="space-y-4">
                     <!-- Reason Select -->
                     <div class="space-y-2">

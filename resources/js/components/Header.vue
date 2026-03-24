@@ -122,7 +122,7 @@
                                             <Icon icon="mdi:account-outline" class="text-sm text-gray-500" />
                                             <span>Public Profile</span>
                                         </Link>
-                                        <Link href="#" disabled
+                                        <Link href="/orders" disabled
                                             class="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-700 hover:text-blue-600 transition-colors">
                                             <Icon icon="mdi:package-variant" class="text-sm text-gray-500" />
                                             <span>My Orders</span>
@@ -166,7 +166,7 @@
                         <div class="rounded-full p-[3px] bg-gradient-to-l from-yellow-400 via-blue-400 to-orange-400">
                             <Link
                                 class="flex items-center gap-0.5 rounded-full px-3 py-1 text-xs font-medium bg-white hover:shadow transition-shadow"
-                                :href="route('amo.login')">
+                                :href="route('login')">
                                 <Icon icon="mdi:plus" class="text-xs" />
                                 Login
                             </Link>
@@ -198,7 +198,8 @@
                         <Icon icon="mdi:map-marker-outline" class="text-sm text-blue-600" />
                         <select v-model="selectedCity"
                             class="w-full px-2 py-1.5 bg-transparent focus:outline-none text-xs">
-                            <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
+                            <option value="Pakistan">Pakistan</option>
+                            <option v-for="city in cities" :key="city" :value="city.name">{{ city.name }}</option>
                         </select>
                     </div>
                 </div>

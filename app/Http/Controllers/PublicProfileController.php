@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Order;
 use App\Models\Ad;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -63,9 +64,11 @@ class PublicProfileController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'rank' => $user->rank,
                 'avatar' => optional($user->files->first())->file_url,
                 'profile' => $profile,
-                'ratings' => $user->receivedRatings
+                'ratings' => $user->receivedRatings,
+                'orderStats' => $user->orderStats()
             ],
             'ads' => $ads,
             'filters' => [

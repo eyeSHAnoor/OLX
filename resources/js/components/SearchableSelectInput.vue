@@ -71,12 +71,7 @@ function stopKeyboardPropagation(e: Event) {
     <div class="flex flex-col gap-1 w-full">
         <Label v-if="label" :for="id">{{ label }}</Label>
 
-        <Select
-            :model-value="props.modelValue"
-            :disabled="disabled"
-            :name="id"
-            @update:model-value="select"
-        >
+        <Select :model-value="props.modelValue" :disabled="disabled" :name="id" @update:model-value="select">
             <SelectTrigger class="w-full">
                 <SelectValue :placeholder="placeholder">
                     <!-- custom selected slot -->
@@ -89,24 +84,15 @@ function stopKeyboardPropagation(e: Event) {
             <SelectContent>
                 <!-- Search input -->
                 <div class="px-2 py-1">
-                    <input
-                        v-model="query"
-                        type="text"
-                        placeholder="Search..."
+                    <input v-model="query" type="text" placeholder="Search..."
                         class="w-full border rounded px-2 py-1 text-sm focus:outline-none"
-                        @keydown="stopKeyboardPropagation"
-                        @keyup="stopKeyboardPropagation"
-                        @keypress="stopKeyboardPropagation"
-                    />
+                        @keydown="stopKeyboardPropagation" @keyup="stopKeyboardPropagation"
+                        @keypress="stopKeyboardPropagation" />
                 </div>
 
                 <div v-if="filteredItems.length" class="max-h-60 overflow-y-auto">
-                    <SelectItem
-                        class=""
-                        v-for="(item, i) in filteredItems"
-                        :key="i"
-                        :value="isObject ? item[props.keyBy ?? ''] : item"
-                    >
+                    <SelectItem class="" v-for="(item, i) in filteredItems" :key="i"
+                        :value="isObject ? item[props.keyBy ?? ''] : item">
                         <!-- put slot *inside* SelectItem, no as-child -->
                         <slot name="item" :item="item">
                             {{ isObject ? item.label : item }}
@@ -125,4 +111,3 @@ function stopKeyboardPropagation(e: Event) {
         </div>
     </div>
 </template>
-

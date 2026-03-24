@@ -16,6 +16,11 @@ Route::get('/category/{slug?}', [CategoryController::class, 'show'])->name('cate
 Route::post('/category/filter', [CategoryController::class, 'filter'])->name('category.filter');
 Route::get('/user/{id}', [App\Http\Controllers\PublicProfileController::class, 'show'])->name('user.profile');
 Route::get('/ads/{ad}', [App\Http\Controllers\AdController::class, 'show'])->name('ads.show');
+Route::get('/orders/{order}/review', [App\Http\Controllers\OrderController::class, 'review'])
+    // ->middleware('signed')
+    ->name('orders.review');
+Route::post('/orders/{order}/complete', [App\Http\Controllers\OrderController::class,'completed'])->name('orders.complete');
+Route::post('/orders/{order}/cancel', [App\Http\Controllers\OrderController::class,'cancel'])->name('orders.cancel');
 Route::post('/set-city', function (\Illuminate\Http\Request $request) {
     session(['city' => $request->city]);
     return back();
@@ -87,6 +92,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('user/my/ads', [App\Http\Controllers\CreateAdController::class, 'Myads'])->name('user.ads');
     Route::post('/ads', [AdController::class, 'store'])->name('ads.store');
     Route::put('/ads/{ad}', [AdController::class, 'update'])->name('ads.update');
+    Route::delete('/ads/{ad}', [AdController::class, 'destroy'])->name('ads.destroy');
 
     Route::get('/profile/edit', [App\Http\Controllers\UserProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile/update', [App\Http\Controllers\UserProfileController::class, 'update'])->name('user.profile.update');
@@ -105,6 +111,7 @@ Route::middleware(['auth'])->group(function () {
     // Users
     Route::resource('users', App\Http\Controllers\UserController::class);
 
+    Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/mark-as-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
     Route::post('/notifications/mark-all-as-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
 
@@ -113,6 +120,11 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/reports/create', [App\Http\Controllers\UserReportController::class, 'create'])->name('reports.create');
     Route::post('/reports', [App\Http\Controllers\UserReportController::class, 'store'])->name('reports.store');
+
+    Route::get('/orders', [App\Http\Controllers\OrderController::class, 'index'])->name('orders');
+    Route::post('/order', [App\Http\Controllers\OrderController::class, 'store'])->name('orders.store');
+    Route::post('/orders/{order}/accept', [App\Http\Controllers\OrderController::class, 'accept'])->name('orders.accept');
+    Route::post('/orders/{order}/reject', [App\Http\Controllers\OrderController::class, 'reject'])->name('orders.reject');
 });
 
 Route::middleware([
@@ -135,7 +147,6 @@ Route::middleware([
             Route::get('admin/ads/create', [AdController::class, 'create'])->name('ads.create');
             Route::get('/ads/{ad}/edit', [AdController::class, 'edit'])->name('ads.edit');
             Route::patch('/ads/{ad}', [AdController::class, 'update']); // optional, Laravel accepts both PUT/PATCH
-            Route::delete('/ads/{ad}', [AdController::class, 'destroy'])->name('ads.destroy');
             Route::post('ads/{ad}/set-primary-image', [\App\Http\Controllers\AdController::class, 'setPrimaryImage'])
                 ->name('ads.set-primary-image');
             Route::get('/api/brands/{category}', [App\Http\Controllers\BrandController::class, 'getByCategory']);

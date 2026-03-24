@@ -23,24 +23,50 @@
             <!-- Sidebar - Hidden on mobile unless toggled -->
             <aside class="lg:col-span-1 space-y-6" :class="showMobileFilters ? 'block' : 'hidden lg:block'">
 
+                <!-- Search Input - Mobile/Desktop -->
+                <div class="bg-white rounded-xl shadow-sm p-5 md:p-6">
+                    <h3 class="font-semibold text-base md:text-lg text-gray-800 mb-4">Search</h3>
+                    <input type="text" v-model="searchTerm" @keyup.enter="applyFilters" placeholder="Search ads..."
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition" />
+                </div>
+
                 <!-- Category Filter -->
                 <div class="bg-white rounded-xl shadow-sm p-5 md:p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="font-semibold text-base md:text-lg text-gray-800">Categories</h3>
-                        <button @click="showAllCategories = !showAllCategories"
-                            v-if="activeCategory?.children_recursive?.length > 5"
+                        <button @click="showAllCategories = !showAllCategories" v-if="categories?.length > 5"
                             class="text-sm text-yellow-600 hover:text-yellow-700 md:hidden">
                             {{ showAllCategories ? 'Show Less' : 'Show All' }}
                         </button>
                     </div>
                     <div class="space-y-1 md:space-y-2 max-h-64 md:max-h-none overflow-y-auto">
-                        <div v-for="(child, index) in activeCategory?.children_recursive" :key="child.id" :class="[
+                        <div v-for="(category, index) in categories" :key="category.id"
+                            @click="selectCategory(category.id)" :class="[
+                                'text-sm cursor-pointer py-2 md:py-2.5 px-3 rounded-lg transition-all duration-200',
+                                'hover:bg-yellow-50 hover:text-yellow-600 hover:pl-4 md:hover:pl-5',
+                                'border-l-4',
+                                selectedCategoryId === category.id ? 'border-yellow-500 bg-yellow-50 text-yellow-600' : 'border-transparent hover:border-yellow-500',
+                                index >= 5 && !showAllCategories ? 'hidden md:block' : 'block'
+                            ]">
+                            {{ category.name }}
+                            <span class="text-xs text-gray-400 ml-2" v-if="category.ads_count">
+                                ({{ category.ads_count }})
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Brand Filter -->
+                <div class="bg-white rounded-xl shadow-sm p-5 md:p-6">
+                    <h3 class="font-semibold text-base md:text-lg text-gray-800 mb-4">Brands</h3>
+                    <div class="space-y-1 md:space-y-2 max-h-64 md:max-h-none overflow-y-auto">
+                        <div v-for="brand in brands" :key="brand.id" @click="selectBrand(brand.id)" :class="[
                             'text-sm cursor-pointer py-2 md:py-2.5 px-3 rounded-lg transition-all duration-200',
                             'hover:bg-yellow-50 hover:text-yellow-600 hover:pl-4 md:hover:pl-5',
-                            'border-l-4 border-transparent hover:border-yellow-500',
-                            index >= 5 && !showAllCategories ? 'hidden md:block' : 'block'
+                            'border-l-4',
+                            selectedBrandId === brand.id ? 'border-yellow-500 bg-yellow-50 text-yellow-600' : 'border-transparent hover:border-yellow-500'
                         ]">
-                            {{ child.name }}
+                            {{ brand.name }}
                         </div>
                     </div>
                 </div>
@@ -52,12 +78,14 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1">Min</label>
-                                <input type="number" placeholder="$ Min" v-model="minPrice"
+                                <input type="number" placeholder=" Min" v-model.number="minPrice"
+                                    @change="applyPriceFilter"
                                     class="w-full px-3 md:px-4 py-2.5 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition text-sm md:text-base" />
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1">Max</label>
-                                <input type="number" placeholder="$ Max" v-model="maxPrice"
+                                <input type="number" placeholder=" Max" v-model.number="maxPrice"
+                                    @change="applyPriceFilter"
                                     class="w-full px-3 md:px-4 py-2.5 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition text-sm md:text-base" />
                             </div>
                         </div>
@@ -91,16 +119,16 @@
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
                             <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-                                Results for {{ activeCategory?.name || 'All Categories' }}
+                                {{ getPageTitle }}
                             </h1>
                             <p class="text-gray-600 text-sm md:text-base">
-                                {{ filteredAds.length }} ads found
+                                {{ ads?.data?.length || 0 }} ads found
                             </p>
                         </div>
 
                         <!-- Sort for Mobile -->
                         <div class="md:hidden">
-                            <select v-model="sortBy"
+                            <select v-model="sortBy" @change="applyFilters"
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition text-sm">
                                 <option value="newest">Newest First</option>
                                 <option value="price_low">Price: Low to High</option>
@@ -146,7 +174,7 @@
                         <!-- Sort for Desktop -->
                         <div class="hidden md:flex items-center space-x-4">
                             <span class="text-gray-600">Sort by:</span>
-                            <select v-model="sortBy"
+                            <select v-model="sortBy" @change="applyFilters"
                                 class="border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition min-w-[180px]">
                                 <option value="newest">Newest First</option>
                                 <option value="price_low">Price: Low to High</option>
@@ -170,9 +198,23 @@
                 <!-- Active Filters - Mobile -->
                 <div v-if="activeFilterCount > 0" class="mb-4 md:hidden">
                     <div class="flex items-center flex-wrap gap-2">
+                        <div v-if="selectedCategoryId"
+                            class="inline-flex items-center bg-yellow-50 text-yellow-700 text-xs px-3 py-1.5 rounded-full">
+                            Category: {{ getCategoryName(selectedCategoryId) }}
+                            <button @click="clearCategoryFilter" class="ml-1.5 hover:text-yellow-900">
+                                ×
+                            </button>
+                        </div>
+                        <div v-if="selectedBrandId"
+                            class="inline-flex items-center bg-yellow-50 text-yellow-700 text-xs px-3 py-1.5 rounded-full">
+                            Brand: {{ getBrandName(selectedBrandId) }}
+                            <button @click="clearBrandFilter" class="ml-1.5 hover:text-yellow-900">
+                                ×
+                            </button>
+                        </div>
                         <div v-if="minPrice || maxPrice"
                             class="inline-flex items-center bg-yellow-50 text-yellow-700 text-xs px-3 py-1.5 rounded-full">
-                            Price: {{ minPrice ? `$${minPrice}` : 'Min' }} - {{ maxPrice ? `$${maxPrice}` : 'Max' }}
+                            Price: {{ minPrice ? `${minPrice}` : 'Min' }} - {{ maxPrice ? `$${maxPrice}` : 'Max' }}
                             <button @click="clearPriceFilter" class="ml-1.5 hover:text-yellow-900">
                                 ×
                             </button>
@@ -184,17 +226,17 @@
                 </div>
 
                 <!-- Results -->
-                <div v-if="viewMode === 'grid' && filteredAds.length"
-                    class="grid grid-cols-1 xs:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
-                    <AdCard v-for="ad in filteredAds" :key="ad.id" :ad="ad" />
+                <div v-if="viewMode === 'grid' && ads?.data?.length"
+                    class="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+                    <AdCard v-for="ad in ads.data" :key="ad.id" :ad="ad" />
                 </div>
 
-                <div v-if="viewMode === 'list' && filteredAds.length" class="space-y-3 md:space-y-4">
-                    <AdListItem v-for="ad in filteredAds" :key="ad.id" :ad="ad" />
+                <div v-if="viewMode === 'list' && ads?.data?.length" class="space-y-3 md:space-y-4">
+                    <AdListItem v-for="ad in ads.data" :key="ad.id" :ad="ad" />
                 </div>
 
                 <!-- No Results -->
-                <div v-if="!filteredAds.length" class="text-center py-12 md:py-16 bg-white rounded-xl shadow-sm">
+                <div v-if="!ads?.data?.length" class="text-center py-12 md:py-16 bg-white rounded-xl shadow-sm">
                     <div class="max-w-md mx-auto px-4">
                         <svg class="w-16 h-16 md:w-20 md:h-20 text-gray-300 mx-auto mb-4 md:mb-6" fill="none"
                             stroke="currentColor" viewBox="0 0 24 24">
@@ -202,11 +244,11 @@
                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                         <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-3">
-                            {{ originalAds.length ? 'No matching ads found' : 'No ads found' }}
+                            {{ ads?.total ? 'No matching ads found' : 'No ads found' }}
                         </h3>
                         <p class="text-gray-600 text-sm md:text-base mb-6 md:mb-8">
-                            {{ originalAds.length ?
-                                'Try adjusting your price filter to find what you\'re looking for.'
+                            {{ ads?.total ?
+                                'Try adjusting your filters to find what you\'re looking for.'
                                 : 'There are no ads in this category yet.' }}
                         </p>
                         <div class="flex flex-col sm:flex-row gap-3 justify-center">
@@ -214,12 +256,26 @@
                                 class="px-6 md:px-8 py-2.5 md:py-3 bg-yellow-600 text-white font-medium rounded-lg hover:bg-yellow-700 transition-colors duration-200 text-sm md:text-base">
                                 Reset Filters
                             </button>
-                            <button v-if="!originalAds.length" @click="$router.push('/')"
+                            <button v-if="!ads?.total" @click="$router.push('/')"
                                 class="px-6 md:px-8 py-2.5 md:py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base">
                                 Browse All Categories
                             </button>
                         </div>
                     </div>
+                </div>
+
+                <!-- Pagination -->
+                <div v-if="ads?.last_page > 1" class="mt-8 flex justify-center">
+                    <nav class="inline-flex rounded-md shadow">
+                        <button v-for="page in ads.last_page" :key="page" @click="goToPage(page)" :class="[
+                            'px-4 py-2 text-sm font-medium border',
+                            page === ads.current_page
+                                ? 'bg-yellow-600 text-white border-yellow-600'
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        ]">
+                            {{ page }}
+                        </button>
+                    </nav>
                 </div>
 
             </main>
@@ -229,157 +285,266 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { router } from '@inertiajs/vue3'
 import AdCard from '@/components/AdCard.vue'
 import AdListItem from '@/components/AdListItem.vue'
+
+declare const useForceTheme: any;
 useForceTheme('light');
-// Interfaces based on your data structure
-interface Ad {
-    id: number
-    ad_title: string
-    price: number
-    location: string
-    created_at: string
-    description?: string
-    brand?: {
-        id: number
-        name: string
+
+// Props from Laravel/Inertia
+const props = defineProps<{
+    ads: {
+        data: any[]
+        current_page: number
+        last_page: number
+        total: number
+        per_page: number
     }
-    brand_id?: number
-    category_id?: number
-    city?: string
-    is_featured?: number
-    seller_name?: string
-    seller_phone?: string
-    user_id?: number
-    images?: Array<{
-        path: string
-    }>
-}
-
-interface Category {
-    id: number
-    name: string
-    slug?: string
-    parent_id: number | null
-    is_active: number
-    created_at: string
-    updated_at: string
-    files?: Array<any>
-    children_recursive?: Category[]
-    ads?: Ad[]
-}
-
-interface Props {
-    category?: Category | null
-    categories?: Category[]
-}
-
-const props = withDefaults(defineProps<Props>(), {
-    category: null,
-    categories: () => []
-})
+    categories: any[]
+    brands: any[]
+    filters: {
+        filter?: {
+            global?: string
+            category?: string
+            brand?: string
+        }
+        min_price?: number
+        max_price?: number
+        sort_by?: string
+    }
+    totalAds: number
+}>()
 
 const viewMode = ref<'grid' | 'list'>('grid')
-const sortBy = ref<string>('newest')
-const minPrice = ref<number | null>(null)
-const maxPrice = ref<number | null>(null)
 const showMobileFilters = ref<boolean>(false)
 const showAllCategories = ref<boolean>(false)
 
-const activeCategory = computed(() => {
-    if (props.category?.ads_count > 0) {
-        return props.category
+// Filter states (initialized from props)
+const selectedCategoryId = ref<number | null>(null)
+const selectedBrandId = ref<number | null>(null)
+const minPrice = ref<number | null>(null)
+const maxPrice = ref<number | null>(null)
+const sortBy = ref<string>('newest')
+const searchTerm = ref<string>('')
+
+// Initialize filters from props
+const initFilters = () => {
+    const filters = props.filters || {}
+
+    // Initialize search
+    if (filters.filter?.global) {
+        searchTerm.value = filters.filter.global
     }
 
-    return props.categories?.find(cat => cat.ads_count > 0) || null
-})
-
-
-// Get ads from the active category
-const originalAds = computed(() => {
-    return activeCategory.value?.ads || []
-})
-
-
-// Count active filters
-const activeFilterCount = computed(() => {
-    let count = 0
-    if (minPrice.value !== null) count++
-    if (maxPrice.value !== null) count++
-    return count
-})
-
-// Filtered and sorted ads
-const filteredAds = computed(() => {
-    let ads = [...originalAds.value]
-
-    // Apply price filter
-    if (minPrice.value !== null) {
-        ads = ads.filter(ad => ad.price >= minPrice.value!)
-    }
-    if (maxPrice.value !== null) {
-        ads = ads.filter(ad => ad.price <= maxPrice.value!)
+    // Initialize category
+    if (filters.filter?.category) {
+        selectedCategoryId.value = parseInt(filters.filter.category as string)
     }
 
-    // Apply sorting
-    switch (sortBy.value) {
-        case 'price_low':
-            ads.sort((a, b) => a.price - b.price)
-            break
-        case 'price_high':
-            ads.sort((a, b) => b.price - a.price)
-            break
-        case 'newest':
-            ads.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            break
+    // Initialize brand
+    if (filters.filter?.brand) {
+        selectedBrandId.value = parseInt(filters.filter.brand as string)
     }
 
-    return ads
-})
+    // Initialize price
+    if (filters.min_price) {
+        minPrice.value = parseInt(filters.min_price as any)
+    }
+    if (filters.max_price) {
+        maxPrice.value = parseInt(filters.max_price as any)
+    }
 
-const applyPriceFilter = () => {
-    console.log('Applying price filter:', { min: minPrice.value, max: maxPrice.value })
-    // Auto-close mobile filters after applying
-    if (window.innerWidth < 1024) {
-        showMobileFilters.value = false
+    // Initialize sort
+    if (filters.sort_by) {
+        sortBy.value = filters.sort_by
     }
 }
 
-const resetFilters = () => {
-    minPrice.value = null
-    maxPrice.value = null
-    sortBy.value = 'newest'
-    showMobileFilters.value = false
-}
-
-const clearPriceFilter = () => {
-    minPrice.value = null
-    maxPrice.value = null
-}
-
-// Auto-close mobile filters on larger screens
-watch(() => window.innerWidth, (width) => {
-    if (width >= 1024) {
-        showMobileFilters.value = false
-    }
-})
-
-// Close mobile filters when clicking outside (optional)
-const handleClickOutside = (event: MouseEvent) => {
-    const target = event.target as HTMLElement
-    if (!target.closest('aside') && !target.closest('[class*="mobile-filter-toggle"]')) {
-        showMobileFilters.value = false
-    }
-}
-
+// Call init on mount
 onMounted(() => {
+    initFilters()
     document.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside)
 })
+
+// Computed properties
+const getPageTitle = computed(() => {
+    if (searchTerm.value) {
+        return `Search results for "${searchTerm.value}"`
+    }
+    if (selectedCategoryId.value) {
+        const category = props.categories.find(c => c.id === selectedCategoryId.value)
+        return category ? category.name : 'All Categories'
+    }
+    return 'All Items'
+})
+
+// Helper functions to get names
+const getCategoryName = (id: number) => {
+    const category = props.categories.find(c => c.id === id)
+    return category ? category.name : ''
+}
+
+const getBrandName = (id: number) => {
+    const brand = props.brands.find(b => b.id === id)
+    return brand ? brand.name : ''
+}
+
+// Count active filters
+const activeFilterCount = computed(() => {
+    let count = 0
+    if (selectedCategoryId.value) count++
+    if (selectedBrandId.value) count++
+    if (minPrice.value !== null && minPrice.value !== undefined) count++
+    if (maxPrice.value !== null && maxPrice.value !== undefined) count++
+    if (searchTerm.value) count++
+    return count
+})
+
+// Function to apply filters (navigate with new filters)
+const applyFilters = () => {
+    const params: any = {}
+
+    // Build filter object
+    if (searchTerm.value) {
+        params.filter = { ...params.filter, global: searchTerm.value }
+    }
+
+    if (selectedCategoryId.value) {
+        params.filter = { ...params.filter, category: selectedCategoryId.value }
+    }
+
+    if (selectedBrandId.value) {
+        params.filter = { ...params.filter, brand: selectedBrandId.value }
+    }
+
+    if (minPrice.value !== null && minPrice.value !== undefined) {
+        params.min_price = minPrice.value
+    }
+
+    if (maxPrice.value !== null && maxPrice.value !== undefined) {
+        params.max_price = maxPrice.value
+    }
+
+    params.sort_by = sortBy.value || 'newest'
+
+    // Use Inertia to navigate with new filters
+    router.get('/all-items', params, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true
+    })
+
+    // Close mobile filters
+    if (window.innerWidth < 1024) {
+        showMobileFilters.value = false
+    }
+}
+
+// Category selection
+const selectCategory = (categoryId: number) => {
+    if (selectedCategoryId.value === categoryId) {
+        // Toggle off if same category
+        selectedCategoryId.value = null
+    } else {
+        selectedCategoryId.value = categoryId
+    }
+    applyFilters()
+}
+
+// Brand selection
+const selectBrand = (brandId: number) => {
+    if (selectedBrandId.value === brandId) {
+        selectedBrandId.value = null
+    } else {
+        selectedBrandId.value = brandId
+    }
+    applyFilters()
+}
+
+// Clear individual filters
+const clearCategoryFilter = () => {
+    selectedCategoryId.value = null
+    applyFilters()
+}
+
+const clearBrandFilter = () => {
+    selectedBrandId.value = null
+    applyFilters()
+}
+
+// Price filter
+const applyPriceFilter = () => {
+    applyFilters()
+}
+
+// Clear price filter
+const clearPriceFilter = () => {
+    minPrice.value = null
+    maxPrice.value = null
+    applyFilters()
+}
+
+// Reset all filters
+const resetFilters = () => {
+    selectedCategoryId.value = null
+    selectedBrandId.value = null
+    minPrice.value = null
+    maxPrice.value = null
+    sortBy.value = 'newest'
+    searchTerm.value = ''
+    showMobileFilters.value = false
+
+    // Navigate without filters
+    router.get('/all-items', {}, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true
+    })
+}
+
+// Pagination
+const goToPage = (page: number) => {
+    const params: any = { page }
+
+    // Preserve all current filters
+    if (searchTerm.value) {
+        params.filter = { ...params.filter, global: searchTerm.value }
+    }
+    if (selectedCategoryId.value) {
+        params.filter = { ...params.filter, category: selectedCategoryId.value }
+    }
+    if (selectedBrandId.value) {
+        params.filter = { ...params.filter, brand: selectedBrandId.value }
+    }
+    if (minPrice.value) params.min_price = minPrice.value
+    if (maxPrice.value) params.max_price = maxPrice.value
+    if (sortBy.value !== 'newest') params.sort_by = sortBy.value
+
+    router.get('/all-items', params, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true
+    })
+}
+
+// Handle sort change (already handled by watcher but keep for clarity)
+watch(sortBy, () => {
+    applyFilters()
+})
+
+// Handle click outside for mobile filters
+const handleClickOutside = (event: MouseEvent) => {
+    const target = event.target as HTMLElement
+    if (!target.closest('aside') && !target.closest('[class*="mobile-filter-toggle"]')) {
+        showMobileFilters.value = false
+    }
+}
 </script>
 
 <style scoped>
