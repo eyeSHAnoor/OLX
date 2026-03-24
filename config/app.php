@@ -126,29 +126,9 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
-        'providers' => [
-        /*
-        * Laravel Framework Service Providers...
-        */
-        Illuminate\Auth\AuthServiceProvider::class,
-        Illuminate\Broadcasting\BroadcastServiceProvider::class,
-        Illuminate\Bus\BusServiceProvider::class,
-        Illuminate\Cache\CacheServiceProvider::class,
-        // … other default Laravel providers
-
-        /*
-        * Package Service Providers
-        */
-        Barryvdh\DomPDF\ServiceProvider::class, // your PDF provider
-
-        /*
-        * Application Service Providers...
-        */
-        App\Providers\AppServiceProvider::class,
-        App\Providers\AuthServiceProvider::class,
-        App\Providers\EventServiceProvider::class,
-        App\Providers\RouteServiceProvider::class,
-    ],
+    'provider' => ServiceProvider::defaultProviders()->merge([
+        App\Providers\AppServiceProvider::class
+    ]),
 
     'queue_cron_token' => env('QUEUE_CRON_TOKEN'),
 ];
