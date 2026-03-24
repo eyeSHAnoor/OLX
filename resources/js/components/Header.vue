@@ -1,7 +1,7 @@
 <template>
     <nav class="border-b">
         <!-- TOP BAR -->
-        <div class="w-full bg-slate-100">
+        <div class="w-full bg-gradient-to-r from-brand-blue/15 via-brand-teal/15 to-brand-orange/15">
             <div class="max-w-9/11 mx-auto px-3 py-4 flex items-center justify-between">
 
                 <!-- Logo + Hamburger -->
