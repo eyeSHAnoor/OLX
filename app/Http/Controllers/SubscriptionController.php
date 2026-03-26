@@ -78,7 +78,7 @@ class SubscriptionController extends Controller
         $pendingSubscription = $user->subscription()->where('payment_status', 'pending')->first();
 
         if (! $pendingSubscription) {
-            return redirect()->back()->with('error', 'No pending subscription found for this user.');
+            return redirect()->route('home')->with('error', 'No pending subscription found for this user.');
         }
 
         DB::transaction(function () use ($pendingSubscription, $user) {

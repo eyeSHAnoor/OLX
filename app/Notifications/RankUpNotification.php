@@ -41,7 +41,8 @@ class RankUpNotification extends Notification implements ShouldQueue
         return [
             'rank' => $this->rank,
             'message' => "🎉 Your seller rank increased to Rank {$this->rank}",
-            'type' => 'rank_up'
+            'type' => 'rank_up',
+            'url' => route('user.ads', [], false)
         ];
     }
 
@@ -51,7 +52,8 @@ class RankUpNotification extends Notification implements ShouldQueue
         return new BroadcastMessage([
             'rank' => $this->rank,
             'message' => "🎉 Your seller rank increased to Rank {$this->rank}",
-            'type' => 'rank_up'
+            'type' => 'rank_up',
+            'url' => route('user.ads', [], false)
         ]);
     }
 }

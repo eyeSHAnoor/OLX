@@ -70,4 +70,10 @@ class Order extends Model
             'cancel_rate' => $cancelRate,
         ];
     }
+
+    // Add broadcast method for real-time notifications
+    public function broadcastOrderAccepted()
+    {
+        broadcast(new \App\Events\OrderAccepted($this));
+    }
 }

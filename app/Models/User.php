@@ -130,6 +130,16 @@ class User extends Authenticatable
             ->where('payment_status', 'pending');
     }
 
+    public function expiredSubscription()
+    {
+        // Disable the global scope so we can fetch expired subscriptions
+        return $this->hasOne(Subscription::class)->withoutGlobalScope('not_expired')
+                    ->where(function ($q) {
+                        $q->where('status', 'expired')
+                        ->orWhere('ends_at', '<', now());
+                    });
+    }
+
     public function subscriptionStatus(): string
     {
         if ($this->activeSubscription()->exists()) {
@@ -138,6 +148,10 @@ class User extends Authenticatable
 
         if ($this->pendingSubscription()->exists()) {
             return 'pending';
+        }
+
+        if ($this->expiredSubscription()->exists()) {
+            return 'expired';
         }
 
         return 'none';

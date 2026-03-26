@@ -18,8 +18,6 @@
 
         <!-- Mobile Bottom Navigation - Sticky Footer -->
         <MobileBottomNav />
-        <!-- Global Alert Dialog -->
-        <ShadcnAlertDialog />
     </div>
 </template>
 

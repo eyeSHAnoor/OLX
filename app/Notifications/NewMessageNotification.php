@@ -32,7 +32,8 @@ class NewMessageNotification extends Notification implements ShouldQueue
             'message' => "{$this->message->sender->name} sends You a message",
             // 'message' => $this->message->body,
             'conversation_id' => $this->chat->id,
-            'type' => 'new_message'
+            'type' => 'new_message',
+             'url' => route('chat.show', $this->chat->id, false)
         ];
     }
 
@@ -43,6 +44,7 @@ class NewMessageNotification extends Notification implements ShouldQueue
             'message' => "{$this->message->sender->name} sends You a message",
             'sender_id' => $this->message->sender_id,
             'sender_name' => $this->message->sender->name ?? 'Unknown',
+            'url' => route('chat.show', $this->chat->id, false)
         ]);
     }
 }

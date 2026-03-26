@@ -81,6 +81,7 @@ declare global {
   const useInitials: typeof import('./resources/js/composables/useInitials')['useInitials']
   const useModal: typeof import('./resources/js/composables/useModal.js')['default']
   const useModel: typeof import('vue')['useModel']
+  const useNotificationStore: typeof import('./resources/js/stores/notificationStore')['useNotificationStore']
   const useNotifications: typeof import('./resources/js/composables/useNotifications')['useNotifications']
   const usePage: typeof import('@inertiajs/vue3')['usePage']
   const usePermissions: typeof import('./resources/js/composables/usePermissions.js')['default']

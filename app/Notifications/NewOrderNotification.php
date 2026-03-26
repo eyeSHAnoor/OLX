@@ -30,7 +30,8 @@ class NewOrderNotification extends Notification implements ShouldQueue
             'buyer_id' => $this->order->buyer_id,
             'buyer_name' => $this->order->buyer->name ?? 'Unknown',
             'message' => "{$this->order->buyer->name} placed an order on your ad",
-            'type' => 'new_order'
+            'type' => 'new_order',
+            'url' => route('orders', [], false)
         ];
     }
 
@@ -43,7 +44,8 @@ class NewOrderNotification extends Notification implements ShouldQueue
             'buyer_id' => $this->order->buyer_id,
             'buyer_name' => $this->order->buyer->name ?? 'Unknown',
             'message' => "{$this->order->buyer->name} placed an order on your ad",
-            'type' => 'new_order'
+            'type' => 'new_order',
+            'url' => route('orders', [], false)
         ]);
     }
 }

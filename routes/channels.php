@@ -18,3 +18,8 @@ Broadcast::channel('conversation.{id}', function ($user, $id) {
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
+
+// Broadcast::channel('buyer.{buyerId}', function ($user, $buyerId) {
+//     // Only allow the logged-in user who is the buyer
+//     return (int) $user->id === (int) $buyerId;
+// });

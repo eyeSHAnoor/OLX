@@ -31,7 +31,8 @@ class OrderStatusNotification extends Notification implements ShouldQueue
             'seller_name' => $this->order->seller->name ?? 'Seller',
             'status' => $this->status,
             'message' => $this->statusMessage(),
-            'type' => 'order_status'
+            'type' => 'order_status',
+            'url' => route('orders', [], false)
         ];
     }
 
@@ -45,7 +46,8 @@ class OrderStatusNotification extends Notification implements ShouldQueue
             'seller_name' => $this->order->seller->name ?? 'Seller',
             'status' => $this->status,
             'message' => $this->statusMessage(),
-            'type' => 'order_status'
+            'type' => 'order_status',
+            'url' => route('orders', [], false)
         ]);
     }
 

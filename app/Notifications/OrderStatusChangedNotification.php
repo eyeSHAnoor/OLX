@@ -61,7 +61,8 @@ class OrderStatusChangedNotification extends Notification implements ShouldQueue
             'qty' => $this->order->qty,
             'price' => $this->order->price,
             'message' => "Your order #{$this->order->id} for '{$this->order->ad->ad_title}' was {$this->order->status}.",
-            'type' => 'order_accepted'
+            'type' => 'order_accepted',
+            'url' => route('orders', [], false)
         ];
     }
 
@@ -77,7 +78,8 @@ class OrderStatusChangedNotification extends Notification implements ShouldQueue
             'qty' => $this->order->qty,
             'price' => $this->order->price,
             'message' => "Your order #{$this->order->id} has been {$this->order->status}.",
-            'type' => 'order_accepted'
+            'type' => 'order_accepted',
+            'url' => route('orders', [], false)
         ]);
     }
 }

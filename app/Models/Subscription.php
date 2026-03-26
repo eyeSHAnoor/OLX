@@ -43,15 +43,15 @@ class Subscription extends Model
             }
         });
 
-        static::addGlobalScope('not_expired', function (Builder $builder) {
-            $builder->where(function ($query) {
-                $query->where('status', '!=', 'expired')
-                    ->where(function ($q) {
-                        $q->whereNull('ends_at')
-                            ->orWhere('ends_at', '>', now());
-                    });
-            });
-        });
+        // static::addGlobalScope('not_expired', function (Builder $builder) {
+        //     $builder->where(function ($query) {
+        //         $query->where('status', '!=', 'expired')
+        //             ->where(function ($q) {
+        //                 $q->whereNull('ends_at')
+        //                     ->orWhere('ends_at', '>', now());
+        //             });
+        //     });
+        // });
     }
 
     public function plan()

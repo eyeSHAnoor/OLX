@@ -142,6 +142,25 @@ const getEmptyMessage = () => {
         return `No ${props.currentStatus} orders as a seller`
     }
 }
+
+// Request buyer to review order (seller action)
+const requestReview = (orderId) => {
+    router.post(`/orders/${orderId}/request-review`, {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            alert('Review request sent to buyer!');
+        },
+        onError: (errors) => {
+            console.error(errors);
+            alert('Failed to send review request.');
+        }
+    });
+};
+
+// Helper: Show request review button (only for sellers and completed orders)
+const canRequestReview = (order) => {
+    return activeTab.value === 'selling' && order.status === 'accepted';
+};
 </script>
 
 <template>
@@ -206,6 +225,7 @@ const getEmptyMessage = () => {
                                 ? 'text-blue-600'
                                 : 'text-gray-500 hover:text-gray-700'
                         ]">
+
                         <div class="flex gap-1 items-center">
                             <span>{{ status }}</span>
                             <span class="text-xs mt-0.5 font-normal opacity-75">
@@ -402,6 +422,13 @@ const getEmptyMessage = () => {
                                                 Review Order
                                             </button>
                                         </div>
+
+                                        <!-- <div v-else-if="canRequestReview(order)">
+                                            <button @click="requestReview(order.id)"
+                                                class="px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-indigo-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg whitespace-nowrap">
+                                                Request Review
+                                            </button>
+                                        </div> -->
 
                                         <!-- Status Badge for other statuses -->
                                         <span v-else

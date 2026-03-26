@@ -53,10 +53,11 @@
                                     <p class="text-xs text-gray-500 mt-2">Updating...</p>
                                 </div>
 
+
                                 <div v-else-if="notifications.length">
                                     <div v-for="n in notifications" :key="n.id"
-                                        class="p-3 text-xs hover:bg-gray-50 border-b"
-                                        :class="{ 'bg-blue-50/30': !n.read_at }">
+                                        class="p-3 text-xs hover:bg-gray-50 border-b cursor-pointer"
+                                        @click="openNotification(n)" :class="{ 'bg-blue-50/30': !n.read_at }">
                                         <div>
                                             {{ n.data.message || n.data.body }}
                                             <div class="text-[9px] text-gray-400 mt-0.5">
@@ -263,7 +264,21 @@ watch(showNotifications, async (newVal) => {
         hasMarkedAsRead.value = true;
     }
 });
+console.log(page.props.notifications)
 
+const openNotification = (notification: any) => {
+    markAsRead(notification)
+
+    if (notification.data?.url) {
+
+        let url = notification.data.url
+
+        // Fix 127.0.0.1 vs localhost issue
+        url = url.replace('http://127.0.0.1:8000', '')
+
+        router.visit(url)
+    }
+}
 // Mark all as read function
 const markAllAsRead = () => {
     return new Promise((resolve, reject) => {

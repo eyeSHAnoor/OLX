@@ -42,6 +42,7 @@ class NewRatingNotification extends Notification implements ShouldQueue
             'message' => "{$this->rater->name} gave you a {$this->rating->star_rating} rating",
             'body' => "{$this->rater->name} rated you " . str_repeat('⭐', $this->rating->rating),
             'created_at' => now(),
+            'url' => route('ads.show', $this->adId, false)
         ];
     }
 
@@ -58,6 +59,7 @@ class NewRatingNotification extends Notification implements ShouldQueue
             'ad_id' => $this->adId,
             'message' => "{$this->rater->name} gave you a {$this->rating->rating}-star rating",
             'time' => now()->diffForHumans(),
+            'url' => route('ads.show', $this->adId, false)
         ]);
     }
 
@@ -72,6 +74,7 @@ class NewRatingNotification extends Notification implements ShouldQueue
             'review' => $this->rating->review,
             'ad_id' => $this->adId,
             'message' => "{$this->rater->name} gave you a {$this->rating->star_rating} rating",
+            'url' => route('ads.show', $this->adId, false)
         ];
     }
 }

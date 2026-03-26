@@ -8,6 +8,15 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AdController;
+use Illuminate\Support\Facades\Mail;
+
+Route::get('/test-mail', function () {
+    Mail::raw('This is a test email from Laravel!', function ($message) {
+        $message->to('www.prisha7@gmail.com')
+                ->subject('Test Email');
+    });
+    return 'Test email sent!';
+});
 
 Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/account', [\App\Http\Controllers\HomeController::class, 'account'])->name('account');
@@ -125,6 +134,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/order', [App\Http\Controllers\OrderController::class, 'store'])->name('orders.store');
     Route::post('/orders/{order}/accept', [App\Http\Controllers\OrderController::class, 'accept'])->name('orders.accept');
     Route::post('/orders/{order}/reject', [App\Http\Controllers\OrderController::class, 'reject'])->name('orders.reject');
+    // Route::post('/orders/{order}/request-review', [App\Http\Controllers\OrderController::class, 'requestReview'])->name('orders.requestReview');
 });
 
 Route::middleware([

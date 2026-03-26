@@ -35,10 +35,11 @@
 
             <!-- Notifications List -->
             <div v-if="notifications.data.length > 0" class="space-y-1">
-                <div v-for="notification in notifications.data" :key="notification.id" :class="[
-                    'bg-white rounded-lg shadow-sm border p-2 transition hover:shadow-md',
-                    notification.read_at ? 'border-gray-100' : 'border-l-4 border-l-brand-teal border-gray-100'
-                ]">
+                <div v-for="notification in notifications.data" :key="notification.id"
+                    @click="openNotification(notification)" class="cursor-pointer" :class="[
+                        'bg-white rounded-lg shadow-sm border p-2 transition hover:shadow-md',
+                        notification.read_at ? 'border-gray-100' : 'border-l-4 border-l-brand-teal border-gray-100'
+                    ]">
                     <div class="flex items-start justify-between">
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-1">
@@ -232,6 +233,23 @@ const markAllAsRead = () => {
     }
 }
 
+const openNotification = (notification: any) => {
+
+    // mark as read if not already
+    if (!notification.read_at) {
+        markAsRead(notification.id)
+    }
+
+    if (notification.data?.url) {
+
+        let url = notification.data.url
+
+        // Fix localhost vs 127.0.0.1 problem
+        url = url.replace('http://127.0.0.1:8000', '')
+
+        router.visit(url)
+    }
+}
 </script>
 
 <style scoped>

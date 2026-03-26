@@ -9,7 +9,7 @@ use App\Notifications\NewOrderNotification;
 use App\Notifications\OrderStatusChangedNotification;
 use App\Notifications\OrderStatusNotification;
 use App\Notifications\RankUpNotification;
-
+// use App\Events\ReviewRequested;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -152,7 +152,6 @@ class OrderController extends Controller
 
         // Notify buyer
         $order->buyer->notify(new OrderStatusChangedNotification($order));
-
         return redirect()->back()->with('success', 'Order accepted and buyer notified.');
     }
 
@@ -175,6 +174,14 @@ class OrderController extends Controller
 
         return redirect()->back()->with('success', 'Order rejected and buyer notified.');
     }
+
+    // public function requestReview(Order $order)
+    // {
+
+    //     broadcast(new ReviewRequested($order));
+
+    //     return redirect()->back()->with('success', 'Request send to buyer to review your order');;
+    // }
 
     public function completed(Order $order)
     {
