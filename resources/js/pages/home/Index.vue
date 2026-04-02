@@ -103,6 +103,8 @@ import { Icon } from '@iconify/vue';
 import { useForceTheme } from '@/composables/useForceTheme'
 
 const page = usePage();
+
+console.log('Page Props:', page.props);
 const categories = computed(() => page.props.categories || [])
 const banners = computed(() => page.props.banners || [])
 const isSearching = computed(() => page.props.isSearching || false)

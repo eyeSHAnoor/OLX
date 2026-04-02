@@ -34,7 +34,8 @@ class HomeController extends Controller
         | STEP 1: Load ALL categories once
         |--------------------------------------------------------------------------
         */
-        $allCategories = Category::select('id', 'parent_id', 'name', 'slug', 'position')
+        $allCategories = Category::with('files')
+            ->select('id', 'parent_id', 'name', 'slug', 'position')
             ->orderBy('position')
             ->get();
 
