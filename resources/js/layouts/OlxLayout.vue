@@ -20,12 +20,18 @@
         <MobileBottomNav />
 
         <!-- <OrderPopup :order="popupOrder" @close="popupOrder = null" /> -->
-        <div v-if="userId">
+        <!-- <div v-if="userId">
             <OrderPopup v-if="popupOrder" :order="popupOrder"
                 :type="popupOrder?.buyer_id === page.props.auth.user.id ? 'buyer' : 'seller'"
                 @close="popupOrder = null" />
             <TermsPopup v-if="page.props.auth.user.terms_accepted === 0" />
             <BroadcastPopup :message="popupBroadcast" @close="popupBroadcast = null" />
+        </div> -->
+        <div v-if="userId">
+            <OrderPopup v-if="popupOrder && popupType" :order="popupOrder" :type="popupType"
+                @close="popupOrder = null" />
+            <TermsPopup v-if="page.props.auth.user.terms_accepted === 0" />
+            <BroadcastPopup v-if="popupBroadcast" :message="popupBroadcast" @close="popupBroadcast = null" />
         </div>
     </div>
 </template>
@@ -48,11 +54,16 @@ const props = defineProps({
         default: false
     }
 })
-
 const page = usePage()
+// console.log(page.props);
 const popupOrder = ref(null)
 const popupBroadcast = ref(null)
 const userId = page.props.auth?.user?.id
+
+const popupType = computed(() => {
+    if (!popupOrder.value || !page.props.auth?.user) return null
+    return popupOrder.value.buyer_id === page.props.auth.user.id ? 'buyer' : 'seller'
+})
 
 onMounted(() => {
     if (!userId) {

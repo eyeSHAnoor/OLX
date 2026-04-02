@@ -234,6 +234,7 @@ class CreateAdController extends Controller
         // Allow sold -> active transition (reactivate)
         if ($ad->status === 'sold' && $newStatus === 'active') {
             $ad->status = 'active';
+            $ad->is_active = true; 
             $ad->save();
             return back()->with('success', 'Ad reactivated successfully.');
         }
@@ -241,6 +242,8 @@ class CreateAdController extends Controller
         // Normal active/inactive toggle
         if (in_array($ad->status, ['active', 'inactive']) && in_array($newStatus, ['active', 'inactive'])) {
             $ad->status = $newStatus;
+            // Update is_active according to status
+            $ad->is_active = $newStatus === 'active' ? true : false;
             $ad->save();
             return back()->with('success', 'Ad status updated.');
         }

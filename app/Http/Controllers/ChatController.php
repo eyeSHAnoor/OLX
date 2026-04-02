@@ -147,6 +147,7 @@ class ChatController extends Controller
 
     public function sendProduct(Request $request)
     {
+        // dd($request->all());
         // Validate request data
         $request->validate([
             'conversation_id' => 'required|exists:conversations,id',
