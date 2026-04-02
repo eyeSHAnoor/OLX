@@ -11,13 +11,12 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 class BrandData extends Data
 {
-    // Add a private property to hold the original model
     private Brand $model;
 
     public function __construct(
         public int $id,
         public string $name,
-        Brand $model // pass the model here
+        Brand $model
     ) {
         $this->model = $model;
     }
@@ -27,7 +26,7 @@ class BrandData extends Data
         return new self(
             id: $brand->id,
             name: $brand->name,
-            model: $brand, // store the model
+            model: $brand,
         );
     }
 
@@ -35,9 +34,18 @@ class BrandData extends Data
     #[DataCollectionOf(CategoryData::class)]
     public function categories(): array
     {
-        // map categories using CategoryData
         return $this->model->categories
-            ->map(fn($category) => CategoryData::fromModel($category))
+            ->map(fn ($category) => CategoryData::fromModel($category))
+            ->toArray();
+    }
+
+    // ADD THIS
+    #[Computed]
+    #[DataCollectionOf(BrandModelData::class)]
+    public function models(): array
+    {
+        return $this->model->models
+            ->map(fn ($model) => BrandModelData::fromModel($model))
             ->toArray();
     }
 }

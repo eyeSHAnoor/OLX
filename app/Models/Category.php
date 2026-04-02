@@ -39,6 +39,13 @@ class Category extends Model
         return $this->belongsToMany(Brand::class);
     }
 
+    // Category-specific attributes/specifications
+    public function attributes()
+    {
+        return $this->hasMany(CategoryAttribute::class);
+    }
+
+
     public function files()
     {
         return $this->morphMany(File::class, 'fileable');

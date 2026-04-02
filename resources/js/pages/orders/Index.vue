@@ -11,7 +11,12 @@ const props = defineProps({
     buyingStats: Object,
     sellingStats: Object
 })
-
+const goBack = () => {
+    router.visit(route('account'), {
+        preserveState: true,
+        preserveScroll: true
+    })
+}
 const expandedOrder = ref(null)
 const activeTab = ref(props.currentView || 'buying')
 
@@ -30,14 +35,12 @@ const currentOrders = computed(() => {
     return activeTab.value === 'buying' ? buyingOrders.value : sellingOrders.value
 })
 
-const statuses = ['pending', 'accepted', 'rejected', 'completed', 'cancelled']
+const statuses = ['pending', 'accepted', 'rejected']
 
 const statusColors = {
     pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     accepted: 'bg-green-100 text-green-800 border-green-200',
     rejected: 'bg-red-100 text-red-800 border-red-200',
-    completed: 'bg-blue-100 text-blue-800 border-blue-200',
-    cancelled: 'bg-gray-100 text-gray-800 border-gray-200'
 }
 
 // Get status count for current view
@@ -166,6 +169,13 @@ const canRequestReview = (order) => {
 <template>
     <OlxLayout>
         <div class="max-w-9/11 mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+            <div class="pb-2 sm:hidden visible">
+                <button @click="goBack"
+                    class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
+                    <Icon icon="mdi:arrow-left" class="text-base" />
+                    Back
+                </button>
+            </div>
             <!-- Header -->
             <div class="mb-6 sm:mb-8">
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-900">My Orders</h1>
@@ -299,7 +309,7 @@ const canRequestReview = (order) => {
                                     <div class="flex items-center gap-2 mt-1">
                                         <span class="text-xs text-gray-400">#{{ order.id }}</span>
                                         <span class="text-xs font-medium text-gray-900">Rs. {{ order.price * order.qty
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -327,7 +337,7 @@ const canRequestReview = (order) => {
                                                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                         <span class="truncate max-w-[80px] sm:max-w-[120px]">{{ getOtherParty(order)
-                                        }}</span>
+                                            }}</span>
                                     </div>
 
                                     <!-- Quantity -->

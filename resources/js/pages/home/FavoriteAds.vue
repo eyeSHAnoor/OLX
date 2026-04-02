@@ -1,6 +1,14 @@
 <template>
     <OlxLayout>
+        <TopCategoriesBar />
         <div class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
+            <div class="pb-2 sm:hidden visible">
+                <button @click="goBack"
+                    class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
+                    <Icon icon="mdi:arrow-left" class="text-base" />
+                    Back
+                </button>
+            </div>
             <!-- Header Section -->
             <div class="mb-6 md:mb-8">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -31,26 +39,40 @@
                         </div>
 
                         <!-- Category Filter -->
-                        <select v-model="filters.category"
+                        <SelectInput v-model="filters.category" placeholder="Select Category"
                             class="flex-shrink-0 px-2 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[110px]">
-                            <option value="">All Categories</option>
-                            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                        </select>
+                            <SelectContent>
+                                <SelectItem v-for="cat in categories" :key="cat.id" :value="cat.id">
+                                    {{ cat.name }}
+                                </SelectItem>
+                            </SelectContent>
+                        </SelectInput>
 
                         <!-- Brand Filter -->
-                        <select v-model="filters.brand"
+                        <SelectInput v-model="filters.brand" placeholder="Select Brand"
                             class="flex-shrink-0 px-2 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[110px]">
-                            <option value="">All Brands</option>
-                            <option v-for="brand in brands" :key="brand.id" :value="brand.id">{{ brand.name }}</option>
-                        </select>
+                            <SelectContent>
+                                <SelectItem v-for="brand in brands" :key="brand.id" :value="brand.id">
+                                    {{ brand.name }}
+                                </SelectItem>
+                            </SelectContent>
+                        </SelectInput>
 
                         <!-- Sort Filter -->
-                        <select v-model="sort"
-                            class="flex-shrink-0 px-2 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[120px]">
-                            <option value="newest">Newest First</option>
-                            <option value="price_low">Price: Low to High</option>
-                            <option value="price_high">Price: High to Low</option>
-                        </select>
+                        <SelectInput v-model="sort" placeholder="Sort By"
+                            class="flex-shrink-0 px-2  border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[120px]">
+                            <SelectContent>
+                                <SelectItem value="newest">
+                                    Newest First
+                                </SelectItem>
+                                <SelectItem value="price_low">
+                                    Price: Low to High
+                                </SelectItem>
+                                <SelectItem value="price_high">
+                                    Price: High to Low
+                                </SelectItem>
+                            </SelectContent>
+                        </SelectInput>
 
                         <!-- Action Buttons -->
                         <button @click="applyFilters"
@@ -129,13 +151,26 @@
                 Showing {{ allLoadedAds.length }} of {{ totalAds }} favorite ads
             </div>
 
+            <!-- Loading Spinner (when filters applied and no ads yet) -->
+            <div v-if="loading && allLoadedAds.length === 0" class="text-center py-12">
+                <svg class="animate-spin w-10 h-10 text-brand-teal mx-auto mb-3" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                    </circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                <p class="text-sm text-gray-500">Loading favorites...</p>
+            </div>
+
             <!-- Favorite Ads Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
                 <AdCard v-for="ad in allLoadedAds" :key="ad.id" :ad="ad" @favorite-removed="handleFavoriteRemoved" />
             </div>
 
             <!-- Loading indicator for infinite scroll -->
-            <div v-if="loading" class="text-center py-6">
+            <div v-if="loading && allLoadedAds.length > 0" class="text-center py-6">
                 <div class="inline-flex items-center gap-2 text-gray-500">
                     <svg class="animate-spin h-5 w-5 text-brand-teal" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24">
@@ -178,7 +213,6 @@
             </div>
         </div>
     </OlxLayout>
-
 </template>
 
 <script setup lang="ts">
@@ -188,6 +222,8 @@ import OlxLayout from '@/layouts/OlxLayout.vue'
 import AdCard from '@/components/AdCard.vue'
 import axios from 'axios'
 import debounce from 'lodash/debounce'
+import { Icon } from '@iconify/vue'
+import TopCategoriesBar from '@/components/TopCategoriesBar.vue'
 
 interface Props {
     favoriteAds: {
@@ -225,20 +261,20 @@ const allLoadedAds = ref<any[]>([])
 const currentPage = ref(1)
 const totalPages = ref(1)
 const totalAds = ref(0)
+const loading = ref(false)  // <-- added loading ref
 
 // Update all loaded favorites when initial data arrives
 watch(() => props.favoriteAds, (newData) => {
     if (newData) {
-        // For first load or filter change, replace all ads
         if (newData.current_page === 1) {
             allLoadedAds.value = [...newData.data]
         } else {
-            // For subsequent pages, append new ads
             allLoadedAds.value = [...allLoadedAds.value, ...newData.data]
         }
         currentPage.value = newData.current_page
         totalPages.value = newData.last_page
         totalAds.value = newData.total
+        loading.value = false  // ensure loading is turned off
     }
 }, { immediate: true, deep: true })
 
@@ -256,7 +292,6 @@ const filters = ref({
 const sort = ref(props.filters?.sort || 'newest')
 
 // Infinite scroll states
-const loading = ref(false)
 const loadMoreTrigger = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
 
@@ -320,30 +355,22 @@ const handleFavoriteRemoved = (adId: number) => {
 
 // Setup intersection observer for infinite scroll
 const setupObserver = () => {
-    if (observer) {
-        observer.disconnect()
-    }
-
+    if (observer) observer.disconnect()
     observer = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && !loading.value && hasMorePages.value) {
             loadMore()
         }
     }, { threshold: 0.1, rootMargin: '100px' })
-
-    if (loadMoreTrigger.value) {
-        observer.observe(loadMoreTrigger.value)
-    }
+    if (loadMoreTrigger.value) observer.observe(loadMoreTrigger.value)
 }
 
 // Load more favorites
 const loadMore = () => {
     if (loading.value || !hasMorePages.value) return
-
     const nextPage = currentPage.value + 1
     if (nextPage > totalPages.value) return
 
     loading.value = true
-
     router.get(route('user.favorites'), {
         page: nextPage,
         filter: {
@@ -357,13 +384,10 @@ const loadMore = () => {
     }, {
         preserveState: true,
         preserveScroll: true,
-        only: ['favoriteAds'], // Only update the favoriteAds prop
+        only: ['favoriteAds'],
         onSuccess: () => {
             loading.value = false
-            // Re-setup observer after new content loads
-            setTimeout(() => {
-                setupObserver()
-            }, 100)
+            setTimeout(setupObserver, 100)
         },
         onError: () => {
             loading.value = false
@@ -373,9 +397,9 @@ const loadMore = () => {
 
 // Actions
 const applyFilters = () => {
-    // Reset all loaded ads and pagination when filters change
     allLoadedAds.value = []
     currentPage.value = 1
+    loading.value = true   // show loading spinner
 
     router.get(route('user.favorites'), {
         filter: {
@@ -391,6 +415,9 @@ const applyFilters = () => {
         preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
+            // loading will be turned off in the watch on props.favoriteAds
+        },
+        onError: () => {
             loading.value = false
         }
     })
@@ -415,9 +442,7 @@ const confirmClearAll = () => {
 const clearAllFavorites = async () => {
     try {
         const response = await axios.delete(route('user.favorites.clear'))
-
         if (response.data.success) {
-            // Clear all ads from the list
             allLoadedAds.value = []
             totalAds.value = 0
             showClearAllModal.value = false
@@ -444,20 +469,23 @@ watch([() => filters.value.category, () => filters.value.brand, () => filters.va
 // Watch for ads changes to re-setup observer
 watch(allLoadedAds, (newAds) => {
     if (hasMorePages.value && newAds.length > 0) {
-        setTimeout(() => {
-            setupObserver()
-        }, 100)
+        setTimeout(setupObserver, 100)
     }
 }, { deep: true })
 
 // Setup observer on mount
 onMounted(() => {
-    setTimeout(() => {
-        setupObserver()
-    }, 100)
+    setTimeout(setupObserver, 100)
 })
 
 onUnmounted(() => {
     if (observer) observer.disconnect()
 })
+
+const goBack = () => {
+    router.visit(route('account'), {
+        preserveState: true,
+        preserveScroll: true
+    })
+}
 </script>

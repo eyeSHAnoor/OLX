@@ -155,9 +155,11 @@
                         <div class="ml-2 text-[10px]">
                             <label for="terms" class="text-gray-600">
                                 I agree to the
-                                <a href="#" class="font-medium text-brand-teal hover:text-brand-teal/80">Terms</a>
+                                <a :href="route('policy.show', 'terms')"
+                                    class="font-medium text-brand-teal hover:text-brand-teal/80">Terms</a>
                                 and
-                                <a href="#" class="font-medium text-brand-teal hover:text-brand-teal/80">Privacy</a>
+                                <a :href="route('policy.show', 'privacy')"
+                                    class="font-medium text-brand-teal hover:text-brand-teal/80">Privacy</a>
                             </label>
                         </div>
                     </div>

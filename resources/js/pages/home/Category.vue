@@ -13,41 +13,101 @@ const props = defineProps<{
     category?: any
     categories: any[]
     brands: any[]
-    allBrands?: any[]
+    attributes?: any[]
     filters: any
     priceRange?: { min: number; max: number }
 }>()
 
 const page = usePage()
-
+// console.log(page.props)
 // ----------------------
-// BANNERS
+// BANNERS (new logic)
 // ----------------------
-const BANNER_INTERVAL = 9
-const BANNER_OFFSET = 8
+const allBanners = computed(() => (page.props as any).banners || [])
 
-const banners = computed(() => {
-    const bannerData = (page.props as any).banners
-    return Array.isArray(bannerData) ? bannerData : []
-})
+// Banners that are generic (target_category_id = null) – shown as top carousel
+const genericBanners = computed(() =>
+    allBanners.value.filter(b => b.target_category_id === null)
+)
 
-const topBanner = computed(() => {
-    return (page.props as any).topBanner || null
-})
+// Banners that target the current category – shown between ads
+const categoryBanners = computed(() =>
+    allBanners.value.filter(b => b.target_category_id === props.category?.id)
+)
+
+// Carousel state
+const currentSlide = ref(0)
+let slideInterval: ReturnType<typeof setInterval> | null = null
+
+const nextSlide = () => {
+    if (genericBanners.value.length > 1) {
+        currentSlide.value = (currentSlide.value + 1) % genericBanners.value.length
+    }
+}
+const prevSlide = () => {
+    if (genericBanners.value.length > 1) {
+        currentSlide.value = (currentSlide.value - 1 + genericBanners.value.length) % genericBanners.value.length
+    }
+}
+
+// Auto‑rotate every 5 seconds
+const startAutoRotate = () => {
+    if (slideInterval) clearInterval(slideInterval)
+    if (genericBanners.value.length > 1) {
+        slideInterval = setInterval(nextSlide, 5000)
+    }
+}
+const stopAutoRotate = () => {
+    if (slideInterval) {
+        clearInterval(slideInterval)
+        slideInterval = null
+    }
+}
+
+// Inline banner placement: after every 5 ads, or after the last ad if total ≤ 5
+const BANNER_POSITION_INTERVAL = 9
+
+const shouldShowInlineBanner = (index: number, totalAds: number) => {
+    if (!categoryBanners.value.length) return false
+    if (totalAds <= BANNER_POSITION_INTERVAL) {
+        // Show only after the last ad
+        return index === totalAds - 1
+    }
+    // Show after every N ads, but not after the last one (to avoid double banner after last)
+    return (index + 1) % BANNER_POSITION_INTERVAL === 0 && index < totalAds - 1
+}
+
+const getInlineBanner = (position: number) => {
+    const banners = categoryBanners.value
+    if (!banners.length) return null
+    // Cycle through available banners
+    const bannerIndex = position % banners.length
+    return banners[bannerIndex]
+}
 
 // ----------------------
 // STATE
 // ----------------------
 const viewMode = ref<'grid' | 'list'>('grid')
 const showMobileFilters = ref(false)
+const isLoading = ref(false)
 
 // Filters
 const searchTerm = ref(props.filters?.filter?.global || '')
 const selectedBrands = ref<number[]>([])
+const selectedModels = ref<number[]>([])
+const selectedMobileCategory = ref<number | null>(props.category?.id || null)
 const minPrice = ref<number | null>(props.filters?.filter?.min_price || null)
 const maxPrice = ref<number | null>(props.filters?.filter?.max_price || null)
-const selectedCity = ref(props.filters?.filter?.city || 'Pakistan')
+const selectedCity = ref(
+    (() => {
+        const value = props.filters?.filter?.city || 'all'
+        if (typeof value === 'string' && value.toLowerCase() === 'pakistan') return 'all'
+        return value
+    })()
+)
 const sortBy = ref(props.filters?.sort || 'newest')
+const attributeFilters = ref<Record<string, any>>({})
 
 // Categories UI
 const showAllCategories = ref(false)
@@ -69,63 +129,49 @@ const totalAds = ref(0)
 // Update all loaded ads when initial data arrives
 watch(adsData, (newData) => {
     if (newData) {
-        // For first load or filter change, replace all ads
         if (newData.current_page === 1) {
             allLoadedAds.value = [...newData.data]
         } else {
-            // For subsequent pages, append new ads
             allLoadedAds.value = [...allLoadedAds.value, ...newData.data]
         }
         currentPage.value = newData.current_page
         totalPages.value = newData.last_page
         totalAds.value = newData.total
+        isLoading.value = false
     }
 }, { immediate: true, deep: true })
 
-// Computed ads for display (all loaded ads)
 const ads = computed(() => allLoadedAds.value)
-
 const hasMorePages = computed(() => currentPage.value < totalPages.value)
 
 // ----------------------
 // INFINITE SCROLL
 // ----------------------
-const loading = ref(false)
+const loadingMore = ref(false)
 const loadMoreTrigger = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
 
-// Function to setup observer
 const setupObserver = () => {
-    if (observer) {
-        observer.disconnect()
-    }
-
+    if (observer) observer.disconnect()
     observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && !loading.value && hasMorePages.value) {
+        if (entries[0].isIntersecting && !loadingMore.value && hasMorePages.value) {
             loadMore()
         }
     }, { threshold: 0.1, rootMargin: '100px' })
-
-    if (loadMoreTrigger.value) {
-        observer.observe(loadMoreTrigger.value)
-    }
+    if (loadMoreTrigger.value) observer.observe(loadMoreTrigger.value)
 }
 
-// Check if we have ads
-const hasAds = computed(() => {
-    return ads.value && ads.value.length > 0
-})
+const hasAds = computed(() => ads.value && ads.value.length > 0)
+
+const selectedCityLabel = computed(() => selectedCity.value === 'all' ? 'Pakistan' : selectedCity.value)
 
 // ----------------------
 // CATEGORIES
 // ----------------------
-const topLevelCategories = computed(() => {
-    return props.categories.filter(cat => !cat.parent_id)
-})
+const topLevelCategories = computed(() => props.categories.filter(cat => !cat.parent_id))
 
 const displayedCategories = computed(() => {
     if (showAllCategories.value) return props.categories
-
     return props.categories.filter((cat) => {
         if (cat.parent_id) {
             const parentIndex = topLevelCategories.value.findIndex(p => p.id === cat.parent_id)
@@ -136,159 +182,90 @@ const displayedCategories = computed(() => {
     })
 })
 
+const mobileCategoryGroups = computed(() => {
+    const groups: any[] = []
+    topLevelCategories.value.forEach(parent => {
+        const group: any = {
+            label: parent.name,
+            options: [{ id: parent.id, name: parent.name }]
+        }
+        if (parent.children_recursive?.length) {
+            parent.children_recursive.forEach(child => {
+                group.options.push({ id: child.id, name: '└ ' + child.name })
+            })
+        }
+        groups.push(group)
+    })
+    return groups
+})
+
 // ----------------------
 // FILTER COUNT
 // ----------------------
 const activeFilterCount = computed(() => {
     let count = 0
     if (selectedBrands.value.length) count++
-    if (minPrice.value !== null) count++
-    if (maxPrice.value !== null) count++
-    if (selectedCity.value !== 'Pakistan') count++
+    if (selectedModels.value.length) count++
+    if (minPrice.value !== null && minPrice.value > 0) count++
+    if (maxPrice.value !== null && maxPrice.value > 0) count++
+    if (selectedCity.value !== 'all') count++
+    Object.values(attributeFilters.value).forEach(value => {
+        if (value && (Array.isArray(value) ? value.length > 0 : true)) count++
+    })
     return count
 })
 
 // ----------------------
-// BANNERS LOGIC
-// ----------------------
-const shouldShowBanner = (index: number) => {
-    if (!banners.value.length) return false
-
-    const position = index + 1
-    return position >= BANNER_OFFSET &&
-        position % BANNER_INTERVAL === 0 &&
-        index < ads.value.length - 1
-}
-
-const getBannerForPosition = (index: number) => {
-    if (!banners.value.length) return null
-    const bannerIndex = Math.floor(index / BANNER_INTERVAL) % banners.value.length
-    return banners.value[bannerIndex]
-}
-
-// ----------------------
 // ROUTER ACTIONS
 // ----------------------
+const goBack = () => window.history.back()
+
+const findCategoryById = (id: number) => {
+    const searchCategories = (cats: any[]): any => {
+        for (const cat of cats) {
+            if (cat.id === id) return cat
+            if (cat.children_recursive?.length) {
+                const found = searchCategories(cat.children_recursive)
+                if (found) return found
+            }
+        }
+        return null
+    }
+    return searchCategories(props.categories)
+}
+
 const applyFilters = () => {
-    // Reset all loaded ads and pagination when filters change
     allLoadedAds.value = []
     currentPage.value = 1
+    isLoading.value = true
 
-    router.get(route('category.show', props.category?.slug), {
+    const processedAttributeFilters: Record<string, any> = {}
+    Object.entries(attributeFilters.value).forEach(([key, value]) => {
+        if (Array.isArray(value) && value.length > 0) {
+            processedAttributeFilters[key] = value.join(',')
+        } else if (value && !Array.isArray(value)) {
+            processedAttributeFilters[key] = value
+        }
+    })
+
+    let targetRoute = route('category.show')
+    if (selectedMobileCategory.value !== null) {
+        const selectedCategory = findCategoryById(selectedMobileCategory.value)
+        if (selectedCategory) targetRoute = route('category.show', selectedCategory.slug)
+    } else if (props.category?.slug) {
+        targetRoute = route('category.show', props.category.slug)
+    }
+
+    router.get(targetRoute, {
         filter: {
             global: searchTerm.value,
-            category: props.category?.id,
+            category: selectedMobileCategory.value,
             brand: selectedBrands.value.join(','),
+            model: selectedModels.value.join(','),
             min_price: minPrice.value,
             max_price: maxPrice.value,
             city: selectedCity.value,
-        },
-        sort: sortBy.value,
-        page: 1, // Reset to first page
-    }, {
-        preserveState: true,
-        preserveScroll: true,
-        onSuccess: () => {
-            loading.value = false
-        }
-    })
-
-    showMobileFilters.value = false
-}
-
-const loadMore = () => {
-    // Don't load if already loading or no more pages
-    if (loading.value || !hasMorePages.value) return
-
-    // Check if next page exists
-    const nextPage = currentPage.value + 1
-    if (nextPage > totalPages.value) {
-        loading.value = false
-        return
-    }
-
-    loading.value = true
-
-    const params = {
-        ...props.filters,
-        page: nextPage
-    }
-
-    // Ensure filter parameters are properly structured
-    if (params.filter) {
-        params.filter = {
-            ...params.filter,
-            global: searchTerm.value,
-            category: props.category?.id,
-            brand: selectedBrands.value.join(','),
-            min_price: minPrice.value,
-            max_price: maxPrice.value,
-            city: selectedCity.value,
-        }
-    }
-
-    params.sort = sortBy.value
-
-    // Use router.visit to preserve existing data
-    router.visit(route('category.show', props.category?.slug), {
-        method: 'get',
-        data: params,
-        preserveState: true,
-        preserveScroll: true,
-        only: ['category'], // Only update the category prop
-        onSuccess: () => {
-            loading.value = false
-            // Re-setup observer after new content loads
-            setTimeout(() => {
-                setupObserver()
-            }, 100)
-        },
-        onError: () => {
-            loading.value = false
-        }
-    })
-}
-
-const goToPage = (page: number) => {
-    if (page < 1 || page > totalPages.value) return
-
-    // Reset loaded ads when manually changing page
-    allLoadedAds.value = []
-    currentPage.value = page
-
-    router.get(route('category.show', props.category?.slug), {
-        ...props.filters,
-        page: page
-    }, {
-        preserveState: true,
-        preserveScroll: true,
-        onSuccess: () => {
-            loading.value = false
-        }
-    })
-}
-
-// ----------------------
-// FILTER HANDLERS
-// ----------------------
-const debouncedApplyPriceFilter = debounce(applyFilters, 500)
-
-const applyBrandFilter = () => applyFilters()
-const applyCityFilter = () => applyFilters()
-
-const applySort = () => {
-    // Reset loaded ads when sorting changes
-    allLoadedAds.value = []
-    currentPage.value = 1
-
-    router.get(route('category.show', props.category?.slug), {
-        filter: {
-            global: searchTerm.value,
-            category: props.category?.id,
-            brand: selectedBrands.value.join(','),
-            min_price: minPrice.value,
-            max_price: maxPrice.value,
-            city: selectedCity.value,
+            ...processedAttributeFilters,
         },
         sort: sortBy.value,
         page: 1,
@@ -296,7 +273,114 @@ const applySort = () => {
         preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
-            loading.value = false
+            isLoading.value = false
+            loadingMore.value = false
+        },
+        onError: () => {
+            isLoading.value = false
+            loadingMore.value = false
+        }
+    })
+}
+
+const loadMore = () => {
+    if (loadingMore.value || !hasMorePages.value) return
+    const nextPage = currentPage.value + 1
+    if (nextPage > totalPages.value) {
+        loadingMore.value = false
+        return
+    }
+    loadingMore.value = true
+
+    const params: any = { ...props.filters, page: nextPage }
+    if (params.filter) {
+        const processedAttributeFilters: Record<string, any> = {}
+        Object.entries(attributeFilters.value).forEach(([key, value]) => {
+            if (Array.isArray(value) && value.length > 0) {
+                processedAttributeFilters[key] = value.join(',')
+            } else if (value && !Array.isArray(value)) {
+                processedAttributeFilters[key] = value
+            }
+        })
+        params.filter = {
+            ...params.filter,
+            global: searchTerm.value,
+            category: props.category?.id,
+            brand: selectedBrands.value.join(','),
+            model: selectedModels.value.join(','),
+            min_price: minPrice.value,
+            max_price: maxPrice.value,
+            city: selectedCity.value,
+            ...processedAttributeFilters,
+        }
+    }
+    params.sort = sortBy.value
+
+    router.visit(route('category.show', props.category?.slug), {
+        method: 'get',
+        data: params,
+        preserveState: true,
+        preserveScroll: true,
+        only: ['category'],
+        onSuccess: () => {
+            loadingMore.value = false
+            setTimeout(setupObserver, 100)
+        },
+        onError: () => {
+            loadingMore.value = false
+        }
+    })
+}
+
+// ----------------------
+// FILTER HANDLERS
+// ----------------------
+const debouncedApplyPriceFilter = debounce(() => applyFilters(), 500)
+const applyBrandFilter = () => applyFilters()
+const applyCityFilter = () => applyFilters()
+
+const applySort = () => {
+    allLoadedAds.value = []
+    currentPage.value = 1
+    isLoading.value = true
+
+    const processedAttributeFilters: Record<string, any> = {}
+    Object.entries(attributeFilters.value).forEach(([key, value]) => {
+        if (Array.isArray(value) && value.length > 0) {
+            processedAttributeFilters[key] = value.join(',')
+        } else if (value && !Array.isArray(value)) {
+            processedAttributeFilters[key] = value
+        }
+    })
+
+    const targetCategoryId = selectedMobileCategory.value !== null ? selectedMobileCategory.value : props.category?.id
+    const targetCategorySlug = (selectedMobileCategory.value !== null && selectedMobileCategory.value !== props.category?.id)
+        ? null
+        : (props.category?.slug || null)
+
+    router.get(targetCategorySlug ? route('category.show', targetCategorySlug) : route('category.show'), {
+        filter: {
+            global: searchTerm.value,
+            category: targetCategoryId,
+            brand: selectedBrands.value.join(','),
+            model: selectedModels.value.join(','),
+            min_price: minPrice.value,
+            max_price: maxPrice.value,
+            city: selectedCity.value,
+            ...processedAttributeFilters,
+        },
+        sort: sortBy.value,
+        page: 1,
+    }, {
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            isLoading.value = false
+            loadingMore.value = false
+        },
+        onError: () => {
+            isLoading.value = false
+            loadingMore.value = false
         }
     })
 }
@@ -306,65 +390,79 @@ const setQuickPriceRange = (min: number | null, max: number | null) => {
     maxPrice.value = max
     applyFilters()
 }
-
 const clearPriceFilter = () => {
     minPrice.value = null
     maxPrice.value = null
     applyFilters()
 }
-
 const clearBrandFilter = () => {
     selectedBrands.value = []
     applyFilters()
 }
-
-const resetCityFilter = () => {
-    selectedCity.value = 'Pakistan'
+const clearModelFilter = () => {
+    selectedModels.value = []
     applyFilters()
 }
-
+const resetCityFilter = () => {
+    selectedCity.value = 'all'
+    applyFilters()
+}
 const resetAllFilters = () => {
     selectedBrands.value = []
+    selectedModels.value = []
     minPrice.value = null
     maxPrice.value = null
-    selectedCity.value = 'Pakistan'
+    selectedCity.value = 'all'
     sortBy.value = 'newest'
+    attributeFilters.value = {}
     applyFilters()
 }
 
-// ----------------------
-// HELPERS
-// ----------------------
-const getBrandAdCount = (brandId: number) => {
-    return ads.value.filter((ad: any) => ad.brand_id === brandId).length
-}
+const getBrandAdCount = (brandId: number) => ads.value.filter((ad: any) => ad.brand_id === brandId).length
 
 // ----------------------
-// INIT
+// INIT & CLEANUP
 // ----------------------
 onMounted(() => {
+    selectedMobileCategory.value = props.category?.id || null
     if (props.filters?.filter?.brand) {
         selectedBrands.value = props.filters.filter.brand.split(',').map(Number)
     }
-
-    // Setup infinite scroll observer after DOM is ready
-    setTimeout(() => {
-        setupObserver()
-    }, 100)
+    if (props.filters?.filter?.model) {
+        selectedModels.value = props.filters.filter.model.split(',').map(Number)
+    }
+    if (props.filters?.attributeFilters) {
+        attributeFilters.value = {}
+        Object.entries(props.filters.attributeFilters).forEach(([key, value]) => {
+            if (typeof value === 'string' && value.includes(',')) {
+                attributeFilters.value[key] = value.split(',')
+            } else {
+                attributeFilters.value[key] = value
+            }
+        })
+    }
+    setTimeout(setupObserver, 100)
+    startAutoRotate()
 })
 
-// Watch for ads changes to re-setup observer
+watch(() => props.category?.id, (newCategoryId) => {
+    selectedMobileCategory.value = newCategoryId || null
+})
+
 watch(ads, (newAds) => {
-    // Re-setup observer after DOM updates if there are more pages
     if (hasMorePages.value && newAds.length > 0) {
-        setTimeout(() => {
-            setupObserver()
-        }, 100)
+        setTimeout(setupObserver, 100)
     }
 }, { deep: true })
 
+watch(showMobileFilters, (val) => {
+    document.body.style.overflow = val ? 'hidden' : ''
+})
+
 onUnmounted(() => {
     if (observer) observer.disconnect()
+    document.body.style.overflow = ''
+    stopAutoRotate()
 })
 
 const toggleCategoriesView = () => {
@@ -378,69 +476,86 @@ const priceRanges = [
     { label: 'Above $1000', min: 1000, max: null }
 ]
 
-const displayedPages = computed(() => {
-    const pages = []
-    for (let i = 1; i <= totalPages.value; i++) {
-        pages.push(i)
+const ensureAttributeArray = (attrId: number) => {
+    const key = `attribute_${attrId}`
+    if (!Array.isArray(attributeFilters.value[key])) {
+        attributeFilters.value[key] = []
     }
-    return pages
-})
+}
 </script>
 
 <template>
     <OlxLayout>
         <TopCategoriesBar />
-        <!-- Top Banner - Above everything -->
-        <div v-if="topBanner" class="relative h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden">
-            <a :href="topBanner.link" target="_blank" rel="noopener noreferrer" class="block">
-                <img :src="topBanner.image_url" :alt="topBanner.title"
-                    class="w-full rounded-lg shadow-sm hover:shadow-md transition-shadow" />
-            </a>
-        </div>
+
+        <!-- Top Carousel for Generic Banners -->
+        <section v-if="genericBanners.length"
+            class="relative bg-gray-100 h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden">
+            <div v-for="(banner, index) in genericBanners" :key="banner.id"
+                class="absolute inset-0 transition-opacity duration-700"
+                :class="{ 'opacity-100 z-10': currentSlide === index, 'opacity-0': currentSlide !== index }">
+                <a :href="banner.link || '#'" :target="banner.link ? '_blank' : '_self'" class="block w-full h-full">
+                    <img :src="banner.image_url" :alt="banner.title" class="w-full h-full object-cover" />
+                </a>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <button v-if="genericBanners.length > 1" @click="prevSlide"
+                class="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 rounded-full p-3 shadow-md hover:bg-white transition">
+                <Icon icon="mdi:chevron-left" class="text-2xl" />
+            </button>
+            <button v-if="genericBanners.length > 1" @click="nextSlide"
+                class="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 rounded-full p-3 shadow-md hover:bg-white transition">
+                <Icon icon="mdi:chevron-right" class="text-2xl" />
+            </button>
+
+            <!-- Dots -->
+            <div v-if="genericBanners.length > 1" class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                <button v-for="(_, idx) in genericBanners" :key="idx" @click="currentSlide = idx"
+                    class="h-2 rounded-full transition-all"
+                    :class="currentSlide === idx ? 'w-8 bg-yellow-500' : 'w-2 bg-white/70'">
+                </button>
+            </div>
+        </section>
+
         <div>
             <section class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
+                <div class="py-3">
+                    <button @click="goBack"
+                        class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
+                        <Icon icon="mdi:arrow-left" class="text-base" />
+                        Back
+                    </button>
+                </div>
 
-                <!-- Mobile Filter Toggle - Compact -->
+                <!-- Mobile Filter Toggle -->
                 <div class="lg:hidden mb-3">
-                    <button @click="showMobileFilters = !showMobileFilters"
-                        class="w-full flex items-center justify-between bg-white p-3 rounded-lg shadow-sm border border-gray-200 hover:border-brand-teal transition-colors">
-                        <span class="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                    <button @click="showMobileFilters = true"
+                        class="w-full flex items-center justify-between bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                        <span class="flex items-center gap-2 text-sm font-medium text-gray-700">
                             <Icon icon="mdi:filter-outline" class="text-lg" :style="{ color: 'var(--brand-teal)' }" />
                             Filters
                             <span v-if="activeFilterCount > 0"
-                                class="ml-1.5 bg-brand-blue text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                                class="bg-brand-blue text-white text-xs px-2 py-0.5 rounded-full">
                                 {{ activeFilterCount }}
                             </span>
                         </span>
-                        <Icon icon="mdi:chevron-down" class="text-lg text-gray-500"
-                            :class="{ 'rotate-180': showMobileFilters }" />
+                        <Icon icon="mdi:chevron-right" class="text-lg text-gray-400" />
                     </button>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
-                    <!-- Sidebar - Filters -->
-                    <aside class="lg:col-span-1 space-y-4"
-                        :class="showMobileFilters ? 'block mobile-filter-sidebar' : 'hidden lg:block'">
-
-                        <!-- Close button for mobile -->
-                        <div class="lg:hidden flex items-center justify-between mb-3">
-                            <h2 class="font-semibold text-base">Filters</h2>
-                            <button @click="showMobileFilters = false" class="p-1.5 hover:bg-gray-100 rounded-lg">
-                                <Icon icon="mdi:close" class="text-xl" />
-                            </button>
-                        </div>
-
-                        <!-- Categories Filter - Compact -->
+                    <!-- Sidebar Filters (Desktop) -->
+                    <aside class="lg:col-span-1 space-y-4 hidden lg:block">
+                        <!-- Categories Filter -->
                         <div class="bg-white rounded-lg shadow-sm p-4">
                             <div class="flex items-center gap-1.5 text-xs text-gray-600 pb-3 border-b border-gray-100">
-                                <Link :href="route('home')" class="hover:text-brand-teal transition-colors">Home
-                                </Link>
+                                <Link :href="route('home')" class="hover:text-brand-teal">Home</Link>
                                 <Icon icon="mdi:chevron-right" class="text-gray-400 text-sm" />
                                 <span v-if="category" class="text-gray-900 font-medium text-xs">{{ category.name
                                 }}</span>
                                 <span v-else class="text-gray-900 font-medium text-xs">All Categories</span>
                             </div>
-
                             <div class="mt-3">
                                 <h3 class="font-medium text-sm text-gray-800 mb-3 flex items-center gap-1.5">
                                     <Icon icon="mdi:folder-outline" class="text-base"
@@ -453,17 +568,13 @@ const displayedPages = computed(() => {
                                         :class="[!category ? 'bg-brand-blue/10 text-brand-blue font-medium border-l-2 border-brand-blue' : 'hover:bg-gray-50 hover:pl-3']">
                                         All Categories
                                     </Link>
-
-                                    <!-- Display limited or all categories -->
-                                    <template v-for="(cat, index) in displayedCategories" :key="cat.id">
+                                    <template v-for="cat in displayedCategories" :key="cat.id">
                                         <div v-if="!cat.parent_id" class="space-y-0.5">
                                             <Link :href="route('category.show', cat.slug)"
                                                 class="block text-xs py-1.5 px-2 rounded transition-all duration-200 font-medium"
                                                 :class="[category?.id === cat.id ? 'bg-brand-blue/10 text-brand-blue border-l-2 border-brand-blue' : 'hover:bg-gray-50 hover:pl-3']">
                                                 {{ cat.name }}
                                             </Link>
-
-                                            <!-- Subcategories -->
                                             <div v-if="cat.children_recursive?.length" class="ml-3 space-y-0.5">
                                                 <Link v-for="subCat in cat.children_recursive" :key="subCat.id"
                                                     :href="route('category.show', subCat.slug)"
@@ -474,8 +585,6 @@ const displayedPages = computed(() => {
                                             </div>
                                         </div>
                                     </template>
-
-                                    <!-- View More / View Less button -->
                                     <button v-if="topLevelCategories.length > initialCategoriesToShow"
                                         @click="toggleCategoriesView"
                                         class="w-full mt-2 text-xs text-brand-teal hover:text-brand-teal/80 font-medium flex items-center justify-center gap-1 py-1.5 border-t border-gray-100">
@@ -488,7 +597,7 @@ const displayedPages = computed(() => {
                             </div>
                         </div>
 
-                        <!-- Brand Filter - Compact -->
+                        <!-- Brand Filter -->
                         <div class="bg-white rounded-lg shadow-sm p-4" v-if="brands.length">
                             <h3 class="font-medium text-sm text-gray-800 mb-3 flex items-center gap-1.5">
                                 <Icon icon="mdi:tag-outline" class="text-base"
@@ -497,7 +606,7 @@ const displayedPages = computed(() => {
                             </h3>
                             <div class="space-y-1 max-h-48 overflow-y-auto">
                                 <label v-for="brand in brands" :key="brand.id"
-                                    class="flex items-center gap-2 p-1.5 rounded hover:bg-gray-50 cursor-pointer transition-colors">
+                                    class="flex items-center gap-2 p-1.5 rounded hover:bg-gray-50 cursor-pointer">
                                     <input type="checkbox" :value="brand.id" v-model="selectedBrands"
                                         @change="applyBrandFilter"
                                         class="w-3.5 h-3.5 rounded border-gray-300 text-brand-teal focus:ring-brand-teal">
@@ -507,7 +616,32 @@ const displayedPages = computed(() => {
                             </div>
                         </div>
 
-                        <!-- Price Filter - Compact -->
+                        <!-- Model Filter -->
+                        <div class="bg-white rounded-lg shadow-sm p-4" v-if="brands.some(b => b.models?.length)">
+                            <h3 class="font-medium text-sm text-gray-800 mb-3 flex items-center gap-1.5">
+                                <Icon icon="mdi:car-outline" class="text-base"
+                                    :style="{ color: 'var(--brand-teal)' }" />
+                                Models
+                            </h3>
+                            <div class="space-y-1 max-h-48 overflow-y-auto">
+                                <template v-for="brand in brands" :key="brand.id">
+                                    <div v-if="brand.models?.length">
+                                        <div class="text-xs font-medium text-gray-600 mb-1">{{ brand.name }}</div>
+                                        <div class="ml-2 space-y-0.5">
+                                            <label v-for="model in brand.models" :key="model.id"
+                                                class="flex items-center gap-2 p-1 rounded hover:bg-gray-50 cursor-pointer">
+                                                <input type="checkbox" :value="model.id" v-model="selectedModels"
+                                                    @change="applyFilters"
+                                                    class="w-3 h-3 rounded border-gray-300 text-brand-teal focus:ring-brand-teal">
+                                                <span class="text-xs text-gray-700 flex-1">{{ model.name }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Price Filter -->
                         <div class="bg-white rounded-lg shadow-sm p-4">
                             <h3 class="font-medium text-sm text-gray-800 mb-3 flex items-center gap-1.5">
                                 <Icon icon="mdi:currency-usd" class="text-base"
@@ -515,39 +649,35 @@ const displayedPages = computed(() => {
                                 Price Range
                             </h3>
                             <div class="space-y-3">
-                                <!-- Price slider preview -->
                                 <div class="flex items-center justify-between text-xs text-gray-600">
                                     <span>Min: ${{ minPrice || priceRange?.min || 0 }}</span>
                                     <span>Max: ${{ maxPrice || priceRange?.max || 10000 }}</span>
                                 </div>
-
                                 <div class="grid grid-cols-2 gap-2">
                                     <div>
                                         <label class="block text-[10px] text-gray-500 mb-0.5">Minimum</label>
                                         <input type="number" placeholder="Min" v-model.number="minPrice"
                                             @input="debouncedApplyPriceFilter"
-                                            class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-xs" />
+                                            class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none text-xs" />
                                     </div>
                                     <div>
                                         <label class="block text-[10px] text-gray-500 mb-0.5">Maximum</label>
                                         <input type="number" placeholder="Max" v-model.number="maxPrice"
                                             @input="debouncedApplyPriceFilter"
-                                            class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-xs" />
+                                            class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none text-xs" />
                                     </div>
                                 </div>
-
-                                <!-- Quick price suggestions -->
                                 <div class="flex flex-wrap gap-1.5">
                                     <button v-for="range in priceRanges" :key="range.label"
                                         @click="setQuickPriceRange(range.min, range.max)"
-                                        class="text-[10px] px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
+                                        class="text-[10px] px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full">
                                         {{ range.label }}
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Location Filter - Compact -->
+                        <!-- Location Filter -->
                         <div class="bg-white rounded-lg shadow-sm p-4">
                             <h3 class="font-medium text-sm text-gray-800 mb-3 flex items-center gap-1.5">
                                 <Icon icon="mdi:map-marker-outline" class="text-base"
@@ -555,73 +685,116 @@ const displayedPages = computed(() => {
                                 Location
                             </h3>
                             <div class="relative">
-                                <select v-model="selectedCity" @change="applyCityFilter"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none appearance-none bg-white text-xs">
-                                    <option value="Pakistan">All Pakistan</option>
-                                    <option v-for="city in cities" :key="city.lng" :value="city.name">{{ city.name }}
-                                    </option>
-                                </select>
+                                <SelectInput v-model="selectedCity" @update:modelValue="applyCityFilter"
+                                    placeholder="Select City">
+                                    <SelectContent>
+                                        <SelectItem v-for="city in [
+                                            { label: 'All Pakistan', value: 'all' },
+                                            ...cities.map(c => ({ label: c.name, value: c.name }))
+                                        ]" :key="city.value" :value="city.value">
+                                            {{ city.label }}
+                                        </SelectItem>
+                                    </SelectContent>
+                                </SelectInput>
                                 <Icon icon="mdi:chevron-down"
                                     class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
                             </div>
                         </div>
 
-                        <!-- Active Filters Summary - Compact -->
+                        <!-- Attribute Filters -->
+                        <div v-if="attributes?.filter(attr => attr.is_filterable).length"
+                            class="bg-white rounded-lg shadow-sm p-4">
+                            <h3 class="font-medium text-sm text-gray-800 mb-3 flex items-center gap-1.5">
+                                <Icon icon="mdi:filter-variant" class="text-base"
+                                    :style="{ color: 'var(--brand-teal)' }" />
+                                Specifications
+                            </h3>
+                            <div class="space-y-4">
+                                <div v-for="attribute in attributes.filter(attr => attr.is_filterable)"
+                                    :key="attribute.id">
+                                    <label class="block text-xs font-medium text-gray-700 mb-2">{{ attribute.name
+                                    }}</label>
+                                    <div v-if="attribute.type === 'select' && attribute.options?.length"
+                                        class="space-y-1 max-h-32 overflow-y-auto">
+                                        <label v-for="option in attribute.options" :key="option.id"
+                                            class="flex items-center gap-2 p-1 rounded hover:bg-gray-50 cursor-pointer">
+                                            <input type="checkbox" :value="option.id"
+                                                :checked="attributeFilters[`attribute_${attribute.id}`]?.includes(option.id)"
+                                                @change="() => {
+                                                    ensureAttributeArray(attribute.id)
+                                                    const key = `attribute_${attribute.id}`
+                                                    const arr = attributeFilters[key]
+                                                    if (arr.includes(option.id)) attributeFilters[key] = arr.filter(v => v !== option.id)
+                                                    else attributeFilters[key].push(option.id)
+                                                    applyFilters()
+                                                }" />
+                                            <span class="text-xs text-gray-700">{{ option.value }}</span>
+                                        </label>
+                                    </div>
+                                    <div v-else-if="attribute.type === 'text'">
+                                        <input type="text" :placeholder="`Enter ${attribute.name.toLowerCase()}`"
+                                            v-model="attributeFilters[`attribute_${attribute.id}`]"
+                                            @input="applyFilters"
+                                            class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none text-xs" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Active Filters Summary -->
                         <div v-if="activeFilterCount > 0" class="bg-brand-blue/5 rounded-lg p-3">
                             <h4 class="text-xs font-medium text-gray-700 mb-2">Active Filters:</h4>
                             <div class="flex flex-wrap gap-1.5">
                                 <span v-if="selectedBrands.length"
                                     class="inline-flex items-center gap-1 bg-white text-[10px] px-2 py-1 rounded-full shadow-sm">
-                                    {{ selectedBrands.length }} brands
-                                    <button @click="clearBrandFilter" class="ml-0.5 hover:text-brand-teal">×</button>
+                                    {{ selectedBrands.length }} brands <button @click="clearBrandFilter"
+                                        class="ml-0.5 hover:text-brand-teal">×</button>
+                                </span>
+                                <span v-if="selectedModels.length"
+                                    class="inline-flex items-center gap-1 bg-white text-[10px] px-2 py-1 rounded-full shadow-sm">
+                                    {{ selectedModels.length }} models <button @click="clearModelFilter"
+                                        class="ml-0.5 hover:text-brand-teal">×</button>
                                 </span>
                                 <span v-if="minPrice || maxPrice"
                                     class="inline-flex items-center gap-1 bg-white text-[10px] px-2 py-1 rounded-full shadow-sm">
-                                    ${{ minPrice || 0 }} - ${{ maxPrice || '∞' }}
-                                    <button @click="clearPriceFilter" class="ml-0.5 hover:text-brand-teal">×</button>
+                                    ${{ minPrice || 0 }} - ${{ maxPrice || '∞' }} <button @click="clearPriceFilter"
+                                        class="ml-0.5 hover:text-brand-teal">×</button>
                                 </span>
-                                <span v-if="selectedCity !== 'Pakistan'"
+                                <span v-if="selectedCity !== 'all'"
                                     class="inline-flex items-center gap-1 bg-white text-[10px] px-2 py-1 rounded-full shadow-sm">
-                                    {{ selectedCity }}
-                                    <button @click="resetCityFilter" class="ml-0.5 hover:text-brand-teal">×</button>
+                                    {{ selectedCityLabel }} <button @click="resetCityFilter"
+                                        class="ml-0.5 hover:text-brand-teal">×</button>
                                 </span>
+                                <template v-for="(value, key) in attributeFilters" :key="key">
+                                    <span v-if="value && (Array.isArray(value) ? value.length > 0 : true)"
+                                        class="inline-flex items-center gap-1 bg-white text-[10px] px-2 py-1 rounded-full shadow-sm">
+                                        {{attributes?.find(attr => `attribute_${attr.id}` === key)?.name ||
+                                            key.replace('attribute_', '')}}
+                                        <button
+                                            @click="attributeFilters[key] = Array.isArray(value) ? [] : ''; applyFilters()"
+                                            class="ml-0.5 hover:text-brand-teal">×</button>
+                                    </span>
+                                </template>
                             </div>
-
                             <button @click="resetAllFilters"
-                                class="mt-2 text-xs text-brand-teal hover:text-brand-teal/80 font-medium">
-                                Clear all filters
-                            </button>
-                        </div>
-
-                        <!-- Mobile Filter Actions - Compact -->
-                        <div
-                            class="lg:hidden bg-white rounded-lg shadow-sm p-3 border-t border-gray-100 sticky bottom-0">
-                            <div class="grid grid-cols-2 gap-2">
-                                <button @click="resetAllFilters"
-                                    class="py-2 border border-gray-300 text-gray-700 font-medium rounded hover:bg-gray-50 transition-colors text-xs">
-                                    Reset All
-                                </button>
-                                <button @click="applyFilters"
-                                    class="py-2 bg-brand-blue text-white font-medium rounded hover:bg-brand-blue/90 transition-colors text-xs shadow-sm">
-                                    Show Results
-                                </button>
-                            </div>
+                                class="mt-2 text-xs text-brand-teal hover:text-brand-teal/80 font-medium">Clear all
+                                filters</button>
                         </div>
                     </aside>
 
-                    <!-- Main Content - Compact -->
+                    <!-- Main Content -->
                     <main class="lg:col-span-2">
-                        <!-- Header - Compact -->
+                        <!-- Header -->
                         <div class="mb-4 md:mb-5">
                             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div>
-                                    <h1 class="text-xl md:text-2xl font-semibold text-gray-900 mb-1">
-                                        {{ category?.name || 'All Categories' }}
-                                    </h1>
+                                    <h1 class="text-xl md:text-2xl font-semibold text-gray-900 mb-1">{{ category?.name
+                                        || 'All Categories'
+                                    }}</h1>
                                     <p class="text-gray-600 text-xs md:text-sm flex items-center gap-1.5">
                                         <span>{{ totalAds }} ads found</span>
-                                        <span v-if="selectedCity !== 'Pakistan'" class="text-brand-teal">• in {{
-                                            selectedCity }}</span>
+                                        <span v-if="selectedCity !== 'all'" class="text-brand-teal">• in {{
+                                            selectedCityLabel }}</span>
                                         <span v-if="allLoadedAds.length > 0" class="text-brand-teal">• Showing {{
                                             allLoadedAds.length }} of
                                             {{ totalAds }}</span>
@@ -630,54 +803,79 @@ const displayedPages = computed(() => {
                             </div>
                         </div>
 
-                        <!-- Toolbar - Compact -->
+                        <!-- Toolbar -->
                         <div class="bg-white rounded-lg shadow-sm p-3 mb-4">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div class="flex items-center justify-between sm:justify-start">
                                     <div class="flex items-center space-x-1">
                                         <button @click="viewMode = 'grid'"
                                             :class="viewMode === 'grid' ? 'bg-brand-blue/10 text-brand-blue' : 'text-gray-400 hover:text-gray-600'"
-                                            class="p-1.5 rounded transition-all duration-200">
+                                            class="p-1.5 rounded transition">
                                             <Icon icon="mdi:grid-large" class="w-4 h-4" />
                                         </button>
                                         <button @click="viewMode = 'list'"
                                             :class="viewMode === 'list' ? 'bg-brand-blue/10 text-brand-blue' : 'text-gray-400 hover:text-gray-600'"
-                                            class="p-1.5 rounded transition-all duration-200">
+                                            class="p-1.5 rounded transition">
                                             <Icon icon="mdi:format-list-bulleted" class="w-4 h-4" />
                                         </button>
                                     </div>
                                 </div>
-
-                                <!-- Sort Dropdown -->
                                 <div class="flex items-center gap-2">
                                     <span class="text-gray-600 text-xs hidden sm:block">Sort:</span>
-                                    <select v-model="sortBy" @change="applySort"
-                                        class="border border-gray-300 rounded px-3 py-1.5 focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-xs min-w-[140px]">
-                                        <option value="newest">Newest First</option>
-                                        <option value="price_low">Price: Low to High</option>
-                                        <option value="price_high">Price: High to Low</option>
-                                    </select>
+                                    <SelectInput v-model="sortBy" @update:modelValue="applySort" placeholder="Sort By"
+                                        class="min-w-[140px]">
+                                        <SelectContent>
+                                            <SelectItem value="newest">
+                                                Newest First
+                                            </SelectItem>
+
+                                            <SelectItem value="price_low">
+                                                Price: Low to High
+                                            </SelectItem>
+
+                                            <SelectItem value="price_high">
+                                                Price: High to Low
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </SelectInput>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Results Grid/List with Banners -->
-                        <template v-if="hasAds">
-                            <!-- Grid View with Banners -->
+                        <!-- Loading State -->
+                        <!-- <div v-if="isLoading && !hasAds" class="text-center py-12">
+                            <Icon icon="mdi:loading" class="animate-spin text-3xl text-brand-teal mx-auto mb-3" />
+                            <p class="text-sm text-gray-500">Loading ads...</p>
+                        </div> -->
+                        <div v-if="isLoading && !hasAds" class="text-center py-12">
+                            <svg class="animate-spin w-10 h-10 text-brand-teal mx-auto mb-3" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4">
+                                </circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            <p class="text-sm text-gray-500">Loading ads...</p>
+                        </div>
+
+                        <!-- Results with Inline Banners -->
+                        <template v-else-if="hasAds">
+                            <!-- Grid View -->
                             <div v-if="viewMode === 'grid'">
                                 <div
                                     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
-                                    <template v-for="(ad, index) in ads" :key="ad.id">
-                                        <!-- Ad Card -->
+                                    <template v-for="(ad, idx) in ads" :key="ad.id">
                                         <AdCard :ad="ad" />
-
-                                        <!-- Insert mid banners after every 9-10 ads -->
-                                        <div v-if="shouldShowBanner(index)" :key="'banner-' + index"
+                                        <!-- Insert category banner after interval -->
+                                        <div v-if="shouldShowInlineBanner(idx, ads.length)"
+                                            :key="'inline-banner-' + idx"
                                             class="col-span-1 sm:col-span-2 lg:col-span-2 xl:col-span-3 my-2">
-                                            <a :href="getBannerForPosition(index).link" target="_blank"
+                                            <a :href="getInlineBanner(idx)?.link" target="_blank"
                                                 rel="noopener noreferrer" class="block">
-                                                <img :src="getBannerForPosition(index).image_url"
-                                                    :alt="getBannerForPosition(index).title"
+                                                <img :src="getInlineBanner(idx)?.image_url"
+                                                    :alt="getInlineBanner(idx)?.title"
                                                     class="w-full rounded-lg shadow-sm hover:shadow-md transition-shadow" />
                                             </a>
                                         </div>
@@ -685,57 +883,49 @@ const displayedPages = computed(() => {
                                 </div>
                             </div>
 
-                            <!-- List View with Banners -->
+                            <!-- List View -->
                             <div v-if="viewMode === 'list'" class="space-y-2 md:space-y-3">
-                                <template v-for="(ad, index) in ads" :key="ad.id">
-                                    <!-- Ad List Item -->
+                                <template v-for="(ad, idx) in ads" :key="ad.id">
                                     <AdListItem :ad="ad" />
-
-                                    <!-- Insert mid banners after every 9-10 ads -->
-                                    <div v-if="shouldShowBanner(index)" :key="'banner-' + index" class="my-2">
-                                        <a :href="getBannerForPosition(index).link" target="_blank"
-                                            rel="noopener noreferrer" class="block">
-                                            <img :src="getBannerForPosition(index).image_url"
-                                                :alt="getBannerForPosition(index).title"
+                                    <div v-if="shouldShowInlineBanner(idx, ads.length)" :key="'inline-banner-' + idx"
+                                        class="my-2">
+                                        <a :href="getInlineBanner(idx)?.link" target="_blank" rel="noopener noreferrer"
+                                            class="block">
+                                            <img :src="getInlineBanner(idx)?.image_url"
+                                                :alt="getInlineBanner(idx)?.title"
                                                 class="w-full rounded-lg shadow-sm hover:shadow-md transition-shadow" />
                                         </a>
                                     </div>
                                 </template>
                             </div>
 
-                            <!-- Loading indicator for infinite scroll -->
-                            <div v-if="loading" class="text-center py-4">
+                            <!-- Infinite Scroll Loading -->
+                            <div v-if="loadingMore" class="text-center py-4">
                                 <Icon icon="mdi:loading" class="animate-spin text-2xl text-brand-teal mx-auto" />
                                 <p class="text-xs text-gray-500 mt-2">Loading more ads...</p>
                             </div>
-
-                            <!-- Infinite scroll trigger - only show if there are more pages -->
-                            <div ref="loadMoreTrigger" v-if="hasMorePages && !loading && hasAds" class="h-10"></div>
-
-                            <!-- No more items message - only show if we have ads and no more pages -->
+                            <div ref="loadMoreTrigger" v-if="hasMorePages && !loadingMore && hasAds" class="h-10"></div>
                             <div v-if="!hasMorePages && hasAds && allLoadedAds.length === totalAds"
                                 class="text-center py-4">
                                 <p class="text-xs text-gray-400">You've seen all {{ totalAds }} ads</p>
                             </div>
                         </template>
 
-                        <!-- No Results - Compact -->
-                        <div v-else class="text-center py-8 md:py-10 bg-white rounded-lg shadow-sm">
+                        <!-- No Results -->
+                        <div v-else-if="!isLoading && !hasAds"
+                            class="text-center py-8 md:py-10 bg-white rounded-lg shadow-sm">
                             <div class="max-w-md mx-auto px-4">
                                 <Icon icon="mdi:package-variant-closed" class="text-4xl text-gray-300 mx-auto mb-3" />
                                 <h3 class="text-lg md:text-xl font-semibold text-gray-900 mb-2">No ads found</h3>
-                                <p class="text-gray-600 text-xs md:text-sm mb-4">
-                                    Try adjusting your filters or browse other categories
-                                </p>
+                                <p class="text-gray-600 text-xs md:text-sm mb-4">Try adjusting your filters or browse
+                                    other categories</p>
                                 <div class="flex flex-col sm:flex-row gap-2 justify-center">
                                     <Link :href="route('home')"
-                                        class="px-4 py-2 bg-brand-blue text-white font-medium rounded hover:bg-brand-blue/90 transition-colors text-xs shadow-sm">
-                                        Go To Home
-                                    </Link>
+                                        class="px-4 py-2 bg-brand-blue text-white font-medium rounded hover:bg-brand-blue/90 text-xs shadow-sm">
+                                        Go To Home</Link>
                                     <Link :href="route('home')"
-                                        class="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded hover:bg-gray-50 transition-colors text-xs">
-                                        Browse All
-                                    </Link>
+                                        class="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded hover:bg-gray-50 text-xs">
+                                        Browse All</Link>
                                 </div>
                             </div>
                         </div>
@@ -743,5 +933,171 @@ const displayedPages = computed(() => {
                 </div>
             </section>
         </div>
+
+        <!-- Mobile Filters -->
+        <div v-if="showMobileFilters" class="fixed inset-0 bg-white z-50 overflow-y-auto lg:hidden">
+            <div class="sticky top-0 bg-white border-b border-gray-200">
+                <div class="flex items-center justify-between p-4">
+                    <button @click="showMobileFilters = false" class="p-1 -ml-1">
+                        <Icon icon="mdi:arrow-left" class="text-2xl text-gray-700" />
+                    </button>
+                    <h2 class="font-semibold text-lg">Filters</h2>
+                    <button @click="resetAllFilters" class="text-brand-teal text-sm font-medium px-2 py-1">Reset
+                        all</button>
+                </div>
+            </div>
+            <div class="divide-y divide-gray-100 pb-24">
+                <div class="p-4">
+                    <p class="text-sm font-semibold text-gray-900 mb-3">Category</p>
+                    <SelectInput v-model="selectedMobileCategory"
+                        @update:modelValue="() => { selectedBrands = []; selectedModels = []; applyFilters() }"
+                        placeholder="All Categories">
+                        <SelectContent>
+                            <SelectItem :value="null">
+                                All Categories
+                            </SelectItem>
+
+                            <template v-for="group in mobileCategoryGroups" :key="group.label">
+                                <!-- Group Label -->
+                                <div class="px-2 py-1 text-xs font-semibold text-gray-500">
+                                    {{ group.label }}
+                                </div>
+
+                                <!-- Group Items -->
+                                <SelectItem v-for="cat in group.options" :key="cat.id" :value="cat.id">
+                                    {{ cat.name }}
+                                </SelectItem>
+                            </template>
+                        </SelectContent>
+                    </SelectInput>
+                </div>
+                <div class="p-4" v-if="brands.length">
+                    <p class="text-sm font-semibold text-gray-900 mb-3">Brand</p>
+                    <div class="space-y-1 max-h-48 overflow-y-auto">
+                        <label v-for="brand in brands" :key="brand.id"
+                            class="flex items-center gap-2 p-1.5 rounded hover:bg-gray-50">
+                            <input type="checkbox" :value="brand.id" v-model="selectedBrands" @change="applyBrandFilter"
+                                class="w-3.5 h-3.5 rounded border-gray-300 text-brand-teal">
+                            <span class="text-xs text-gray-700 flex-1">{{ brand.name }}</span>
+                            <span class="text-[10px] text-gray-500">{{ getBrandAdCount(brand.id) }}</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="p-4" v-if="brands.some(b => b.models?.length)">
+                    <p class="text-sm font-semibold text-gray-900 mb-3">Model</p>
+                    <div class="space-y-1 max-h-48 overflow-y-auto">
+                        <template v-for="brand in brands" :key="brand.id">
+                            <div v-if="brand.models?.length">
+                                <div class="text-xs font-medium text-gray-600 mb-1">{{ brand.name }}</div>
+                                <div class="ml-2 space-y-0.5">
+                                    <label v-for="model in brand.models" :key="model.id"
+                                        class="flex items-center gap-2 p-1 rounded hover:bg-gray-50">
+                                        <input type="checkbox" :value="model.id" v-model="selectedModels"
+                                            @change="applyFilters"
+                                            class="w-3 h-3 rounded border-gray-300 text-brand-teal">
+                                        <span class="text-xs text-gray-700 flex-1">{{ model.name }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <p class="text-sm font-semibold text-gray-900 mb-3">Location</p>
+                    <!-- <select v-model="selectedCity" @change="applyCityFilter"
+                        class="w-full border border-gray-300 rounded-lg p-3 text-sm bg-white">
+                        <option value="Pakistan">All Pakistan</option>
+                        <option v-for="city in cities" :key="city.lng" :value="city.name">📍 {{ city.name }}</option>
+                    </select> -->
+                    <SelectInput v-model="selectedCity" @update:modelValue="applyCityFilter" placeholder="Select City">
+                        <SelectContent>
+                            <SelectItem v-for="city in [
+                                { label: 'All Pakistan', value: 'all' },
+                                ...cities.map(c => ({ label: c.name, value: c.name }))
+                            ]" :key="city.value" :value="city.value">
+                                {{ city.label }}
+                            </SelectItem>
+                        </SelectContent>
+                    </SelectInput>
+                </div>
+                <div class="p-4">
+                    <p class="text-sm font-semibold text-gray-900 mb-3">Price Range</p>
+                    <div class="flex gap-3 mb-4">
+                        <div class="flex-1">
+                            <label class="block text-xs text-gray-500 mb-1">Min ($)</label>
+                            <input type="number" placeholder="Min" v-model.number="minPrice"
+                                @input="debouncedApplyPriceFilter"
+                                class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-teal focus:border-transparent" />
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs text-gray-500 mb-1">Max ($)</label>
+                            <input type="number" placeholder="Max" v-model.number="maxPrice"
+                                @input="debouncedApplyPriceFilter"
+                                class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-teal focus:border-transparent" />
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button v-for="range in priceRanges" :key="range.label"
+                            @click="setQuickPriceRange(range.min, range.max)"
+                            class="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full hover:bg-gray-200">
+                            {{ range.label }}
+                        </button>
+                    </div>
+                </div>
+                <div v-if="attributes?.filter(attr => attr.is_filterable).length" class="p-4">
+                    <div v-for="attribute in (attributes?.filter(attr => attr.is_filterable) || [])" :key="attribute.id"
+                        class="mb-6 last:mb-0">
+                        <p class="text-sm font-semibold text-gray-900 mb-3">{{ attribute.name }}</p>
+                        <div v-if="attribute.type === 'select' && attribute.options?.length"
+                            class="flex flex-wrap gap-2">
+                            <button v-for="option in attribute.options" :key="option.id" @click="() => {
+                                ensureAttributeArray(attribute.id)
+                                const key = `attribute_${attribute.id}`
+                                const arr = attributeFilters[key]
+                                if (arr.includes(option.id)) attributeFilters[key] = arr.filter((v: number) => v !== option.id)
+                                else attributeFilters[key].push(option.id)
+                                applyFilters()
+                            }" :class="[
+                                'px-4 py-2 rounded-full text-sm font-medium transition-all',
+                                attributeFilters[`attribute_${attribute.id}`]?.includes(option.id)
+                                    ? 'bg-brand-teal text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ]">
+                                {{ option.value }}
+                            </button>
+                        </div>
+                        <div v-else-if="attribute.type === 'text'">
+                            <input type="text" :placeholder="`Enter ${attribute.name.toLowerCase()}`"
+                                v-model="attributeFilters[`attribute_${attribute.id}`]" @input="applyFilters"
+                                class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-teal focus:border-transparent" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
+                <button @click="showMobileFilters = false"
+                    class="w-full bg-brand-teal text-white py-3 rounded-lg font-semibold text-base shadow-md hover:bg-brand-teal/90">
+                    Show {{ totalAds }} results
+                </button>
+            </div>
+        </div>
     </OlxLayout>
 </template>
+
+<style>
+.fixed.inset-0.bg-white {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+</style>

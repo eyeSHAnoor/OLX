@@ -12,7 +12,12 @@
 
             <div v-else class="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
                 <!-- Breadcrumb - Compact -->
-                <nav class="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 mb-4 sm:mb-5 flex-wrap">
+                <nav class="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 mt-3 flex-wrap">
+                    <button @click="goBack"
+                        class="inline-flex items-center gap-1 px-3 py-2 mb-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
+                        <Icon icon="mdi:arrow-left" class="text-base" />
+                        Back
+                    </button>
                     <a href="/" class="hover:text-primary transition-colors">Home</a>
                     <Icon icon="lucide:chevron-right" class="size-3 sm:size-3.5 flex-shrink-0" />
                     <a :href="route('category.show', ad.category.slug)"
@@ -23,6 +28,8 @@
                     <span class="text-gray-700 font-medium truncate max-w-[150px] sm:max-w-[300px]">{{ ad.ad_title
                     }}</span>
                 </nav>
+
+
 
                 <!-- Main Content Grid -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
@@ -91,11 +98,12 @@
                                 </h1>
 
                                 <div class="flex items-center gap-2 sm:gap-3">
-                                    <button @click="!hasOrdered && handleShowModal()" :disabled="hasOrdered"
+                                    <button @click="!hasOrdered && ad?.user?.id !== userId && handleShowModal()"
+                                        :disabled="hasOrdered || ad?.user?.id === userId"
                                         class="group relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-200 shadow-md"
-                                        :class="hasOrdered
+                                        :class="(hasOrdered || ad?.user?.id === userId)
                                             ? 'bg-gray-200 cursor-not-allowed opacity-60'
-                                            : 'hover:bg-gray-200 hover:scale-105 active:scale-95 hover:shadow-lg'">
+                                            : 'bg-white hover:bg-gray-200 hover:scale-105 active:scale-95 hover:shadow-lg'">
                                         <Icon icon="lucide:shopping-cart" class="size-4 sm:size-5" />
                                         <span class="text-xs sm:text-sm font-medium hidden sm:inline">Order</span>
                                         <!-- Tooltip for mobile -->
@@ -240,8 +248,8 @@
                                 </a>
 
                                 <!-- Chat Button -->
-                                <button @click="openChat"
-                                    class="flex bg-brand-blue gap-1.5 w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg hover:bg-brand-blue/85 cursor-pointer transition-colors text-sm text-white">
+                                <button @click="openChat" :disabled="ad?.user?.id === userId"
+                                    class="flex bg-brand-blue disabled:bg-brand-blue/70 disabled:cursor-not-allowed gap-1.5 w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg hover:bg-brand-blue/85 cursor-pointer transition-colors text-sm text-white">
                                     <Icon icon="lucide:message-circle" class="size-4 sm:size-5" />
                                     <span>Chat with Seller</span>
                                 </button>
@@ -490,6 +498,7 @@ const page = usePage<PageProps>();
 const ad = computed(() => page.props.ad);
 const similarAds = computed(() => page.props.similarAds || []);
 const hasOrdered = computed(() => page.props.hasOrdered || false)
+const userId = computed(() => page.props.auth?.user?.id || null)
 const { handleShowModal, showModal, selectedItem } = useModal();
 
 const handleOrderPlaced = () => {
@@ -568,7 +577,9 @@ const toggleFavorite = () => {
         }
     })
 }
-
+const goBack = () => {
+    window.history.back()
+}
 // Rating state for ad
 const hoverRating = ref(0)
 const isSubmitting = ref(false)

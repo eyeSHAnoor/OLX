@@ -19,5 +19,10 @@ class Brand extends Model
     {
         return $this->hasMany(\App\Models\Ad::class);
     }
+
+    public function models()
+    {
+        return $this->hasMany(BrandModel::class);
+    }
 }
 

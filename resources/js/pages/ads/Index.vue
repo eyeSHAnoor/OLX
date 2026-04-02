@@ -20,7 +20,7 @@ const ads = computed(() => page.props.ads);
 const categories = computed(() => page.props.categories);
 const brands = computed(() => page.props.brands);
 
-console.log(page.props);
+//console.log(page.props);
 
 // Use search filter
 const { form, reset, isFiltered } = useSearchFilter(route('ads.index'));
@@ -149,7 +149,7 @@ const clearFilter = (filterKey: string) => {
         preserveScroll: true,
     });
 };
-console.log(route('ads.create'));
+//console.log(route('ads.create'));
 
 </script>
 

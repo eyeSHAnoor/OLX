@@ -11,12 +11,7 @@ class Order extends Model
         'seller_id',
         'ad_id',
         'price',
-        'qty',
-        'status',
-        'delivery_option',
-        'delivery_address',
-        'contact_number',
-        'notes'
+        'status'
     ];
 
     // 🔗 Relationships

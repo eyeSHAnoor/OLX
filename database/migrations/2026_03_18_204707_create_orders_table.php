@@ -21,10 +21,6 @@ return new class extends Migration
 
             $table->decimal('price', 12, 2);
             $table->integer('qty')->default(1);
-             $table->enum('delivery_option', ['pickup', 'delivery']);
-            $table->text('delivery_address')->nullable();
-            $table->string('contact_number');
-            $table->text('notes')->nullable();
 
             $table->enum('status', [
                 'pending',

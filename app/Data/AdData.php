@@ -16,6 +16,7 @@ class AdData extends Data
         public int $user_id,
         public int $category_id,
         public ?int $brand_id,
+        public ?int $model_id, // brand model id
         public string $ad_title,
         public ?string $description,
         public ?float $price,
@@ -25,15 +26,19 @@ class AdData extends Data
         public ?string $seller_phone,
         #[DataCollectionOf(AdImageData::class)]
         public ?\Illuminate\Support\Collection $images = null,
+        public ?array $attributes = null, // category attributes
         public ?BrandData $brand = null,
         public ?CategoryData $category = null,
-        public ?array $search_keywords = null, // ✅ added
+        public ?BrandModelData $model = null,
+        public ?array $search_keywords = null,
+        #[DataCollectionOf(FeatureData::class)]
+        public ?\Illuminate\Support\Collection $features = null,
     ) {}
 
     #[Computed]
     public function priceWithCurrency(): string
     {
-        return 'Pkr' . number_format($this->price ?? 0, 2);
+        return 'Pkr ' . number_format($this->price ?? 0, 2);
     }
 
     #[Computed]
@@ -49,6 +54,7 @@ class AdData extends Data
             user_id: $ad->user_id,
             category_id: $ad->category_id,
             brand_id: $ad->brand_id,
+            model_id: $ad->brand_model_id, // link to brand_models table
             ad_title: $ad->ad_title,
             description: $ad->description,
             price: $ad->price,
@@ -56,10 +62,16 @@ class AdData extends Data
             location: $ad->location,
             seller_name: $ad->seller_name,
             seller_phone: $ad->seller_phone,
-            images: $ad->images->map(fn($img) => AdImageData::fromModel($img)),
+            images: $ad->images?->map(fn($img) => AdImageData::fromModel($img)),
+            attributes: $ad->attributes?->map(fn($attr) => [
+                'category_attribute_id' => $attr->category_attribute_id,
+                'value' => $attr->value,
+            ])->toArray(),
             brand: $ad->brand ? BrandData::fromModel($ad->brand) : null,
             category: $ad->category ? CategoryData::fromModel($ad->category) : null,
-            search_keywords: $ad->search_keywords, // ✅ map here
+            model: $ad->model ? BrandModelData::fromModel($ad->model) : null,
+            search_keywords: $ad->search_keywords,
+            features: $ad->features?->map(fn($f) => FeatureData::fromModel($f)),
         );
     }
 }

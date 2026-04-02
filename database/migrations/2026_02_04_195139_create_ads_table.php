@@ -15,7 +15,7 @@ return new class extends Migration
         $table->id();
 
         $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-
+         $table->foreignId('brand_model_id')->nullable()->constrained('brand_models');
         $table->foreignId('category_id')->constrained();
         $table->foreignId('brand_id')->nullable()->constrained();
 
@@ -42,6 +42,7 @@ return new class extends Migration
         $table->index(['category_id']);
         $table->index(['brand_id']);
         $table->index(['ad_title']);
+        $table->index(['brand_model_id']);
     });
 
     }

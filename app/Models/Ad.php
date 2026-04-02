@@ -15,11 +15,15 @@ class Ad extends Model
         'user_id',
         'category_id',
         'brand_id',
+        'brand_model_id',
         'ad_title',
         'description',
         'price',
         'city',
         'location',
+        'status',
+        'is_active',
+        'is_featured',
         'seller_name',
         'seller_phone',
         'search_keywords'
@@ -29,7 +33,7 @@ class Ad extends Model
         'search_keywords' => 'array',
     ];
 
-    protected $appends = ['is_favorited'];
+    protected $appends = ['is_favorited', 'thumbnail'];
 
     public function getIsFavoritedAttribute(): bool
     {
@@ -40,6 +44,28 @@ class Ad extends Model
         }
 
         return $this->favoritedBy()->where('user_id', $user->id)->exists();
+    }
+
+    public function getThumbnailAttribute()
+    {
+        // if images relationship not loaded, load minimal
+        $images = $this->relationLoaded('images')
+            ? $this->images
+            : $this->images()->get(['id','ad_id','path','is_primary']);
+
+        if ($images->isEmpty()) {
+            return null;
+        }
+
+        // try primary image
+        $primary = $images->firstWhere('is_primary', true);
+
+        if ($primary) {
+            return $primary->path;
+        }
+
+        // fallback first image
+        return $images->first()->path;
     }
 
     protected static function booted()
@@ -134,5 +160,15 @@ class Ad extends Model
     public function reports(): HasMany
     {
         return $this->hasMany(UserReport::class);
+    }
+
+     public function model()
+    {
+        return $this->belongsTo(BrandModel::class, 'brand_model_id');
+    }
+
+     public function attributes()
+    {
+        return $this->hasMany(AdAttributeValue::class, 'ad_id');
     }
 }   

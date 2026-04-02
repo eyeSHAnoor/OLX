@@ -20,7 +20,7 @@ class ReportController extends Controller
     {
         $reports = UserReport::with([
             'reportedUser' => function ($q) {
-                $q->select('id', 'name', 'email', 'avatar');
+                $q->select('id', 'name', 'email', 'avatar', 'warning_count', 'status');
             },
             'reporter' => function ($q) {
                 $q->select('id', 'name', 'email', 'avatar');

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { InertiaPageProps } from '@/types';
 import { usePage, router, useForm } from '@inertiajs/vue3';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import Layout from '@/layouts/AppLayout.vue';
 import { useAlertDialog } from '@/composables/useAlertDialog';
 import { useDropZone } from '@vueuse/core';
 import { Plus, X, Tag } from 'lucide-vue-next';
 import CardContent from '@/components/ui/card/CardContent.vue';
+import axios from 'axios';
 
 defineOptions({ layout: Layout });
 
@@ -22,10 +23,13 @@ const categories = computed(() => page.props.categories);
 const brands = computed(() => page.props.brands);
 const features = computed(() => page.props.features);
 
+//console.log('Ad data:', ad.value);
+
 interface AdFormData {
     id?: string | number;
     category_id: string | number;
     brand_id: string | number;
+    brand_model_id?: string | number;
     ad_title: string;
     description: string;
     price: string | number;
@@ -41,6 +45,7 @@ interface AdFormData {
         feature_value_id?: number | '';
         custom_value?: string;
     }[];
+    attributes?: Record<number, string | number>;
 }
 
 interface AdImageData {
@@ -49,10 +54,19 @@ interface AdImageData {
     is_primary: boolean;
 }
 
+// Dynamic attributes and models
+const categoryAttributes = ref<any[]>([]);
+const selectedAttributeValues = ref<Record<number, string | number>>({});
+const brandModels = ref<any[]>([]);
+const isLoadingAttributes = ref(false);
+const isLoadingModels = ref(false);
+const isInitialLoad = ref(true);
+
 const getDefaultForm = (item: App.Data.AdData | undefined): AdFormData => ({
     id: item?.id ?? '',
     category_id: item?.category_id ?? '',
     brand_id: item?.brand_id ?? '',
+    model_id: item?.brand_model_id ?? '',
     ad_title: item?.ad_title ?? '',
     description: item?.description ?? '',
     price: item?.price ?? '',
@@ -68,7 +82,13 @@ const getDefaultForm = (item: App.Data.AdData | undefined): AdFormData => ({
         feature_value_id: f.pivot?.feature_value_id ?? '',
         custom_value: f.pivot?.custom_value ?? '',
     })) ?? [],
-
+    attributes: item?.attributes?.reduce((acc: any, attr: any) => {
+        const attributeId = attr.category_attribute_id || attr.attribute?.id;
+        if (attributeId) {
+            acc[attributeId] = attr.value;
+        }
+        return acc;
+    }, {}) ?? {},
 });
 
 const addFeatureRow = () => {
@@ -83,11 +103,11 @@ const removeFeatureRow = (index: number) => {
     form.features.splice(index, 1);
 };
 
-
 const form = useForm<AdFormData>({ ...getDefaultForm(ad.value) });
 const existingImages = ref<AdImageData[]>(ad.value?.images || []);
 const newKeyword = ref('');
 
+// Computed filtered brands based on selected category
 const filteredBrands = computed(() => {
     if (!form.category_id) return [];
     return brands.value.filter((brand) =>
@@ -95,8 +115,131 @@ const filteredBrands = computed(() => {
     );
 });
 
-watch(() => form.category_id, () => {
-    form.brand_id = '';
+// Function to fetch attributes
+const fetchAttributes = async (categoryId: string | number) => {
+    isLoadingAttributes.value = true;
+    try {
+        const response = await axios.get(`/categories/${categoryId}/attributes`);
+        if (response.data.success) {
+            categoryAttributes.value = response.data.attributes;
+        } else {
+            categoryAttributes.value = response.data.attributes || [];
+        }
+
+        // After loading attributes, populate existing values
+        if (ad.value?.attributes && ad.value.attributes.length > 0) {
+            ad.value.attributes.forEach((attr: any) => {
+                const attributeId = attr.category_attribute_id || attr.attribute?.id;
+                if (attributeId && attr.value) {
+                    selectedAttributeValues.value[attributeId] = attr.value;
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Failed to load attributes:', error);
+        categoryAttributes.value = [];
+    } finally {
+        isLoadingAttributes.value = false;
+    }
+};
+
+// Function to fetch models
+const fetchModels = async (brandId: string | number) => {
+    isLoadingModels.value = true;
+    try {
+        const response = await axios.get(`/brands/${brandId}/models`);
+        if (response.data.success) {
+            brandModels.value = response.data.models;
+        } else {
+            brandModels.value = response.data.models || [];
+        }
+    } catch (error) {
+        console.error('Failed to load models:', error);
+        brandModels.value = [];
+    } finally {
+        isLoadingModels.value = false;
+    }
+};
+
+// Watch for category changes to load attributes
+watch(() => form.category_id, async (newCategoryId, oldCategoryId) => {
+    // Skip if initial load and category already set
+    if (isInitialLoad.value && ad.value?.category_id == newCategoryId) {
+        return;
+    }
+
+    if (newCategoryId && newCategoryId !== oldCategoryId) {
+        // Only reset brand and model if it's a user change, not initial load
+        if (!isInitialLoad.value) {
+            form.brand_id = '';
+            form.model_id = '';
+        }
+        brandModels.value = [];
+
+        // Clear previous attribute values
+        selectedAttributeValues.value = {};
+
+        // Fetch attributes for this category
+        await fetchAttributes(newCategoryId);
+    } else if (!newCategoryId) {
+        categoryAttributes.value = [];
+        brandModels.value = [];
+    }
+}, { immediate: true });
+
+// Watch for brand changes to load models
+watch(() => form.brand_id, async (newBrandId, oldBrandId) => {
+    // Skip if initial load and brand already set
+    if (isInitialLoad.value && ad.value?.brand_id == newBrandId) {
+        return;
+    }
+
+    if (newBrandId && newBrandId !== oldBrandId) {
+        await fetchModels(newBrandId);
+
+        // Only reset model if it's a user change
+        if (!isInitialLoad.value) {
+            form.model_id = '';
+        }
+    } else if (!newBrandId) {
+        brandModels.value = [];
+        if (!isInitialLoad.value) {
+            form.model_id = '';
+        }
+    }
+}, { immediate: true });
+
+// Initial load for edit mode
+onMounted(async () => {
+    // Set form values directly
+    if (ad.value) {
+        form.category_id = ad.value.category_id;
+        form.brand_id = ad.value.brand_id;
+        form.model_id = ad.value.brand_model_id || '';
+
+        // Fetch attributes if category exists
+        if (ad.value.category_id) {
+            await fetchAttributes(ad.value.category_id);
+        }
+
+        // Fetch models if brand exists
+        if (ad.value.brand_id) {
+            await fetchModels(ad.value.brand_id);
+
+            // Auto-select model after models are loaded
+            if (ad.value.brand_model_id && brandModels.value.length > 0) {
+                const modelExists = brandModels.value.some(model => model.id == ad.value.brand_model_id);
+                if (modelExists) {
+                    form.model_id = ad.value.brand_model_id;
+                }
+            }
+        }
+    }
+
+    // Set initial load flag to false after everything is loaded
+    setTimeout(() => {
+        isInitialLoad.value = false;
+    }, 500);
 });
 
 // Search Keywords Handling
@@ -126,7 +269,6 @@ const generateKeywords = () => {
 
     const keywords: string[] = [];
 
-    // Add title words
     if (form.ad_title) {
         const titleWords = form.ad_title.toLowerCase()
             .replace(/[^a-z0-9\s]/gi, '')
@@ -135,7 +277,6 @@ const generateKeywords = () => {
         keywords.push(...titleWords);
     }
 
-    // Add category and brand if selected
     if (form.category_id) {
         const category = categories.value.find(c => c.id == form.category_id);
         if (category?.name) {
@@ -150,7 +291,6 @@ const generateKeywords = () => {
         }
     }
 
-    // Add city and location
     if (form.city) {
         keywords.push(form.city.toLowerCase());
     }
@@ -162,15 +302,11 @@ const generateKeywords = () => {
         keywords.push(...locationWords);
     }
 
-    // Add unique keywords only
     const uniqueKeywords = [...new Set(keywords)];
-
-    // Filter out existing keywords
     const newKeywords = uniqueKeywords.filter(keyword =>
         !form.search_keywords.includes(keyword)
     );
 
-    // Add new keywords (limit to 10 total)
     const availableSlots = 10 - form.search_keywords.length;
     if (availableSlots > 0) {
         form.search_keywords.push(...newKeywords.slice(0, availableSlots));
@@ -252,6 +388,7 @@ const setPrimaryImage = async (imageId: string | number) => {
 const submit = () => {
     const formData = {
         ...form,
+        attributes: selectedAttributeValues.value,
         search_keywords: form.search_keywords.filter(keyword => keyword.trim() !== '')
     };
 
@@ -296,20 +433,6 @@ const destroy = async () => {
     }
 };
 
-// Watch for ad changes
-watch(
-    () => ad.value,
-    (newAd) => {
-        if (newAd) {
-            existingImages.value = newAd.images || [];
-            form.defaults(getDefaultForm(newAd));
-            form.reset();
-            imagePreviews.value = [];
-        }
-    },
-    { immediate: true }
-);
-
 const { set, resetList } = useBreadcrumb();
 onMounted(() => {
     resetList();
@@ -324,14 +447,14 @@ const primaryImage = computed(() => {
     return existingImages.value.find(img => img.is_primary)
         || existingImages.value[0]
         || null
-})
+});
 </script>
 
 <template>
     <AppContainer>
 
         <Head :title="ad ? `Edit: ${ad.ad_title}` : 'Create New Ad'" />
-
+        <!-- {{ ad }} -->
         <!-- Page Header -->
         <div class="my-8">
             <div class="flex items-center justify-between">
@@ -364,10 +487,8 @@ const primaryImage = computed(() => {
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="space-y-6">
-                        <!-- Validation Errors -->
                         <ValidationErrors />
 
-                        <!-- Basic Information Grid -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <TextInput label="Ad Title *" v-model="form.ad_title" :error="form.errors.ad_title"
                                 placeholder="Enter ad title" required />
@@ -390,6 +511,15 @@ const primaryImage = computed(() => {
                                 </SelectContent>
                             </SelectInput>
 
+                            <SelectInput v-if="brandModels.length > 0" label="Model" v-model="form.model_id"
+                                :error="form.errors.model_id" placeholder="Select model" :disabled="isLoadingModels">
+                                <SelectContent>
+                                    <SelectItem v-for="model in brandModels" :key="model.id" :value="model.id">
+                                        {{ model.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </SelectInput>
+
                             <TextInput label="Price *" v-model="form.price" :error="form.errors.price" type="number"
                                 placeholder="0.00" required />
 
@@ -400,7 +530,6 @@ const primaryImage = computed(() => {
                                 placeholder="Enter City" required />
                         </div>
 
-                        <!-- Seller Information -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <TextInput label="Seller Name *" v-model="form.seller_name" :error="form.errors.seller_name"
                                 placeholder="Enter seller name" required />
@@ -409,7 +538,6 @@ const primaryImage = computed(() => {
                                 :error="form.errors.seller_phone" placeholder="Enter phone number" required />
                         </div>
 
-                        <!-- Description -->
                         <div>
                             <label class="text-sm font-medium block mb-2">Description *</label>
                             <textarea v-model="form.description" rows="4"
@@ -421,7 +549,6 @@ const primaryImage = computed(() => {
                             </p>
                         </div>
 
-                        <!-- Search Keywords Section -->
                         <div class="space-y-4 pt-4 border-t">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -437,7 +564,6 @@ const primaryImage = computed(() => {
                                 </AppButton>
                             </div>
 
-                            <!-- Keyword Input -->
                             <div class="flex gap-2">
                                 <div class="flex-1 relative">
                                     <input v-model="newKeyword" @keydown="handleKeywordKeydown"
@@ -455,7 +581,6 @@ const primaryImage = computed(() => {
                                 </AppButton>
                             </div>
 
-                            <!-- Keywords List -->
                             <div v-if="form.search_keywords.length > 0" class="space-y-2">
                                 <div class="flex flex-wrap gap-2">
                                     <div v-for="(keyword, index) in form.search_keywords" :key="index"
@@ -467,27 +592,72 @@ const primaryImage = computed(() => {
                                         </button>
                                     </div>
                                 </div>
-                                <p class="text-xs text-muted-foreground">
-                                    Click the × icon to remove a keyword
-                                </p>
-                            </div>
-                            <div v-else class="text-center py-6 border-2 border-dashed rounded-md">
-                                <Tag class="size-8 text-muted-foreground mx-auto mb-2" />
-                                <p class="text-sm text-muted-foreground">No keywords added yet</p>
-                                <p class="text-xs text-muted-foreground mt-1">
-                                    Add keywords manually or use "Auto-generate" to create from your ad content
-                                </p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
-                <Card>
+
+                <Card v-if="categoryAttributes.length > 0" class="mt-6">
+                    <CardHeader>
+                        <CardTitle>Product Specifications</CardTitle>
+                        <CardDescription>
+                            Fill in the specifications for your product
+                            <span v-if="isLoadingAttributes" class="ml-2 text-xs">Loading...</span>
+                        </CardDescription>
+                    </CardHeader>
                     <CardContent>
-                        <!-- Features Section -->
-                        <div class="pt-6 border-t space-y-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full border rounded-md">
+                                <thead class="bg-muted">
+                                    <tr>
+                                        <th class="p-3 text-left font-medium">Attribute</th>
+                                        <th class="p-3 text-left font-medium">Value</th>
+                                        <th class="p-3 text-left font-medium w-24">Required</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="attr in categoryAttributes" :key="attr.id" class="border-t">
+                                        <td class="p-3 align-top">
+                                            <div class="font-medium">{{ attr.name }}</div>
+                                        </td>
+                                        <td class="p-3">
+                                            <select v-if="attr.type === 'select'"
+                                                v-model="selectedAttributeValues[attr.id]"
+                                                class="w-full px-3 py-2 border rounded-md">
+                                                <option value="">Select {{ attr.name }}</option>
+                                                <option v-for="option in attr.options" :key="option.id"
+                                                    :value="option.id">
+                                                    {{ option.value }}
+                                                </option>
+                                            </select>
+                                            <input v-else v-model="selectedAttributeValues[attr.id]" type="text"
+                                                :placeholder="`Enter ${attr.name.toLowerCase()}`"
+                                                class="w-full px-3 py-2 border rounded-md" />
+                                        </td>
+                                        <td class="p-3 text-center align-top">
+                                            <span v-if="attr.is_required" class="text-red-500 font-medium">Yes</span>
+                                            <span v-else class="text-muted-foreground">No</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <!-- Features Section -->
+                <Card class="mt-6">
+                    <CardHeader>
+                        <CardTitle>Ad Features</CardTitle>
+                        <CardDescription>
+                            Add custom features to your ad
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div class="space-y-4">
                             <div class="flex items-center justify-between">
-                                <h3 class="text-lg font-medium">Ad Features</h3>
-                                <AppDataTableActionButton icon="lucide:edit" tooltip="Add Feature"
+                                <h3 class="text-lg font-medium">Features</h3>
+                                <AppDataTableActionButton icon="lucide:plus" tooltip="Add Feature"
                                     @click="addFeatureRow" />
                             </div>
 
@@ -499,10 +669,8 @@ const primaryImage = computed(() => {
                                         <th class="p-2 w-12"></th>
                                     </tr>
                                 </thead>
-
                                 <tbody>
                                     <tr v-for="(row, index) in form.features" :key="index" class="border-t">
-                                        <!-- Feature -->
                                         <td class="p-2">
                                             <select v-model="row.feature_id" class="w-full border rounded px-2 py-1">
                                                 <option value="">Select</option>
@@ -511,28 +679,22 @@ const primaryImage = computed(() => {
                                                 </option>
                                             </select>
                                         </td>
-
-                                        <!-- Value -->
                                         <td class="p-2">
                                             <template v-if="row.feature_id">
                                                 <select v-model="row.feature_value_id"
                                                     class="w-full border rounded px-2 py-1">
                                                     <option value="">Custom</option>
-
                                                     <option
                                                         v-for="v in features.find(f => f.id === row.feature_id)?.values || []"
                                                         :key="v.id" :value="v.id">
                                                         {{ v.value }}
                                                     </option>
                                                 </select>
-
                                                 <input v-if="!row.feature_value_id" v-model="row.custom_value"
                                                     placeholder="Enter value"
                                                     class="mt-1 w-full border rounded px-2 py-1" />
                                             </template>
                                         </td>
-
-                                        <!-- Remove -->
                                         <td class="p-2">
                                             <button @click="removeFeatureRow(index)">
                                                 <X class="size-4 text-red-500" />
@@ -541,10 +703,6 @@ const primaryImage = computed(() => {
                                     </tr>
                                 </tbody>
                             </table>
-
-                            <p v-if="form.features.length === 0" class="text-sm text-muted-foreground text-center">
-                                No features added yet
-                            </p>
                         </div>
                     </CardContent>
                 </Card>
@@ -558,7 +716,6 @@ const primaryImage = computed(() => {
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="space-y-6">
-                        <!-- Image Upload Area -->
                         <div @click="$refs.fileInput?.click()"
                             class="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors">
                             <div class="flex flex-col items-center justify-center">
@@ -574,11 +731,9 @@ const primaryImage = computed(() => {
                                 class="hidden" />
                         </div>
 
-                        <!-- Image Preview Grid -->
                         <div v-if="existingImages.length > 0 || imagePreviews.length > 0" class="space-y-4">
                             <h3 class="text-sm font-medium">Uploaded Images</h3>
                             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                <!-- Existing Images -->
                                 <div v-for="image in existingImages" :key="image.id"
                                     class="relative group rounded-lg overflow-hidden border">
                                     <img :src="`/storage/${image.path}`" class="w-full h-32 object-cover"
@@ -602,7 +757,6 @@ const primaryImage = computed(() => {
                                     </div>
                                 </div>
 
-                                <!-- New Images -->
                                 <div v-for="(preview, index) in imagePreviews" :key="`new-${index}`"
                                     class="relative group rounded-lg overflow-hidden border">
                                     <img :src="preview" class="w-full h-32 object-cover" :alt="`New image ${index}`" />
@@ -616,16 +770,6 @@ const primaryImage = computed(() => {
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Image Count -->
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-muted-foreground">
-                                    Total images: {{ existingImages.length + form.images.length }} / 10
-                                </span>
-                                <span v-if="form.errors.images" class="text-destructive">
-                                    {{ form.errors.images }}
-                                </span>
-                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -633,7 +777,6 @@ const primaryImage = computed(() => {
 
             <!-- Sidebar -->
             <div class="space-y-6">
-                <!-- Actions Card -->
                 <Card>
                     <CardHeader>
                         <CardTitle>Actions</CardTitle>
@@ -650,49 +793,23 @@ const primaryImage = computed(() => {
                             <AppButton v-if="ad" label="Delete Ad" variant="danger" icon="lucide:trash-2"
                                 class="w-full justify-center" @click="destroy" :disabled="form.processing" />
                         </div>
-
-                        <!-- Keywords Preview -->
-                        <div v-if="form.search_keywords.length > 0" class="pt-4 border-t">
-                            <h4 class="text-sm font-medium mb-2">Search Keywords Preview</h4>
-                            <div class="flex flex-wrap gap-1.5">
-                                <span v-for="(keyword, index) in form.search_keywords.slice(0, 8)" :key="index"
-                                    class="px-2 py-1 bg-muted text-muted-foreground rounded-full text-xs">
-                                    {{ keyword }}
-                                </span>
-                                <span v-if="form.search_keywords.length > 8"
-                                    class="px-2 py-1 bg-muted text-muted-foreground rounded-full text-xs">
-                                    +{{ form.search_keywords.length - 8 }} more
-                                </span>
-                            </div>
-                        </div>
                     </CardContent>
                 </Card>
 
-                <!-- Ad Preview Card -->
                 <Card>
                     <CardHeader>
                         <CardTitle>Preview</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div class="space-y-3">
-                            <!-- Main Image -->
                             <div class="aspect-square rounded-lg bg-muted overflow-hidden">
                                 <div v-if="primaryImage || imagePreviews.length > 0" class="w-full h-full">
-                                    <!-- Existing primary image -->
                                     <img v-if="primaryImage" :src="`/storage/${primaryImage.path}`"
                                         class="w-full h-full object-cover" alt="Primary product image" />
                                     <img v-else-if="imagePreviews.length > 0" :src="imagePreviews[0]"
                                         class="w-full h-full object-cover" alt="New product image" />
-                                    <div v-else class="w-full h-full flex items-center justify-center">
-                                        <Icon icon="lucide:image" class="size-12 text-muted-foreground" />
-                                    </div>
-                                </div>
-                                <div v-else class="w-full h-full flex items-center justify-center">
-                                    <Icon icon="lucide:image" class="size-12 text-muted-foreground" />
                                 </div>
                             </div>
-
-                            <!-- Ad Details -->
                             <div class="space-y-2">
                                 <h3 class="font-semibold line-clamp-1">{{ form.ad_title || 'Ad Title' }}</h3>
                                 <div class="flex items-center justify-between">
@@ -700,48 +817,7 @@ const primaryImage = computed(() => {
                                         {{ form.price ? `$${Number(form.price).toLocaleString()}` : '$0.00' }}
                                     </span>
                                 </div>
-                                <div class="flex items-center gap-1 text-sm text-muted-foreground">
-                                    <Icon icon="lucide:map-pin" class="size-3" />
-                                    <span class="truncate">{{ form.location || 'Location' }}</span>
-                                </div>
-                                <div v-if="form.search_keywords.length > 0" class="pt-2">
-                                    <div class="flex flex-wrap gap-1">
-                                        <span v-for="(keyword, index) in form.search_keywords.slice(0, 3)" :key="index"
-                                            class="px-2 py-0.5 bg-primary/5 text-primary rounded text-xs">
-                                            {{ keyword }}
-                                        </span>
-                                    </div>
-                                </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <!-- Tips Card -->
-                <Card>
-                    <CardHeader>
-                        <CardTitle class="text-sm">Tips for better ads</CardTitle>
-                    </CardHeader>
-                    <CardContent class="text-sm space-y-2 text-muted-foreground">
-                        <div class="flex items-start gap-2">
-                            <Icon icon="lucide:check-circle" class="size-4 text-green-500 mt-0.5" />
-                            <span>Add relevant keywords for better search results</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <Icon icon="lucide:check-circle" class="size-4 text-green-500 mt-0.5" />
-                            <span>Use clear, high-quality images</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <Icon icon="lucide:check-circle" class="size-4 text-green-500 mt-0.5" />
-                            <span>Write detailed descriptions</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <Icon icon="lucide:check-circle" class="size-4 text-green-500 mt-0.5" />
-                            <span>Set competitive pricing</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <Icon icon="lucide:check-circle" class="size-4 text-green-500 mt-0.5" />
-                            <span>Provide accurate contact information</span>
                         </div>
                     </CardContent>
                 </Card>

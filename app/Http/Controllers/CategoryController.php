@@ -6,167 +6,301 @@ use App\Data\CategoryData;
 use App\Models\Category;
 use App\Models\Ad;
 use App\Models\Brand;
+use App\Models\AttributeGroup;
+use App\Models\CategoryAttribute;
+use App\Models\AttributeOption;
 use App\Models\Banner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Spatie\QueryBuilder\QueryBuilder;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
     public function show(Request $request, $slug = null)
     {
-        $selectedCity = strtolower(session('city', 'Pakistan'));
+        $selectedCitySession = strtolower(session('city', 'Pakistan'));
+        $selectedCitySession = $selectedCitySession === 'pakistan' ? 'all' : $selectedCitySession;
 
-        $category = null;
-        if ($slug) {
-            $category = Category::where('slug', $slug)
+        $category = $slug
+            ? Category::where('slug', $slug)
                 ->with(['childrenRecursive', 'files'])
-                ->firstOrFail();
+                ->firstOrFail()
+            : null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Filters
+        |--------------------------------------------------------------------------
+        */
+
+        $cityInput = $request->input('filter.city', $selectedCitySession);
+        $cityInput = is_string($cityInput) ? strtolower(trim($cityInput)) : '';
+        if ($cityInput === 'pakistan' || $cityInput === 'all' || $cityInput === '') {
+            $cityInput = 'all';
         }
 
-        // Filters
-        $searchTerm = $request->input('filter.global');
-        $categoryFilter = $request->input('filter.category', $category?->id);
-        $brandFilter = $request->input('filter.brand');
-        $minPrice = $request->input('filter.min_price');
-        $maxPrice = $request->input('filter.max_price');
-        $sort = $request->input('sort', 'newest');
-        $city = $request->input('filter.city', $selectedCity);
+        $filters = [
+            'global'     => $request->input('filter.global'),
+            'category'   => $request->input('filter.category', $category?->id),
+            'brand'      => $request->input('filter.brand'),
+            'model'      => $request->input('filter.model'),
+            'min_price'  => $request->input('filter.min_price'),
+            'max_price'  => $request->input('filter.max_price'),
+            'city'       => $cityInput,
+        ];
 
-        // Categories (sidebar)
+        $sort = $request->input('sort', 'newest');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Attribute Filters
+        |--------------------------------------------------------------------------
+        */
+
+        $attributeFilters = collect($request->input('filter', []))
+            ->filter(fn ($value, $key) => str_starts_with($key, 'attribute_'))
+            ->map(function ($value) {
+                if (is_string($value) && str_contains($value, ',')) {
+                    return explode(',', $value);
+                }
+                return $value;
+            })
+            ->toArray();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Base Ads Query
+        |--------------------------------------------------------------------------
+        */
+
+        $baseQuery = Ad::query()
+            ->where('status', 'active')
+            ->with(['images', 'brand', 'category', 'model'])
+
+            ->when(
+                !in_array($filters['city'], ['pakistan', 'all', ''], true),
+                fn ($q) => $q->whereRaw('LOWER(city) = ?', [$filters['city']])
+            )
+
+            ->when($filters['global'], function ($q) use ($filters) {
+                $search = strtolower($filters['global']);
+
+                $q->where(function ($q) use ($search) {
+                    $q->whereRaw('LOWER(ad_title) LIKE ?', ["%{$search}%"])
+                        ->orWhereRaw('LOWER(description) LIKE ?', ["%{$search}%"])
+                        ->orWhereHas('brand', fn ($b) =>
+                            $b->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                        );
+                });
+            })
+
+            ->when(
+                $filters['brand'],
+                fn ($q) => $q->whereIn('brand_id', explode(',', $filters['brand']))
+            )
+
+            ->when(
+                $filters['model'],
+                fn ($q) => $q->whereIn('brand_model_id', explode(',', $filters['model']))
+            )
+
+            ->when(
+                $filters['min_price'],
+                fn ($q) => $q->where('price', '>=', $filters['min_price'])
+            )
+
+            ->when(
+                $filters['max_price'],
+                fn ($q) => $q->where('price', '<=', $filters['max_price'])
+            )
+
+            ->when(!empty($attributeFilters), function ($q) use ($attributeFilters) {
+                foreach ($attributeFilters as $key => $value) {
+
+                    if (!$value) continue;
+
+                    $attrId = str_replace('attribute_', '', $key);
+
+                    $q->whereHas('attributes', function ($subQ) use ($attrId, $value) {
+                        $subQ->where('category_attribute_id', $attrId)
+                            ->whereIn('value', (array) $value);
+                    });
+                }
+            })
+
+            ->when($sort === 'price_low', fn ($q) => $q->orderBy('price', 'asc'))
+            ->when($sort === 'price_high', fn ($q) => $q->orderBy('price', 'desc'))
+            ->when(!in_array($sort, ['price_low', 'price_high']), fn ($q) => $q->latest());
+
+        /*
+        |--------------------------------------------------------------------------
+        | Categories
+        |--------------------------------------------------------------------------
+        */
+
         $categories = Category::whereNull('parent_id')
             ->with(['childrenRecursive', 'files'])
             ->orderBy('position')
             ->get();
 
-        // --------------------------
-        // BASE QUERY (REUSABLE)
-        // --------------------------
-        $baseQuery = Ad::query()
-            ->with(['images', 'brand', 'category'])
-            ->when($city !== 'pakistan', fn($q) =>
-                $q->whereRaw('LOWER(city) = ?', [strtolower($city)])
-            );
+        $allBrands = Brand::with('models:id,brand_id,name')
+            ->select('id', 'name')
+            ->get();
 
-        // Search
-        if ($searchTerm) {
-            $search = strtolower($searchTerm);
-            $baseQuery->where(function ($q) use ($search) {
-                $q->whereRaw('LOWER(ad_title) LIKE ?', ["%{$search}%"])
-                ->orWhereRaw('LOWER(description) LIKE ?', ["%{$search}%"])
-                ->orWhereHas('brand', fn($b) =>
-                    $b->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                );
-            });
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | When Category Selected
+        |--------------------------------------------------------------------------
+        */
 
-        // Filters
-        if ($brandFilter) {
-            $baseQuery->where('brand_id', $brandFilter);
-        }
+        if ($filters['category'] &&
+            $selectedCategory = Category::with([
+                'childrenRecursive',
+                'files',
+                'attributes.group',
+                'attributes.options',
+                'brands.models',
+                'parent',
+                'parent.attributes.group',
+                'parent.attributes.options',
+                'parent.brands.models'
+            ])->find($filters['category']))
+        {
 
-        if ($minPrice) {
-            $baseQuery->where('price', '>=', $minPrice);
-        }
+            /*
+            |--------------------------------------------------------------------------
+            | Category IDs (include children)
+            |--------------------------------------------------------------------------
+            */
 
-        if ($maxPrice) {
-            $baseQuery->where('price', '<=', $maxPrice);
-        }
-
-        // Sorting
-        match ($sort) {
-            'price_low' => $baseQuery->orderBy('price', 'asc'),
-            'price_high' => $baseQuery->orderBy('price', 'desc'),
-            default => $baseQuery->latest(),
-        };
-
-        // --------------------------
-        // CATEGORY SELECTED
-        // --------------------------
-        if ($categoryFilter) {
-            $selectedCategory = Category::with(['childrenRecursive', 'files'])
-                ->find($categoryFilter);
-
-            if ($selectedCategory) {
-                $categoryIds = $selectedCategory->getLeafCategoriesEfficient()
-                    ->pluck('id')
-                    ->push($selectedCategory->id)
-                    ->unique();
-
-                $adQuery = (clone $baseQuery)
-                    ->whereIn('category_id', $categoryIds);
-
-                // PAGINATION
-                $ads = $adQuery->paginate(10)->withQueryString();
-
-                $selectedCategory->ads = $ads;
-                $selectedCategory->ads_count = $ads->total();
-
-                // Fix DISTINCT error by removing ORDER BY from the query before pluck
-                $brandIds = (clone $adQuery)->reorder()->pluck('brand_id')->unique();
-                $availableBrands = Brand::whereIn('id', $brandIds)->get();
-
-                $priceRange = [
-                    'min' => (clone $adQuery)->min('price'),
-                    'max' => (clone $adQuery)->max('price'),
-                ];
-
-                return Inertia::render('home/Category', [
-                    'category' => $selectedCategory,
-                    'categories' => $categories,
-                    'brands' => $availableBrands,
-                    'banners' => [],
-                    'topBanner' => null,
-                    'allBrands' => Brand::select('id', 'name')->get(),
-                    'filters' => [
-                        'filter' => [
-                            'global' => $searchTerm,
-                            'category' => $categoryFilter,
-                            'brand' => $brandFilter,
-                            'min_price' => $minPrice,
-                            'max_price' => $maxPrice,
-                            'city' => $city,
-                        ],
-                        'sort' => $sort,
-                    ],
-                    'priceRange' => $priceRange,
-                ]);
-            }
-        }
-
-        // --------------------------
-        // NO CATEGORY
-        // --------------------------
-        $categories->each(function ($category) use ($baseQuery) {
-            $categoryIds = $category->getLeafCategoriesEfficient()
+            $categoryIds = $selectedCategory
+                ->getLeafCategoriesEfficient()
                 ->pluck('id')
-                ->push($category->id)
+                ->push($selectedCategory->id)
                 ->unique();
 
-            $query = (clone $baseQuery)
-                ->whereIn('category_id', $categoryIds);
+            $adQuery = (clone $baseQuery)->whereIn('category_id', $categoryIds);
 
-            $ads = $query->limit(2)->get();
+            $ads = $adQuery->paginate(10)->withQueryString();
 
-            $category->ads = $ads;
-            $category->ads_count = $query->count();
+            $selectedCategory->ads = $ads;
+            $selectedCategory->ads_count = $ads->total();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Attributes (Parent's for children, own for parent)
+            |--------------------------------------------------------------------------
+            */
+
+            $attributes = collect();
+
+            if ($selectedCategory->parent && $selectedCategory->parent->attributes->isNotEmpty()) {
+                $attributes = $selectedCategory->parent->attributes;
+            } else {
+                $attributes = $selectedCategory->attributes;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Brands (Child + Parent)
+            |--------------------------------------------------------------------------
+            */
+
+            $brands = collect();
+
+            if ($selectedCategory->brands->isNotEmpty()) {
+                $brands = $brands->merge($selectedCategory->brands);
+            }
+
+            if ($selectedCategory->parent && $selectedCategory->parent->brands->isNotEmpty()) {
+                $brands = $brands->merge($selectedCategory->parent->brands);
+            }
+
+            $brands = $brands->unique('id')->values();
+
+            /*
+            |--------------------------------------------------------------------------
+            | If still empty → derive from ads
+            |--------------------------------------------------------------------------
+            */
+
+            if ($brands->isEmpty()) {
+
+                $brands = Brand::whereIn(
+                    'id',
+                    (clone $adQuery)->reorder()->pluck('brand_id')->unique()
+                )->with('models:id,brand_id,name')->get();
+            }
+
+            // Fetch banners for category page
+        $banners = Banner::active()
+            ->where('position', 'category')
+            ->where(function ($q) use ($selectedCategory) {
+                // Banner assigned to parent category
+                if ($selectedCategory->parent) {
+                    $q->where('target_category_id', $selectedCategory->parent->id);
+                }
+
+                // Banner assigned to current category
+                $q->orWhere('target_category_id', $selectedCategory->id);
+
+                // Banner with no category → global
+                $q->orWhereNull('target_category_id');
+            })
+            ->orderBy('sort_order', 'asc')
+            ->get();
+
+            // dd($banners);
+
+            return Inertia::render('home/Category', [
+                'category' => $selectedCategory,
+                'categories' => $categories,
+                'brands' => $brands,
+                 'banners' => $banners,
+                'attributes' => $attributes,
+                // 'banners' => [],
+                'topBanner' => null,
+                'filters' => [
+                    'filter' => $filters,
+                    'sort' => $sort,
+                    'attributeFilters' => $attributeFilters
+                ],
+                'priceRange' => [
+                    'min' => (clone $adQuery)->min('price'),
+                    'max' => (clone $adQuery)->max('price'),
+                ],
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | No Category Selected
+        |--------------------------------------------------------------------------
+        */
+
+        $categories->each(function ($cat) use ($baseQuery) {
+
+            $catIds = $cat->getLeafCategoriesEfficient()
+                ->pluck('id')
+                ->push($cat->id)
+                ->unique();
+
+            $query = (clone $baseQuery)->whereIn('category_id', $catIds);
+
+            $cat->ads = $query->limit(2)->get();
+            $cat->ads_count = $query->count();
         });
 
         return Inertia::render('home/Category', [
             'categories' => $categories,
-            'brands' => Brand::select('id', 'name')->get(),
+            'brands' => $allBrands,
             'filters' => [
-                'filter' => [
-                    'global' => $searchTerm,
-                    'category' => $categoryFilter,
-                    'brand' => $brandFilter,
-                    'min_price' => $minPrice,
-                    'max_price' => $maxPrice,
-                    'city' => $city,
-                ],
+                'filter' => $filters,
                 'sort' => $sort,
+                'attributeFilters' => $attributeFilters
             ],
         ]);
     }
@@ -203,51 +337,151 @@ class CategoryController extends Controller
     }
 
     /**
-     * Store a newly created category in storage.
+     * Show the form for creating a new category.
+     */
+    public function create()
+    {
+        $allCategories = Category::with('files')->get();
+        $allBrands = Brand::orderBy('name')->get();
+        $attributeGroups = AttributeGroup::with('attributes')->orderBy('name')->get();
+
+        return inertia('categories/RecordForm', [
+            'allCategories' => $allCategories,
+            'allBrands' => $allBrands,
+            'attributeGroups' => $attributeGroups,
+        ]);
+    }
+
+    /**
+     * Store a newly created category.
      */
     public function store(Request $request)
     {
-        // dd($request->hasFile('image'));
+        // dd($request->all());
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique('categories')->where(function ($query) use ($request) {
-                return $query->where('parent_id', $request->parent_id);
-            })],
-            'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
-            'position' => ['nullable', 'integer', 'min:0'],
-            'image' => ['nullable', 'image', 'max:2048'], // new image validation
+        'name' => ['required', 'string', 'max:255', Rule::unique('categories')->where(function ($query) use ($request) {
+        return $query->where('parent_id', $request->parent_id);
+        })],
+        'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
+        'position' => ['nullable', 'integer', 'min:0'],
+        'image' => ['nullable', 'image', 'max:2048'],
+        'brand_ids' => ['nullable', 'array'],
+        'brand_ids.*' => ['exists:brands,id'],
+        'attributes' => ['nullable', 'array'],
+        'attributes.*.name' => ['required', 'string', 'max:255'],
+        'attributes.*.type' => ['required', 'in:text,number,select,radio,checkbox,date'],
+        'attributes.*.attribute_group_id' => ['nullable', 'exists:attribute_groups,id'],
+        'attributes.*.is_required' => ['boolean'],
+        'attributes.*.is_filterable' => ['boolean'],
+        'attributes.*.options' => ['nullable','array'],
+        'attributes.*.options.*.value' => ['nullable','string','max:255']
         ]);
 
-        // Generate slug from name
-        $slug = $this->generateUniqueSlug($validated['name'], $validated['parent_id'] ?? null);
+        DB::beginTransaction();
 
-        // Create category with slug
-        $category = Category::create([
-            'name' => $validated['name'],
-            'slug' => $slug,
-            'parent_id' => $validated['parent_id'] ?? null,
-            'position' => $validated['position'] ?? $this->getNextPosition($validated['parent_id'] ?? null),
-        ]);
+        try {
+            // Generate slug from name
+            $slug = $this->generateUniqueSlug($validated['name'], $validated['parent_id'] ?? null);
 
-        // Handle category image
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('categories', 'public'); // stores in storage/app/public/categories
-
-            $category->files()->create([
-                'file_location' => $path,
-                'file_name' => $request->file('image')->getClientOriginalName(),
-                'collection' => 'category_images',
+            // Create category
+            $category = Category::create([
+                'name' => $validated['name'],
+                'slug' => $slug,
+                'parent_id' => $validated['parent_id'] ?? null,
+                'position' => $validated['position'] ?? $this->getNextPosition($validated['parent_id'] ?? null),
             ]);
+
+            // Handle category image
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('categories', 'public');
+                $category->files()->create([
+                    'file_location' => $path,
+                    'file_name' => $request->file('image')->getClientOriginalName(),
+                    'collection' => 'category_images',
+                ]);
+            }
+
+            // Sync brands
+            if ($request->has('brand_ids')) {
+                $category->brands()->sync($validated['brand_ids']);
+            }
+
+            // Create attributes with their options
+            if (!empty($validated['attributes'])){
+                foreach ($validated['attributes'] as $index => $attrData) {
+                    // Create the attribute
+                    $attribute = CategoryAttribute::create([
+                        'category_id' => $category->id,
+                        'attribute_group_id' => $attrData['attribute_group_id'] ?? null,
+                        'name' => $attrData['name'],
+                        'type' => $attrData['type'],
+                        'is_required' => $attrData['is_required'] ?? false,
+                        'is_filterable' => $attrData['is_filterable'] ?? false,
+                        'position' => $index,
+                    ]);
+
+                    // Create options for select type attributes
+                    if (in_array($attrData['type'], ['select','radio','checkbox']) && !empty($attrData['options'])) {
+                        foreach ($attrData['options'] as $optIndex => $option) {
+                            if (!empty($option['value'])) {
+                                AttributeOption::create([
+                                    'category_attribute_id' => $attribute->id,
+                                    'value' => $option['value'],
+                                    'position' => $optIndex,
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('categories.index')
+                ->with('success', 'Category created successfully.');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to create category: ' . $e->getMessage());
         }
-
-        $category->load('parent', 'children', 'files');
-
-        return redirect()->route('categories.index')
-            ->with('success', 'Category created successfully.');
     }
 
+    /**
+     * Show the form for editing the specified category.
+     */
+    public function edit(Category $category)
+    {
+        // Load all relationships with proper ordering
+        $category->load([
+            'files', 
+            'brands', 
+            'attributes' => function($query) {
+                $query->orderBy('position');
+            },
+            'attributes.options' => function($query) {
+                $query->orderBy('position');
+            },
+            'attributes.group',
+            'parent'
+        ]);
+        
+        $allCategories = Category::with('files')
+            ->where('id', '!=', $category->id)
+            ->get();
+            
+        $allBrands = Brand::orderBy('name')->get();
+        $attributeGroups = AttributeGroup::with('attributes')->orderBy('name')->get();
+
+        return inertia('categories/RecordForm', [
+            'category' => $category,
+            'allCategories' => $allCategories,
+            'allBrands' => $allBrands,
+            'attributeGroups' => $attributeGroups,
+        ]);
+    }
 
     /**
-     * Update the specified category in storage.
+     * Update the specified category.
      */
     public function update(Request $request, Category $category)
     {
@@ -255,7 +489,7 @@ class CategoryController extends Controller
             'name' => [
                 'required', 'string', 'max:255',
                 Rule::unique('categories')
-                    ->where(function ($query) use ($request, $category) {
+                    ->where(function ($query) use ($request) {
                         return $query->where('parent_id', $request->parent_id);
                     })
                     ->ignore($category->id)
@@ -263,59 +497,262 @@ class CategoryController extends Controller
             'parent_id' => [
                 'nullable', 'integer', 'exists:categories,id',
                 function ($attribute, $value, $fail) use ($category) {
-                    // Prevent category from being its own parent
                     if ($value == $category->id) {
                         $fail('A category cannot be its own parent.');
                     }
-
-                    // Prevent circular reference (category cannot be parent of its descendant)
                     if ($this->isDescendant($value, $category)) {
                         $fail('Cannot assign a descendant category as parent.');
                     }
                 }
             ],
             'position' => ['nullable', 'integer', 'min:0'],
-            'image' => ['nullable', 'image', 'max:2048'], // handle image update
-        ]);
+            'image' => ['nullable', 'image', 'max:2048'],
+            'remove_image' => ['boolean'],
+            'brand_ids' => ['nullable', 'array'],
+            'brand_ids.*' => ['exists:brands,id'],
+            'attributes' => ['nullable', 'array'],
+            'attributes.*.id' => ['nullable', 'exists:category_attributes,id'],
+            'attributes.*.name' => ['required', 'string', 'max:255'],
+            'attributes.*.type' => ['required', 'in:text,number,select,radio,checkbox,date'],
+            'attributes.*.attribute_group_id' => ['nullable', 'exists:attribute_groups,id'],
+            'attributes.*.is_required' => ['boolean'],
+            'attributes.*.is_filterable' => ['boolean'],
+            'attributes.*.options' => ['nullable','array'],
+            'attributes.*.options.*.value' => ['nullable','string','max:255']
+  ]);
 
-        // Regenerate slug if name changed
-        if ($validated['name'] !== $category->name) {
-            $validated['slug'] = $this->generateUniqueSlug($validated['name'], $validated['parent_id'] ?? null, $category->id);
-        }
+        DB::beginTransaction();
 
-        // Update position if parent changed
-        if ($validated['parent_id'] != $category->parent_id) {
-            $validated['position'] = $validated['position'] ?? $this->getNextPosition($validated['parent_id'] ?? null);
-        }
+        try {
+            // Update basic info
+            $updateData = [
+                'name' => $validated['name'],
+                'parent_id' => $validated['parent_id'] ?? null,
+            ];
 
-        // Update category
-        $category->update($validated);
-
-        // Handle image update
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('categories', 'public');
-
-            // Delete old image(s) if exists
-            foreach ($category->files as $file) {
-                if (\Storage::disk('public')->exists($file->file_location)) {
-                    \Storage::disk('public')->delete($file->file_location);
-                }
-                $file->delete();
+            // Regenerate slug if name changed
+            if ($validated['name'] !== $category->name) {
+                $updateData['slug'] = $this->generateUniqueSlug($validated['name'], $validated['parent_id'] ?? null, $category->id);
             }
 
-            // Save new image
-            $category->files()->create([
-                'file_location' => $path,
-                'file_name' => $request->file('image')->getClientOriginalName(),
-                'collection' => 'category_images',
-            ]);
+            // Update position if parent changed
+            if (($validated['parent_id'] ?? null) != $category->parent_id) {
+                $updateData['position'] = $validated['position'] ?? $this->getNextPosition($validated['parent_id'] ?? null);
+            } elseif (isset($validated['position'])) {
+                $updateData['position'] = $validated['position'];
+            }
+
+            $category->update($updateData);
+
+            // Handle image
+            if ($request->has('remove_image') && $request->remove_image) {
+                foreach ($category->files as $file) {
+                    if (Storage::disk('public')->exists($file->file_location)) {
+                        Storage::disk('public')->delete($file->file_location);
+                    }
+                    $file->delete();
+                }
+            } elseif ($request->hasFile('image')) {
+                $path = $request->file('image')->store('categories', 'public');
+                
+                // Delete old images
+                foreach ($category->files as $file) {
+                    if (Storage::disk('public')->exists($file->file_location)) {
+                        Storage::disk('public')->delete($file->file_location);
+                    }
+                    $file->delete();
+                }
+                
+                // Save new image
+                $category->files()->create([
+                    'file_location' => $path,
+                    'file_name' => $request->file('image')->getClientOriginalName(),
+                    'collection' => 'category_images',
+                ]);
+            }
+
+            // Sync brands
+            $category->brands()->sync($validated['brand_ids'] ?? []);
+
+            // Handle attributes with their options
+            $existingAttributeIds = [];
+            
+            if (!empty($validated['attributes'])) {
+                foreach ($validated['attributes'] as $attrData) {
+                    if (isset($attrData['id'])) {
+                        // Update existing attribute
+                        $attribute = CategoryAttribute::find($attrData['id']);
+
+                        if (empty($attrData['name']) || empty($attrData['type'])) {
+                            continue;
+                        }
+                        
+                        if ($attribute && $attribute->category_id == $category->id) {
+                            $attribute->update([
+                                'attribute_group_id' => $attrData['attribute_group_id'] ?? null,
+                                'name' => $attrData['name'],
+                                'type' => $attrData['type'],
+                                'is_required' => $attrData['is_required'] ?? false,
+                                'is_filterable' => $attrData['is_filterable'] ?? false,
+                                'position' => $attrData['position'] ?? 0,
+                            ]);
+                            
+                            $existingAttributeIds[] = $attribute->id;
+                            
+                            // Handle options for select type
+                            if (in_array($attrData['type'], ['select','radio','checkbox'])) {
+
+            $existingOptionIds = [];
+
+            if (!empty($attrData['options'])) {
+                foreach ($attrData['options'] as $optIndex => $optData) {
+
+                    if (empty($optData['value'])) {
+                        continue;
+                    }
+
+                    if (isset($optData['id'])) {
+
+                        $option = AttributeOption::find($optData['id']);
+
+                        if ($option && $option->category_attribute_id == $attribute->id) {
+                            $option->update([
+                                'value' => $optData['value'],
+                                'position' => $optIndex,
+                            ]);
+
+                            $existingOptionIds[] = $option->id;
+                        }
+
+                    } else {
+
+                        $option = AttributeOption::create([
+                            'category_attribute_id' => $attribute->id,
+                            'value' => $optData['value'],
+                            'position' => $optIndex,
+                        ]);
+
+                        $existingOptionIds[] = $option->id;
+                    }
+                }
+            }
+
+            AttributeOption::where('category_attribute_id', $attribute->id)
+                ->whereNotIn('id', $existingOptionIds)
+                ->delete();
+
+        } else {
+
+            AttributeOption::where('category_attribute_id', $attribute->id)->delete();
         }
+                                }
+                            } else {
+                                // Create new attribute
+                                $attribute = CategoryAttribute::create([
+                                    'category_id' => $category->id,
+                                    'attribute_group_id' => $attrData['attribute_group_id'] ?? null,
+                                    'name' => $attrData['name'],
+                                    'type' => $attrData['type'],
+                                    'is_required' => (bool) ($attrData['is_required'] ?? false),
+                                    'is_filterable' => (bool) ($attrData['is_filterable'] ?? false),
+                                    'position' => $attrData['position'] ?? 0,
+                                ]);
+                                
+                                $existingAttributeIds[] = $attribute->id;
+                                
+                                // Create options for select type
+                                if ($attrData['type'] === 'select' && !empty($attrData['options'])) {
+                                    foreach ($attrData['options'] as $optIndex => $optData) {
+                                        if (!empty($optData['value'])) {
+                                            AttributeOption::create([
+                                                'category_attribute_id' => $attribute->id,
+                                                'value' => $optData['value'],
+                                                'position' => $optIndex,
+                                            ]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+            // Delete attributes that were removed (including their options - cascading will handle)
+            CategoryAttribute::where('category_id', $category->id)
+                ->whereNotIn('id', $existingAttributeIds)
+                ->delete();
 
-        $category->load('parent', 'children', 'files');
+            DB::commit();
 
-        return redirect()->route('categories.index')
-            ->with('success', 'Category updated successfully.');
+            return redirect()->route('categories.index')
+                ->with('success', 'Category updated successfully.');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to update category: ' . $e->getMessage());
+        }
     }
+
+    /**
+     * Helper methods
+     */
+    private function generateUniqueSlug($name, $parentId = null, $ignoreId = null)
+    {
+        $slug = \Str::slug($name);
+        $originalSlug = $slug;
+        $counter = 1;
+        
+        $query = Category::where('slug', $slug);
+        
+        if ($parentId) {
+            $query->where('parent_id', $parentId);
+        } else {
+            $query->whereNull('parent_id');
+        }
+        
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+        
+        while ($query->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $query = Category::where('slug', $slug);
+            if ($parentId) {
+                $query->where('parent_id', $parentId);
+            } else {
+                $query->whereNull('parent_id');
+            }
+            if ($ignoreId) {
+                $query->where('id', '!=', $ignoreId);
+            }
+            $counter++;
+        }
+        
+        return $slug;
+    }
+
+    private function getNextPosition($parentId = null)
+    {
+        $query = Category::where('parent_id', $parentId);
+        
+        if ($parentId === null) {
+            $query->whereNull('parent_id');
+        }
+        
+        $maxPosition = $query->max('position');
+        return $maxPosition !== null ? $maxPosition + 1 : 0;
+    }
+
+    private function isDescendant($parentId, Category $category)
+    {
+        if (!$parentId) return false;
+        
+        $parent = Category::find($parentId);
+        if (!$parent) return false;
+        
+        $descendants = $parent->descendantsAndSelf()->pluck('id')->toArray();
+        return in_array($category->id, $descendants);
+    }
+
 
 
     /**
@@ -345,68 +782,6 @@ class CategoryController extends Controller
             ->with('success', 'Category deleted successfully.');
     }
 
-
-    /**
-     * Generate a unique slug for the category.
-     */
-    private function generateUniqueSlug(string $name, ?int $parentId = null, ?int $exceptId = null): string
-    {
-        $slug = Str::slug($name);
-        $originalSlug = $slug;
-        $counter = 1;
-
-        while (Category::where('slug', $slug)
-            ->when($parentId, function ($query) use ($parentId) {
-                return $query->where('parent_id', $parentId);
-            }, function ($query) {
-                return $query->whereNull('parent_id');
-            })
-            ->when($exceptId, function ($query) use ($exceptId) {
-                return $query->where('id', '!=', $exceptId);
-            })
-            ->exists()) {
-            $slug = $originalSlug . '-' . $counter;
-            $counter++;
-        }
-
-        return $slug;
-    }
-
-    /**
-     * Get the next position for a new category at a given level.
-     */
-    private function getNextPosition(?int $parentId = null): int
-    {
-        $lastPosition = Category::where('parent_id', $parentId)
-            ->max('position');
-
-        return ($lastPosition ?? 0) + 1;
-    }
-
-    /**
-     * Check if a category is a descendant of another category.
-     */
-    private function isDescendant(?int $parentId, Category $potentialDescendant): bool
-    {
-        if (!$parentId) {
-            return false;
-        }
-
-        $parent = Category::find($parentId);
-        if (!$parent) {
-            return false;
-        }
-
-        $checkCategory = $parent;
-        while ($checkCategory) {
-            if ($checkCategory->id === $potentialDescendant->id) {
-                return true;
-            }
-            $checkCategory = $checkCategory->parent;
-        }
-
-        return false;
-    }
 
     /**
      * Reorder categories at a given level after deletion.

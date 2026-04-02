@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('verifications:clean')->daily();
         $schedule->command('subscriptions:expire')->hourly();
+        $schedule->command('users:reactivate-suspended')->hourly();
     }
 
     

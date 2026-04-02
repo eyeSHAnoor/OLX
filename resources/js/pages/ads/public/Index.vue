@@ -1,5 +1,6 @@
 <template>
     <OlxLayout>
+        <TopCategoriesBar />
         <div class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
             <!-- Header Section -->
             <div class="mb-6 md:mb-8">
@@ -75,14 +76,6 @@
                             class="flex-shrink-0 px-2 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[110px]">
                             <option value="">All Categories</option>
                             <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                        </select>
-
-                        <!-- Brand Filter -->
-                        <select v-model="filters.brand"
-                            class="flex-shrink-0 px-2 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[110px]"
-                            :disabled="!filters.category && brands.length === 0">
-                            <option value="">All Brands</option>
-                            <option v-for="brand in brands" :key="brand.id" :value="brand.id">{{ brand.name }}</option>
                         </select>
 
                         <!-- Sort Filter -->
@@ -171,8 +164,41 @@
                 Showing {{ allLoadedAds.length }} of {{ totalAds }} ads
             </div>
 
+            <!-- Status Tabs -->
+            <!-- Status Tabs -->
+            <div class="border-b border-gray-200 my-4 sm:my-6">
+
+                <nav class="-mb-px flex overflow-x-auto no-scrollbar space-x-4 sm:space-x-6 px-1" aria-label="Tabs">
+
+                    <button v-for="tab in statusTabs" :key="tab.value" @click="setStatusFilter(tab.value)" :class="[
+                        'flex items-center whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition',
+                        activeStatusTab === tab.value
+                            ? 'border-brand-teal text-brand-teal'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ]">
+                        {{ tab.label }}
+
+                    </button>
+
+                </nav>
+
+            </div>
+
+            <!-- Loading Spinner (when filters applied and no ads yet) -->
+            <div v-if="loading && allLoadedAds.length === 0" class="text-center py-12">
+                <svg class="animate-spin w-10 h-10 text-brand-teal mx-auto mb-3" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                    </circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                <p class="text-sm text-gray-500">Loading ads...</p>
+            </div>
+
             <!-- Ads Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
                 <div v-for="ad in allLoadedAds" :key="ad.id"
                     class="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-200">
 
@@ -226,6 +252,27 @@
                                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                             </button>
+                            <button v-if="ad.status !== 'sold'" @click="toggleAdStatus(ad)"
+                                class="p-2 bg-white rounded-lg hover:bg-yellow-500 hover:text-white transition-colors shadow-lg"
+                                :title="ad.status === 'active' ? 'Deactivate' : 'Activate'">
+                                <svg v-if="ad.status === 'active'" class="w-5 h-5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                </svg>
+                                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                            </button>
+                            <button v-else @click="reactivateSoldAd(ad)"
+                                class="p-2 bg-white rounded-lg hover:bg-green-600 hover:text-white transition-colors shadow-lg"
+                                title="Reactivate (make Active)">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
 
@@ -277,8 +324,8 @@
                 </div>
             </div>
 
-            <!-- Loading indicator -->
-            <div v-if="loading" class="text-center py-6">
+            <!-- Infinite scroll loading indicator (bottom) -->
+            <div v-if="loading && allLoadedAds.length > 0" class="text-center py-6">
                 <div class="inline-flex items-center gap-2 text-gray-500">
                     <svg class="animate-spin h-5 w-5 text-brand-teal" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24">
@@ -319,6 +366,7 @@
                 </Link>
             </div>
         </div>
+        <ShadcnAlertDialog />
     </OlxLayout>
 </template>
 
@@ -328,6 +376,8 @@ import { router, Link } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import debounce from 'lodash/debounce'
 import { useShadcnAlert } from '@/composables/useShadcnAlert'
+import ShadcnAlertDialog from '@/components/ShadcnAlertDialog.vue'
+import TopCategoriesBar from '@/components/TopCategoriesBar.vue'
 
 interface Props {
     ads: {
@@ -349,6 +399,7 @@ interface Props {
             brand: string | null
             min_price: string | null
             max_price: string | null
+            status: string | null
         }
         sort: string
     }
@@ -356,13 +407,40 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// Store all loaded ads (accumulated from all pages)
+// ==================== ALL REFS (MUST BE DEFINED BEFORE ANY WATCH THAT USES THEM) ====================
 const allLoadedAds = ref<any[]>([])
 const currentPage = ref(1)
 const totalPages = ref(1)
 const totalAds = ref(0)
+const loading = ref(false)           // <-- Moved up to fix ReferenceError
 
-// Update all loaded ads when initial data arrives
+// Status tabs
+const activeStatusTab = ref(props.filters?.filter?.status || 'all')
+const statusTabs = [
+    { label: 'All Ads', value: 'all' },
+    { label: 'Active', value: 'active' },
+    { label: 'Inactive', value: 'inactive' },
+    { label: 'Sold', value: 'sold' },
+]
+
+// Filter states
+const filters = ref({
+    global: props.filters?.filter?.global || '',
+    category: props.filters?.filter?.category || '',
+    brand: props.filters?.filter?.brand || '',
+    min_price: props.filters?.filter?.min_price || '',
+    max_price: props.filters?.filter?.max_price || '',
+    status: props.filters?.filter?.status || ''
+})
+
+const sort = ref(props.filters?.sort || 'newest')
+
+// Infinite scroll refs
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
+
+// ==================== WATCHES ====================
+// This watch now has access to 'loading' because it's defined above
 watch(() => props.ads, (newData) => {
     if (newData) {
         if (newData.current_page === 1) {
@@ -373,33 +451,17 @@ watch(() => props.ads, (newData) => {
         currentPage.value = newData.current_page
         totalPages.value = newData.last_page
         totalAds.value = newData.total
+        loading.value = false   // Safe now
     }
 }, { immediate: true, deep: true })
 
+// ==================== COMPUTED ====================
 const hasMorePages = computed(() => currentPage.value < totalPages.value)
 
-// Filter states
-const filters = ref({
-    global: props.filters?.filter?.global || '',
-    category: props.filters?.filter?.category || '',
-    brand: props.filters?.filter?.brand || '',
-    min_price: props.filters?.filter?.min_price || '',
-    max_price: props.filters?.filter?.max_price || ''
-})
-
-const sort = ref(props.filters?.sort || 'newest')
-
-// Infinite scroll states
-const loading = ref(false)
-const loadMoreTrigger = ref<HTMLElement | null>(null)
-let observer: IntersectionObserver | null = null
-
-// Computed stats
 const activeAds = computed(() => allLoadedAds.value.filter(ad => ad.status === 'active').length)
 const pendingAds = computed(() => allLoadedAds.value.filter(ad => ad.status === 'pending').length)
 const totalViews = computed(() => allLoadedAds.value.reduce((sum, ad) => sum + (ad.views || 0), 0))
 
-// Check if any filters are applied
 const isFiltered = computed(() => {
     return filters.value.global ||
         filters.value.category ||
@@ -409,7 +471,39 @@ const isFiltered = computed(() => {
         sort.value !== 'newest'
 })
 
-// Helper functions
+// ==================== METHODS ====================
+const setStatusFilter = (status: string) => {
+    activeStatusTab.value = status
+    filters.value.status = status === 'all' ? '' : status
+    applyFilters()
+}
+
+const getStatusCount = (status: string) => {
+    if (status === 'all') return totalAds.value
+    return allLoadedAds.value.filter(ad => ad.status === status).length
+}
+
+const toggleAdStatus = async (ad: any) => {
+    const newStatus = ad.status === 'active' ? 'inactive' : 'active'
+    await updateAdStatus(ad.id, newStatus)
+}
+
+const reactivateSoldAd = async (ad: any) => {
+    await updateAdStatus(ad.id, 'active')
+}
+
+const updateAdStatus = async (adId: number, newStatus: string) => {
+    router.patch(route('user.ads.status', { ad: adId }), { status: newStatus }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            const adIndex = allLoadedAds.value.findIndex(a => a.id === adId)
+            if (adIndex !== -1) {
+                allLoadedAds.value[adIndex].status = newStatus
+            }
+        }
+    })
+}
+
 const formatPrice = (price: number | string) => {
     if (!price) return 'Any'
     const num = typeof price === 'string' ? parseFloat(price) : price
@@ -450,38 +544,26 @@ const truncateText = (text: string, maxLength: number) => {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
 }
 
-// Handle category change - reset brand filter when category changes
 const handleCategoryChange = () => {
-    // Reset brand filter when category changes
     filters.value.brand = ''
 }
 
-// Setup intersection observer for infinite scroll
 const setupObserver = () => {
-    if (observer) {
-        observer.disconnect()
-    }
-
+    if (observer) observer.disconnect()
     observer = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && !loading.value && hasMorePages.value) {
             loadMore()
         }
     }, { threshold: 0.1, rootMargin: '100px' })
-
-    if (loadMoreTrigger.value) {
-        observer.observe(loadMoreTrigger.value)
-    }
+    if (loadMoreTrigger.value) observer.observe(loadMoreTrigger.value)
 }
 
-// Load more ads
 const loadMore = () => {
     if (loading.value || !hasMorePages.value) return
-
     const nextPage = currentPage.value + 1
     if (nextPage > totalPages.value) return
 
     loading.value = true
-
     router.get(route('user.ads'), {
         page: nextPage,
         filter: {
@@ -489,7 +571,8 @@ const loadMore = () => {
             category: filters.value.category,
             brand: filters.value.brand,
             min_price: filters.value.min_price,
-            max_price: filters.value.max_price
+            max_price: filters.value.max_price,
+            status: filters.value.status
         },
         sort: sort.value
     }, {
@@ -498,9 +581,7 @@ const loadMore = () => {
         only: ['ads'],
         onSuccess: () => {
             loading.value = false
-            setTimeout(() => {
-                setupObserver()
-            }, 100)
+            setTimeout(setupObserver, 100)
         },
         onError: () => {
             loading.value = false
@@ -508,10 +589,10 @@ const loadMore = () => {
     })
 }
 
-// Actions
 const applyFilters = () => {
     allLoadedAds.value = []
     currentPage.value = 1
+    loading.value = true
 
     router.get(route('user.ads'), {
         filter: {
@@ -519,7 +600,8 @@ const applyFilters = () => {
             category: filters.value.category,
             brand: filters.value.brand,
             min_price: filters.value.min_price,
-            max_price: filters.value.max_price
+            max_price: filters.value.max_price,
+            status: filters.value.status
         },
         sort: sort.value,
         page: 1
@@ -527,6 +609,9 @@ const applyFilters = () => {
         preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
+            loading.value = false
+        },
+        onError: () => {
             loading.value = false
         }
     })
@@ -538,7 +623,8 @@ const resetFilters = () => {
         category: '',
         brand: '',
         min_price: '',
-        max_price: ''
+        max_price: '',
+        status: ''
     }
     sort.value = 'newest'
     applyFilters()
@@ -561,12 +647,10 @@ const confirmDeleteAd = async (ad: any) => {
         confirmText: 'Yes, Delete',
         cancelText: 'Cancel'
     })
-
     if (confirmed) {
         router.delete(route('ads.destroy', { id: ad.id }), {
             preserveScroll: true,
             onSuccess: () => {
-                // Remove the ad from the list
                 const index = allLoadedAds.value.findIndex(a => a.id === ad.id)
                 if (index !== -1) {
                     allLoadedAds.value.splice(index, 1)
@@ -577,7 +661,7 @@ const confirmDeleteAd = async (ad: any) => {
     }
 }
 
-// Debounce search
+// ==================== WATCHERS (continued) ====================
 const debouncedApplyFilters = debounce(() => {
     applyFilters()
 }, 500)
@@ -586,25 +670,19 @@ watch(() => filters.value.global, () => {
     debouncedApplyFilters()
 })
 
-// Watch other filters for immediate update
 watch([() => filters.value.category, () => filters.value.brand, () => filters.value.min_price, () => filters.value.max_price, sort], () => {
     applyFilters()
 })
 
-// Watch for ads changes to re-setup observer
 watch(allLoadedAds, (newAds) => {
     if (hasMorePages.value && newAds.length > 0) {
-        setTimeout(() => {
-            setupObserver()
-        }, 100)
+        setTimeout(setupObserver, 100)
     }
 }, { deep: true })
 
-// Setup observer on mount
+// ==================== LIFECYCLE ====================
 onMounted(() => {
-    setTimeout(() => {
-        setupObserver()
-    }, 100)
+    setTimeout(setupObserver, 100)
 })
 
 onUnmounted(() => {

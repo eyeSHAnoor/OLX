@@ -10,6 +10,7 @@ class Message extends Model
         'conversation_id',
         'sender_id',
         'body',
+        'type',
         'is_read'
     ];
 

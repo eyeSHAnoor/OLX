@@ -5,6 +5,7 @@ import { InertiaPageProps } from '@/types';
 import Layout from '@/layouts/AppLayout.vue';
 import CategoryAccordion from './_partials/CategoryAccordion.vue';
 import CategoryDetailsModal from './_partials/CategoryDetailsModal.vue';
+import { router } from '@inertiajs/vue3';
 
 defineOptions({ layout: Layout });
 
@@ -43,7 +44,7 @@ onMounted(() => {
             <template #links>
                 <div class="flex items-center gap-2">
                     <AppButton label="New Category" icon="radix-icons:plus-circled" size="sm"
-                        @click="handleShowModal({})" class="" />
+                        @click="router.visit(route('categories.create'))" class="" />
                 </div>
             </template>
         </PageHeading>

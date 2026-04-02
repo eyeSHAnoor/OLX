@@ -30,6 +30,8 @@ class User extends Authenticatable
         'suspended_until',
         'verification_code',
         'verification_code_expires_at',
+        'terms_accepted',
+        'terms_accepted_at',
         'rank'
     ];
 
@@ -211,12 +213,17 @@ class User extends Authenticatable
     public function completedOrdersCount(): int
     {
         return $this->sellerOrders()
-            ->where('status', 'completed')
+            ->where('status', 'accepted')
             ->count();
     }
 
     public function calculateRank(): int
     {
         return floor($this->completedOrdersCount() / 10);
+    }
+
+    public function ads(): HasMany
+    {
+        return $this->hasMany(Ad::class, 'user_id'); 
     }
 }   

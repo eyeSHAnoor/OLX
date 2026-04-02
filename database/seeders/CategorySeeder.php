@@ -274,10 +274,7 @@ class CategorySeeder extends Seeder
             $subPosition = 1;
             // Create subcategories
             foreach ($categoryData['subcategories'] as $subcategoryName) {
-                // Add parent category prefix to make slug unique
                 $slug = Str::slug($mainCategory->name . ' ' . $subcategoryName);
-                
-                // Check for duplicate and add counter if needed
                 $uniqueSlug = $slug;
                 $counter = 1;
                 while (Category::where('slug', $uniqueSlug)->exists()) {

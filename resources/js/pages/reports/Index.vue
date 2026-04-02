@@ -22,7 +22,7 @@ const page = usePage<{
 const reports = computed(() => page.props.reports);
 const statuses = computed(() => page.props.statuses);
 const reasons = computed(() => page.props.reasons);
-
+console.log('Reports Page Props:', page.props);
 // Initialize search filter
 const { form, reset, isFiltered } = useSearchFilter(route('reports.index'));
 
@@ -312,6 +312,15 @@ const selectedReports = ref<any[]>([]);
                             <div>
                                 <p class="font-medium text-sm">{{ row.original.reported_user?.name || 'N/A' }}</p>
                                 <p class="text-xs text-muted-foreground">{{ row.original.reported_user?.email }}</p>
+                                <p class="text-xs py-1">
+                                    Status:
+                                    <span class="inline bg-yellow-100 text-yellow-600 p-1">
+                                        {{ row.original.reported_user?.status || 'N/A' }}
+                                    </span>
+                                </p>
+                                <p class="text-xs font-light text-red-600">
+                                    Warning Count: {{ row.original.reported_user?.warning_count || 0 }}
+                                </p>
                             </div>
                         </div>
                     </template>

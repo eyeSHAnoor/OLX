@@ -56,16 +56,24 @@ class HandleInertiaRequests extends Middleware
                 'message' => trim($message),
                 'author' => trim($author),
             ],
-            'auth' => [
-                'user' => $user ? array_merge(
-                    $user->toArray(),
-                    ['roles' => method_exists($user, 'getRoleNames') ? $user->getRoleNames() : []],
-                    ['permissions' => method_exists($user, 'getAllPermissions') ? $user->getAllPermissions()->pluck('name') : []],
-                    ['subscription_status' => $user->subscriptionStatus()],
-                    [
-                        'image' => $user->profile
-                    ]
-                ) : null,
+           'auth' => [
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'terms_accepted' => $user->terms_accepted,
+
+                    'roles' => method_exists($user, 'getRoleNames')
+                        ? $user->getRoleNames()
+                        : [],
+
+                    'permissions' => method_exists($user, 'getAllPermissions')
+                        ? $user->getAllPermissions()->pluck('name')
+                        : [],
+
+                    'subscription_status' => $user->subscriptionStatus(),
+
+                    'image' => $user->profile?->image,
+                ] : null,
             ],
             'ziggy' => [
                 ...(new Ziggy)->toArray(),

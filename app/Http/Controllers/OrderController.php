@@ -5,11 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Ad;
 use App\Models\User;
+use App\Models\Conversation;
+use App\Models\Message;
 use App\Notifications\NewOrderNotification;
 use App\Notifications\OrderStatusChangedNotification;
 use App\Notifications\OrderStatusNotification;
 use App\Notifications\RankUpNotification;
-// use App\Events\ReviewRequested;
+use App\Events\MessageSent;
+use App\Notifications\NewMessageNotification;
+use App\Events\OrderCreated;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -75,32 +79,20 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-        // Validate request
+        // dd($request->all());
         $request->validate([
             'ad_id' => ['required', 'exists:ads,id'],
             'qty' => ['nullable', 'integer', 'min:1'],
-
-            'delivery_option' => ['required', 'in:pickup,delivery'],
-            'contact_number' => ['required', 'string', 'max:20'],
-            'delivery_address' => [
-                'nullable',
-                'string',
-                'required_if:delivery_option,delivery'
-            ],
-            'notes' => ['nullable', 'string']
         ]);
 
         $qty = $request->qty ?? 1;
 
-        // Get ad
         $ad = Ad::findOrFail($request->ad_id);
 
-        // Prevent ordering your own ad
         if ($ad->user_id === auth()->id()) {
             return redirect()->back()->with('Error', 'You cannot order your own ad');
         }
 
-        // Prevent duplicate pending order
         $alreadyExists = Order::where('buyer_id', auth()->id())
             ->where('ad_id', $ad->id)
             ->where('status', 'pending')
@@ -115,25 +107,54 @@ class OrderController extends Controller
             'buyer_id' => auth()->id(),
             'seller_id' => $ad->user_id,
             'ad_id' => $ad->id,
-
             'price' => $ad->price,
             'qty' => $qty,
 
-            'delivery_option' => $request->delivery_option,
-            'delivery_address' => $request->delivery_option === 'delivery'
-                ? $request->delivery_address
-                : null,
-
-            'contact_number' => $request->contact_number,
-            'notes' => $request->notes,
-
-            'status' => 'pending',
         ]);
 
-        // Notify seller
+        broadcast(new OrderCreated($order))->toOthers();
+
         $ad->user->notify(new NewOrderNotification($order));
 
-        return redirect()->back()->with('Success', 'Item is ordered and owner is notified');
+        /*
+        |--------------------------------------------------------------------------
+        | Create / Get Conversation
+        |--------------------------------------------------------------------------
+        */
+
+        $conversation = Conversation::firstOrCreate(
+                            [
+                                'buyer_id' => auth()->id(),
+                                'seller_id' => $ad->user_id,
+                            ],
+                            [
+                                'product_id' => $ad->id, // only used if conversation is newly created
+                                'last_message_at' => now()
+                            ]
+                        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Send System Message
+        |--------------------------------------------------------------------------
+        */
+
+        $message = Message::create([
+            'conversation_id' => $conversation->id,
+            'sender_id' => auth()->id(),
+            'body' => "🛒 Order #{$order->id} created for {$qty} item(s).",
+            'is_read' => false
+        ]);
+
+        $conversation->update([
+            'last_message_at' => now()
+        ]);
+
+        broadcast(new MessageSent($message))->toOthers();
+
+        return redirect()
+            ->route('chat.show', $conversation->id)
+            ->with('Success', 'Order placed and chat opened');
     }
 
     // Accept order
@@ -150,8 +171,30 @@ class OrderController extends Controller
         $order->status = 'accepted';
         $order->save();
 
+        $seller = $order->seller; // ✅ define seller
+
+        $newRank = $seller->calculateRank();
+
+        if ($order->ad) {
+            $order->ad->update([
+                'is_active' => false,
+                'status' => 'sold'
+            ]);
+        }
+
+        if ($newRank > $seller->rank) {
+
+            $seller->update([
+                'rank' => $newRank
+            ]);
+
+            // Send notification
+            $seller->notify(new RankUpNotification($newRank));
+        }
+
         // Notify buyer
         $order->buyer->notify(new OrderStatusChangedNotification($order));
+
         return redirect()->back()->with('success', 'Order accepted and buyer notified.');
     }
 
@@ -199,6 +242,13 @@ class OrderController extends Controller
                             ->count();
 
         $newRank = $seller->calculateRank();
+
+        if ($order->ad) {
+            $order->ad->update([
+                'is_active' => false,
+                'status' => 'sold'
+            ]);
+        }
 
         if ($newRank > $seller->rank) {
 

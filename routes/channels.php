@@ -23,3 +23,16 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 //     // Only allow the logged-in user who is the buyer
 //     return (int) $user->id === (int) $buyerId;
 // });
+
+Broadcast::channel('seller.{id}', function ($user, $id) {
+    return $user->id == $id;
+});
+
+Broadcast::channel('buyer.{id}', function ($user, $id) {
+    return $user->id == $id;
+});
+
+Broadcast::channel('admin-broadcast', function ($user) {
+    // All authenticated users can listen
+    return auth()->check();
+});

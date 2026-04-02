@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->foreignId('conversation_id')->constrained()->cascadeOnDelete();
             $table->foreignId('sender_id')->constrained('users')->cascadeOnDelete();
             $table->text('body');
+            $table->string('type')->default('text');
             $table->boolean('is_read')->default(false);
             $table->timestamps();
 

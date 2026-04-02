@@ -1,90 +1,182 @@
 <template>
-    <OlxLayout>
-        <div class="max-w-4xl mx-auto px-8 sm:px-4 py-8">
-            <!-- Header -->
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Notifications</h1>
-                    <p class="text-sm text-gray-600 mt-1">
-                        {{ unreadCount }} unread {{ unreadCount === 1 ? 'notification' : 'notifications' }}
-                    </p>
-                </div>
-            </div>
-            <Link :href="route('orders')" class="block">
-            <div class="space-y-1 py-2">
-                <div :class="[
-                    'rounded-lg shadow-sm border p-2 transition hover:shadow-md bg-brand-teal/10']">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1 ">
-                            <div class="flex items-center gap-2 mb-1">
-                                <p class="text-sm text-gray-600 mt-1">
-                                    Manage Your Orders
+    <OlxLayout :hide-search-bar="true">
+        <div class="min-h-screen bg-gray-50">
+            <div class="max-w-3xl mx-auto px-4 py-6 md:py-8">
+                <!-- Header -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Notifications</h1>
+                                <p class="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                                    <span class="inline-block size-2 bg-blue-500 rounded-full"></span>
+                                    {{ unreadCount }} unread {{ unreadCount === 1 ? 'notification' : 'notifications' }}
                                 </p>
                             </div>
+
+                            <button v-if="unreadCount > 0" @click="markAllAsRead"
+                                class="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
+                                Mark all as read
+                            </button>
                         </div>
-                        <div class="py-2">
-                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="flex border-b border-gray-100 bg-white">
+                        <button @click="activeTab = 'all'" :class="[
+                            'flex-1 px-4 py-3 text-sm font-medium transition-all relative',
+                            activeTab === 'all'
+                                ? 'text-blue-600'
+                                : 'text-gray-500 hover:text-gray-700'
+                        ]">
+                            All
+                            <div v-if="activeTab === 'all'"
+                                class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full"></div>
+                        </button>
+                        <button @click="activeTab = 'unread'" :class="[
+                            'flex-1 px-4 py-3 text-sm font-medium transition-all relative',
+                            activeTab === 'unread'
+                                ? 'text-blue-600'
+                                : 'text-gray-500 hover:text-gray-700'
+                        ]">
+                            Unread
+                            <span v-if="unreadCount > 0"
+                                class="ml-2 px-2 py-0.5 text-xs bg-red-500 text-white rounded-full">
+                                {{ unreadCount }}
+                            </span>
+                            <div v-if="activeTab === 'unread'"
+                                class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Orders Card -->
+                <Link :href="route('orders')" class="block mb-4">
+                    <div
+                        class="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl shadow-sm border border-orange-100 p-4 transition-all hover:shadow-md hover:scale-[1.01]">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="size-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900">Manage Your Orders</h3>
+                                <p class="text-sm text-gray-600">View and track all your orders in one place</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 5l7 7-7 7" />
                             </svg>
                         </div>
                     </div>
-                </div>
-            </div>
-            </Link>
+                </Link>
 
-            <!-- Notifications List -->
-            <div v-if="notifications.data.length > 0" class="space-y-1">
-                <div v-for="notification in notifications.data" :key="notification.id"
-                    @click="openNotification(notification)" class="cursor-pointer" :class="[
-                        'bg-white rounded-lg shadow-sm border p-2 transition hover:shadow-md',
-                        notification.read_at ? 'border-gray-100' : 'border-l-4 border-l-brand-teal border-gray-100'
-                    ]">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <p class="text-sm text-gray-600 mt-1">
-                                    {{ getNotificationMessage(notification.data) }}
-                                </p>
-                            </div>
+                <!-- Notifications List -->
+                <div v-if="filteredNotifications.length > 0" class="space-y-2">
+                    <!-- Date Groups -->
+                    <template v-for="(group, dateKey) in groupedNotifications" :key="dateKey">
+                        <div
+                            class="text-xs font-semibold text-gray-500 px-4 py-2 bg-gray-50 rounded-lg mt-4 first:mt-0">
+                            {{ dateKey }}
+                        </div>
 
+                        <div v-for="notification in group" :key="notification.id"
+                            @click="openNotification(notification)"
+                            class="group bg-white rounded-xl shadow-sm border transition-all hover:shadow-md cursor-pointer"
+                            :class="[
+                                notification.read_at ? 'border-gray-100' : 'border-l-4 border-l-blue-500 border-gray-100',
+                                'hover:bg-gray-50/50'
+                            ]">
+                            <div class="p-4">
+                                <div class="flex gap-3">
+                                    <!-- Icon -->
+                                    <div :class="[
+                                        'size-12 rounded-full flex-shrink-0 flex items-center justify-center',
+                                        getIconBgColor(notification.data.type)
+                                    ]">
+                                        <Icon :icon="getIconName(notification.data.type)"
+                                            :class="['size-6', getIconColor(notification.data.type)]" />
+                                    </div>
 
-                            <div class="flex items-center gap-4 mt-2">
-                                <span class="text-xs text-gray-400">
-                                    {{ formatDate(notification.created_at) }}
-                                </span>
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-gray-900">
+                                                    {{ getNotificationTitle(notification.data) }}
+                                                </p>
+                                                <p class="text-sm text-gray-600 mt-1 leading-relaxed">
+                                                    {{ getNotificationMessage(notification.data) }}
+                                                </p>
 
-                                <button v-if="!notification.read_at" @click="markAsRead(notification.id)"
-                                    class="text-xs text-brand-teal hover:text-brand-teal/80">
-                                    Mark as read
-                                </button>
+                                                <!-- Metadata -->
+                                                <div class="flex items-center gap-3 mt-2">
+                                                    <span class="text-xs text-gray-400 flex items-center gap-1">
+                                                        <Icon icon="lucide:clock" class="size-3" />
+                                                        {{ formatDate(notification.created_at) }}
+                                                    </span>
+
+                                                    <span v-if="notification.data.metadata?.type"
+                                                        class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                                                        {{ notification.data.metadata.type }}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Unread dot & actions -->
+                                            <div class="flex flex-col items-end gap-2">
+                                                <div v-if="!notification.read_at"
+                                                    class="size-2 bg-blue-500 rounded-full animate-pulse"></div>
+
+                                                <button v-if="!notification.read_at"
+                                                    @click.stop="markAsRead(notification.id)"
+                                                    class="opacity-0 group-hover:opacity-100 text-xs text-gray-400 hover:text-blue-600 transition-all">
+                                                    Mark as read
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </template>
                 </div>
-            </div>
 
-            <!-- Empty State -->
-            <div v-else class="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
-                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <h3 class="text-lg font-semibold text-gray-900 mb-1">No notifications</h3>
-                <p class="text-sm text-gray-600">You're all caught up! Check back later for new notifications.</p>
-            </div>
+                <!-- Empty State -->
+                <div v-else class="bg-white rounded-2xl shadow-sm border border-gray-100 py-12 px-4 text-center">
+                    <div class="size-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Icon icon="lucide:bell-off" class="size-10 text-gray-400" />
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1">
+                        {{ activeTab === 'unread' ? 'No unread notifications' : 'All caught up!' }}
+                    </h3>
+                    <p class="text-sm text-gray-500 max-w-sm mx-auto">
+                        {{ activeTab === 'unread'
+                            ? 'You have no unread notifications. Check back later for updates.'
+                            : 'You have no notifications at the moment. We\'ll notify you when something happens.'
+                        }}
+                    </p>
+                </div>
 
-            <!-- Pagination -->
-            <div v-if="notifications.last_page > 1" class="mt-6">
-                <div class="flex justify-center gap-2">
-                    <button v-for="page in pages" :key="page" @click="goToPage(page)" :class="[
-                        'px-3 py-1 rounded-lg text-sm transition',
-                        notifications.current_page === page
-                            ? 'bg-brand-teal text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                    ]">
-                        {{ page }}
-                    </button>
+                <!-- Pagination -->
+                <div v-if="notifications.last_page > 1" class="mt-6">
+                    <div class="flex justify-center gap-2">
+                        <button v-for="page in pages" :key="page" @click="goToPage(page)" :disabled="page === '...'"
+                            :class="[
+                                'min-w-[36px] h-9 rounded-lg text-sm font-medium transition-all',
+                                notifications.current_page === page
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : page === '...'
+                                        ? 'bg-transparent text-gray-400 cursor-default'
+                                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                            ]">
+                            {{ page }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -92,9 +184,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { ref, computed } from 'vue'
+import { router, Link } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
+import { Icon } from '@iconify/vue'
 
 interface Props {
     notifications: {
@@ -107,82 +200,156 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const activeTab = ref<'all' | 'unread'>('all')
+
+// Filter notifications based on active tab
+const filteredNotifications = computed(() => {
+    if (activeTab.value === 'all') {
+        return props.notifications.data
+    }
+    return props.notifications.data.filter(n => !n.read_at)
+})
+
+// Group notifications by date
+const groupedNotifications = computed(() => {
+    const groups: Record<string, any[]> = {}
+
+    filteredNotifications.value.forEach(notification => {
+        const dateKey = getDateGroup(notification.created_at)
+        if (!groups[dateKey]) {
+            groups[dateKey] = []
+        }
+        groups[dateKey].push(notification)
+    })
+
+    return groups
+})
+
+// Get date group label
+const getDateGroup = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const thisWeek = new Date(today)
+    thisWeek.setDate(thisWeek.getDate() - 7)
+
+    if (date >= today) {
+        return 'Today'
+    } else if (date >= yesterday) {
+        return 'Yesterday'
+    } else if (date >= thisWeek) {
+        return 'This Week'
+    } else {
+        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    }
+}
 
 // Format date
 const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    const diffInMinutes = Math.floor(diffInSeconds / 60)
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    const diffInDays = Math.floor(diffInHours / 24)
 
-    if (diffInHours < 1) {
-        const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
-        return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`
+    if (diffInSeconds < 60) {
+        return 'Just now'
+    } else if (diffInMinutes < 60) {
+        return `${diffInMinutes}m ago`
     } else if (diffInHours < 24) {
-        return `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`
+        return `${diffInHours}h ago`
+    } else if (diffInDays === 1) {
+        return 'Yesterday'
+    } else if (diffInDays < 7) {
+        return `${diffInDays}d ago`
     } else {
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     }
 }
 
 // Get notification title based on type
 const getNotificationTitle = (data: any) => {
-    switch (data.type) {
-        case 'new_ad':
-            return 'New Ad Posted'
-        case 'ad_sold':
-            return 'Ad Sold'
-        case 'message_received':
-            return 'New Message'
-        case 'favorite_added':
-            return 'Added to Favorites'
-        default:
-            return data.title || 'Notification'
+    const titles: Record<string, string> = {
+        'new_ad': 'New Ad Posted',
+        'ad_sold': 'Ad Sold',
+        'message_received': 'New Message',
+        'favorite_added': 'Added to Favorites',
+        'order_placed': 'New Order',
+        'order_shipped': 'Order Shipped',
+        'order_delivered': 'Order Delivered',
+        'price_drop': 'Price Drop Alert',
+        'review_received': 'New Review'
     }
+    return titles[data.type] || data.title || 'Notification'
 }
 
 // Get notification message
 const getNotificationMessage = (data: any) => {
-    return data.message || 'You have a new notification'
-}
+    if (data.message) return data.message
 
-// Get icon based on notification type
-const getIconPath = (type: string) => {
-    switch (type) {
-        case 'new_ad':
-            return 'M12 4v16m8-8H4'
-        case 'ad_sold':
-            return 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
-        case 'message_received':
-            return 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
-        default:
-            return 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'
+    const messages: Record<string, string> = {
+        'new_ad': `A new ad "${data.ad_title || 'item'}" has been posted in your area.`,
+        'ad_sold': `Your ad "${data.ad_title || 'item'}" has been sold!`,
+        'message_received': `You have a new message from ${data.sender_name || 'someone'}.`,
+        'favorite_added': `${data.user_name || 'Someone'} added your ad to favorites.`,
+        'order_placed': `Order #${data.order_id} has been placed successfully.`,
+        'order_shipped': `Your order #${data.order_id} has been shipped.`,
+        'order_delivered': `Your order #${data.order_id} has been delivered.`,
+        'price_drop': `Price dropped on "${data.ad_title || 'item'}" by ${data.price_drop || ''}`,
+        'review_received': `${data.reviewer_name || 'Someone'} left a review on your ad.`
     }
+    return messages[data.type] || 'You have a new notification'
 }
 
+// Get icon name
+const getIconName = (type: string) => {
+    const icons: Record<string, string> = {
+        'new_ad': 'lucide:megaphone',
+        'ad_sold': 'lucide:shopping-bag',
+        'message_received': 'lucide:message-circle',
+        'favorite_added': 'lucide:heart',
+        'order_placed': 'lucide:shopping-cart',
+        'order_shipped': 'lucide:truck',
+        'order_delivered': 'lucide:check-circle',
+        'price_drop': 'lucide:trending-down',
+        'review_received': 'lucide:star'
+    }
+    return icons[type] || 'lucide:bell'
+}
+
+// Get icon background color
 const getIconBgColor = (type: string) => {
-    switch (type) {
-        case 'new_ad':
-            return 'bg-blue-100'
-        case 'ad_sold':
-            return 'bg-green-100'
-        case 'message_received':
-            return 'bg-purple-100'
-        default:
-            return 'bg-gray-100'
+    const colors: Record<string, string> = {
+        'new_ad': 'bg-blue-100',
+        'ad_sold': 'bg-green-100',
+        'message_received': 'bg-purple-100',
+        'favorite_added': 'bg-pink-100',
+        'order_placed': 'bg-orange-100',
+        'order_shipped': 'bg-cyan-100',
+        'order_delivered': 'bg-emerald-100',
+        'price_drop': 'bg-red-100',
+        'review_received': 'bg-yellow-100'
     }
+    return colors[type] || 'bg-gray-100'
 }
 
+// Get icon color
 const getIconColor = (type: string) => {
-    switch (type) {
-        case 'new_ad':
-            return 'text-blue-600'
-        case 'ad_sold':
-            return 'text-green-600'
-        case 'message_received':
-            return 'text-purple-600'
-        default:
-            return 'text-gray-600'
+    const colors: Record<string, string> = {
+        'new_ad': 'text-blue-600',
+        'ad_sold': 'text-green-600',
+        'message_received': 'text-purple-600',
+        'favorite_added': 'text-pink-600',
+        'order_placed': 'text-orange-600',
+        'order_shipped': 'text-cyan-600',
+        'order_delivered': 'text-emerald-600',
+        'price_drop': 'text-red-600',
+        'review_received': 'text-yellow-600'
     }
+    return colors[type] || 'text-gray-600'
 }
 
 // Pagination
@@ -190,7 +357,7 @@ const pages = computed(() => {
     const total = props.notifications.last_page
     const current = props.notifications.current_page
     const delta = 2
-    const range = []
+    const range: (number | string)[] = []
 
     for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
         range.push(i)
@@ -204,14 +371,14 @@ const pages = computed(() => {
     }
 
     range.unshift(1)
-    if (total !== 1) {
+    if (total !== 1 && total !== 1) {
         range.push(total)
     }
 
     return range
 })
 
-const goToPage = (page: number) => {
+const goToPage = (page: number | string) => {
     if (page === '...') return
     router.get(route('notifications.index'), { page }, { preserveState: true })
 }
@@ -225,33 +392,83 @@ const markAsRead = (id: string) => {
 }
 
 const markAllAsRead = () => {
-    if (confirm('Mark all notifications as read?')) {
-        router.post(route('notifications.mark-all-read'), {}, {
-            preserveScroll: true,
-            preserveState: true
-        })
-    }
+    router.post(route('notifications.markAllAsRead'), {}, {
+        preserveScroll: true,
+        preserveState: true
+    })
 }
 
 const openNotification = (notification: any) => {
-
-    // mark as read if not already
+    // Mark as read if not already
     if (!notification.read_at) {
         markAsRead(notification.id)
     }
 
     if (notification.data?.url) {
-
         let url = notification.data.url
-
-        // Fix localhost vs 127.0.0.1 problem
         url = url.replace('http://127.0.0.1:8000', '')
-
+        url = url.replace('http://localhost:8000', '')
         router.visit(url)
     }
 }
 </script>
 
 <style scoped>
-/* No additional styles needed - using Tailwind classes */
+/* Smooth transitions */
+* {
+    transition: all 0.2s ease;
+}
+
+/* Custom scrollbar */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 5px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Animation for new notifications */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.bg-white.rounded-xl {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Pulse animation for unread dot */
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 </style>

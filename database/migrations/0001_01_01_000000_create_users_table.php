@@ -27,6 +27,8 @@ return new class extends Migration {
             $table->timestamp('verification_code_expires_at')->nullable();
 
             $table->integer('rank')->default(0);
+            $table->boolean('terms_accepted')->default(false);
+            $table->timestamp('terms_accepted_at')->nullable();
 
             $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();

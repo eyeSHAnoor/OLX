@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import { Icon } from '@iconify/vue'
@@ -19,15 +19,41 @@ const conversationsList = ref(props.conversations || [])
 const showMobileSidebar = ref(false)
 const showMobileChat = ref(false)
 const isTyping = ref(false)
+const searchQuery = ref('')
+const selectedFilter = ref('all') // all, unread
+const editingMessage = ref(null)
 
 useForceTheme('light');
+
+// Filter conversations
+const filteredConversations = computed(() => {
+    let filtered = conversationsList.value
+
+    // Search filter
+    if (searchQuery.value) {
+        filtered = filtered.filter(conv => {
+            const name = conv.seller_id === page.props.auth.user.id
+                ? conv.buyer.name
+                : conv.seller.name
+            return name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                conv.product?.ad_title?.toLowerCase().includes(searchQuery.value.toLowerCase())
+        })
+    }
+
+    // Unread filter
+    if (selectedFilter.value === 'unread') {
+        filtered = filtered.filter(conv => getUnreadCount(conv) > 0)
+    }
+
+    return filtered
+})
+
 // Scroll to bottom
-const scrollToBottom = () => {
-    setTimeout(() => {
-        if (messagesEnd.value) {
-            messagesEnd.value.scrollIntoView({ behavior: 'smooth' })
-        }
-    }, 100)
+const scrollToBottom = async () => {
+    await nextTick()
+    if (messagesEnd.value) {
+        messagesEnd.value.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    }
 }
 
 // Listen for new messages
@@ -98,6 +124,7 @@ const sendMessage = () => {
 }
 
 const formatTime = (date) => {
+    if (!date) return ''
     return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
@@ -145,52 +172,95 @@ const goBackToSidebar = () => {
     showMobileSidebar.value = true
     showMobileChat.value = false
 }
+
+const getInitials = (name) => {
+    return name?.charAt(0).toUpperCase() || '?'
+}
+
+const getAvatarColor = (id) => {
+    const colors = [
+        'from-brand-blue/90 to-brand-blue',
+    ]
+    return colors[id % colors.length]
+}
 </script>
 
 <template>
-    <OlxLayout>
-        <div class="h-[calc(100vh-73px)] bg-gray-50">
-            <div class="h-full max-w-8/10 mx-auto px-6 sm:px-4 py-2 sm:py-4">
+    <OlxLayout :hide-search-bar="true">
+        <div
+            class="h-[calc(100vh-73px)] bg-gradient-to-br from-gray-50 to-gray-100 sm:max-w-5xl mx-auto rounded-2xl shadow-lg overflow-hidden">
+            <div class="h-full max-w-[1600px] mx-auto px-4 py-4">
                 <!-- Desktop Layout -->
-                <div class="hidden md:flex h-full bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="hidden md:flex h-full overflow-hidden">
                     <!-- Conversations Sidebar -->
-                    <div class="w-80 border-r flex flex-col">
-                        <div class="p-4 border-b bg-gray-50">
-                            <h2 class="font-semibold text-gray-800">Messages</h2>
-                            <p class="text-sm text-gray-500">{{ conversationsList.length }} conversations</p>
-                        </div>
+                    <div class="w-96 border-r border-gray-200 flex flex-col bg-white">
+                        <!-- Sidebar Header -->
+                        <div class="p-5 border-b border-gray-200 bg-white">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-3">Messages</h2>
 
-                        <div class="flex-1 overflow-y-auto">
-                            <div v-if="!conversationsList.length" class="p-8 text-center">
-                                <Icon icon="lucide:inbox" class="size-12 text-gray-300 mx-auto mb-3" />
-                                <p class="text-gray-500">No conversations yet</p>
+                            <!-- Search Bar -->
+                            <div class="relative">
+                                <Icon icon="lucide:search"
+                                    class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
+                                <input v-model="searchQuery" type="text" placeholder="Search conversations..."
+                                    class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
                             </div>
 
-                            <Link v-for="conv in conversationsList" :key="conv.id" :href="`/chat/${conv.id}`"
-                                class="flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors border-b"
-                                :class="conv.id === conversation?.id ? 'bg-blue-50' : ''">
+                            <!-- Filter Tabs -->
+                            <div class="flex gap-2 mt-3">
+                                <button @click="selectedFilter = 'all'" :class="[
+                                    'flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                                    selectedFilter === 'all'
+                                        ? 'bg-brand-blue text-white shadow-sm'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ]">
+                                    All
+                                </button>
+                                <button @click="selectedFilter = 'unread'" :class="[
+                                    'flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                                    selectedFilter === 'unread'
+                                        ? 'bg-brand-blue text-white shadow-sm'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ]">
+                                    Unread
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Conversations List -->
+                        <div class="flex-1 overflow-y-auto">
+                            <div v-if="!filteredConversations.length"
+                                class="flex flex-col items-center justify-center h-full p-8">
+                                <Icon icon="lucide:inbox" class="size-12 text-gray-300 mb-3" />
+                                <p class="text-gray-500 text-sm">No conversations found</p>
+                            </div>
+
+                            <Link v-for="conv in filteredConversations" :key="conv.id" :href="`/chat/${conv.id}`"
+                                class="group flex items-start gap-3 p-4 hover:bg-gray-50 transition-all cursor-pointer border-b border-gray-100"
+                                :class="conv.id === conversation?.id ? 'bg-brand-blue/20' : ''">
 
                                 <!-- Avatar -->
                                 <div class="relative flex-shrink-0">
-                                    <div class="size-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 
-                                                flex items-center justify-center text-white font-medium">
-                                        {{ (conv.seller_id === page.props.auth.user.id
-                                            ? conv.buyer.name.charAt(0)
-                                            : conv.seller.name.charAt(0)).toUpperCase() }}
+                                    <div :class="[
+                                        'size-12 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-semibold text-lg shadow-sm',
+                                        getAvatarColor(conv.id)
+                                    ]">
+                                        {{ getInitials(conv.seller_id === page.props.auth.user.id ? conv.buyer.name :
+                                            conv.seller.name) }}
                                     </div>
-                                    <div class="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full 
-                                                border-2 border-white"></div>
+                                    <div
+                                        class="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-white">
+                                    </div>
                                 </div>
 
                                 <!-- Content -->
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between mb-1">
-                                        <h3 class="font-medium text-gray-900 truncate">
-                                            {{ conv.seller_id === page.props.auth.user.id
-                                                ? conv.buyer.name
-                                                : conv.seller.name }}
+                                        <h3 class="font-semibold text-gray-900 truncate">
+                                            {{ conv.seller_id === page.props.auth.user.id ? conv.buyer.name :
+                                                conv.seller.name }}
                                         </h3>
-                                        <span class="text-xs text-gray-500 whitespace-nowrap ml-2">
+                                        <span class="text-xs text-gray-400 whitespace-nowrap ml-2">
                                             {{ formatTime(getLastMessage(conv)?.created_at || conv.created_at) }}
                                         </span>
                                     </div>
@@ -199,85 +269,19 @@ const goBackToSidebar = () => {
                                         {{ getLastMessage(conv)?.body || 'No messages yet' }}
                                     </p>
 
-                                    <div class="flex items-center justify-between mt-2">
+                                    <div class="flex items-center justify-between mt-1.5">
                                         <span
-                                            class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full truncate max-w-[150px]">
+                                            class="text-xs text-gray-400 truncate max-w-[180px] flex items-center gap-1">
+                                            <Icon icon="lucide:package" class="size-3" />
                                             {{ conv.product?.ad_title || 'Product' }}
                                         </span>
                                         <span v-if="getUnreadCount(conv) > 0"
-                                            class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                                            class="bg-brand-blue text-white text-xs font-medium px-2 py-0.5 rounded-full shadow-sm">
                                             {{ getUnreadCount(conv) }}
                                         </span>
                                     </div>
                                 </div>
                             </Link>
-                        </div>
-                    </div>
-
-                    <!-- Chat Area -->
-                    <div class="flex-1 flex flex-col bg-white">
-                        <!-- Chat Header -->
-                        <div v-if="conversation" class="border-b p-4 flex items-center gap-3 bg-gray-50">
-                            <div class="size-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 
-                                        flex items-center justify-center text-white font-medium text-lg">
-                                {{ otherUser?.name?.charAt(0).toUpperCase() }}
-                            </div>
-                            <div>
-                                <h3 class="font-semibold text-gray-900">{{ otherUser?.name }}</h3>
-                                <p class="text-sm text-gray-500 flex items-center gap-1">
-                                    <Icon icon="lucide:package" class="size-4" />
-                                    {{ conversation.product?.ad_title }}
-                                </p>
-                            </div>
-                        </div>
-                        <div v-else class="border-b p-4 bg-gray-50">
-                            <h3 class="font-semibold text-gray-500">Select a conversation</h3>
-                        </div>
-
-                        <!-- Messages -->
-                        <div v-if="conversation" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-                            <div v-for="message in messagesList" :key="message.id"
-                                :class="['flex', message.sender_id === page.props.auth.user.id ? 'justify-end' : 'justify-start']">
-
-                                <div class="max-w-[70%]">
-                                    <div :class="['rounded-2xl p-3 break-words',
-                                        message.sender_id === page.props.auth.user.id
-                                            ? 'bg-blue-500 text-white rounded-br-none'
-                                            : 'bg-white text-gray-800 rounded-bl-none shadow-sm']">
-                                        <p class="text-sm">{{ message.body }}</p>
-                                    </div>
-                                    <div
-                                        :class="['text-xs text-gray-500 mt-1 flex items-center gap-1',
-                                            message.sender_id === page.props.auth.user.id ? 'justify-end' : 'justify-start']">
-                                        {{ formatTime(message.created_at) }}
-                                        <Icon v-if="message.sender_id === page.props.auth.user.id"
-                                            icon="lucide:check-check"
-                                            :class="message.is_read ? 'text-blue-500' : 'text-gray-400'"
-                                            class="size-3" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div ref="messagesEnd"></div>
-                        </div>
-                        <div v-else class="flex-1 flex items-center justify-center bg-gray-50">
-                            <div class="text-center">
-                                <Icon icon="lucide:message-circle" class="size-16 mx-auto mb-4 text-gray-300" />
-                                <p class="text-gray-500">Select a conversation to start chatting</p>
-                            </div>
-                        </div>
-
-                        <!-- Input -->
-                        <div v-if="conversation" class="border-t p-4 bg-white">
-                            <form @submit.prevent="sendMessage" class="flex gap-2">
-                                <input v-model="newMessage" type="text" placeholder="Type your message..." class="flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 
-                                           focus:ring-blue-500/50 text-sm">
-                                <button type="submit" class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 
-                                           transition-colors disabled:opacity-50 disabled:cursor-not-allowed 
-                                           flex items-center gap-2" :disabled="!newMessage.trim()">
-                                    <span>Send</span>
-                                    <Icon icon="lucide:send" class="size-4" />
-                                </button>
-                            </form>
                         </div>
                     </div>
                 </div>
@@ -286,56 +290,62 @@ const goBackToSidebar = () => {
                 <div class="md:hidden h-full">
                     <!-- Mobile Conversations List -->
                     <div v-if="showMobileSidebar || (!showMobileChat && !conversation)"
-                        class="h-full bg-white rounded-xl shadow-sm flex flex-col">
-                        <div class="p-4 border-b bg-gray-50">
-                            <h2 class="font-semibold text-gray-800">Messages</h2>
-                            <p class="text-sm text-gray-500">{{ conversationsList.length }} conversations</p>
+                        class="h-full bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden">
+                        <div class="p-4 border-b border-gray-200 bg-white">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-3">Messages</h2>
+                            <div class="relative">
+                                <Icon icon="lucide:search"
+                                    class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
+                                <input v-model="searchQuery" type="text" placeholder="Search..."
+                                    class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                            </div>
                         </div>
 
                         <div class="flex-1 overflow-y-auto">
-                            <div v-if="!conversationsList.length" class="p-8 text-center">
-                                <Icon icon="lucide:inbox" class="size-12 text-gray-300 mx-auto mb-3" />
-                                <p class="text-gray-500">No conversations yet</p>
+                            <div v-if="!filteredConversations.length"
+                                class="flex flex-col items-center justify-center h-full p-8">
+                                <Icon icon="lucide:inbox" class="size-12 text-gray-300 mb-3" />
+                                <p class="text-gray-500 text-sm">No conversations</p>
                             </div>
 
-                            <button v-for="conv in conversationsList" :key="conv.id"
+                            <button v-for="conv in filteredConversations" :key="conv.id"
                                 @click="router.visit(`/chat/${conv.id}`)"
-                                class="w-full flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors border-b text-left">
+                                class="w-full flex items-start gap-3 p-4 hover:bg-gray-50 transition-all border-b border-gray-100 text-left">
 
                                 <div class="relative flex-shrink-0">
-                                    <div class="size-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 
-                                                flex items-center justify-center text-white font-medium">
-                                        {{ (conv.seller_id === page.props.auth.user.id
-                                            ? conv.buyer.name.charAt(0)
-                                            : conv.seller.name.charAt(0)).toUpperCase() }}
+                                    <div :class="[
+                                        'size-12 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-semibold text-lg',
+                                        getAvatarColor(conv.id)
+                                    ]">
+                                        {{ getInitials(conv.seller_id === page.props.auth.user.id ? conv.buyer.name :
+                                            conv.seller.name) }}
                                     </div>
-                                    <div class="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full 
-                                                border-2 border-white"></div>
+                                    <div
+                                        class="absolute bottom-0 right-0 size-3 bg-brand-teal rounded-full border-2 border-white">
+                                    </div>
                                 </div>
 
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between mb-1">
-                                        <h3 class="font-medium text-gray-900 truncate">
-                                            {{ conv.seller_id === page.props.auth.user.id
-                                                ? conv.buyer.name
-                                                : conv.seller.name }}
+                                        <h3 class="font-semibold text-gray-900 truncate">
+                                            {{ conv.seller_id === page.props.auth.user.id ? conv.buyer.name :
+                                                conv.seller.name }}
                                         </h3>
-                                        <span class="text-xs text-gray-500 whitespace-nowrap ml-2">
+                                        <span class="text-xs text-gray-400 whitespace-nowrap ml-2">
                                             {{ formatTime(conv.last_message_at || conv.created_at) }}
                                         </span>
                                     </div>
-
                                     <p class="text-sm text-gray-600 truncate">
                                         {{ conv.last_message?.body || 'No messages yet' }}
                                     </p>
-
-                                    <div class="flex items-center justify-between mt-2">
+                                    <div class="flex items-center justify-between mt-1">
                                         <span
-                                            class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full truncate max-w-[150px]">
+                                            class="text-xs text-gray-400 truncate max-w-[150px] flex items-center gap-1">
+                                            <Icon icon="lucide:package" class="size-3" />
                                             {{ conv.product?.ad_title }}
                                         </span>
                                         <span v-if="getUnreadCount(conv) > 0"
-                                            class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                                            class="bg-brand-blue text-white text-xs font-medium px-2 py-0.5 rounded-full">
                                             {{ getUnreadCount(conv) }}
                                         </span>
                                     </div>
@@ -344,79 +354,16 @@ const goBackToSidebar = () => {
                         </div>
                     </div>
 
-                    <!-- Mobile Chat View -->
-                    <div v-else-if="showMobileChat && conversation"
-                        class="h-full bg-white rounded-xl shadow-sm flex flex-col">
-                        <!-- Mobile Chat Header -->
-                        <div class="border-b p-3 flex items-center gap-2 bg-gray-50">
-                            <button @click="goBackToSidebar" class="p-2 hover:bg-gray-200 rounded-full">
-                                <Icon icon="lucide:arrow-left" class="size-5" />
-                            </button>
-
-                            <div class="size-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 
-                                        flex items-center justify-center text-white font-medium">
-                                {{ otherUser?.name?.charAt(0).toUpperCase() }}
-                            </div>
-
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-semibold text-gray-900 truncate">{{ otherUser?.name }}</h3>
-                                <p class="text-xs text-gray-500 truncate flex items-center gap-1">
-                                    <Icon icon="lucide:package" class="size-3" />
-                                    {{ conversation.product?.ad_title }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Mobile Messages -->
-                        <div class="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50">
-                            <div v-for="message in messagesList" :key="message.id"
-                                :class="['flex', message.sender_id === page.props.auth.user.id ? 'justify-end' : 'justify-start']">
-
-                                <div class="max-w-[85%]">
-                                    <div :class="['rounded-2xl p-3 break-words text-sm',
-                                        message.sender_id === page.props.auth.user.id
-                                            ? 'bg-blue-500 text-white rounded-br-none'
-                                            : 'bg-white text-gray-800 rounded-bl-none shadow-sm']">
-                                        <p>{{ message.body }}</p>
-                                    </div>
-                                    <div
-                                        :class="['text-xs text-gray-500 mt-1 flex items-center gap-1',
-                                            message.sender_id === page.props.auth.user.id ? 'justify-end' : 'justify-start']">
-                                        {{ formatTime(message.created_at) }}
-                                        <Icon v-if="message.sender_id === page.props.auth.user.id"
-                                            icon="lucide:check-check"
-                                            :class="message.is_read ? 'text-blue-500' : 'text-gray-400'"
-                                            class="size-3" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div ref="messagesEnd"></div>
-                        </div>
-
-                        <!-- Mobile Input -->
-                        <div class="border-t p-3 bg-white">
-                            <form @submit.prevent="sendMessage" class="flex gap-2">
-                                <input v-model="newMessage" type="text" placeholder="Type a message..." class="flex-1 px-4 py-2.5 border rounded-lg focus:outline-none 
-                                           focus:ring-2 focus:ring-blue-500/50 text-sm">
-                                <button type="submit" class="size-11 bg-blue-500 text-white rounded-lg hover:bg-blue-600 
-                                           transition-colors disabled:opacity-50 disabled:cursor-not-allowed 
-                                           flex items-center justify-center" :disabled="!newMessage.trim()">
-                                    <Icon icon="lucide:send" class="size-4" />
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-
                     <!-- Mobile Empty State -->
                     <div v-else
-                        class="h-full bg-white rounded-xl shadow-sm flex flex-col items-center justify-center p-4">
-                        <Icon icon="lucide:message-circle" class="size-20 mb-4 text-gray-300" />
+                        class="h-full bg-white rounded-2xl shadow-xl flex flex-col items-center justify-center p-6">
+                        <div class="size-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                            <Icon icon="lucide:message-circle" class="size-10 text-gray-400" />
+                        </div>
                         <p class="text-lg font-medium text-gray-700 mb-2">No conversation selected</p>
-                        <p class="text-sm text-gray-500 mb-6 text-center">
-                            Choose a conversation from the list to start chatting
-                        </p>
+                        <p class="text-sm text-gray-500 mb-6 text-center">Choose a conversation to start messaging</p>
                         <button @click="showMobileSidebar = true"
-                            class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium">
+                            class="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-medium shadow-sm">
                             View Conversations
                         </button>
                     </div>
@@ -427,43 +374,51 @@ const goBackToSidebar = () => {
 </template>
 
 <style scoped>
-/* Smooth transitions */
-.flex {
-    transition: all 0.3s ease;
-}
-
-/* Custom scrollbar */
+/* Custom scrollbar - modern thin style */
 .overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: transparent;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
     background: #cbd5e1;
-    border-radius: 3px;
+    border-radius: 10px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
 
-/* Message bubbles */
-.bg-blue-500 {
-    background-color: #3b82f6;
+/* Smooth transitions */
+* {
+    transition: all 0.2s ease;
 }
 
-.hover\:bg-blue-600:hover {
-    background-color: #2563eb;
+/* Message bubble animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.flex>div {
+    animation: fadeInUp 0.2s ease-out;
 }
 
 /* Mobile optimizations */
 @media (max-width: 768px) {
-    .max-w-7xl {
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
+    .px-6 {
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
 }
 </style>

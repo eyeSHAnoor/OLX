@@ -29,25 +29,47 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        // Authenticate the user
         $request->authenticate();
 
+        // Regenerate session to prevent session fixation
         $request->session()->regenerate();
 
         $user = auth()->user();
-        // dd($user->hasRole('super_admin'));
-        if ($user && $user->hasRole('super_admin')){
+
+        // If super admin, redirect to dashboard
+        if ($user && $user->hasRole('super_admin')) {
             return redirect()->route('dashboard');
         }
-        if ($user->status === 'banned') {
-            return back()->withErrors(['email' => 'Your account is banned.']);
-        }
 
-        if ($user->status === 'suspended' && $user->suspended_until > now()) {
+        // Check if banned
+        if ($user->status === 'banned') {
+            // Log them out immediately
+            auth()->logout();
             return back()->withErrors([
-                'email' => 'Account suspended until '.$user->suspended_until->format('d M Y')
+                'email' => 'Your account is banned.'
             ]);
         }
-       return redirect()->intended(route('home'));
+
+        // Check if suspended
+        if ($user->status === 'suspended') {
+            // Check if suspension is still active
+            if ($user->suspended_until && $user->suspended_until->isFuture()) {
+                auth()->logout();
+                return back()->withErrors([
+                    'email' => 'Your account is suspended until ' . $user->suspended_until->format('d M Y H:i')
+                ]);
+            } else {
+                // If suspension has expired, reset status
+                $user->update([
+                    'status' => 'active',
+                    'suspended_until' => null
+                ]);
+            }
+        }
+
+        // If everything is fine, proceed to intended page
+        return redirect()->intended(route('home'));
     }
 
 

@@ -24,5 +24,10 @@ class DatabaseSeeder extends Seeder
         // $this->call(AdSeeder::class);
         $this->call(PlanSeeder::class);
         $this->call(FeatureSeeder::class);
+        $this->call(AttributeGroupSeeder::class);
+        $this->call(CategoryAttributeSeeder::class);
+        $this->call(AttributeOptionSeeder::class);
+        $this->call(BrandModelSeeder::class);
+      
     }
 }

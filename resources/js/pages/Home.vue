@@ -105,7 +105,7 @@ const activeCategory = computed(() => {
     return categories.value[0] || null
 })
 
-console.log(page.props);
+//console.log(page.props);
 
 const topCategories = computed(() => {
     return categories.value

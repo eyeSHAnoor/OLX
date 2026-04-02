@@ -1,5 +1,6 @@
 <template>
     <OlxLayout>
+        <TopCategoriesBar />
         <!-- HERO BANNER -->
         <section v-if="homepageBanners.length"
             class="relative bg-gray-100 h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden">

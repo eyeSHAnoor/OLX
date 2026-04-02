@@ -1,6 +1,7 @@
 <!-- CategoryAccordion.vue -->
 <script setup>
 import CategoryDetailsModal from './CategoryDetailsModal.vue';
+import { router } from '@inertiajs/vue3';
 
 defineProps({
     categories: {
@@ -98,7 +99,8 @@ const handleCategoryUpdated = () => {
                         <!-- Edit Button -->
                         <AppButton size="xs" icon="lucide:edit" variant="ghost" no-label
                             class="opacity-0 group-hover:opacity-100 transition-opacity"
-                            @click.stop="editCategory(category)" :title="`Edit ${category.name}`" />
+                            @click="router.visit(route('categories.edit', category.id))"
+                            :title="`Edit ${category.name}`" />
                     </div>
                 </div>
             </AccordionTrigger>

@@ -178,6 +178,7 @@ class HomeController extends Controller
     private function buildAdQuery($categoryIds, $city, $searchTerm, $brandFilter, $startDate, $endDate, $sort)
     {
         return Ad::with(['images', 'brand', 'category'])
+            ->where('status', 'active') 
             ->whereIn('category_id', $categoryIds)
             ->excludeReportedBy(Auth::id())
             ->when($city !== 'pakistan', fn($q) =>

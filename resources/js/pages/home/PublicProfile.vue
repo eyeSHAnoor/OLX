@@ -1,6 +1,13 @@
 <template>
     <OlxLayout>
         <div class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
+            <div class="pb-2 sm:hidden visible">
+                <button @click="goBack"
+                    class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
+                    <Icon icon="mdi:arrow-left" class="text-base" />
+                    Back
+                </button>
+            </div>
             <!-- Rank Banner -->
             <!-- Rank Badge - Professional Minimal Style -->
             <div v-if="profileUser.rank !== null" class="mb-4 md:mb-5">
@@ -18,7 +25,7 @@
                 </div>
             </div>
 
-            <!-- Order Statistics - Clean Dashboard Style -->
+            <!-- Order Statistics - Total, Completed, Ratings -->
             <div v-if="profileUser.orderStats" class="mb-5">
                 <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
                     <div class="px-4 py-3 border-b border-gray-100">
@@ -26,9 +33,9 @@
                     </div>
 
                     <div class="p-4">
-                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <!-- Total Orders -->
-                            <div class="text-left">
+                            <div class="text-left bg-gray-50 p-4 rounded-lg">
                                 <div class="text-2xl font-semibold text-gray-900">
                                     {{ profileUser.orderStats.total_orders || 0 }}
                                 </div>
@@ -36,60 +43,30 @@
                             </div>
 
                             <!-- Completed Orders -->
-                            <div class="text-left">
+                            <div class="text-left bg-gray-50 p-4 rounded-lg">
                                 <div class="text-2xl font-semibold text-gray-900">
                                     {{ profileUser.orderStats.completed_orders || 0 }}
                                 </div>
                                 <div class="text-xs text-gray-500 mt-1">Completed</div>
                             </div>
 
-                            <!-- Total Amount -->
-                            <div class="text-left">
-                                <div class="text-lg font-semibold text-gray-900">
-                                    Rs. {{ formatAmount(profileUser.orderStats.completed_amount || 0) }}
-                                </div>
-                                <div class="text-xs text-gray-500 mt-1">Total Spent</div>
-                            </div>
-
-                            <!-- Completion Rate with Progress Bar -->
-                            <div class="text-left">
+                            <!-- Average Rating -->
+                            <div class="text-left bg-gray-50 p-4 rounded-lg">
                                 <div class="text-2xl font-semibold text-gray-900">
-                                    {{ profileUser.orderStats.completion_rate || 0 }}%
+                                    {{ averageRating > 0 ? averageRating.toFixed(1) : 0 }} / 5.0
                                 </div>
-                                <div class="text-xs text-gray-500 mt-1">Completion Rate</div>
-                                <div class="w-full bg-gray-100 rounded h-1 mt-2">
-                                    <div class="h-1 rounded bg-gray-700 transition-all duration-300"
-                                        :style="{ width: `${profileUser.orderStats.completion_rate || 0}%` }">
-                                    </div>
+                                <div class="text-xs text-gray-500 mt-1">Average Rating</div>
+                                <!-- Optional stars -->
+                                <div class="mt-2 flex items-center gap-1">
+                                    <template v-for="i in 5" :key="i">
+                                        <svg class="w-4 h-4"
+                                            :class="i <= Math.round(averageRating) ? 'text-yellow-400' : 'text-gray-300'"
+                                            fill="currentColor" viewBox="0 0 20 20">
+                                            <path
+                                                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.947a1 1 0 00.95.69h4.15c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 00-.364 1.118l1.286 3.947c.3.921-.755 1.688-1.54 1.118l-3.36-2.44a1 1 0 00-1.176 0l-3.36 2.44c-.784.57-1.838-.197-1.539-1.118l1.286-3.947a1 1 0 00-.364-1.118L2.035 9.374c-.783-.57-.38-1.81.588-1.81h4.15a1 1 0 00.95-.69l1.286-3.947z" />
+                                        </svg>
+                                    </template>
                                 </div>
-                            </div>
-
-                            <!-- Cancelled Orders -->
-                            <div class="text-left">
-                                <div class="text-2xl font-semibold text-gray-900">
-                                    {{ profileUser.orderStats.cancelled_orders || 0 }}
-                                </div>
-                                <div class="text-xs text-gray-500 mt-1">
-                                    Cancelled ({{ profileUser.orderStats.cancel_rate || 0 }}%)
-                                </div>
-                                <div class="w-full bg-gray-100 rounded h-1 mt-2">
-                                    <div class="h-1 rounded bg-gray-400 transition-all duration-300"
-                                        :style="{ width: `${profileUser.orderStats.cancel_rate || 0}%` }">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Rating Summary -->
-                        <div v-if="averageRating > 0" class="mt-4 pt-4 border-t border-gray-100">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm text-gray-600">Average Rating</span>
-                                    <span class="text-sm font-medium text-gray-900">{{ averageRating.toFixed(1) }} /
-                                        5.0</span>
-                                </div>
-                                <span class="text-xs text-gray-500">{{ totalRatings }} {{ totalRatings === 1 ? 'rating'
-                                    : 'ratings' }}</span>
                             </div>
                         </div>
                     </div>
@@ -274,22 +251,52 @@
                     <!-- Filters and Actions -->
                     <div class="flex flex-col sm:flex-row gap-2">
                         <!-- City Filter -->
-                        <select v-model="cityFilter" @change="applyFilters"
+                        <!-- <select v-model="cityFilter" @change="applyFilters"
                             class="border border-gray-300 rounded px-3 py-1.5 focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-xs min-w-[140px]">
                             <option value="all">All Cities</option>
-                            <option v-for="city in userCities" :key="city" :value="city">
-                                {{ city }}
+                            <option v-for="city in cities" :key="city" :value="city.name">
+                                {{ city.name }}
                             </option>
-                        </select>
+                        </select> -->
+
+                        <SelectInput v-model="cityFilter" @update:modelValue="applyFilters"
+                            class="border border-gray-300 rounded px-3 py-1.5 focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-xs min-w-[140px]"
+                            placeholder="Select City">
+                            <SelectContent>
+                                <SelectItem value="all">All Cities</SelectItem>
+                                <SelectItem v-for="city in cities" :key="city" :value="city.name">
+                                    {{ city.name }}
+                                </SelectItem>
+                            </SelectContent>
+                        </SelectInput>
 
                         <!-- Sort Filter -->
-                        <select v-model="sortBy" @change="applyFilters"
+                        <!-- <select v-model="sortBy" @change="applyFilters"
                             class="border border-gray-300 rounded px-3 py-1.5 focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-xs min-w-[140px]">
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
                             <option value="price_low">Price: Low to High</option>
                             <option value="price_high">Price: High to Low</option>
-                        </select>
+                        </select> -->
+                        <div class="hidden md:flex items-center space-x-3">
+                            <!-- <span class="text-xs text-gray-600">Sort:</span> -->
+                            <SelectInput v-model="sortBy" @update:modelValue="applyFilters" placeholder="Sort By"
+                                class="border border-gray-300 rounded px-3 py-1.5 focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-xs min-w-[140px]">
+                                <SelectContent>
+                                    <SelectItem value="newest">
+                                        Newest First
+                                    </SelectItem>
+                                    <SelectItem value="oldest">Oldest First</SelectItem>
+                                    <SelectItem value="price_low">
+                                        Price: Low to High
+                                    </SelectItem>
+
+                                    <SelectItem value="price_high">
+                                        Price: High to Low
+                                    </SelectItem>
+                                </SelectContent>
+                            </SelectInput>
+                        </div>
 
                         <!-- Add New Ad Button (only for owner) -->
                         <div v-if="isOwner">
@@ -453,55 +460,7 @@
             </div>
         </div>
 
-        <!-- Delete Confirmation Modal -->
-        <Teleport to="body">
-            <div v-if="showDeleteModal" class="fixed inset-0 z-50 overflow-y-auto">
-                <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                    <div class="fixed inset-0 transition-opacity" @click="showDeleteModal = false">
-                        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-                    </div>
-
-                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-
-                    <div
-                        class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                        <div class="bg-white px-4 pt-4 pb-3 sm:p-5 sm:pb-4">
-                            <div class="sm:flex sm:items-start">
-                                <div
-                                    class="mx-auto flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-red-100 sm:mx-0 sm:h-8 sm:w-8">
-                                    <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                </div>
-                                <div class="mt-2 text-center sm:mt-0 sm:ml-3 sm:text-left">
-                                    <h3 class="text-base font-medium text-gray-900">
-                                        Delete Ad
-                                    </h3>
-                                    <div class="mt-1">
-                                        <p class="text-xs text-gray-500">
-                                            Are you sure you want to delete "{{ adToDelete?.title }}"? This action
-                                            cannot be undone.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-gray-50 px-4 py-2 sm:px-5 sm:flex sm:flex-row-reverse">
-                            <button @click="deleteAd" type="button"
-                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-3 py-1.5 bg-red-600 text-xs font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-2 sm:w-auto">
-                                Delete
-                            </button>
-                            <button @click="showDeleteModal = false" type="button"
-                                class="mt-2 sm:mt-0 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-3 py-1.5 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-blue sm:w-auto">
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </Teleport>
+        <ShadcnAlertDialog />
     </OlxLayout>
 </template>
 
@@ -510,9 +469,14 @@ import { ref, computed } from 'vue'
 import { router, Link, usePage } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import AdCard from '@/components/AdCard.vue'
+import ShadcnAlertDialog from '@/components/ShadcnAlertDialog.vue'
+import { useShadcnAlert } from '@/composables/useShadcnAlert'
 import { Icon } from '@iconify/vue'
+import citiesList from '@/data/cities.json'
 
 const page = usePage()
+const cities = ref<string[]>(['all', ...citiesList])
+console.log(cities)
 
 interface Props {
     profileUser: {
@@ -604,9 +568,7 @@ const isOwner = computed(() => {
 const cityFilter = ref(props.filters.city)
 const sortBy = ref(props.filters.sort_by)
 
-// Delete modal state
-const showDeleteModal = ref(false)
-const adToDelete = ref<any>(null)
+const alert = useShadcnAlert()
 
 // Rating calculations
 const receivedRatings = computed(() => props.profileUser.received_ratings || [])
@@ -685,22 +647,33 @@ const editAd = (adId: number) => {
     router.get(route('user.ads.edit', { id: adId }))
 }
 
-// Confirm delete
-const confirmDeleteAd = (ad: any) => {
-    adToDelete.value = ad
-    showDeleteModal.value = true
-}
+// Confirm delete using unified dialog
+const confirmDeleteAd = async (ad: any) => {
+    const confirmed = await alert.show({
+        type: 'destructive',
+        title: 'Delete Ad',
+        description: `Are you sure you want to delete "${ad.ad_title || ad.title}"? This action cannot be undone.`,
+        confirmText: 'Yes, Delete',
+        cancelText: 'Cancel'
+    })
 
-// Delete ad
-const deleteAd = () => {
-    if (adToDelete.value) {
-        router.delete(route('ads.destroy', { id: adToDelete.value.id }), {
-            preserveScroll: true,
-            onSuccess: () => {
-                showDeleteModal.value = false
-                adToDelete.value = null
+    if (!confirmed) return
+
+    router.delete(route('ads.destroy', { id: ad.id }), {
+        preserveScroll: true,
+        onSuccess: () => {
+            // Optionally update local list after deletion
+            const index = props.ads.data.findIndex((item: any) => item.id === ad.id)
+            if (index !== -1) {
+                props.ads.data.splice(index, 1)
             }
-        })
-    }
+        }
+    })
+}
+const goBack = () => {
+    router.visit(route('account'), {
+        preserveState: true,
+        preserveScroll: true
+    })
 }
 </script>

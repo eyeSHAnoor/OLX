@@ -31,6 +31,7 @@ class PublicProfileController extends Controller
 
         $adsQuery = Ad::with(['images', 'category', 'brand'])
             ->where('user_id', $user->id)
+            ->where('status', 'active')
             ->when($cityFilter !== 'all', function ($query) use ($cityFilter) {
                 return $query->whereRaw('LOWER(city) = ?', [strtolower($cityFilter)]);
             });

@@ -7,6 +7,7 @@ import BrandForm from './_partials/BrandForm.vue';
 import { useAlertDialog } from '@/composables/useAlertDialog';
 import { useBreadcrumb } from '@/composables/useBreadcrumb';
 
+
 defineOptions({ layout: Layout });
 
 // Props and Page setup
@@ -81,7 +82,12 @@ async function handleDeleteBrand(brand: App.Data.BrandData) {
         <PageHeading>
             <template #title>Brands</template>
             <template #links>
-                <AppButton label="New Brand" icon="radix-icons:plus-circled" @click="handleShowModal({})" class="" />
+                <!-- <AppButton label="New Brand" icon="radix-icons:plus-circled" @click="route('brands.create')" class="" /> -->
+                <Button as-child size="sm">
+                    <Link :href="route('brands.create')">
+                    <Icon icon="radix-icons:plus-circled" class="size-4" /> New
+                    </Link>
+                </Button>
             </template>
         </PageHeading>
 
@@ -107,7 +113,7 @@ async function handleDeleteBrand(brand: App.Data.BrandData) {
                     <template #actions-cell="{ row }">
                         <div class="flex items-center justify-end gap-2">
                             <AppDataTableActionButton icon="lucide:edit" tooltip="Edit"
-                                @click="handleShowModal(row.original)" />
+                                @click="router.visit(route('brands.edit', row.original))" />
                             <AppDataTableActionButton icon="lucide:trash-2" tooltip="Delete" variant="danger"
                                 @click="handleDeleteBrand(row.original)" />
                         </div>

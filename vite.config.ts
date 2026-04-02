@@ -15,6 +15,7 @@ export default defineConfig({
             input: ['resources/js/app.ts'],
             ssr: 'resources/js/ssr.ts',
             refresh: [],
+            // refresh: true,
         }),
         tailwindcss(),
 
@@ -91,6 +92,7 @@ export default defineConfig({
         port: 5173,
         watch: {
             ignored: ['**/*.php'], // Ignore PHP files completely
+            //     usePolling: true,
         },
         hmr: {
             host: 'localhost',

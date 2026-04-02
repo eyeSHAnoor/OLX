@@ -60,7 +60,7 @@
                                     <h3 class="text-base font-medium text-gray-900 mb-1">{{ plan.name }}</h3>
                                     <div class="flex items-baseline mb-3">
                                         <span class="text-2xl font-light text-gray-900">{{ formatPrice(plan.price)
-                                            }}</span>
+                                        }}</span>
                                         <span class="text-xs text-gray-500 ml-1">/{{ plan.duration_days }} days</span>
                                     </div>
 
@@ -184,10 +184,35 @@
                             </div>
                         </div>
 
-                        <!-- Instructions -->
+                        <!-- Instructions (with QR and TILL ID for JazzCash) -->
                         <div v-if="form.payment_method" class="p-3 rounded-lg border border-blue-100">
-                            <h4 class="text-xs font-medium text-brand-blue mb-1">Payment Instructions</h4>
-                            <p class="text-xs text-brand-blue/90">{{ currentPaymentMethod.instructions }}</p>
+                            <h4 class="text-xs font-medium text-brand-blue mb-2">Payment Instructions</h4>
+
+                            <!-- JazzCash specific: QR Code + TILL ID -->
+                            <div v-if="form.payment_method === 'jazzcash'">
+                                <div class="flex flex-col items-center gap-2 mb-3">
+                                    <!-- QR Code Image (replace with your actual QR code URL) -->
+                                    <img src="/images/jazzcashQR.jpeg" alt="JazzCash QR Code"
+                                        class="w-32 h-32 sm:w-40 sm:h-40 object-contain border rounded-lg p-1 bg-white shadow-sm" />
+                                    <!-- TILL ID -->
+                                    <div class="text-center">
+                                        <p class="text-xs text-gray-500">TILL ID / Merchant ID</p>
+                                        <p class="text-sm font-mono font-medium text-gray-800">982295010</p>
+                                        <button @click="copyTillId"
+                                            class="mt-1 text-[10px] text-blue-600 hover:underline flex items-center gap-1 mx-auto">
+                                            <Icon icon="mdi:content-copy" class="text-xs" />
+                                            Copy TILL ID
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-brand-blue/90">
+                                    Send the exact amount to the TILL ID above using JazzCash app, then upload the
+                                    receipt.
+                                </p>
+                            </div>
+
+                            <!-- Default instructions for other methods -->
+                            <p v-else class="text-xs text-brand-blue/90">{{ currentPaymentMethod.instructions }}</p>
                         </div>
 
                         <!-- File Upload -->
@@ -416,7 +441,7 @@ const paymentMethods = [
         id: 'jazzcash',
         name: 'JazzCash',
         icon: 'mdi:cash',
-        instructions: 'Send payment to 0300-1234567 (JazzCash account)',
+        instructions: 'Send payment to the TILL ID above using JazzCash app.',
     },
     {
         id: 'easypaisa',
@@ -470,6 +495,13 @@ function handleDragLeave() {
 function removeFile() {
     form.receipt = null
     uploadedFileName.value = ''
+}
+
+// Copy TILL ID to clipboard
+function copyTillId() {
+    navigator.clipboard.writeText('1234567890')
+    // Optional: show a small toast message
+    alert('TILL ID copied!')
 }
 
 function submit() {

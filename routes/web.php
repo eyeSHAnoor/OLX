@@ -18,6 +18,10 @@ Route::get('/test-mail', function () {
     return 'Test email sent!';
 });
 
+Route::get('/cities/{city}/regions', function (City $city) {
+    return $city->regions()->pluck('name');
+});
+
 Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/account', [\App\Http\Controllers\HomeController::class, 'account'])->name('account');
 Route::get('/all-items', [App\Http\Controllers\SearchController::class, 'allItems'])->name('all.items');
@@ -76,6 +80,16 @@ Route::get('/storagelink', function () {
 
 Route::middleware(['auth'])->group(function () {
 
+
+    Route::post('/accept-terms', function () {
+            $user = auth()->user();
+            $user->update([
+                'terms_accepted' => true,
+                'terms_accepted_at' => now()
+            ]);
+            return redirect()->back();
+        });
+
     Route::get('/subscriptions',
         [App\Http\Controllers\SubscriptionController::class,'index'])
         ->name('subscriptions.index');
@@ -89,11 +103,28 @@ Route::middleware(['auth'])->group(function () {
     ->middleware(['auth']); 
 
     Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
+      Route::get('/chat/my-ads', function () {
+        $ads = auth()->user()->ads()
+            ->where('status', 'active')
+            ->where('is_active', true) 
+            ->select('id','ad_title','description','price')
+            ->with('images:id,ad_id,path,is_primary')
+            ->latest()
+            ->get();
+
+        return response()->json($ads);
+    })->name('chat.my-ads');
     Route::get('/chat/{conversation}', [App\Http\Controllers\ChatController::class, 'show'])->name('chat.show');
+    Route::get('/messages/{conversation}', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
+    Route::post('/messages/{conversation}/read', [App\Http\Controllers\ChatController::class, 'markAsRead'])->name('chat.mark-read');
     Route::post('/chat/send', [App\Http\Controllers\ChatController::class, 'send'])->name('chat.send');
+    Route::post('/chat/upload', [App\Http\Controllers\ChatController::class, 'upload'])->name('chat.upload');
     Route::post('/chat/start', [App\Http\Controllers\ChatController::class, 'start'])->name('chat.start');
     Route::delete('/chat/message/{message}', [App\Http\Controllers\ChatController::class, 'deleteMessage'])->name('chat.message.delete');
-
+    Route::get('/chat/file/{message}', [App\Http\Controllers\ChatController::class, 'file'])->name('chat.file');
+    Route::post('/chat/send-product', [App\Http\Controllers\ChatController::class, 'sendProduct'])->name('chat.send-product');
+    Route::delete('/chat/{conversation}', [App\Http\Controllers\ChatController::class, 'destroyConversation'])->name('chat.conversation.destroy');
+   
     Route::get('user/ads/create', [App\Http\Controllers\CreateAdController::class, 'index'])->name('user.ads.create');
     Route::get('user/ads/edit/{id}', [App\Http\Controllers\CreateAdController::class, 'edit'])->name('user.ads.edit');
     Route::get('/ads/category-data/{category}', [App\Http\Controllers\CreateAdController::class, 'getCategoryData'])->name('ads.category-data');
@@ -102,11 +133,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/ads', [AdController::class, 'store'])->name('ads.store');
     Route::put('/ads/{ad}', [AdController::class, 'update'])->name('ads.update');
     Route::delete('/ads/{ad}', [AdController::class, 'destroy'])->name('ads.destroy');
+    Route::patch('/user/ads/{ad}/status', [App\Http\Controllers\CreateAdController::class, 'updateStatus'])->name('user.ads.status');
+    Route::get('categories/{category}/attributes', [AdController::class, 'getAttributesByCategory']);
+    Route::get('brands/{brand}/models', [AdController::class, 'getModelsByBrand']);
 
     Route::get('/profile/edit', [App\Http\Controllers\UserProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile/update', [App\Http\Controllers\UserProfileController::class, 'update'])->name('user.profile.update');
     Route::delete('/profile/delete', [App\Http\Controllers\UserProfileController::class, 'destroy'])->name('user.profile.destroy');
-    Route::get('/check-username', [UserProfileController::class, 'checkUsername'])->name('user.check-username');
+    Route::get('/check-username', [App\Http\Controllers\UserProfileController::class, 'checkUsername'])->name('user.check-username');
 
     Route::post('/ratings', [App\Http\Controllers\RatingController::class, 'store'])->name('ratings.store');
     Route::post('/ads/{ad}/favorite', [App\Http\Controllers\AdFavoriteController::class, 'toggle'])->name('ads.favorite');
@@ -181,6 +215,21 @@ Route::middleware([
             Route::post('/reports/{report}/respond', [App\Http\Controllers\ReportController::class, 'respond'])->name('reports.respond');
             Route::delete('/reports/{report}', [App\Http\Controllers\ReportController::class, 'destroy'])->name('reports.destroy');
             Route::post('/reports/bulk-update', [App\Http\Controllers\ReportController::class, 'bulkUpdate'])->name('reports.bulk-update');
+
+            //  Route::post('/admin/broadcast-message', [App\Http\Controllers\BroadcastController::class, 'store']);
+            Route::resource('broadcast-messages', App\Http\Controllers\BroadcastController::class)->except(['show']);
+            Route::post('broadcast-messages/{broadcast_message}/toggle-status', [App\Http\Controllers\BroadcastController::class, 'toggleStatus'])
+                ->name('broadcast-messages.toggle-status');
+            Route::post('/broadcast-message/{message}/send', [App\Http\Controllers\BroadcastController::class, 'broadcast'])
+                ->name('broadcast-message.send');
+
+            // // API endpoint (could be in api.php if used externally)
+            // Route::get('api/broadcast-messages/active', [App\Http\Controllers\BroadcastController::class, 'getActive'])
+            //     ->name('api.broadcast-messages.active');
+
+
+
+
                 }
     );
 
