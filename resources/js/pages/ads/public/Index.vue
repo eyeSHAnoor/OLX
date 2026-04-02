@@ -697,4 +697,11 @@ onUnmounted(() => {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+@media (hover: none) and (pointer: coarse) {
+    .group .absolute {
+        opacity: 1 !important;
+        background: rgba(0, 0, 0, 0.6);
+    }
+}
 </style>
