@@ -21,8 +21,8 @@
 
         <!-- <OrderPopup :order="popupOrder" @close="popupOrder = null" /> -->
         <div v-if="userId">
-            <OrderPopup :order="popupOrder.orderRequest"
-                :type="popupOrder?.orderRequest?.buyer_id === page.props.auth.user.id ? 'buyer' : 'seller'"
+            <OrderPopup v-if="popupOrder" :order="popupOrder"
+                :type="popupOrder?.buyer_id === page.props.auth.user.id ? 'buyer' : 'seller'"
                 @close="popupOrder = null" />
             <TermsPopup v-if="page.props.auth.user.terms_accepted === 0" />
             <BroadcastPopup :message="popupBroadcast" @close="popupBroadcast = null" />
