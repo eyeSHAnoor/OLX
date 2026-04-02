@@ -27,6 +27,7 @@ return new class extends Migration
 
         $table->string('location');
         $table->string('city');
+        $table->string('region')->nullable();
 
         // Seller info (snapshot at posting time)
         $table->string('seller_name');
