@@ -62,26 +62,26 @@ onMounted(() => {
     // Seller channel: for orders where the user is the seller
     window.Echo.private(`seller.${userId}`)
         .subscribed(() => {
-            //console.log('Subscribed to seller channel')
+            console.log('Subscribed to seller channel')
         })
         .listen('OrderCreated', (e) => {
-            //console.log('Seller EVENT RECEIVED', e)
+            console.log('Seller EVENT RECEIVED', e)
             popupOrder.value = e
         })
 
     // Buyer channel: for orders where the user is the buyer
     window.Echo.private(`buyer.${userId}`)
         .subscribed(() => {
-            //console.log('Subscribed to buyer channel')
+            console.log('Subscribed to buyer channel')
         })
         .listen('OrderRequestSent', (e) => {
-            //console.log('Buyer EVENT RECEIVED', e)
+            console.log('Buyer EVENT RECEIVED', e)
             popupOrder.value = e
         })
 
     window.Echo.channel('admin-broadcast')
         .listen('BroadcastAdminMessage', (e) => {
-            //console.log('Admin Broadcast RECEIVED', e)
+            console.log('Admin Broadcast RECEIVED', e)
             popupBroadcast.value = e
         })
 })
