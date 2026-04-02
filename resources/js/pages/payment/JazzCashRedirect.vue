@@ -25,7 +25,7 @@ const jazzcashForm = ref(null)
 onMounted(() => {
     // Auto-submit the form when component mounts
     if (jazzcashForm.value) {
-        console.log(jazzcashForm)
+        //console.log(jazzcashForm)
         jazzcashForm.value.submit()
     }
 })

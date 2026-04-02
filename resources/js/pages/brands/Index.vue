@@ -19,7 +19,7 @@ const page = usePage<{
 const brands = computed(() => page.props.brands);
 const categories = computed(() => page.props.categories);
 
-console.log(page.props);
+//console.log(page.props);
 
 // Initialize search filter - check if useSearchFilter returns what you expect
 const { form, reset, isFiltered } = useSearchFilter(route('brands.index'));

@@ -60,7 +60,7 @@
                                     <h3 class="text-base font-medium text-gray-900 mb-1">{{ plan.name }}</h3>
                                     <div class="flex items-baseline mb-3">
                                         <span class="text-2xl font-light text-gray-900">{{ formatPrice(plan.price)
-                                        }}</span>
+                                            }}</span>
                                         <span class="text-xs text-gray-500 ml-1">/{{ plan.duration_days }} days</span>
                                     </div>
 
@@ -398,7 +398,7 @@ const props = defineProps({
 const page = usePage()
 const user = computed(() => page.props.auth?.user)
 
-console.log(page.props)
+//console.log(page.props)
 
 const selectedPlan = ref(null)
 const paymentStep = ref('select')

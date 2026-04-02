@@ -61,6 +61,7 @@ class HandleInertiaRequests extends Middleware
                     'id' => $user->id,
                     'name' => $user->name,
                     'terms_accepted' => $user->terms_accepted,
+                    'email' => $user->email,
 
                     'roles' => method_exists($user, 'getRoleNames')
                         ? $user->getRoleNames()

@@ -93,7 +93,7 @@ const props = defineProps({
 })
 
 const page = usePage()
-console.log(page.props);
+//console.log(page.props);
 
 const steps = ['Category', 'Details']
 const currentStep = ref(1)
@@ -164,7 +164,7 @@ const goToPreviousStep = () => {
 }
 
 const handleSubmit = (adData) => {
-    console.log('Ad submitted:', adData)
+    //console.log('Ad submitted:', adData)
 }
 
 // On mounted, handle edit mode
@@ -175,23 +175,23 @@ onMounted(() => {
 
         if (fullCategory) {
             selectedCategory.value = fullCategory
-            console.log('Found full category:', fullCategory.name)
-            console.log('Category has brands:', fullCategory.brands?.length || 0, 'brands')
+            //console.log('Found full category:', fullCategory.name)
+            //console.log('Category has brands:', fullCategory.brands?.length || 0, 'brands')
 
             // Also set the selected brand from ad data
             if (props.ad.brand_id && fullCategory.brands) {
                 const brand = fullCategory.brands.find(b => b.id === props.ad.brand_id)
                 if (brand) {
                     selectedBrand.value = brand
-                    console.log('Auto-selected brand:', brand.name)
+                    //console.log('Auto-selected brand:', brand.name)
                 } else {
-                    console.log('Brand not found in category brands')
+                    //console.log('Brand not found in category brands')
                 }
             }
         } else {
             // Fallback to the category from ad data (won't have brands)
             selectedCategory.value = props.ad.category
-            console.log('Using category from ad data (may not have brands)')
+            //console.log('Using category from ad data (may not have brands)')
         }
 
         // Auto-advance to step 2 since category is already selected
@@ -203,10 +203,10 @@ onMounted(() => {
     // Debug: Log when selectedCategory changes
     watch(selectedCategory, (newCategory) => {
         if (newCategory) {
-            console.log('Selected category changed to:', newCategory.name)
-            console.log('Available brands count:', newCategory.brands?.length || 0)
+            //console.log('Selected category changed to:', newCategory.name)
+            //console.log('Available brands count:', newCategory.brands?.length || 0)
             if (newCategory.brands && newCategory.brands.length > 0) {
-                console.log('First few brands:', newCategory.brands.slice(0, 3).map(b => b.name))
+                //console.log('First few brands:', newCategory.brands.slice(0, 3).map(b => b.name))
             }
         }
     }, { immediate: true })

@@ -210,7 +210,7 @@ const handleLogin = () => {
     setTimeout(() => {
         router.post('/login', form, {
             onSuccess: () => {
-                console.log('Login successful')
+                //console.log('Login successful')
             },
             onError: (err) => {
                 if (err.email) errors.email = err.email
@@ -224,7 +224,7 @@ const handleLogin = () => {
 }
 
 const socialLogin = (provider: string) => {
-    console.log(`Logging in with ${provider}`)
+    //console.log(`Logging in with ${provider}`)
     window.location.href = `/auth/${provider}`
 }
 </script>

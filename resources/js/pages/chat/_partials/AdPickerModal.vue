@@ -119,7 +119,7 @@ const loadAds = async () => {
     loading.value = true
     try {
         const res = await axios.get('/chat/my-ads')
-        console.log('Loaded ads:', res.data)
+        //console.log('Loaded ads:', res.data)
         ads.value = res.data.map(ad => ({
             id: ad.id,
             title: ad.ad_title || ad.title,

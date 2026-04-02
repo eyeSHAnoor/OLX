@@ -26,7 +26,7 @@
                     </a>
                     <Icon icon="lucide:chevron-right" class="size-3 sm:size-3.5 flex-shrink-0" />
                     <span class="text-gray-700 font-medium truncate max-w-[150px] sm:max-w-[300px]">{{ ad.ad_title
-                    }}</span>
+                        }}</span>
                 </nav>
 
 
@@ -317,7 +317,7 @@
                         <!-- Average Score -->
                         <div class="flex flex-col items-center">
                             <span class="text-4xl sm:text-5xl font-bold text-gray-900">{{ adAvgRating.toFixed(1)
-                                }}</span>
+                            }}</span>
                             <span class="text-xs text-gray-500 mt-1">out of 5</span>
                         </div>
 
@@ -372,7 +372,7 @@
                                 <div class="flex items-center gap-3">
                                     <span v-if="userCurrentRating > 0" class="text-sm text-gray-600">
                                         You rated this <span class="font-medium text-gray-900">{{ userCurrentRating
-                                            }}/5</span>
+                                        }}/5</span>
                                     </span>
                                     <span v-else class="text-sm text-gray-500">Click a star to rate</span>
 
@@ -421,7 +421,7 @@
                                         </Link>
                                         <span class="text-xs text-gray-500">•</span>
                                         <span class="text-xs text-gray-500">{{ formatRelativeTime(rating.created_at)
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <div class="flex gap-1">
                                         <Icon v-for="i in 5" :key="i" icon="lucide:star" class="size-3.5"
@@ -503,9 +503,9 @@ const { handleShowModal, showModal, selectedItem } = useModal();
 
 const handleOrderPlaced = () => {
     // Optional: Do something specific when order is placed
-    console.log('Order placed successfully');
+    //console.log('Order placed successfully');
 }
-console.log(page.props)
+//console.log(page.props)
 // Favorite state
 const isFavorited = ref(false)
 const isFavoriteLoading = ref(false)

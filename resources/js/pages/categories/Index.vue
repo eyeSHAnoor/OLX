@@ -15,7 +15,7 @@ interface PageProps extends InertiaPageProps {
 }
 
 const page = usePage<PageProps>();
-console.log(page.props);
+//console.log(page.props);
 
 const categories = computed(() => page.props.categories);
 const allCategories = computed(() => page.props.allCategories);

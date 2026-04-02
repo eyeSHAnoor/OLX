@@ -34,7 +34,7 @@ const navItems = computed(() => [
                 visible: true,
                 title: 'Broadcast Messages',
                 href: '/broadcast-messages',
-                icon: 'material-symbols:group-outline',
+                icon: 'material-symbols:campaign',
                 isActive: page.url === '/broadcast-messages' || route().current('broadcast-messages.*'),
             },
             {

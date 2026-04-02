@@ -257,7 +257,7 @@ const submit = () => {
 };
 
 const socialRegister = (provider: string) => {
-    console.log(`Registering with ${provider}`);
+    //console.log(`Registering with ${provider}`);
     window.location.href = `/auth/${provider}/register`;
 };
 </script>

@@ -245,7 +245,7 @@
                     <h2 class="text-lg md:text-xl font-semibold text-gray-900">
                         {{ profileUser.name }}'s Ads
                         <span class="text-xs font-normal text-gray-500 ml-2">({{ ads.total || profileUser.total_ads || 0
-                            }} total)</span>
+                        }} total)</span>
                     </h2>
 
                     <!-- Filters and Actions -->
@@ -476,7 +476,7 @@ import citiesList from '@/data/cities.json'
 
 const page = usePage()
 const cities = ref<string[]>(['all', ...citiesList])
-console.log(cities)
+//console.log(cities)
 
 interface Props {
     profileUser: {
@@ -547,7 +547,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-console.log(page.props)
+//console.log(page.props)
 
 // Helper function to format amount
 const formatAmount = (amount: number) => {

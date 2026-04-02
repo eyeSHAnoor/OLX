@@ -559,7 +559,7 @@ const fetchModels = async (brandId) => {
                 if (modelExists) {
                     const model = brandModels.value.find(m => m.id == modelId)
                     localSelectedModel.value = model
-                    console.log('Auto-selected model:', model)
+                    //console.log('Auto-selected model:', model)
                 }
             }
         }
@@ -643,7 +643,7 @@ const setInitialBrandAndModel = () => {
         const brand = props.selectedCategory.brands.find(b => b.id === props.adData.brand_id)
         if (brand) {
             localSelectedBrand.value = brand
-            console.log('Auto-selected brand:', brand)
+            //console.log('Auto-selected brand:', brand)
 
             // After brand is set, fetch models and then set model
             setTimeout(() => {
@@ -817,7 +817,7 @@ const handleSubmit = () => {
         remove_images: form.remove_images
     }
 
-    console.log('Submitting:', submitData)
+    //console.log('Submitting:', submitData)
 
     if (props.editMode) {
         const formData = new FormData()

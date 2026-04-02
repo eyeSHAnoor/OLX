@@ -18,7 +18,7 @@ const page = usePage<{
 }>();
 
 const users = computed(() => page.props.users);
-console.log('Users data:', page.props);
+//console.log('Users data:', page.props);
 const { form, reset, isFiltered } = useSearchFilter(route('users.index'));
 
 if (!form.value) {

@@ -22,7 +22,7 @@ const page = usePage<{
 const reports = computed(() => page.props.reports);
 const statuses = computed(() => page.props.statuses);
 const reasons = computed(() => page.props.reasons);
-console.log('Reports Page Props:', page.props);
+//console.log('Reports Page Props:', page.props);
 // Initialize search filter
 const { form, reset, isFiltered } = useSearchFilter(route('reports.index'));
 

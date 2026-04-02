@@ -47,7 +47,7 @@
                             </button>
                         </div>
                         <p v-if="form.errors.cover_image" class="mt-1 text-xs text-red-600">{{ form.errors.cover_image
-                            }}</p>
+                        }}</p>
                     </div>
 
                     <!-- Profile Image Section -->
@@ -438,7 +438,7 @@ const submitForm = () => {
 
 const alert = useAlertDialog();
 const destroy = async () => {
-    console.log('button pressed', props.user);
+    //console.log('button pressed', props.user);
 
     form.delete(route('users.destroy', props.user.id), {
         preserveScroll: true,
