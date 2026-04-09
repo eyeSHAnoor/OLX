@@ -898,18 +898,19 @@ const sendAd = (ad) => {
                             <button @click="goBackToSidebar" class="p-1 -ml-1">
                                 <Icon icon="lucide:arrow-left" class="size-6 text-gray-600" />
                             </button>
-
-                            <div :class="[
-                                'size-10 rounded-full flex items-center justify-center text-white font-semibold',
-                                getAvatarColor()
-                            ]">
-                                {{ otherUser?.name?.charAt(0).toUpperCase() || '?' }}
-                            </div>
-
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-gray-900">{{ otherUser?.name }}</h3>
-                                <p class="text-xs text-green-500">Online</p>
-                            </div>
+                            <Link :href="route('user.profile', otherUser?.id)"
+                                class="flex items-center cursor-pointer gap-3">
+                                <div :class="[
+                                    'size-10 rounded-full flex items-center justify-center text-white font-semibold',
+                                    getAvatarColor()
+                                ]">
+                                    {{ otherUser?.name?.charAt(0).toUpperCase() || '?' }}
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-gray-900">{{ otherUser?.name }}</h3>
+                                    <p class="text-xs text-green-500">Online</p>
+                                </div>
+                            </Link>
                         </div>
 
                         <!-- Mobile Messages -->

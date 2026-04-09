@@ -12,8 +12,10 @@
 
             <div class="border-b border-gray-200 pb-4">
                 <h2 class="text-3xl font-light text-gray-900">{{ editMode ? 'Edit Ad' : 'Ad Details' }}</h2>
-                <p class="text-gray-500 mt-1 text-sm">{{ editMode ?
-                    'Update your ad information below' : 'Fill in the information below to create your ad' }}</p>
+                <p class="text-gray-500 mt-1 text-sm">
+                    {{ editMode ? 'Update your ad information below' : 'Fill in the information below to create your ad'
+                    }}
+                </p>
             </div>
         </div>
 
@@ -37,8 +39,8 @@
             </div>
         </div>
 
+        <!-- Form (hidden while submitting) -->
         <form v-if="!form.processing" @submit.prevent="handleSubmit" class="space-y-8">
-
             <!-- Basic Information Section -->
             <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
@@ -77,15 +79,10 @@
                         <SelectInput v-model="localSelectedBrand" @update:modelValue="handleBrandChange"
                             placeholder="Select Brand" class="w-full">
                             <SelectContent>
-
-                                <SelectItem :value="null">
-                                    Select Brand
-                                </SelectItem>
-
+                                <SelectItem :value="null">Select Brand</SelectItem>
                                 <SelectItem v-for="brand in availableBrands" :key="brand.id" :value="brand">
                                     {{ brand.name }}
                                 </SelectItem>
-
                             </SelectContent>
                         </SelectInput>
                         <p v-if="form.errors.brand_id" class="text-red-500 text-xs mt-1.5">
@@ -100,15 +97,10 @@
                             placeholder="Select Model" :disabled="isLoadingModels"
                             class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white">
                             <SelectContent>
-
-                                <SelectItem :value="null">
-                                    Select Model
-                                </SelectItem>
-
+                                <SelectItem :value="null">Select Model</SelectItem>
                                 <SelectItem v-for="model in brandModels" :key="model.id" :value="model">
                                     {{ model.name }}
                                 </SelectItem>
-
                             </SelectContent>
                         </SelectInput>
                         <p v-if="form.errors.model_id" class="text-red-500 text-xs mt-1.5">
@@ -280,23 +272,36 @@
             <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                     <h3 class="font-medium text-gray-900">Images <span class="text-red-500">*</span></h3>
-                    <p class="text-xs text-gray-500 mt-1">Upload up to 10 images (JPEG, PNG, JPG, GIF)</p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Upload up to 10 images (JPEG, PNG, JPG, GIF) – images are compressed automatically
+                    </p>
                 </div>
 
                 <div class="p-6">
                     <div class="mb-6">
                         <input type="file" multiple accept="image/*" @change="handleImageUpload" class="hidden"
                             ref="fileInput" />
-                        <button type="button" @click="$refs.fileInput.click()"
-                            class="w-full px-4 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors flex flex-col items-center justify-center">
-                            <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
+                        <button type="button" @click="$refs.fileInput.click()" :disabled="isCompressing"
+                            class="w-full px-4 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors flex flex-col items-center justify-center"
+                            :class="{ 'opacity-50 cursor-not-allowed': isCompressing }">
+                            <svg v-if="!isCompressing" class="w-8 h-8 text-gray-400 mb-2" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            <span class="text-sm text-gray-600">Click to upload images</span>
-                            <span class="text-xs text-gray-400 mt-1">or drag and drop</span>
+                            <svg v-else class="animate-spin h-8 w-8 text-gray-400 mb-2"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
+                                </path>
+                            </svg>
+                            <span class="text-sm text-gray-600">
+                                {{ isCompressing ? 'Compressing images...' : 'Click to upload images' }}
+                            </span>
+                            <span v-if="!isCompressing" class="text-xs text-gray-400 mt-1">or drag and drop</span>
                         </button>
+                        <p v-if="compressionError" class="text-red-500 text-xs mt-2">{{ compressionError }}</p>
                     </div>
 
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -346,73 +351,6 @@
                 </div>
             </div>
 
-            <!-- Features Section -->
-            <!-- <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-                    <div>
-                        <h3 class="font-medium text-gray-900">Features</h3>
-                        <p class="text-xs text-gray-500 mt-1">Add specific features for your ad</p>
-                    </div>
-                    <button type="button" @click="addFeatureRow"
-                        class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add Feature
-                    </button>
-                </div>
-
-                <div class="p-6">
-                    <div v-if="features && features.length > 0" class="space-y-4">
-                        <div v-for="(feature, index) in form.features" :key="index" class="flex gap-4 items-start">
-                            <div class="flex-1">
-                                <select v-model="feature.feature_id"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors bg-white text-sm">
-                                    <option value="">Select Feature</option>
-                                    <option v-for="f in features" :key="f.id" :value="f.id">
-                                        {{ f.name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="flex-1">
-                                <template v-if="feature.feature_id">
-                                    <template v-if="hasFeatureValues(feature.feature_id)">
-                                        <select v-model="feature.feature_value_id"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors bg-white text-sm">
-                                            <option value="">Select Value</option>
-                                            <option v-for="v in getFeatureValues(feature.feature_id)" :key="v.id"
-                                                :value="v.id">
-                                                {{ v.value }}
-                                            </option>
-                                        </select>
-                                        <input v-if="feature.feature_value_id === ''" v-model="feature.custom_value"
-                                            placeholder="Enter custom value"
-                                            class="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors text-sm" />
-                                    </template>
-                                    <template v-else>
-                                        <input v-model="feature.custom_value"
-                                            :placeholder="`Enter ${getFeatureName(feature.feature_id)}`"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors text-sm" />
-                                    </template>
-                                </template>
-                                <p v-else class="text-sm text-gray-400 italic">Select a feature first</p>
-                            </div>
-                            <button type="button" @click="removeFeatureRow(index)"
-                                class="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <p v-if="form.features.length === 0" class="text-sm text-gray-500 text-center py-4">
-                        No features added yet. Click "Add Feature" to get started.
-                    </p>
-                </div>
-            </div> -->
-
             <!-- Keywords Section -->
             <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
@@ -454,7 +392,7 @@
 
             <!-- Submit Button -->
             <div class="flex justify-end pt-4">
-                <button type="submit" :disabled="form.processing"
+                <button type="submit" :disabled="form.processing || isCompressing"
                     class="px-8 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium">
                     <span v-if="form.processing">{{ editMode ? 'Updating...' : 'Posting...' }}</span>
                     <span v-else>{{ editMode ? 'Update Ad' : 'Post Ad' }}</span>
@@ -462,6 +400,7 @@
             </div>
         </form>
 
+        <!-- Full‑page loading spinner (shown during submission) -->
         <div v-else class="min-h-[calc(100vh-4rem)] flex items-center justify-center">
             <div class="text-center">
                 <svg class="animate-spin h-12 w-12 text-brand-blue mx-auto" xmlns="http://www.w3.org/2000/svg"
@@ -477,6 +416,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import imageCompression from 'browser-image-compression'
 import { useForm, router } from '@inertiajs/vue3'
 import axios from 'axios'
 import cities from '@/data/cities.json'
@@ -494,7 +434,6 @@ const props = defineProps({
 })
 
 const STORAGE_KEY = 'ad_form_draft'
-// isSubmitting is handled by Inertia useForm processing state (form.processing)
 
 // Dynamic attributes and models
 const categoryAttributes = ref([])
@@ -503,6 +442,10 @@ const brandModels = ref([])
 const localSelectedBrand = ref(null)
 const localSelectedModel = ref(null)
 const isLoadingModels = ref(false)
+
+// Image compression state
+const isCompressing = ref(false)
+const compressionError = ref('')
 
 const cityOptions = computed(() => {
     const citiesList = cities
@@ -551,7 +494,7 @@ const fetchModels = async (brandId) => {
             brandModels.value = response.data.models || []
         }
 
-        // Auto-select model if editing - use brand_model_id or model_id
+        // Auto-select model if editing
         if (props.editMode && props.adData) {
             const modelId = props.adData.brand_model_id || props.adData.model_id
             if (modelId && brandModels.value.length > 0) {
@@ -559,7 +502,6 @@ const fetchModels = async (brandId) => {
                 if (modelExists) {
                     const model = brandModels.value.find(m => m.id == modelId)
                     localSelectedModel.value = model
-                    //console.log('Auto-selected model:', model)
                 }
             }
         }
@@ -582,7 +524,6 @@ const handleBrandChange = () => {
 }
 
 const handleModelChange = () => {
-    // Update form model_id
     form.model_id = localSelectedModel.value?.id || null
 }
 
@@ -601,7 +542,6 @@ const initializeForm = () => {
         }
     }
 
-    // Get model ID from either brand_model_id or model_id
     const modelId = props.editMode && props.adData
         ? (props.adData.brand_model_id || props.adData.model_id || null)
         : (formData.model_id || null)
@@ -639,13 +579,9 @@ if (props.editMode && props.adData?.features) {
 // Set initial brand from adData if editing
 const setInitialBrandAndModel = () => {
     if (props.editMode && props.adData && props.selectedCategory?.brands) {
-        // Find and set the brand
         const brand = props.selectedCategory.brands.find(b => b.id === props.adData.brand_id)
         if (brand) {
             localSelectedBrand.value = brand
-            //console.log('Auto-selected brand:', brand)
-
-            // After brand is set, fetch models and then set model
             setTimeout(() => {
                 if (localSelectedBrand.value) {
                     fetchModels(localSelectedBrand.value.id)
@@ -676,39 +612,6 @@ const totalImages = computed(() => {
     return (existingImages.value?.length || 0) + form.images.length
 })
 
-const getFeatureValues = (featureId) => {
-    if (!featureId || !props.features || !props.features.length) return []
-    const id = Number(featureId)
-    const feature = props.features.find(f => Number(f.id) === id)
-    return feature?.values || []
-}
-
-const hasFeatureValues = (featureId) => {
-    if (!featureId || !props.features || !props.features.length) return false
-    const id = Number(featureId)
-    const feature = props.features.find(f => Number(f.id) === id)
-    return feature?.values && feature.values.length > 0
-}
-
-const getFeatureName = (featureId) => {
-    if (!featureId || !props.features || !props.features.length) return 'value'
-    const id = Number(featureId)
-    const feature = props.features.find(f => Number(f.id) === id)
-    return feature?.name?.toLowerCase() || 'value'
-}
-
-const addFeatureRow = () => {
-    form.features.push({
-        feature_id: '',
-        feature_value_id: null,
-        custom_value: null
-    })
-}
-
-const removeFeatureRow = (index) => {
-    form.features.splice(index, 1)
-}
-
 const addKeyword = () => {
     const value = newKeyword.value.trim()
     if (value && !form.search_keywords.includes(value) && form.search_keywords.length < 20) {
@@ -721,23 +624,49 @@ const removeKeyword = (index) => {
     form.search_keywords.splice(index, 1)
 }
 
-const handleImageUpload = (event) => {
+// Image upload with compression
+const handleImageUpload = async (event) => {
     const files = Array.from(event.target.files)
     const totalAfterUpload = totalImages.value + files.length
 
     if (totalAfterUpload > 10) {
         alert('Maximum 10 images allowed')
+        event.target.value = ''
         return
     }
 
-    files.forEach(file => {
-        if (file.type.startsWith('image/')) {
+    isCompressing.value = true
+    compressionError.value = ''
+
+    const compressionOptions = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true
+    }
+
+    for (const file of files) {
+        if (!file.type.startsWith('image/')) continue
+
+        try {
+            const compressedFile = await imageCompression(file, compressionOptions)
+            form.images.push(compressedFile)
+
+            // Generate preview from original file (or compressed, but original is fine for preview)
+            const reader = new FileReader()
+            reader.onload = e => imagePreviews.value.push(e.target.result)
+            reader.readAsDataURL(file)
+        } catch (error) {
+            console.error('Compression failed for', file.name, error)
+            compressionError.value = `Failed to compress ${file.name}. It will be uploaded as-is.`
+            // Fallback: add original file
             form.images.push(file)
             const reader = new FileReader()
             reader.onload = e => imagePreviews.value.push(e.target.result)
             reader.readAsDataURL(file)
         }
-    })
+    }
+
+    isCompressing.value = false
     event.target.value = ''
 }
 
@@ -817,8 +746,6 @@ const handleSubmit = () => {
         remove_images: form.remove_images
     }
 
-    //console.log('Submitting:', submitData)
-
     if (props.editMode) {
         const formData = new FormData()
 
@@ -865,9 +792,7 @@ const handleSubmit = () => {
         router.post(route('ads.update', props.adData.id), formData, {
             forceFormData: true,
             preserveScroll: true,
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            },
+            headers: { 'Content-Type': 'multipart/form-data' },
             onSuccess: () => {
                 router.visit(route('user.profile', props.user?.id))
                 clearDraftData()
@@ -918,9 +843,7 @@ const handleSubmit = () => {
         router.post(route('ads.store'), formData, {
             forceFormData: true,
             preserveScroll: true,
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            },
+            headers: { 'Content-Type': 'multipart/form-data' },
             onSuccess: () => {
                 clearDraftData()
                 resetFormState()
@@ -950,7 +873,6 @@ onMounted(() => {
     if (props.selectedCategory?.id) {
         fetchAttributes(props.selectedCategory.id)
     }
-    // Set initial brand and model after component is mounted
     setInitialBrandAndModel()
 })
 
@@ -962,13 +884,13 @@ const emit = defineEmits(['back'])
 </script>
 
 <style scoped>
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-input[type="number"] {
+input[type='number'] {
     -moz-appearance: textfield;
 }
 </style>

@@ -2,33 +2,77 @@
     <OlxLayout>
         <div class="max-w-8/10 mx-auto space-y-12 py-10">
             <!-- Subscription Check -->
+            <!-- Subscription Check -->
             <div v-if="!canCreateAd" class="bg-white rounded-lg shadow-sm p-8 text-center">
                 <div class="max-w-md mx-auto">
-                    <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <svg class="w-10 h-10 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
+                    <!-- Pending Status -->
+                    <template v-if="user?.subscription_status === 'pending'">
+                        <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
 
-                    <h2 class="text-2xl font-semibold text-gray-900 mb-3">Subscription Required</h2>
+                        <h2 class="text-2xl font-semibold text-gray-900 mb-3">Almost There! 🎉</h2>
 
-                    <p class="text-gray-600 mb-6">
-                        You need an active subscription to post ads.
-                        Please purchase a subscription plan to start posting your ads.
-                    </p>
-
-                    <div class="space-y-3">
-                        <Link :href="route('subscriptions.index')"
-                            class="inline-block w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium">
-                            View Subscription Plans
-                        </Link>
-
-                        <p class="text-sm text-gray-500">
-                            Your current status:
-                            <span class="font-medium capitalize">{{ user?.subscription_status }}</span>
+                        <p class="text-gray-600 mb-2">
+                            Your subscription is being processed.
                         </p>
-                    </div>
+                        <p class="text-gray-500 text-sm mb-6">
+                            This usually takes just a few moments. We'll notify you as soon as it's active, and then
+                            you'll be ready to post your ads!
+                        </p>
+
+                        <div class="space-y-3">
+                            <div class="inline-block w-full px-6 py-3 bg-blue-50 text-blue-700 rounded-lg font-medium">
+                                ⏳ Status: Pending Approval
+                            </div>
+
+                            <p class="text-xs text-gray-400">
+                                Thank you for your patience! If it takes longer than expected, feel free to
+                                <a href="#" class="text-primary hover:underline">contact support</a>.
+                            </p>
+                        </div>
+                    </template>
+
+                    <!-- No Active Subscription -->
+                    <template v-else>
+                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+
+                        <h2 class="text-2xl font-semibold text-gray-900 mb-3">Ready to Start Selling?</h2>
+
+                        <p class="text-gray-600 mb-2">
+                            You're just one step away from reaching thousands of buyers!
+                        </p>
+                        <p class="text-gray-500 text-sm mb-6">
+                            An active subscription unlocks unlimited ad posting and helps your items get noticed.
+                        </p>
+
+                        <div class="space-y-3">
+                            <Link :href="route('subscriptions.index')"
+                                class="inline-block w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm">
+                                ✨ Choose a Plan & Get Started
+                            </Link>
+
+                            <p class="text-xs text-gray-400">
+                                Your current account status:
+                                <span class="font-medium capitalize text-gray-600">{{ user?.subscription_status ||
+                                    'free' }}</span>
+                            </p>
+                        </div>
+
+                        <div class="mt-6 pt-6 border-t border-gray-100">
+                            <p class="text-xs text-gray-400">
+                                Need help? <a href="#" class="text-primary hover:underline">Contact support</a>
+                            </p>
+                        </div>
+                    </template>
                 </div>
             </div>
 

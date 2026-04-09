@@ -3,7 +3,7 @@
         <TopCategoriesBar />
         <!-- HERO BANNER -->
         <section v-if="homepageBanners.length"
-            class="relative bg-gray-100 h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden">
+            class="relative bg-gray-100 h-[180px] md:h-[400px] lg:h-[500px] overflow-hidden">
             <div v-for="(banner, index) in homepageBanners" :key="banner.id"
                 class="absolute inset-0 transition-opacity duration-700"
                 :class="{ 'opacity-100 z-10': currentSlide === index, 'opacity-0': currentSlide !== index }">
@@ -12,7 +12,7 @@
                 </a>
             </div>
 
-            <!-- Navigation -->
+            <!-- Navigation buttons (optional, keep as is) -->
             <button v-if="homepageBanners.length > 1" @click="prevSlide"
                 class="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 rounded-full p-3">
                 <Icon icon="mdi:chevron-left" class="text-2xl" />
@@ -23,7 +23,7 @@
             </button>
 
             <!-- Dots -->
-            <div v-if="homepageBanners.length > 1" class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+            <div v-if="homepageBanners.length > 1" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
                 <button v-for="(_, index) in homepageBanners" :key="index" @click="currentSlide = index"
                     class="h-2 rounded-full transition-all"
                     :class="currentSlide === index ? 'w-8 bg-yellow-500' : 'w-2 bg-white/70'">

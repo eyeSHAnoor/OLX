@@ -1,19 +1,14 @@
 <template>
     <div v-if="category.ads && category.ads.length > 0" class="my-6 sm:my-8">
-
-        <!-- Category Header - Compact -->
+        <!-- Category Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2 sm:gap-4">
-            <!-- Category Name -->
             <div class="flex-1">
                 <h2 class="text-base sm:text-lg font-semibold text-gray-800">
                     {{ category.name }}
                     <span class="text-[10px] sm:text-xs text-gray-500 ml-1">({{ filteredAds.length }})</span>
                 </h2>
             </div>
-
-            <!-- Action Buttons - Smaller -->
             <div class="flex items-center gap-1.5">
-                <!-- View All Button -->
                 <button @click="navigateToCategory(category)"
                     class="inline-flex items-center text-[10px] sm:text-xs font-medium text-white bg-brand-blue hover:bg-brand-teal transition-colors px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md shadow-sm">
                     View All
@@ -25,25 +20,26 @@
             </div>
         </div>
 
-        <!-- No Results Message - Compact -->
+        <!-- No Results -->
         <div v-if="filteredAds.length === 0" class="text-center py-6 sm:py-8 text-gray-500 text-xs sm:text-sm">
             No ads found in "{{ category.name }}" matching "{{ localSearch }}"
         </div>
 
-        <!-- Ads Grid - Tighter spacing -->
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            <AdCard v-for="ad in visibleAds" :key="ad.id" :ad="ad" />
+        <!-- Desktop/Tablet Grid (hidden on mobile) -->
+        <div v-else class="hidden sm:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <AdCard v-for="ad in visibleAds" :key="ad.id" :ad="ad" :size="'normal'" />
         </div>
 
-        <!-- Show More Button - Optional, if you want to see all ads in this section -->
-        <!-- <div v-if="filteredAds.length > 4" class="flex justify-center mt-4 sm:mt-5">
-            <button @click="showAll = !showAll"
-                class="text-[10px] sm:text-xs font-medium text-brand-blue hover:text-brand-teal transition-colors px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-md">
-                {{ showAll ? 'Show Less' : `Show ${filteredAds.length - 4} More` }}
-            </button>
-        </div> -->
+        <!-- Mobile Carousel (visible only on mobile) -->
+        <div class="block sm:hidden overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
+            <div class="flex flex-nowrap gap-3">
+                <div v-for="ad in filteredAds" :key="ad.id" class="w-[260px] flex-shrink-0">
+                    <AdCard :ad="ad" :size="'small'" />
+                </div>
+            </div>
+        </div>
 
-        <!-- Divider - Lighter -->
+        <!-- Divider -->
         <div v-if="filteredAds.length > 0" class="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-100"></div>
     </div>
 </template>
@@ -58,7 +54,6 @@ const props = defineProps({
     searchTerm: String
 })
 
-// Navigate to category show page
 const navigateToCategory = (category) => {
     if (category.slug) {
         router.get(route('category.show', { slug: category.slug }))
@@ -68,10 +63,8 @@ const navigateToCategory = (category) => {
 const showAll = ref(false)
 const localSearch = ref(props.searchTerm || '')
 
-// Filter ads based on local search
 const filteredAds = computed(() => {
     if (!localSearch.value.trim()) return props.category.ads || []
-
     const search = localSearch.value.toLowerCase().trim()
     return (props.category.ads || []).filter(ad =>
         ad.title?.toLowerCase().includes(search) ||
@@ -81,21 +74,19 @@ const filteredAds = computed(() => {
 
 const visibleAds = computed(() => showAll.value ? filteredAds.value : filteredAds.value.slice(0, 4))
 
-// Navigate to search page with category + global filter
-const viewCategoryAds = () => {
-    router.get(route('home'), {
-        filter: {
-            category: props.category.id,
-            global: localSearch.value || ''
-        }
-    }, {
-        preserveState: true,
-        preserveScroll: true
-    })
-}
-
-// Watch for external search term changes
 watch(() => props.searchTerm, (newSearch) => {
     localSearch.value = newSearch || ''
 })
 </script>
+
+<style scoped>
+/* Hide scrollbar on mobile carousel (optional) */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+</style>
