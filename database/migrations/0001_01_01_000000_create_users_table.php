@@ -26,6 +26,9 @@ return new class extends Migration {
             $table->string('verification_code', 6)->nullable();
             $table->timestamp('verification_code_expires_at')->nullable();
 
+            $table->date('date_of_birth')->nullable();
+            $table->enum('gender', ['male', 'female', 'custom'])->nullable();
+
             $table->integer('rank')->default(0);
             $table->boolean('terms_accepted')->default(false);
             $table->timestamp('terms_accepted_at')->nullable();
