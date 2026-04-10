@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Ad;
 use App\Models\AdImage;
+use App\Models\AdView;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\CategoryAttribute;
@@ -480,6 +481,15 @@ class AdController extends Controller
             'features' => function ($q) {
                 $q->withPivot(['feature_value_id', 'custom_value']);
             }
+        ]);
+
+            AdView::firstOrCreate([
+            'ad_id' => $ad->id,
+            'session_id' => session()->getId(),
+        ], [
+            'user_id' => auth()->id(),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
         ]);
         
         

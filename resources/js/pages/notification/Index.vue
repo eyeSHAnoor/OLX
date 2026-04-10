@@ -398,6 +398,12 @@ const markAllAsRead = () => {
     })
 }
 
+onMounted(() => {
+    if (props.unreadCount > 0) {
+        markAllAsRead()
+    }
+})
+
 const openNotification = (notification: any) => {
     // Mark as read if not already
     if (!notification.read_at) {

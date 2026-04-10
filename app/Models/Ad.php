@@ -23,6 +23,7 @@ class Ad extends Model
         'location',
         'status',
         'is_active',
+        'views',
         'is_featured',
         'seller_name',
         'seller_phone',
@@ -33,7 +34,16 @@ class Ad extends Model
         'search_keywords' => 'array',
     ];
 
-    protected $appends = ['is_favorited', 'thumbnail'];
+    protected $appends = ['is_favorited', 'thumbnail', 'views_count'];
+
+    public function getViewsCountAttribute()
+    {
+        if ($this->relationLoaded('views')) {
+            return $this->views->count();
+        }
+
+        return $this->views()->count();
+    }
 
     public function getIsFavoritedAttribute(): bool
     {
@@ -170,5 +180,10 @@ class Ad extends Model
      public function attributes()
     {
         return $this->hasMany(AdAttributeValue::class, 'ad_id');
+    }
+
+    public function views()
+    {
+        return $this->hasMany(AdView::class);
     }
 }   

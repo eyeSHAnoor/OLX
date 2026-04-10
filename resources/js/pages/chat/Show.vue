@@ -59,10 +59,41 @@ const dummyMessages = [
 
 useForceTheme('light');
 
-// Filter conversations
+// Helper: get the latest message timestamp for a conversation
+const getLatestMessageTimestamp = (conv) => {
+    // Use last_message if available, otherwise fallback to created_at
+    if (conv.last_message && conv.last_message.created_at) {
+        return new Date(conv.last_message.created_at).getTime()
+    }
+    if (conv.messages && conv.messages.length) {
+        return new Date(conv.messages[conv.messages.length - 1].created_at).getTime()
+    }
+    return new Date(conv.created_at || conv.updated_at).getTime()
+}
+
+// Helper: get the last message object
+const getLastMessage = (conversation) => {
+    if (conversation.last_message) return conversation.last_message
+    if (conversation.messages && conversation.messages.length) {
+        return conversation.messages[conversation.messages.length - 1]
+    }
+    return null
+}
+
+// Sort conversations by latest message timestamp (newest first)
+const sortedConversations = computed(() => {
+    const convs = [...conversationsList.value]
+    return convs.sort((a, b) => {
+        const timeA = getLatestMessageTimestamp(a)
+        const timeB = getLatestMessageTimestamp(b)
+        return timeB - timeA
+    })
+})
+
+// Filter conversations (apply search after sorting)
 const filteredConversations = computed(() => {
-    if (!searchQuery.value) return conversationsList.value
-    return conversationsList.value.filter(conv => {
+    if (!searchQuery.value) return sortedConversations.value
+    return sortedConversations.value.filter(conv => {
         const name = conv.seller_id === page.props.auth.user.id
             ? conv.buyer.name
             : conv.seller.name
@@ -119,11 +150,9 @@ const deleteSelectedConversations = async () => {
 
     // If the current conversation was deleted, reset
     if (props.conversation && selectedConversations.value.includes(props.conversation.id)) {
-        // Navigate to chat index
         router.visit(route('chat.index'))
     }
 
-    // Exit selection mode
     toggleSelectionMode()
 }
 
@@ -139,17 +168,97 @@ const scrollToBottom = async () => {
     }
 }
 
-// Listen for new messages and deleted messages
+// Update conversation list when a new message arrives
+const updateConversationOnNewMessage = (message) => {
+    const convIndex = conversationsList.value.findIndex(c => c.id === message.conversation_id)
+    if (convIndex !== -1) {
+        // Update the conversation's last_message and updated_at
+        const updatedConv = { ...conversationsList.value[convIndex] }
+        updatedConv.last_message = message
+        updatedConv.updated_at = message.created_at
+        // If the conversation has a messages array, push the new message
+        if (updatedConv.messages) {
+            updatedConv.messages.push(message)
+        } else {
+            updatedConv.messages = [message]
+        }
+        // Replace and let sorting reorder
+        conversationsList.value.splice(convIndex, 1, updatedConv)
+        // Force reactivity by reassigning (sorting computed will re-run)
+        conversationsList.value = [...conversationsList.value]
+    }
+}
+
+// Handle new message event from Echo
+const onMessageSent = (e) => {
+    messagesList.value.push(e.message)
+    scrollToBottom()
+    // Update conversation list to bring this conversation to top
+    updateConversationOnNewMessage(e.message)
+}
+
+// Handle message deletion
+const onMessageDeleted = (e) => {
+    messagesList.value = messagesList.value.filter(m => m.id !== e.messageId)
+    // Optionally update the conversation's last message if needed
+    const conv = conversationsList.value.find(c => c.id === e.conversation_id)
+    if (conv && conv.last_message && conv.last_message.id === e.messageId) {
+        // Find the new last message
+        const remainingMessages = messagesList.value.filter(m => m.conversation_id === e.conversation_id)
+        const newLast = remainingMessages.length ? remainingMessages[remainingMessages.length - 1] : null
+        conv.last_message = newLast
+        conversationsList.value = [...conversationsList.value]
+    }
+}
+
+// Setup Echo listeners for a conversation
+const setupEchoListeners = (conversationId) => {
+    window.Echo.private(`conversation.${conversationId}`)
+        .listen('.message.sent', onMessageSent)
+        .listen('.message.deleted', onMessageDeleted)
+}
+
+// Teardown Echo listeners
+const teardownEchoListeners = (conversationId) => {
+    window.Echo.leave(`conversation.${conversationId}`)
+}
+
+// Mobile: scroll message input into view when focused
+// Mobile: keep input above keyboard and show latest message
+const scrollInputIntoView = (event) => {
+    if (window.innerWidth < 768) {
+        setTimeout(() => {
+            event.target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            // Also scroll messages to bottom so latest message is visible
+            scrollToBottom()
+        }, 100)
+    }
+}
+
+// Refs for input elements (to attach focus listener)
+const messageInputRef = ref(null)
+
+// Watch for conversation changes to re-attach listeners
+watch(() => props.conversation, (newConv, oldConv) => {
+    if (oldConv) {
+        teardownEchoListeners(oldConv.id)
+    }
+    if (newConv) {
+        setupEchoListeners(newConv.id)
+        messagesList.value = props.messages || []
+        scrollToBottom()
+
+        if (window.innerWidth < 768) {
+            showMobileChat.value = true
+            showMobileSidebar.value = false
+        }
+    }
+})
+
 onMounted(() => {
     if (props.conversation) {
-        window.Echo.private(`conversation.${props.conversation.id}`)
-            .listen('.message.sent', (e) => {
-                messagesList.value.push(e.message)
-                scrollToBottom()
-            })
-            .listen('.message.deleted', (e) => {
-                messagesList.value = messagesList.value.filter(m => m.id !== e.messageId)
-            })
+        setupEchoListeners(props.conversation.id)
+        scrollToBottom()
 
         if (window.innerWidth < 768) {
             showMobileChat.value = true
@@ -157,7 +266,12 @@ onMounted(() => {
         }
     }
 
-    scrollToBottom()
+    // Attach focus listener to message input (both desktop and mobile)
+    nextTick(() => {
+        if (messageInputRef.value) {
+            messageInputRef.value.addEventListener('focus', scrollInputIntoView)
+        }
+    })
 
     const handleResize = () => {
         if (window.innerWidth >= 768) {
@@ -176,39 +290,28 @@ onMounted(() => {
     window.addEventListener('click', handleClickOutside)
 
     return () => {
+        if (props.conversation) {
+            teardownEchoListeners(props.conversation.id)
+        }
+        if (messageInputRef.value) {
+            messageInputRef.value.removeEventListener('focus', scrollInputIntoView)
+        }
         window.removeEventListener('resize', handleResize)
         window.removeEventListener('click', handleClickOutside)
     }
 })
 
-// Cleanup
+const handleResizeForKeyboard = () => {
+    if (window.innerWidth < 768 && document.activeElement === messageInputRef.value) {
+        messageInputRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        scrollToBottom()
+    }
+}
+window.addEventListener('resize', handleResizeForKeyboard)
+// Cleanup on unmount
 onUnmounted(() => {
     if (props.conversation) {
-        window.Echo.leave(`conversation.${props.conversation.id}`)
-    }
-})
-
-// Watch for conversation changes
-watch(() => props.conversation, (newConv, oldConv) => {
-    if (oldConv) {
-        window.Echo.leave(`conversation.${oldConv.id}`)
-    }
-    if (newConv) {
-        window.Echo.private(`conversation.${newConv.id}`)
-            .listen('.message.sent', (e) => {
-                messagesList.value.push(e.message)
-                scrollToBottom()
-            })
-            .listen('.message.deleted', (e) => {
-                messagesList.value = messagesList.value.filter(m => m.id !== e.messageId)
-            })
-        messagesList.value = props.messages || []
-        scrollToBottom()
-
-        if (window.innerWidth < 768) {
-            showMobileChat.value = true
-            showMobileSidebar.value = false
-        }
+        teardownEchoListeners(props.conversation.id)
     }
 })
 
@@ -315,13 +418,6 @@ const goBackToSidebar = () => {
     showMobileChat.value = false
 }
 
-const getLastMessage = (conversation) => {
-    if (!conversation.messages || !conversation.messages.length) {
-        return conversation.last_message || null
-    }
-    return conversation.messages[conversation.messages.length - 1]
-}
-
 const getUnreadCount = (conversation) => {
     if (!conversation.messages) return 0
     return conversation.messages.filter(
@@ -347,7 +443,7 @@ const groupMessagesByDate = (messages) => {
     return groups
 }
 
-// File upload functions
+// File upload functions (unchanged)
 const triggerFileSelect = (type) => {
     const input = document.createElement('input')
     input.type = 'file'
@@ -361,7 +457,7 @@ const triggerFileSelect = (type) => {
 
 const handleFileSelect = (files) => {
     for (let file of files) {
-        const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+        const MAX_SIZE = 10 * 1024 * 1024;
         if (file.size > MAX_SIZE) {
             alert(`File ${file.name} exceeds 10 MB limit.`);
             continue;
@@ -374,7 +470,6 @@ const handleFileSelect = (files) => {
             const url = URL.createObjectURL(file)
             previewUrls.value.push({ url, type: 'video', file, name: file.name })
         } else {
-            // Document
             previewUrls.value.push({ url: null, type: 'document', file, name: file.name })
         }
     }
@@ -386,7 +481,6 @@ const removeFile = (index) => {
     }
     selectedFiles.value.splice(index, 1)
     previewUrls.value.splice(index, 1)
-    // Rebuild uploadProgress for remaining files (optional)
     const newProgress = {}
     selectedFiles.value.forEach(file => {
         if (uploadProgress.value[file.name]) {
@@ -412,12 +506,10 @@ const sendFiles = async () => {
                     uploadProgress.value[file.name] = percent
                 }
             })
-            // The broadcast will add the message to messagesList automatically
         } catch (error) {
             console.error('Upload failed', error)
         }
     }
-    // Clear selected files
     selectedFiles.value = []
     previewUrls.value = []
     uploadProgress.value = {}
@@ -434,13 +526,11 @@ const closePreview = () => {
     previewItem.value = null
 }
 
-// Get the private file URL using message ID
 const getFileUrl = (messageId) => {
     return `/chat/file/${messageId}`
 }
 
 const showAttachMenu = ref(false)
-
 const showAdPicker = ref(false)
 const ads = ref([])
 const loadingAds = ref(false)
@@ -448,14 +538,12 @@ const loadingAds = ref(false)
 const openAdPicker = async () => {
     showAdPicker.value = true
     loadingAds.value = true
-
     try {
         const res = await axios.get('/chat/my-ads')
         ads.value = res.data
     } catch (e) {
         console.error(e)
     }
-
     loadingAds.value = false
 }
 
@@ -467,44 +555,38 @@ const sendAd = (ad) => {
     }, {
         preserveScroll: true
     })
-
     showAdPicker.value = false
 }
 </script>
 
 <template>
     <OlxLayout :hide-search-bar="true">
-        <div class="h-[calc(100vh-73px)] bg-gray-100 sm:max-w-5xl  mx-auto  overflow-hidden">
+        <div class="h-[calc(93dvh-73px)] sm:h-[calc(100dvh-73px)] bg-gray-100 sm:max-w-5xl mx-auto overflow-hidden">
             <div class="h-full max-w-[1600px] mx-auto">
                 <!-- Desktop Layout -->
                 <div class="hidden md:flex h-full bg-white shadow-xl">
                     <!-- Conversations Sidebar -->
                     <div class="w-96 border-r border-gray-200 flex flex-col bg-white">
-                        <!-- Sidebar Header -->
+                        <!-- Sidebar Header (unchanged) -->
                         <div class="p-5 border-b border-gray-200 bg-white">
                             <div class="flex items-center justify-between mb-4">
                                 <h2 class="text-2xl font-bold text-gray-800">Chats</h2>
                                 <div class="flex items-center gap-2">
-                                    <!-- Delete button when in selection mode -->
                                     <button v-if="selectionMode" @click="deleteSelectedConversations"
                                         :disabled="selectedConversations.length === 0"
                                         class="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                         <Icon icon="lucide:trash-2" class="size-5 text-red-500" />
                                     </button>
-                                    <!-- Cancel selection mode -->
                                     <button v-if="selectionMode" @click="cancelSelection"
                                         class="p-2 hover:bg-gray-100 rounded-full transition-colors">
                                         <Icon icon="lucide:x" class="size-5 text-gray-600" />
                                     </button>
-                                    <!-- Pen icon to toggle selection mode -->
                                     <button v-else @click="toggleSelectionMode"
                                         class="p-2 hover:bg-gray-100 rounded-full transition-colors">
                                         <Icon icon="lucide:edit-2" class="size-5 text-gray-600" />
                                     </button>
                                 </div>
                             </div>
-
-                            <!-- Search Bar -->
                             <div class="relative">
                                 <Icon icon="lucide:search"
                                     class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
@@ -513,7 +595,7 @@ const sendAd = (ad) => {
                             </div>
                         </div>
 
-                        <!-- Conversations List -->
+                        <!-- Conversations List (now using filteredConversations which is sorted) -->
                         <div class="flex-1 overflow-y-auto">
                             <div v-if="!filteredConversations.length"
                                 class="flex flex-col items-center justify-center h-full p-8">
@@ -528,14 +610,12 @@ const sendAd = (ad) => {
                                     conv.id === conversation?.id && !selectionMode ? 'bg-gray-100' : '',
                                     selectionMode && selectedConversations.includes(conv.id) ? 'bg-brand-blue/5' : ''
                                 ]">
-                                <!-- Checkbox for selection mode -->
                                 <div v-if="selectionMode" class="flex-shrink-0 pt-2">
                                     <input type="checkbox" :checked="selectedConversations.includes(conv.id)"
                                         @click.stop @change="toggleSelectConversation(conv.id)"
                                         class="w-4 h-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue" />
                                 </div>
 
-                                <!-- Avatar -->
                                 <div class="relative flex-shrink-0">
                                     <div :class="[
                                         'size-12 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-sm',
@@ -549,7 +629,6 @@ const sendAd = (ad) => {
                                     </div>
                                 </div>
 
-                                <!-- Content -->
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between mb-1">
                                         <h3 class="font-semibold text-gray-900 truncate">
@@ -560,13 +639,10 @@ const sendAd = (ad) => {
                                             {{ formatTime(getLastMessage(conv)?.created_at || conv.created_at) }}
                                         </span>
                                     </div>
-
                                     <div class="flex items-center justify-between">
                                         <p class="text-sm text-gray-500 truncate flex-1">
                                             <span v-if="getLastMessage(conv)?.sender_id === page.props.auth.user.id"
-                                                class="text-gray-400">
-                                                You:
-                                            </span>
+                                                class="text-gray-400">You:</span>
                                             {{ getLastMessage(conv)?.body || 'No messages yet' }}
                                         </p>
                                         <span v-if="getUnreadCount(conv) > 0"
@@ -579,9 +655,8 @@ const sendAd = (ad) => {
                         </div>
                     </div>
 
-                    <!-- Chat Area -->
+                    <!-- Chat Area (unchanged except input ref) -->
                     <div class="flex-1 flex flex-col bg-gray-50">
-                        <!-- Chat Header -->
                         <div v-if="conversation"
                             class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
                             <Link :href="route('user.profile', otherUser?.id)"
@@ -605,23 +680,17 @@ const sendAd = (ad) => {
                             <h3 class="text-gray-500 text-center">Select a conversation to start messaging</h3>
                         </div>
 
-                        <!-- Messages Area -->
                         <div v-if="conversation" class="flex-1 overflow-y-auto px-6 py-6" ref="messagesContainer">
                             <div v-for="(messages, date) in groupMessagesByDate(messagesList)" :key="date">
                                 <div class="flex justify-center mb-4">
-                                    <span class="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
-                                        {{ date }}
-                                    </span>
+                                    <span class="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">{{ date
+                                        }}</span>
                                 </div>
-
                                 <div v-for="message in messages" :key="message.id"
                                     :class="['flex mb-4', message.sender_id === page.props.auth.user.id ? 'justify-end' : 'justify-start']">
-
                                     <div class="flex items-end gap-2 max-w-[70%]">
                                         <div v-if="message.sender_id !== page.props.auth.user.id"
-                                            :class="['size-8 rounded-full flex-shrink-0', getAvatarColor()]">
-                                        </div>
-
+                                            :class="['size-8 rounded-full flex-shrink-0', getAvatarColor()]"></div>
                                         <div @contextmenu.prevent="handleRightClick($event, message)"
                                             class="relative cursor-context-menu">
                                             <div :class="[
@@ -630,35 +699,27 @@ const sendAd = (ad) => {
                                                     ? (message.sender_id === page.props.auth.user.id
                                                         ? 'bg-brand-teal text-white rounded-br-sm'
                                                         : 'bg-white text-gray-800 rounded-bl-sm border border-gray-200')
-                                                    : '' // no background for file messages
+                                                    : ''
                                             ]">
-                                                <!-- File message -->
                                                 <template v-if="message.type === 'file'">
-                                                    <!-- Image -->
                                                     <img v-if="message.body.match(/\.(jpg|jpeg|png|gif|webp)$/i)"
                                                         :src="getFileUrl(message.id)"
                                                         class="max-w-[200px] rounded-lg cursor-pointer hover:opacity-90 transition shadow-sm border border-gray-200"
                                                         @click="openPreview({ url: getFileUrl(message.id), type: 'image', name: message.body.split('/').pop() })" />
-                                                    <!-- Video -->
                                                     <video v-else-if="message.body.match(/\.(mp4|mov|avi|webm)$/i)"
                                                         controls
                                                         class="max-w-[250px] rounded-lg shadow-sm border border-gray-200">
                                                         <source :src="getFileUrl(message.id)" />
                                                     </video>
-                                                    <!-- Document -->
                                                     <div v-else
                                                         class="flex items-center gap-2 p-2 bg-gray-100 rounded-lg">
                                                         <Icon icon="lucide:file-text" class="size-6 text-gray-600" />
-                                                        <span class="text-sm truncate max-w-[150px]">
-                                                            {{ message.body.split('/').pop() }}
-                                                        </span>
+                                                        <span class="text-sm truncate max-w-[150px]">{{
+                                                            message.body.split('/').pop() }}</span>
                                                         <a :href="getFileUrl(message.id)" target="_blank"
-                                                            class="text-brand-blue hover:underline text-xs ml-2">
-                                                            Download
-                                                        </a>
+                                                            class="text-brand-blue hover:underline text-xs ml-2">Download</a>
                                                     </div>
                                                 </template>
-                                                <!-- Text message -->
                                                 <p v-else class="text-sm leading-relaxed">{{ message.body }}</p>
                                             </div>
                                             <div :class="[
@@ -678,7 +739,6 @@ const sendAd = (ad) => {
                             <div ref="messagesEnd"></div>
                         </div>
 
-                        <!-- Empty State -->
                         <div v-else class="flex-1 flex items-center justify-center">
                             <div class="text-center">
                                 <div
@@ -691,15 +751,13 @@ const sendAd = (ad) => {
                             </div>
                         </div>
 
-                        <!-- Input Area Desktop -->
+                        <!-- Input Area Desktop with ref for focus scrolling -->
                         <div v-if="conversation" class="bg-white border-t border-gray-200 p-4">
-                            <!-- File Preview Area -->
                             <div v-if="previewUrls.length" class="mb-3 flex flex-wrap gap-2">
                                 <div v-for="(item, idx) in previewUrls" :key="idx"
                                     class="relative group rounded-lg overflow-hidden border border-gray-200 bg-gray-50 shadow-sm">
                                     <div v-if="item.type === 'image'" class="w-20 h-20 bg-cover bg-center"
-                                        :style="{ backgroundImage: `url(${item.url})` }">
-                                    </div>
+                                        :style="{ backgroundImage: `url(${item.url})` }"></div>
                                     <div v-else-if="item.type === 'video'"
                                         class="w-20 h-20 bg-gray-800 flex items-center justify-center">
                                         <Icon icon="lucide:video" class="size-8 text-white" />
@@ -707,9 +765,8 @@ const sendAd = (ad) => {
                                     <div v-else
                                         class="w-20 h-20 bg-gray-100 flex flex-col items-center justify-center p-2">
                                         <Icon icon="lucide:file-text" class="size-8 text-gray-500" />
-                                        <span class="text-xs text-gray-600 truncate w-full text-center">
-                                            {{ item.name.slice(0, 10) }}
-                                        </span>
+                                        <span class="text-xs text-gray-600 truncate w-full text-center">{{
+                                            item.name.slice(0, 10) }}</span>
                                     </div>
                                     <button @click="removeFile(idx)"
                                         class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition">
@@ -722,7 +779,6 @@ const sendAd = (ad) => {
                                 </div>
                             </div>
 
-                            <!-- Quick Replies -->
                             <div class="flex gap-2 mb-3 overflow-x-auto pb-2">
                                 <button v-for="(dummy, index) in dummyMessages.slice(0, 4)" :key="index"
                                     @click="sendDummyMessage(dummy.text)"
@@ -732,36 +788,26 @@ const sendAd = (ad) => {
                                 </button>
                             </div>
 
-                            <!-- Message Input with File Buttons -->
                             <div class="flex flex-col gap-2">
                                 <div class="flex gap-2 items-center">
-
-                                    <!-- Attachment Button -->
                                     <div class="relative">
                                         <button type="button" @click="showAttachMenu = !showAttachMenu"
                                             class="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Attach">
                                             <Icon icon="lucide:paperclip" class="size-5 text-gray-500" />
                                         </button>
-
-                                        <!-- Dropdown -->
                                         <div v-if="showAttachMenu"
                                             class="absolute bottom-12 left-0 bg-white shadow-lg border rounded-xl p-2 w-40 z-50">
                                             <button @click="triggerFileSelect('image'); showAttachMenu = false"
                                                 class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded-lg">
-                                                <Icon icon="lucide:image" class="size-4 text-brand-blue" />
-                                                Image
+                                                <Icon icon="lucide:image" class="size-4 text-brand-blue" /> Image
                                             </button>
-
                                             <button @click="triggerFileSelect('video'); showAttachMenu = false"
                                                 class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded-lg">
-                                                <Icon icon="lucide:video" class="size-4 text-brand-blue" />
-                                                Video
+                                                <Icon icon="lucide:video" class="size-4 text-brand-blue" /> Video
                                             </button>
-
                                             <button @click="triggerFileSelect('document'); showAttachMenu = false"
                                                 class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded-lg">
-                                                <Icon icon="lucide:file-text" class="size-4 text-brand-blue" />
-                                                Document
+                                                <Icon icon="lucide:file-text" class="size-4 text-brand-blue" /> Document
                                             </button>
                                             <button @click="openAdPicker(); showAttachMenu = false"
                                                 class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded-lg">
@@ -771,17 +817,15 @@ const sendAd = (ad) => {
                                         </div>
                                     </div>
 
-                                    <!-- Emoji -->
                                     <button type="button" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
                                         <Icon icon="lucide:smile" class="size-5 text-gray-500" />
                                     </button>
 
-                                    <!-- Message Input -->
                                     <div class="flex-1 flex gap-2">
-                                        <input v-model="newMessage" type="text" placeholder="Type a message..."
+                                        <input ref="messageInputRef" v-model="newMessage" type="text"
+                                            placeholder="Type a message..."
                                             class="flex-1 px-4 py-2.5 border-0 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:bg-white transition-all text-sm"
                                             @keyup.enter="sendMessage" />
-
                                         <button type="submit" @click="sendMessage"
                                             class="size-10 bg-brand-blue text-white rounded-full hover:bg-brand-blue-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-sm"
                                             :disabled="!newMessage.trim()">
@@ -790,7 +834,6 @@ const sendAd = (ad) => {
                                     </div>
                                 </div>
 
-                                <!-- Send Files Button -->
                                 <button v-if="selectedFiles.length" @click="sendFiles" :disabled="uploading"
                                     class="bg-brand-teal hover:bg-brand-teal-dark text-white rounded-xl py-2 text-sm font-medium transition disabled:opacity-50">
                                     <span v-if="uploading">Uploading...</span>
@@ -801,27 +844,24 @@ const sendAd = (ad) => {
                     </div>
                 </div>
 
-                <!-- Mobile Layout -->
+                <!-- Mobile Layout (similar focus ref added) -->
                 <div class="md:hidden h-full">
-                    <!-- Mobile Conversations List -->
                     <div v-if="showMobileSidebar || (!showMobileChat && !conversation)"
                         class="h-full bg-white flex flex-col">
+                        <!-- same sidebar content as before, using filteredConversations -->
                         <div class="p-4 border-b border-gray-200 bg-white">
                             <div class="flex items-center justify-between mb-3">
                                 <h2 class="text-2xl font-bold text-gray-800">Chats</h2>
                                 <div class="flex items-center gap-2">
-                                    <!-- Delete button when in selection mode -->
                                     <button v-if="selectionMode" @click="deleteSelectedConversations"
                                         :disabled="selectedConversations.length === 0"
                                         class="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50">
                                         <Icon icon="lucide:trash-2" class="size-5 text-red-500" />
                                     </button>
-                                    <!-- Cancel selection mode -->
                                     <button v-if="selectionMode" @click="cancelSelection"
                                         class="p-2 hover:bg-gray-100 rounded-full transition-colors">
                                         <Icon icon="lucide:x" class="size-5 text-gray-600" />
                                     </button>
-                                    <!-- Pen icon to toggle selection mode -->
                                     <button v-else @click="toggleSelectionMode"
                                         class="p-2 hover:bg-gray-100 rounded-full transition-colors">
                                         <Icon icon="lucide:edit-2" class="size-5 text-gray-600" />
@@ -835,40 +875,34 @@ const sendAd = (ad) => {
                                     class="w-full pl-9 pr-4 py-2.5 bg-gray-100 border-0 rounded-xl text-sm focus:outline-none" />
                             </div>
                         </div>
-
                         <div class="flex-1 overflow-y-auto">
                             <div v-if="!filteredConversations.length"
                                 class="flex flex-col items-center justify-center h-full p-8">
                                 <Icon icon="lucide:inbox" class="size-12 text-gray-300 mb-3" />
                                 <p class="text-gray-500 text-sm">No conversations</p>
                             </div>
-
                             <button v-for="conv in filteredConversations" :key="conv.id"
                                 @click="selectionMode ? toggleSelectConversation(conv.id) : router.visit(`/chat/${conv.id}`)"
                                 class="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-all border-b border-gray-100 text-left"
-                                :class="[
-                                    selectionMode && selectedConversations.includes(conv.id) ? 'bg-brand-blue/5' : ''
-                                ]">
-                                <!-- Checkbox for selection mode -->
+                                :class="[selectionMode && selectedConversations.includes(conv.id) ? 'bg-brand-blue/5' : '']">
                                 <div v-if="selectionMode" class="flex-shrink-0 pt-2">
                                     <input type="checkbox" :checked="selectedConversations.includes(conv.id)"
                                         @click.stop @change="toggleSelectConversation(conv.id)"
                                         class="w-4 h-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue" />
                                 </div>
-
                                 <div class="relative flex-shrink-0">
                                     <div :class="[
                                         'size-12 rounded-full flex items-center justify-center text-white font-semibold text-lg',
                                         getAvatarColor()
                                     ]">
                                         {{ getInitials(conv.seller_id === page.props.auth.user.id ? conv.buyer.name :
-                                            conv.seller.name) }}
+                                            conv.seller.name)
+                                        }}
                                     </div>
                                     <div
                                         class="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-white">
                                     </div>
                                 </div>
-
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between mb-1">
                                         <h3 class="font-semibold text-gray-900 truncate">
@@ -876,7 +910,7 @@ const sendAd = (ad) => {
                                                 conv.seller.name }}
                                         </h3>
                                         <span class="text-xs text-gray-400 whitespace-nowrap ml-2">
-                                            {{ formatTime(conv.last_message_at || conv.created_at) }}
+                                            {{ formatTime(conv.last_message?.created_at || conv.created_at) }}
                                         </span>
                                     </div>
                                     <p class="text-sm text-gray-500 truncate">
@@ -891,9 +925,7 @@ const sendAd = (ad) => {
                         </div>
                     </div>
 
-                    <!-- Mobile Chat View -->
                     <div v-else-if="showMobileChat && conversation" class="h-full bg-gray-50 flex flex-col">
-                        <!-- Mobile Chat Header -->
                         <div class="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
                             <button @click="goBackToSidebar" class="p-1 -ml-1">
                                 <Icon icon="lucide:arrow-left" class="size-6 text-gray-600" />
@@ -913,7 +945,6 @@ const sendAd = (ad) => {
                             </Link>
                         </div>
 
-                        <!-- Mobile Messages -->
                         <div class="flex-1 overflow-y-auto p-4 space-y-4">
                             <div v-for="message in messagesList" :key="message.id"
                                 :class="['flex', message.sender_id === page.props.auth.user.id ? 'justify-end' : 'justify-start']">
@@ -924,9 +955,8 @@ const sendAd = (ad) => {
                                             ? (message.sender_id === page.props.auth.user.id
                                                 ? 'bg-brand-teal text-white rounded-br-sm'
                                                 : 'bg-white text-gray-800 rounded-bl-sm border border-gray-200')
-                                            : '' // no background for file messages
+                                            : ''
                                     ]">
-                                        <!-- File message -->
                                         <template v-if="message.type === 'file'">
                                             <img v-if="message.body.match(/\.(jpg|jpeg|png|gif|webp)$/i)"
                                                 :src="getFileUrl(message.id)"
@@ -939,7 +969,7 @@ const sendAd = (ad) => {
                                             <div v-else class="flex items-center gap-2">
                                                 <Icon icon="lucide:file-text" class="size-5" />
                                                 <span class="text-sm truncate">{{ message.body.split('/').pop()
-                                                }}</span>
+                                                    }}</span>
                                                 <a :href="getFileUrl(message.id)" target="_blank"
                                                     class="text-brand-blue underline text-xs">Download</a>
                                             </div>
@@ -957,10 +987,7 @@ const sendAd = (ad) => {
                             <div ref="messagesEnd"></div>
                         </div>
 
-                        <!-- Mobile Input -->
                         <div class="bg-white border-t border-gray-200 p-3">
-
-                            <!-- Quick Replies (mobile) -->
                             <div class="flex gap-2 mb-3 overflow-x-auto pb-2">
                                 <button v-for="(dummy, index) in dummyMessages.slice(0, 4)" :key="index"
                                     @click="sendDummyMessage(dummy.text)"
@@ -970,7 +997,6 @@ const sendAd = (ad) => {
                                 </button>
                             </div>
 
-                            <!-- File Preview (mobile) -->
                             <div v-if="previewUrls.length" class="mb-2 flex flex-wrap gap-2">
                                 <div v-for="(item, idx) in previewUrls" :key="idx"
                                     class="relative w-16 h-16 rounded-lg overflow-hidden border shadow-sm">
@@ -991,42 +1017,35 @@ const sendAd = (ad) => {
                             </div>
 
                             <div class="flex gap-2">
-                                <!-- Attachment Button -->
                                 <div class="relative">
                                     <button type="button" @click="showAttachMenu = !showAttachMenu"
                                         class="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Attach">
                                         <Icon icon="lucide:paperclip" class="size-5 text-gray-500" />
                                     </button>
-
-                                    <!-- Dropdown -->
                                     <div v-if="showAttachMenu"
                                         class="absolute bottom-12 left-0 bg-white shadow-lg border rounded-xl p-2 w-40 z-50">
                                         <button @click="triggerFileSelect('image'); showAttachMenu = false"
                                             class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded-lg">
-                                            <Icon icon="lucide:image" class="size-4 text-brand-blue" />
-                                            Image
+                                            <Icon icon="lucide:image" class="size-4 text-brand-blue" /> Image
                                         </button>
-
                                         <button @click="triggerFileSelect('video'); showAttachMenu = false"
                                             class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded-lg">
-                                            <Icon icon="lucide:video" class="size-4 text-brand-blue" />
-                                            Video
+                                            <Icon icon="lucide:video" class="size-4 text-brand-blue" /> Video
                                         </button>
-
                                         <button @click="triggerFileSelect('document'); showAttachMenu = false"
                                             class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded-lg">
-                                            <Icon icon="lucide:file-text" class="size-4 text-brand-blue" />
-                                            Document
+                                            <Icon icon="lucide:file-text" class="size-4 text-brand-blue" /> Document
                                         </button>
                                         <button @click="openAdPicker(); showAttachMenu = false"
                                             class="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 rounded-lg">
-                                            <Icon icon="lucide:shopping-bag" class="size-4 text-brand-blue" />
-                                            Product
+                                            <Icon icon="lucide:shopping-bag" class="size-4 text-brand-blue" /> Product
                                         </button>
                                     </div>
                                 </div>
-                                <input v-model="newMessage" type="text" placeholder="Type a message..."
-                                    class="flex-1 px-4 py-2.5 bg-gray-100 rounded-2xl focus:outline-none text-sm" />
+                                <input ref="messageInputRef" v-model="newMessage" type="text"
+                                    placeholder="Type a message..."
+                                    class="flex-1 px-4 py-2.5 bg-gray-100 rounded-2xl focus:outline-none text-sm"
+                                    @keyup.enter="sendMessage" />
                                 <button type="submit" @click="sendMessage"
                                     class="size-11 bg-brand-blue text-white rounded-full hover:bg-brand-blue-dark disabled:opacity-50 flex items-center justify-center"
                                     :disabled="!newMessage.trim()">
@@ -1040,7 +1059,6 @@ const sendAd = (ad) => {
                         </div>
                     </div>
 
-                    <!-- Mobile Empty State -->
                     <div v-else class="h-full bg-white flex flex-col items-center justify-center p-6">
                         <div class="size-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                             <Icon icon="lucide:message-circle" class="size-12 text-gray-400" />
@@ -1056,7 +1074,7 @@ const sendAd = (ad) => {
             </div>
         </div>
 
-        <!-- Context Menu -->
+        <!-- Context Menu, Alert Dialog, Preview Modal, AdPickerModal (unchanged) -->
         <div v-if="contextMenu.show" class="fixed z-50 bg-white rounded-lg shadow-xl border py-1 min-w-[180px]"
             :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
             <button @click="deleteMessage"
@@ -1066,7 +1084,6 @@ const sendAd = (ad) => {
             </button>
         </div>
 
-        <!-- Alert Dialog -->
         <div v-if="isOpen" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
                 <div class="flex items-center gap-3 mb-4">
@@ -1087,7 +1104,6 @@ const sendAd = (ad) => {
             </div>
         </div>
 
-        <!-- Preview Modal -->
         <div v-if="showPreviewModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
             @click.self="closePreview">
             <div class="relative max-w-full max-h-full">
@@ -1105,7 +1121,7 @@ const sendAd = (ad) => {
             </div>
         </div>
     </OlxLayout>
-    <AdPickerModal v-model="showAdPicker" @select="sendAd" :conversation-id="conversation.id" />
+    <AdPickerModal v-model="showAdPicker" :conversation-id="conversation.id" />
 </template>
 
 <style scoped>
@@ -1113,7 +1129,6 @@ const sendAd = (ad) => {
     --tw-ring-color: rgba(59, 130, 246, 0.2);
 }
 
-/* Custom scrollbar */
 .overflow-y-auto::-webkit-scrollbar {
     width: 5px;
 }
@@ -1131,12 +1146,10 @@ const sendAd = (ad) => {
     background: #94a3b8;
 }
 
-/* Smooth animations */
 * {
     transition: all 0.2s ease;
 }
 
-/* Message animations */
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -1153,12 +1166,10 @@ const sendAd = (ad) => {
     animation: slideIn 0.2s ease-out;
 }
 
-/* Quick replies hover effect */
 .whitespace-nowrap:hover {
     transform: scale(1.05);
 }
 
-/* Mobile optimizations */
 @media (max-width: 768px) {
     .overflow-x-auto {
         -webkit-overflow-scrolling: touch;

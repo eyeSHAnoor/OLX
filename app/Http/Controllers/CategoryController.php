@@ -10,6 +10,7 @@ use App\Models\AttributeGroup;
 use App\Models\CategoryAttribute;
 use App\Models\AttributeOption;
 use App\Models\Banner;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;

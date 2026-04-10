@@ -119,15 +119,17 @@ const loadAds = async () => {
     loading.value = true
     try {
         const res = await axios.get('/chat/my-ads')
-        //console.log('Loaded ads:', res.data)
+        console.log('Loaded ads:', res.data)
         ads.value = res.data.map(ad => ({
             id: ad.id,
             title: ad.ad_title || ad.title,
             price: ad.price,
-            thumbnail: ad.images?.find(img => img.is_primary)?.path ||
+            thumbnail: '/storage/' + (
+                ad.images?.find(img => img.is_primary)?.path ||
                 ad.images?.[0]?.path ||
                 ad.thumbnail ||
-                '/placeholder.jpg'
+                'placeholder.jpg'
+            )
         }))
     } catch (err) {
         console.error('Failed to load ads', err)
@@ -156,8 +158,6 @@ const selectAd = async (ad) => {
                 notes: ''
             }
         })
-
-        emit('select', ad)
         close()
     } catch (err) {
         console.error('Failed to send product message', err)
