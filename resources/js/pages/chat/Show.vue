@@ -32,11 +32,11 @@ const isTyping = ref(false)
 const selectedImage = ref(null)
 const showEmojiPicker = ref(false)
 
-// Selection mode state
+// Selection mode
 const selectionMode = ref(false)
 const selectedConversations = ref([])
 
-// File upload states
+// File upload
 const selectedFiles = ref([])
 const previewUrls = ref([])
 const uploading = ref(false)
@@ -44,13 +44,13 @@ const uploadProgress = ref({})
 const showPreviewModal = ref(false)
 const previewItem = ref(null)
 
-// Alert dialog composable
+// Alert dialog
 const { isOpen, options, show, onConfirm, onCancel } = useAlertDialog()
 
-// Sending state to prevent double sends
+// Sending state
 const isSending = ref(false)
 
-// Dummy messages for quick replies
+// Quick replies
 const dummyMessages = [
     { text: "Hi, is this still available?", icon: "lucide:help-circle", color: "brand-blue-light" },
     { text: "What's your best price?", icon: "lucide:tag", color: "brand-blue-light" },
@@ -62,7 +62,7 @@ const dummyMessages = [
 
 useForceTheme('light');
 
-// Helper: get the latest message timestamp for a conversation
+// Helpers
 const getLatestMessageTimestamp = (conv) => {
     if (conv.last_message && conv.last_message.created_at) {
         return new Date(conv.last_message.created_at).getTime()
@@ -73,7 +73,6 @@ const getLatestMessageTimestamp = (conv) => {
     return new Date(conv.created_at || conv.updated_at).getTime()
 }
 
-// Helper: get the last message object
 const getLastMessage = (conversation) => {
     if (conversation.last_message) return conversation.last_message
     if (conversation.messages && conversation.messages.length) {
@@ -82,7 +81,6 @@ const getLastMessage = (conversation) => {
     return null
 }
 
-// Sort conversations by latest message timestamp (newest first)
 const sortedConversations = computed(() => {
     const convs = [...conversationsList.value]
     return convs.sort((a, b) => {
@@ -92,7 +90,6 @@ const sortedConversations = computed(() => {
     })
 })
 
-// Filter conversations (apply search after sorting)
 const filteredConversations = computed(() => {
     if (!searchQuery.value) return sortedConversations.value
     return sortedConversations.value.filter(conv => {
@@ -104,14 +101,11 @@ const filteredConversations = computed(() => {
     })
 })
 
-// Selection mode functions
+// Selection functions
 const toggleSelectionMode = () => {
     selectionMode.value = !selectionMode.value
-    if (!selectionMode.value) {
-        selectedConversations.value = []
-    }
+    if (!selectionMode.value) selectedConversations.value = []
 }
-
 const toggleSelectConversation = (convId) => {
     if (selectedConversations.value.includes(convId)) {
         selectedConversations.value = selectedConversations.value.filter(id => id !== convId)
@@ -119,10 +113,8 @@ const toggleSelectConversation = (convId) => {
         selectedConversations.value.push(convId)
     }
 }
-
 const deleteSelectedConversations = async () => {
     if (selectedConversations.value.length === 0) return
-
     const confirmed = await show({
         type: 'confirm',
         title: 'Delete Conversations',
@@ -131,35 +123,23 @@ const deleteSelectedConversations = async () => {
         cancelText: 'Cancel',
         icon: 'lucide:trash-2'
     })
-
     if (!confirmed) return
-
     for (const convId of selectedConversations.value) {
         await router.delete(route('chat.conversation.destroy', convId), {
             preserveState: true,
             preserveScroll: true,
-            onError: (error) => {
-                console.error('Failed to delete conversation', error)
-            }
+            onError: (error) => console.error('Failed to delete conversation', error)
         })
     }
-
-    conversationsList.value = conversationsList.value.filter(
-        conv => !selectedConversations.value.includes(conv.id)
-    )
-
+    conversationsList.value = conversationsList.value.filter(conv => !selectedConversations.value.includes(conv.id))
     if (props.conversation && selectedConversations.value.includes(props.conversation.id)) {
         router.visit(route('chat.index'))
     }
-
     toggleSelectionMode()
 }
+const cancelSelection = () => toggleSelectionMode()
 
-const cancelSelection = () => {
-    toggleSelectionMode()
-}
-
-// Scroll to bottom
+// Scroll to bottom of messages
 const scrollToBottom = async () => {
     await nextTick()
     if (messagesEnd.value) {
@@ -167,16 +147,20 @@ const scrollToBottom = async () => {
     }
 }
 
-// Focus input and keep keyboard open (simplified, no aggressive calls)
+// Mobile: bring input above keyboard and scroll messages to bottom
+const bringInputAboveKeyboard = () => {
+    if (window.innerWidth >= 768) return
+    if (messageInputRef.value) {
+        messageInputRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        scrollToBottom()
+    }
+}
+
+// Focus input and reposition
 const focusMessageInput = () => {
     if (messageInputRef.value) {
         messageInputRef.value.focus()
-        if (window.innerWidth < 768) {
-            setTimeout(() => {
-                messageInputRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                scrollToBottom()
-            }, 100)
-        }
+        bringInputAboveKeyboard()
     }
 }
 
@@ -197,14 +181,16 @@ const updateConversationOnNewMessage = (message) => {
     }
 }
 
-// Handle new message event from Echo
+// Echo handlers
 const onMessageSent = (e) => {
     messagesList.value.push(e.message)
     scrollToBottom()
     updateConversationOnNewMessage(e.message)
+    // If input is focused on mobile, keep it above keyboard (same as after sending)
+    if (window.innerWidth < 768 && document.activeElement === messageInputRef.value) {
+        bringInputAboveKeyboard()
+    }
 }
-
-// Handle message deletion
 const onMessageDeleted = (e) => {
     messagesList.value = messagesList.value.filter(m => m.id !== e.messageId)
     const conv = conversationsList.value.find(c => c.id === e.conversation_id)
@@ -216,41 +202,30 @@ const onMessageDeleted = (e) => {
     }
 }
 
-// Setup Echo listeners for a conversation
 const setupEchoListeners = (conversationId) => {
     window.Echo.private(`conversation.${conversationId}`)
         .listen('.message.sent', onMessageSent)
         .listen('.message.deleted', onMessageDeleted)
 }
-
-// Teardown Echo listeners
 const teardownEchoListeners = (conversationId) => {
     window.Echo.leave(`conversation.${conversationId}`)
 }
 
-// Mobile: scroll message input into view when focused
+// Input ref and focus event
+const messageInputRef = ref(null)
 const scrollInputIntoView = (event) => {
     if (window.innerWidth < 768) {
-        setTimeout(() => {
-            event.target.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            scrollToBottom()
-        }, 100)
+        bringInputAboveKeyboard()
     }
 }
 
-// Refs for input elements
-const messageInputRef = ref(null)
-
-// Watch for conversation changes to re-attach listeners
+// Watch conversation changes
 watch(() => props.conversation, (newConv, oldConv) => {
-    if (oldConv) {
-        teardownEchoListeners(oldConv.id)
-    }
+    if (oldConv) teardownEchoListeners(oldConv.id)
     if (newConv) {
         setupEchoListeners(newConv.id)
         messagesList.value = props.messages || []
         scrollToBottom()
-
         if (window.innerWidth < 768) {
             showMobileChat.value = true
             showMobileSidebar.value = false
@@ -258,22 +233,29 @@ watch(() => props.conversation, (newConv, oldConv) => {
     }
 })
 
+// Handle keyboard resize
+const handleKeyboardResize = () => {
+    if (window.innerWidth >= 768) return
+    if (document.activeElement === messageInputRef.value) {
+        bringInputAboveKeyboard()
+    }
+}
+
 onMounted(() => {
     if (props.conversation) {
         setupEchoListeners(props.conversation.id)
         scrollToBottom()
-
         if (window.innerWidth < 768) {
             showMobileChat.value = true
             showMobileSidebar.value = false
         }
     }
-
     nextTick(() => {
         if (messageInputRef.value) {
             messageInputRef.value.addEventListener('focus', scrollInputIntoView)
         }
     })
+    window.addEventListener('resize', handleKeyboardResize)
 
     const handleResize = () => {
         if (window.innerWidth >= 768) {
@@ -282,45 +264,30 @@ onMounted(() => {
         }
         contextMenu.value.show = false
     }
-
     const handleClickOutside = () => {
         contextMenu.value.show = false
         showEmojiPicker.value = false
     }
-
     window.addEventListener('resize', handleResize)
     window.addEventListener('click', handleClickOutside)
 
     return () => {
-        if (props.conversation) {
-            teardownEchoListeners(props.conversation.id)
-        }
+        if (props.conversation) teardownEchoListeners(props.conversation.id)
         if (messageInputRef.value) {
             messageInputRef.value.removeEventListener('focus', scrollInputIntoView)
         }
         window.removeEventListener('resize', handleResize)
         window.removeEventListener('click', handleClickOutside)
+        window.removeEventListener('resize', handleKeyboardResize)
     }
 })
-
-const handleResizeForKeyboard = () => {
-    if (window.innerWidth < 768 && document.activeElement === messageInputRef.value) {
-        messageInputRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        scrollToBottom()
-    }
-}
-window.addEventListener('resize', handleResizeForKeyboard)
 
 onUnmounted(() => {
-    if (props.conversation) {
-        teardownEchoListeners(props.conversation.id)
-    }
-    window.removeEventListener('resize', handleResizeForKeyboard)
+    if (props.conversation) teardownEchoListeners(props.conversation.id)
 })
 
-// ---------- FIXED SEND MESSAGE ----------
+// ---------- SEND MESSAGE WITH AXIOS ----------
 const sendMessage = async () => {
-    // Guard clauses
     if (!props.conversation) return
     if (!newMessage.value.trim()) return
     if (isSending.value) return
@@ -328,42 +295,29 @@ const sendMessage = async () => {
     const messageToSend = newMessage.value.trim()
     isSending.value = true
 
-    // Clear input immediately (optimistic UI)
+    // Optimistic clear
     newMessage.value = ''
 
     try {
         const response = await axios.post('/chat/send', {
             conversation_id: props.conversation.id,
             body: messageToSend
-        }, {
-            timeout: 10000 // 10 second timeout
-        })
+        }, { timeout: 10000 })
 
-        // Check response structure – adjust based on your backend
         const newMsg = response.data.message || response.data
         if (newMsg && newMsg.id) {
             messagesList.value.push(newMsg)
             scrollToBottom()
             updateConversationOnNewMessage(newMsg)
-        } else {
-            console.warn('Unexpected response format', response.data)
         }
-
-        // Keep focus after send (but don't wait)
+        // Keep focus and input above keyboard
         focusMessageInput()
     } catch (error) {
         console.error('Send failed', error)
-        // Restore the message text
         newMessage.value = messageToSend
         focusMessageInput()
-
-        // Show error alert
         let errorMsg = 'Could not send message. Please try again.'
-        if (error.response?.data?.message) {
-            errorMsg = error.response.data.message
-        } else if (error.message) {
-            errorMsg = error.message
-        }
+        if (error.response?.data?.message) errorMsg = error.response.data.message
         await show({
             type: 'error',
             title: 'Failed to send',
@@ -375,28 +329,22 @@ const sendMessage = async () => {
     }
 }
 
-// ---------- FIXED QUICK REPLY ----------
 const sendDummyMessage = async (messageText) => {
     if (!props.conversation) return
     if (isSending.value) return
 
     isSending.value = true
-
     try {
         const response = await axios.post('/chat/send', {
             conversation_id: props.conversation.id,
             body: messageText
-        }, {
-            timeout: 10000
-        })
-
+        }, { timeout: 10000 })
         const newMsg = response.data.message || response.data
         if (newMsg && newMsg.id) {
             messagesList.value.push(newMsg)
             scrollToBottom()
             updateConversationOnNewMessage(newMsg)
         }
-
         focusMessageInput()
     } catch (error) {
         console.error('Quick reply failed', error)
@@ -413,17 +361,16 @@ const sendDummyMessage = async (messageText) => {
     }
 }
 
+// Context menu, delete message
 const handleRightClick = (event, message) => {
     event.preventDefault()
     if (message.sender_id !== page.props.auth.user.id) return
-
     const x = event.clientX
     const y = event.clientY
     const menuWidth = 160
     const menuHeight = 40
     const windowWidth = window.innerWidth
     const windowHeight = window.innerHeight
-
     contextMenu.value = {
         show: true,
         x: x + menuWidth > windowWidth ? x - menuWidth : x,
@@ -431,10 +378,8 @@ const handleRightClick = (event, message) => {
         message: message
     }
 }
-
 const deleteMessage = async () => {
     if (!contextMenu.value.message) return
-
     const confirmed = await show({
         type: 'confirm',
         title: 'Delete Message',
@@ -443,33 +388,24 @@ const deleteMessage = async () => {
         cancelText: 'Cancel',
         icon: 'lucide:trash-2'
     })
-
     if (confirmed) {
-        router.delete(route('chat.message.delete', contextMenu.value.message.id), {
-            preserveScroll: true,
-        })
+        router.delete(route('chat.message.delete', contextMenu.value.message.id), { preserveScroll: true })
     }
-
     contextMenu.value.show = false
 }
 
+// Formatting
 const formatTime = (date) => {
     if (!date) return ''
     return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
-
 const formatDate = (date) => {
     const messageDate = new Date(date)
     const today = new Date()
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
-
-    if (messageDate.toDateString() === today.toDateString()) {
-        return 'Today'
-    }
-    if (messageDate.toDateString() === yesterday.toDateString()) {
-        return 'Yesterday'
-    }
+    if (messageDate.toDateString() === today.toDateString()) return 'Today'
+    if (messageDate.toDateString() === yesterday.toDateString()) return 'Yesterday'
     return messageDate.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -479,9 +415,7 @@ const formatDate = (date) => {
 
 const otherUser = computed(() => {
     if (!props.conversation) return null
-    return props.conversation.seller_id === page.props.auth.user.id
-        ? props.conversation.buyer
-        : props.conversation.seller
+    return props.conversation.seller_id === page.props.auth.user.id ? props.conversation.buyer : props.conversation.seller
 })
 
 const goBackToSidebar = () => {
@@ -491,30 +425,23 @@ const goBackToSidebar = () => {
 
 const getUnreadCount = (conversation) => {
     if (!conversation.messages) return 0
-    return conversation.messages.filter(
-        m => m.sender_id !== page.props.auth.user.id && !m.is_read
-    ).length
+    return conversation.messages.filter(m => m.sender_id !== page.props.auth.user.id && !m.is_read).length
 }
 
 const getAvatarColor = () => 'bg-brand-blue/80'
-
-const getInitials = (name) => {
-    return name?.charAt(0).toUpperCase() || '?'
-}
+const getInitials = (name) => name?.charAt(0).toUpperCase() || '?'
 
 const groupMessagesByDate = (messages) => {
     const groups = {}
     messages.forEach(message => {
         const date = formatDate(message.created_at)
-        if (!groups[date]) {
-            groups[date] = []
-        }
+        if (!groups[date]) groups[date] = []
         groups[date].push(message)
     })
     return groups
 }
 
-// File upload functions
+// File upload
 const triggerFileSelect = (type) => {
     const input = document.createElement('input')
     input.type = 'file'
@@ -525,7 +452,6 @@ const triggerFileSelect = (type) => {
     input.onchange = (e) => handleFileSelect(e.target.files)
     input.click()
 }
-
 const handleFileSelect = (files) => {
     for (let file of files) {
         const MAX_SIZE = 10 * 1024 * 1024;
@@ -545,22 +471,16 @@ const handleFileSelect = (files) => {
         }
     }
 }
-
 const removeFile = (index) => {
-    if (previewUrls.value[index]?.url) {
-        URL.revokeObjectURL(previewUrls.value[index].url)
-    }
+    if (previewUrls.value[index]?.url) URL.revokeObjectURL(previewUrls.value[index].url)
     selectedFiles.value.splice(index, 1)
     previewUrls.value.splice(index, 1)
     const newProgress = {}
     selectedFiles.value.forEach(file => {
-        if (uploadProgress.value[file.name]) {
-            newProgress[file.name] = uploadProgress.value[file.name]
-        }
+        if (uploadProgress.value[file.name]) newProgress[file.name] = uploadProgress.value[file.name]
     })
     uploadProgress.value = newProgress
 }
-
 const sendFiles = async () => {
     if (selectedFiles.value.length === 0) return
     uploading.value = true
@@ -586,21 +506,17 @@ const sendFiles = async () => {
     uploadProgress.value = {}
     uploading.value = false
 }
-
 const openPreview = (item) => {
     previewItem.value = item
     showPreviewModal.value = true
 }
-
 const closePreview = () => {
     showPreviewModal.value = false
     previewItem.value = null
 }
+const getFileUrl = (messageId) => `/chat/file/${messageId}`
 
-const getFileUrl = (messageId) => {
-    return `/chat/file/${messageId}`
-}
-
+// Attach menu & ad picker
 const showAttachMenu = ref(false)
 const showAdPicker = ref(false)
 const ads = ref([])
@@ -612,12 +528,9 @@ const openAdPicker = async () => {
     try {
         const res = await axios.get('/chat/my-ads')
         ads.value = res.data
-    } catch (e) {
-        console.error(e)
-    }
+    } catch (e) { console.error(e) }
     loadingAds.value = false
 }
-
 const sendAd = (ad) => {
     axios.post('/chat/send', {
         conversation_id: props.conversation.id,
@@ -632,9 +545,9 @@ const sendAd = (ad) => {
 <template>
     <OlxLayout :hide-search-bar="true">
         <div
-            class="h-[calc(93dvh-73px)] sm:h-[calc(100dvh-73px)] bg-gray-100 sm:max-w-5xl mx-auto overflow-hidden w-full max-w-full">
+            class="h-[calc(100dvh-73px)] sm:h-[calc(100dvh-73px)] bg-gray-100 sm:max-w-5xl mx-auto overflow-hidden w-full max-w-full">
             <div class="h-full max-w-[1600px] mx-auto w-full">
-                <!-- Desktop Layout -->
+                <!-- Desktop Layout (unchanged) -->
                 <div class="hidden md:flex h-full bg-white shadow-xl w-full">
                     <!-- Conversations Sidebar -->
                     <div class="w-96 border-r border-gray-200 flex flex-col bg-white">
@@ -720,7 +633,7 @@ const sendAd = (ad) => {
                         </div>
                     </div>
 
-                    <!-- Chat Area -->
+                    <!-- Chat Area Desktop -->
                     <div class="flex-1 flex flex-col bg-gray-50 w-full min-w-0">
                         <div v-if="conversation"
                             class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
@@ -749,7 +662,7 @@ const sendAd = (ad) => {
                             <div v-for="(messages, date) in groupMessagesByDate(messagesList)" :key="date">
                                 <div class="flex justify-center mb-4">
                                     <span class="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">{{ date
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <div v-for="message in messages" :key="message.id"
                                     :class="['flex mb-4', message.sender_id === page.props.auth.user.id ? 'justify-end' : 'justify-start']">
@@ -993,6 +906,7 @@ const sendAd = (ad) => {
                     <!-- Chat Area (Mobile) -->
                     <div v-else-if="showMobileChat && conversation"
                         class="h-full w-full bg-gray-50 flex flex-col overflow-hidden">
+                        <!-- Header -->
                         <div class="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 flex-shrink-0">
                             <button @click="goBackToSidebar" class="p-1 -ml-1">
                                 <Icon icon="lucide:arrow-left" class="size-6 text-gray-600" />
@@ -1012,6 +926,7 @@ const sendAd = (ad) => {
                             </Link>
                         </div>
 
+                        <!-- Messages container (scrollable) -->
                         <div class="flex-1 overflow-y-auto p-4 space-y-4">
                             <div v-for="message in messagesList" :key="message.id"
                                 :class="['flex', message.sender_id === page.props.auth.user.id ? 'justify-end' : 'justify-start']">
@@ -1036,7 +951,7 @@ const sendAd = (ad) => {
                                             <div v-else class="flex items-center gap-2">
                                                 <Icon icon="lucide:file-text" class="size-5" />
                                                 <span class="text-sm truncate">{{ message.body.split('/').pop()
-                                                    }}</span>
+                                                }}</span>
                                                 <a :href="getFileUrl(message.id)" target="_blank"
                                                     class="text-brand-blue underline text-xs">Download</a>
                                             </div>
@@ -1054,7 +969,7 @@ const sendAd = (ad) => {
                             <div ref="messagesEnd"></div>
                         </div>
 
-                        <!-- Mobile Input Area -->
+                        <!-- Input area (fixed at bottom, above keyboard) -->
                         <div class="bg-white border-t border-gray-200 p-3 flex-shrink-0">
                             <div class="flex gap-2 mb-3 overflow-x-auto pb-2">
                                 <button v-for="(dummy, index) in dummyMessages.slice(0, 4)" :key="index"
@@ -1219,6 +1134,11 @@ const sendAd = (ad) => {
     * {
         max-width: 100%;
         box-sizing: border-box;
+    }
+
+    /* Ensure flex children can shrink */
+    .flex-col {
+        min-height: 0;
     }
 }
 
