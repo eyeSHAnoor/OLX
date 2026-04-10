@@ -23,6 +23,11 @@
                                 autofocus />
                         </div>
                         <div class="max-h-60 overflow-y-auto">
+                            <div @click="selectCity('Pakistan')"
+                                class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                                :class="{ 'bg-blue-50': selectedCity === 'Pakistan' }">
+                                Pakistan
+                            </div>
                             <div v-for="city in filteredCities" :key="city" @click="selectCity(city)"
                                 class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
                                 :class="{ 'bg-blue-50': selectedCity === city }">
@@ -101,6 +106,11 @@
 
                     <!-- City List -->
                     <div class="flex-1 overflow-y-auto p-2">
+                        <div @click="selectCityFromModal('Pakistan')"
+                            class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm rounded-md"
+                            :class="{ 'bg-blue-50': selectedCity === 'Pakistan' }">
+                            All cities
+                        </div>
                         <div v-for="city in modalFilteredCities" :key="city" @click="selectCityFromModal(city)"
                             class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm rounded-md"
                             :class="{ 'bg-blue-50': selectedCity === city }">
@@ -124,7 +134,7 @@ import { Icon } from '@iconify/vue'
 import citiesList from '@/data/cities.json'
 
 const page = usePage()
-const cities = ref<string[]>(['Pakistan', ...(Array.isArray(citiesList) ? citiesList.map((c: any) => typeof c === 'string' ? c : c.name) : [])])
+const cities = ref<string[]>([...(Array.isArray(citiesList) ? citiesList.map((c: any) => typeof c === 'string' ? c : c.name) : [])])
 const selectedCity = ref(localStorage.getItem('selectedCity') || page.props.selectedCity || 'Pakistan')
 const userSelectedCity = ref(!!localStorage.getItem('selectedCity'))
 const searchTerm = ref(page.props.filters?.filter?.global || '')
