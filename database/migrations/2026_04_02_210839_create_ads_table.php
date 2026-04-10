@@ -26,7 +26,9 @@ return new class extends Migration
         $table->decimal('price', 10, 2)->nullable();
 
         $table->string('location');
+        $table->string('country')->nullable();
         $table->string('city');
+
         $table->string('region')->nullable();
 
         // Seller info (snapshot at posting time)

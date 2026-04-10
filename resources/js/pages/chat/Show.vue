@@ -57,6 +57,14 @@ const dummyMessages = [
     { text: "When can we meet?", icon: "lucide:calendar", color: "brand-blue-light" }
 ]
 
+const focusMessageInput = () => {
+    nextTick(() => {
+        if (messageInputRef.value) {
+            messageInputRef.value.focus()
+        }
+    })
+}
+
 useForceTheme('light');
 
 // Helper: get the latest message timestamp for a conversation
@@ -251,6 +259,7 @@ watch(() => props.conversation, (newConv, oldConv) => {
         if (window.innerWidth < 768) {
             showMobileChat.value = true
             showMobileSidebar.value = false
+            focusMessageInput()
         }
     }
 })
@@ -326,6 +335,7 @@ const sendMessage = () => {
         preserveState: true,
         onSuccess: () => {
             newMessage.value = ''
+            focusMessageInput()
         }
     })
 }
@@ -338,7 +348,10 @@ const sendDummyMessage = (messageText) => {
         body: messageText
     }, {
         preserveScroll: true,
-        preserveState: true
+        preserveState: true,
+        onSuccess: () => {
+            focusMessageInput()
+        }
     })
 }
 
@@ -684,7 +697,7 @@ const sendAd = (ad) => {
                             <div v-for="(messages, date) in groupMessagesByDate(messagesList)" :key="date">
                                 <div class="flex justify-center mb-4">
                                     <span class="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">{{ date
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <div v-for="message in messages" :key="message.id"
                                     :class="['flex mb-4', message.sender_id === page.props.auth.user.id ? 'justify-end' : 'justify-start']">
@@ -969,7 +982,7 @@ const sendAd = (ad) => {
                                             <div v-else class="flex items-center gap-2">
                                                 <Icon icon="lucide:file-text" class="size-5" />
                                                 <span class="text-sm truncate">{{ message.body.split('/').pop()
-                                                    }}</span>
+                                                }}</span>
                                                 <a :href="getFileUrl(message.id)" target="_blank"
                                                     class="text-brand-blue underline text-xs">Download</a>
                                             </div>

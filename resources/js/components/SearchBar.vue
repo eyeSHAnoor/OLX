@@ -47,7 +47,7 @@
                 </div>
             </div>
 
-            <!-- Mobile layout: only search bar + city selector link -->
+            <!-- Mobile layout: search bar + Pakistan button + city dropdown -->
             <div class="block md:hidden">
                 <!-- Search Input -->
                 <div class="flex w-full">
@@ -60,8 +60,16 @@
                     </button>
                 </div>
 
-                <!-- City selector link (opens modal) -->
-                <div class="mt-1">
+                <!-- Pakistan Button + City Dropdown (side by side) -->
+                <div class="mt-2 flex flex-row gap-4 items-center justify-start">
+                    <!-- Pakistan Button (Separate) -->
+
+                    <button @click="setPakistanCity"
+                        class="text-sm text-brand-teal hover:text-brand-teal/90 transition-colors flex items-center gap-1">
+                        <Icon icon="mdi:flag" class="text-sm text-green-600" />
+                        <span class="text-sm">Pakistan</span>
+                    </button>
+                    <!-- City Dropdown Button (shows selected city, opens modal) -->
                     <button @click="openModal"
                         class="text-sm text-brand-teal hover:text-brand-teal/90 transition-colors flex items-center gap-1">
                         <Icon icon="mdi:map-marker-outline" class="text-md" />
@@ -169,6 +177,12 @@ const closeModal = () => {
 const selectCityFromModal = (city: string) => {
     selectedCity.value = city
     closeModal()
+}
+
+// New method to set Pakistan as the selected city (for mobile separate button)
+const setPakistanCity = () => {
+    if (modalOpen.value) closeModal()
+    selectedCity.value = 'Pakistan'
 }
 
 // Close desktop dropdown when clicking outside
