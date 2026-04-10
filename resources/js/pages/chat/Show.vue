@@ -47,6 +47,9 @@ const previewItem = ref(null)
 // Alert dialog composable
 const { isOpen, options, show, onConfirm, onCancel } = useAlertDialog()
 
+// Sending state to prevent double sends
+const isSending = ref(false)
+
 // Dummy messages for quick replies
 const dummyMessages = [
     { text: "Hi, is this still available?", icon: "lucide:help-circle", color: "brand-blue-light" },
@@ -57,19 +60,10 @@ const dummyMessages = [
     { text: "When can we meet?", icon: "lucide:calendar", color: "brand-blue-light" }
 ]
 
-const focusMessageInput = () => {
-    nextTick(() => {
-        if (messageInputRef.value) {
-            messageInputRef.value.focus()
-        }
-    })
-}
-
 useForceTheme('light');
 
 // Helper: get the latest message timestamp for a conversation
 const getLatestMessageTimestamp = (conv) => {
-    // Use last_message if available, otherwise fallback to created_at
     if (conv.last_message && conv.last_message.created_at) {
         return new Date(conv.last_message.created_at).getTime()
     }
@@ -140,7 +134,6 @@ const deleteSelectedConversations = async () => {
 
     if (!confirmed) return
 
-    // Delete each conversation
     for (const convId of selectedConversations.value) {
         await router.delete(route('chat.conversation.destroy', convId), {
             preserveState: true,
@@ -151,12 +144,10 @@ const deleteSelectedConversations = async () => {
         })
     }
 
-    // Update conversations list by filtering out deleted ones
     conversationsList.value = conversationsList.value.filter(
         conv => !selectedConversations.value.includes(conv.id)
     )
 
-    // If the current conversation was deleted, reset
     if (props.conversation && selectedConversations.value.includes(props.conversation.id)) {
         router.visit(route('chat.index'))
     }
@@ -176,23 +167,32 @@ const scrollToBottom = async () => {
     }
 }
 
+// Focus input and keep keyboard open (simplified, no aggressive calls)
+const focusMessageInput = () => {
+    if (messageInputRef.value) {
+        messageInputRef.value.focus()
+        if (window.innerWidth < 768) {
+            setTimeout(() => {
+                messageInputRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                scrollToBottom()
+            }, 100)
+        }
+    }
+}
+
 // Update conversation list when a new message arrives
 const updateConversationOnNewMessage = (message) => {
     const convIndex = conversationsList.value.findIndex(c => c.id === message.conversation_id)
     if (convIndex !== -1) {
-        // Update the conversation's last_message and updated_at
         const updatedConv = { ...conversationsList.value[convIndex] }
         updatedConv.last_message = message
         updatedConv.updated_at = message.created_at
-        // If the conversation has a messages array, push the new message
         if (updatedConv.messages) {
             updatedConv.messages.push(message)
         } else {
             updatedConv.messages = [message]
         }
-        // Replace and let sorting reorder
         conversationsList.value.splice(convIndex, 1, updatedConv)
-        // Force reactivity by reassigning (sorting computed will re-run)
         conversationsList.value = [...conversationsList.value]
     }
 }
@@ -201,17 +201,14 @@ const updateConversationOnNewMessage = (message) => {
 const onMessageSent = (e) => {
     messagesList.value.push(e.message)
     scrollToBottom()
-    // Update conversation list to bring this conversation to top
     updateConversationOnNewMessage(e.message)
 }
 
 // Handle message deletion
 const onMessageDeleted = (e) => {
     messagesList.value = messagesList.value.filter(m => m.id !== e.messageId)
-    // Optionally update the conversation's last message if needed
     const conv = conversationsList.value.find(c => c.id === e.conversation_id)
     if (conv && conv.last_message && conv.last_message.id === e.messageId) {
-        // Find the new last message
         const remainingMessages = messagesList.value.filter(m => m.conversation_id === e.conversation_id)
         const newLast = remainingMessages.length ? remainingMessages[remainingMessages.length - 1] : null
         conv.last_message = newLast
@@ -232,18 +229,16 @@ const teardownEchoListeners = (conversationId) => {
 }
 
 // Mobile: scroll message input into view when focused
-// Mobile: keep input above keyboard and show latest message
 const scrollInputIntoView = (event) => {
     if (window.innerWidth < 768) {
         setTimeout(() => {
             event.target.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            // Also scroll messages to bottom so latest message is visible
             scrollToBottom()
         }, 100)
     }
 }
 
-// Refs for input elements (to attach focus listener)
+// Refs for input elements
 const messageInputRef = ref(null)
 
 // Watch for conversation changes to re-attach listeners
@@ -259,7 +254,6 @@ watch(() => props.conversation, (newConv, oldConv) => {
         if (window.innerWidth < 768) {
             showMobileChat.value = true
             showMobileSidebar.value = false
-            focusMessageInput()
         }
     }
 })
@@ -275,7 +269,6 @@ onMounted(() => {
         }
     }
 
-    // Attach focus listener to message input (both desktop and mobile)
     nextTick(() => {
         if (messageInputRef.value) {
             messageInputRef.value.addEventListener('focus', scrollInputIntoView)
@@ -317,42 +310,107 @@ const handleResizeForKeyboard = () => {
     }
 }
 window.addEventListener('resize', handleResizeForKeyboard)
-// Cleanup on unmount
+
 onUnmounted(() => {
     if (props.conversation) {
         teardownEchoListeners(props.conversation.id)
     }
+    window.removeEventListener('resize', handleResizeForKeyboard)
 })
 
-const sendMessage = () => {
+// ---------- FIXED SEND MESSAGE ----------
+const sendMessage = async () => {
+    // Guard clauses
+    if (!props.conversation) return
     if (!newMessage.value.trim()) return
+    if (isSending.value) return
 
-    router.post('/chat/send', {
-        conversation_id: props.conversation.id,
-        body: newMessage.value
-    }, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-            newMessage.value = ''
-            focusMessageInput()
+    const messageToSend = newMessage.value.trim()
+    isSending.value = true
+
+    // Clear input immediately (optimistic UI)
+    newMessage.value = ''
+
+    try {
+        const response = await axios.post('/chat/send', {
+            conversation_id: props.conversation.id,
+            body: messageToSend
+        }, {
+            timeout: 10000 // 10 second timeout
+        })
+
+        // Check response structure – adjust based on your backend
+        const newMsg = response.data.message || response.data
+        if (newMsg && newMsg.id) {
+            messagesList.value.push(newMsg)
+            scrollToBottom()
+            updateConversationOnNewMessage(newMsg)
+        } else {
+            console.warn('Unexpected response format', response.data)
         }
-    })
+
+        // Keep focus after send (but don't wait)
+        focusMessageInput()
+    } catch (error) {
+        console.error('Send failed', error)
+        // Restore the message text
+        newMessage.value = messageToSend
+        focusMessageInput()
+
+        // Show error alert
+        let errorMsg = 'Could not send message. Please try again.'
+        if (error.response?.data?.message) {
+            errorMsg = error.response.data.message
+        } else if (error.message) {
+            errorMsg = error.message
+        }
+        await show({
+            type: 'error',
+            title: 'Failed to send',
+            description: errorMsg,
+            confirmText: 'OK'
+        })
+    } finally {
+        isSending.value = false
+    }
 }
 
-const sendDummyMessage = (messageText) => {
+// ---------- FIXED QUICK REPLY ----------
+const sendDummyMessage = async (messageText) => {
     if (!props.conversation) return
+    if (isSending.value) return
 
-    router.post('/chat/send', {
-        conversation_id: props.conversation.id,
-        body: messageText
-    }, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-            focusMessageInput()
+    isSending.value = true
+
+    try {
+        const response = await axios.post('/chat/send', {
+            conversation_id: props.conversation.id,
+            body: messageText
+        }, {
+            timeout: 10000
+        })
+
+        const newMsg = response.data.message || response.data
+        if (newMsg && newMsg.id) {
+            messagesList.value.push(newMsg)
+            scrollToBottom()
+            updateConversationOnNewMessage(newMsg)
         }
-    })
+
+        focusMessageInput()
+    } catch (error) {
+        console.error('Quick reply failed', error)
+        let errorMsg = 'Could not send quick reply. Please try again.'
+        if (error.response?.data?.message) errorMsg = error.response.data.message
+        await show({
+            type: 'error',
+            title: 'Send failed',
+            description: errorMsg,
+            confirmText: 'OK'
+        })
+    } finally {
+        isSending.value = false
+    }
 }
 
 const handleRightClick = (event, message) => {
@@ -456,7 +514,7 @@ const groupMessagesByDate = (messages) => {
     return groups
 }
 
-// File upload functions (unchanged)
+// File upload functions
 const triggerFileSelect = (type) => {
     const input = document.createElement('input')
     input.type = 'file'
@@ -561,26 +619,25 @@ const openAdPicker = async () => {
 }
 
 const sendAd = (ad) => {
-    router.post('/chat/send', {
+    axios.post('/chat/send', {
         conversation_id: props.conversation.id,
         type: 'ad',
         ad_id: ad.id
-    }, {
-        preserveScroll: true
-    })
-    showAdPicker.value = false
+    }).then(() => {
+        showAdPicker.value = false
+    }).catch(err => console.error(err))
 }
 </script>
 
 <template>
     <OlxLayout :hide-search-bar="true">
-        <div class="h-[calc(93dvh-73px)] sm:h-[calc(100dvh-73px)] bg-gray-100 sm:max-w-5xl mx-auto overflow-hidden">
-            <div class="h-full max-w-[1600px] mx-auto">
+        <div
+            class="h-[calc(93dvh-73px)] sm:h-[calc(100dvh-73px)] bg-gray-100 sm:max-w-5xl mx-auto overflow-hidden w-full max-w-full">
+            <div class="h-full max-w-[1600px] mx-auto w-full">
                 <!-- Desktop Layout -->
-                <div class="hidden md:flex h-full bg-white shadow-xl">
+                <div class="hidden md:flex h-full bg-white shadow-xl w-full">
                     <!-- Conversations Sidebar -->
                     <div class="w-96 border-r border-gray-200 flex flex-col bg-white">
-                        <!-- Sidebar Header (unchanged) -->
                         <div class="p-5 border-b border-gray-200 bg-white">
                             <div class="flex items-center justify-between mb-4">
                                 <h2 class="text-2xl font-bold text-gray-800">Chats</h2>
@@ -607,15 +664,12 @@ const sendAd = (ad) => {
                                     class="w-full pl-9 pr-4 py-2.5 bg-gray-100 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:bg-white transition-all" />
                             </div>
                         </div>
-
-                        <!-- Conversations List (now using filteredConversations which is sorted) -->
                         <div class="flex-1 overflow-y-auto">
                             <div v-if="!filteredConversations.length"
                                 class="flex flex-col items-center justify-center h-full p-8">
                                 <Icon icon="lucide:inbox" class="size-12 text-gray-300 mb-3" />
                                 <p class="text-gray-500 text-sm">No conversations found</p>
                             </div>
-
                             <div v-for="conv in filteredConversations" :key="conv.id"
                                 @click="selectionMode ? toggleSelectConversation(conv.id) : router.visit(`/chat/${conv.id}`)"
                                 class="group flex items-start gap-3 px-5 py-3 hover:bg-gray-50 transition-all cursor-pointer border-b border-gray-100"
@@ -628,7 +682,6 @@ const sendAd = (ad) => {
                                         @click.stop @change="toggleSelectConversation(conv.id)"
                                         class="w-4 h-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue" />
                                 </div>
-
                                 <div class="relative flex-shrink-0">
                                     <div :class="[
                                         'size-12 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-sm',
@@ -641,7 +694,6 @@ const sendAd = (ad) => {
                                         class="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-white">
                                     </div>
                                 </div>
-
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between mb-1">
                                         <h3 class="font-semibold text-gray-900 truncate">
@@ -668,8 +720,8 @@ const sendAd = (ad) => {
                         </div>
                     </div>
 
-                    <!-- Chat Area (unchanged except input ref) -->
-                    <div class="flex-1 flex flex-col bg-gray-50">
+                    <!-- Chat Area -->
+                    <div class="flex-1 flex flex-col bg-gray-50 w-full min-w-0">
                         <div v-if="conversation"
                             class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
                             <Link :href="route('user.profile', otherUser?.id)"
@@ -693,11 +745,11 @@ const sendAd = (ad) => {
                             <h3 class="text-gray-500 text-center">Select a conversation to start messaging</h3>
                         </div>
 
-                        <div v-if="conversation" class="flex-1 overflow-y-auto px-6 py-6" ref="messagesContainer">
+                        <div v-if="conversation" class="flex-1 overflow-y-auto px-6 py-6">
                             <div v-for="(messages, date) in groupMessagesByDate(messagesList)" :key="date">
                                 <div class="flex justify-center mb-4">
                                     <span class="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">{{ date
-                                    }}</span>
+                                        }}</span>
                                 </div>
                                 <div v-for="message in messages" :key="message.id"
                                     :class="['flex mb-4', message.sender_id === page.props.auth.user.id ? 'justify-end' : 'justify-start']">
@@ -764,7 +816,7 @@ const sendAd = (ad) => {
                             </div>
                         </div>
 
-                        <!-- Input Area Desktop with ref for focus scrolling -->
+                        <!-- Input Area Desktop -->
                         <div v-if="conversation" class="bg-white border-t border-gray-200 p-4">
                             <div v-if="previewUrls.length" class="mb-3 flex flex-wrap gap-2">
                                 <div v-for="(item, idx) in previewUrls" :key="idx"
@@ -794,8 +846,8 @@ const sendAd = (ad) => {
 
                             <div class="flex gap-2 mb-3 overflow-x-auto pb-2">
                                 <button v-for="(dummy, index) in dummyMessages.slice(0, 4)" :key="index"
-                                    @click="sendDummyMessage(dummy.text)"
-                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all hover:scale-105 bg-brand-blue-light text-brand-blue">
+                                    @click="sendDummyMessage(dummy.text)" :disabled="isSending"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all hover:scale-105 bg-brand-blue-light text-brand-blue disabled:opacity-50">
                                     <Icon :icon="dummy.icon" class="size-3" />
                                     <span>{{ dummy.text }}</span>
                                 </button>
@@ -837,16 +889,16 @@ const sendAd = (ad) => {
                                     <div class="flex-1 flex gap-2">
                                         <input ref="messageInputRef" v-model="newMessage" type="text"
                                             placeholder="Type a message..."
-                                            class="flex-1 px-4 py-2.5 border-0 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:bg-white transition-all text-sm"
+                                            class="flex-1 px-4 py-2.5 border-0 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:bg-white transition-all text-base"
                                             @keyup.enter="sendMessage" />
                                         <button type="submit" @click="sendMessage"
                                             class="size-10 bg-brand-blue text-white rounded-full hover:bg-brand-blue-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-sm"
-                                            :disabled="!newMessage.trim()">
-                                            <Icon icon="lucide:send" class="size-4" />
+                                            :disabled="!newMessage.trim() || isSending">
+                                            <Icon v-if="!isSending" icon="lucide:send" class="size-4" />
+                                            <Icon v-else icon="lucide:loader-2" class="size-4 animate-spin" />
                                         </button>
                                     </div>
                                 </div>
-
                                 <button v-if="selectedFiles.length" @click="sendFiles" :disabled="uploading"
                                     class="bg-brand-teal hover:bg-brand-teal-dark text-white rounded-xl py-2 text-sm font-medium transition disabled:opacity-50">
                                     <span v-if="uploading">Uploading...</span>
@@ -857,11 +909,11 @@ const sendAd = (ad) => {
                     </div>
                 </div>
 
-                <!-- Mobile Layout (similar focus ref added) -->
-                <div class="md:hidden h-full">
+                <!-- Mobile Layout -->
+                <div class="md:hidden h-full w-full overflow-hidden">
+                    <!-- Conversations Sidebar (Mobile) -->
                     <div v-if="showMobileSidebar || (!showMobileChat && !conversation)"
-                        class="h-full bg-white flex flex-col">
-                        <!-- same sidebar content as before, using filteredConversations -->
+                        class="h-full w-full bg-white flex flex-col overflow-hidden">
                         <div class="p-4 border-b border-gray-200 bg-white">
                             <div class="flex items-center justify-between mb-3">
                                 <h2 class="text-2xl font-bold text-gray-800">Chats</h2>
@@ -938,8 +990,10 @@ const sendAd = (ad) => {
                         </div>
                     </div>
 
-                    <div v-else-if="showMobileChat && conversation" class="h-full bg-gray-50 flex flex-col">
-                        <div class="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
+                    <!-- Chat Area (Mobile) -->
+                    <div v-else-if="showMobileChat && conversation"
+                        class="h-full w-full bg-gray-50 flex flex-col overflow-hidden">
+                        <div class="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 flex-shrink-0">
                             <button @click="goBackToSidebar" class="p-1 -ml-1">
                                 <Icon icon="lucide:arrow-left" class="size-6 text-gray-600" />
                             </button>
@@ -982,7 +1036,7 @@ const sendAd = (ad) => {
                                             <div v-else class="flex items-center gap-2">
                                                 <Icon icon="lucide:file-text" class="size-5" />
                                                 <span class="text-sm truncate">{{ message.body.split('/').pop()
-                                                }}</span>
+                                                    }}</span>
                                                 <a :href="getFileUrl(message.id)" target="_blank"
                                                     class="text-brand-blue underline text-xs">Download</a>
                                             </div>
@@ -1000,11 +1054,12 @@ const sendAd = (ad) => {
                             <div ref="messagesEnd"></div>
                         </div>
 
-                        <div class="bg-white border-t border-gray-200 p-3">
+                        <!-- Mobile Input Area -->
+                        <div class="bg-white border-t border-gray-200 p-3 flex-shrink-0">
                             <div class="flex gap-2 mb-3 overflow-x-auto pb-2">
                                 <button v-for="(dummy, index) in dummyMessages.slice(0, 4)" :key="index"
-                                    @click="sendDummyMessage(dummy.text)"
-                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all hover:scale-105 bg-brand-blue-light text-brand-blue">
+                                    @click="sendDummyMessage(dummy.text)" :disabled="isSending"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all hover:scale-105 bg-brand-blue-light text-brand-blue disabled:opacity-50">
                                     <Icon :icon="dummy.icon" class="size-3" />
                                     <span>{{ dummy.text }}</span>
                                 </button>
@@ -1057,12 +1112,13 @@ const sendAd = (ad) => {
                                 </div>
                                 <input ref="messageInputRef" v-model="newMessage" type="text"
                                     placeholder="Type a message..."
-                                    class="flex-1 px-4 py-2.5 bg-gray-100 rounded-2xl focus:outline-none text-sm"
+                                    class="flex-1 px-4 py-2.5 bg-gray-100 rounded-2xl focus:outline-none text-base"
                                     @keyup.enter="sendMessage" />
                                 <button type="submit" @click="sendMessage"
                                     class="size-11 bg-brand-blue text-white rounded-full hover:bg-brand-blue-dark disabled:opacity-50 flex items-center justify-center"
-                                    :disabled="!newMessage.trim()">
-                                    <Icon icon="lucide:send" class="size-4" />
+                                    :disabled="!newMessage.trim() || isSending">
+                                    <Icon v-if="!isSending" icon="lucide:send" class="size-4" />
+                                    <Icon v-else icon="lucide:loader-2" class="size-4 animate-spin" />
                                 </button>
                             </div>
                             <button v-if="selectedFiles.length" @click="sendFiles" :disabled="uploading"
@@ -1072,7 +1128,8 @@ const sendAd = (ad) => {
                         </div>
                     </div>
 
-                    <div v-else class="h-full bg-white flex flex-col items-center justify-center p-6">
+                    <!-- No conversation selected state -->
+                    <div v-else class="h-full w-full bg-white flex flex-col items-center justify-center p-6">
                         <div class="size-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                             <Icon icon="lucide:message-circle" class="size-12 text-gray-400" />
                         </div>
@@ -1087,7 +1144,7 @@ const sendAd = (ad) => {
             </div>
         </div>
 
-        <!-- Context Menu, Alert Dialog, Preview Modal, AdPickerModal (unchanged) -->
+        <!-- Modals -->
         <div v-if="contextMenu.show" class="fixed z-50 bg-white rounded-lg shadow-xl border py-1 min-w-[180px]"
             :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
             <button @click="deleteMessage"
@@ -1138,10 +1195,34 @@ const sendAd = (ad) => {
 </template>
 
 <style scoped>
-.focus\:ring-brand-blue\/20:focus {
-    --tw-ring-color: rgba(59, 130, 246, 0.2);
+/* Force 16px on all mobile inputs to prevent zoom */
+@media (max-width: 768px) {
+
+    input,
+    textarea,
+    .chat-input {
+        font-size: 16px !important;
+    }
 }
 
+/* Prevent horizontal overflow on mobile */
+@media (max-width: 768px) {
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .overflow-x-auto::-webkit-scrollbar {
+        display: none;
+    }
+
+    * {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+/* Custom scrollbar */
 .overflow-y-auto::-webkit-scrollbar {
     width: 5px;
 }
@@ -1159,6 +1240,7 @@ const sendAd = (ad) => {
     background: #94a3b8;
 }
 
+/* Smooth animations */
 * {
     transition: all 0.2s ease;
 }
@@ -1177,21 +1259,6 @@ const sendAd = (ad) => {
 
 .flex>div {
     animation: slideIn 0.2s ease-out;
-}
-
-.whitespace-nowrap:hover {
-    transform: scale(1.05);
-}
-
-@media (max-width: 768px) {
-    .overflow-x-auto {
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-    }
-
-    .overflow-x-auto::-webkit-scrollbar {
-        display: none;
-    }
 }
 
 .cursor-context-menu {
