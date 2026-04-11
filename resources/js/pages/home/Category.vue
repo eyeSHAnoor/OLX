@@ -7,6 +7,16 @@ import AdCard from '@/components/AdCard.vue'
 import AdListItem from '@/components/AdListItem.vue'
 import debounce from 'lodash/debounce'
 import citiesList from '@/data/cities.json'
+import TopCategoriesBar from '@/components/TopCategoriesBar.vue'
+// Shadcn/ui components for modal
+import { Button } from '@/components/ui/button'
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 
 // Props
 const props = defineProps<{
@@ -19,7 +29,6 @@ const props = defineProps<{
 }>()
 
 const page = usePage()
-// console.log(page.props)
 // ----------------------
 // BANNERS (new logic)
 // ----------------------
@@ -109,9 +118,56 @@ const selectedCity = ref(
 const sortBy = ref(props.filters?.sort || 'newest')
 const attributeFilters = ref<Record<string, any>>({})
 
-// Categories UI
+// Categories UI (accordion)
 const showAllCategories = ref(false)
 const initialCategoriesToShow = 5
+const expandedCategories = ref<Set<number>>(new Set())
+
+// Toggle category expansion
+const toggleCategory = (catId: number) => {
+    if (expandedCategories.value.has(catId)) {
+        expandedCategories.value.delete(catId)
+    } else {
+        expandedCategories.value.add(catId)
+    }
+}
+
+// Attribute modal state – using Dialog's v-model:open
+const showAttributeModal = ref(false)
+const localAttributeFilters = ref<Record<string, any>>({})
+
+const openAttributeModal = () => {
+    // Deep copy current attribute filters
+    localAttributeFilters.value = JSON.parse(JSON.stringify(attributeFilters.value))
+    // Ensure every filterable attribute has an array as value
+    if (props.attributes) {
+        props.attributes.filter(attr => attr.is_filterable).forEach(attr => {
+            const key = `attribute_${attr.id}`
+            if (!Array.isArray(localAttributeFilters.value[key])) {
+                localAttributeFilters.value[key] = []
+            }
+        })
+    }
+    showAttributeModal.value = true
+}
+
+const applyAttributeModal = () => {
+    // Copy local changes back to main attributeFilters
+    attributeFilters.value = JSON.parse(JSON.stringify(localAttributeFilters.value))
+    applyFilters()
+    showAttributeModal.value = false
+}
+
+const resetAttributeModal = () => {
+    localAttributeFilters.value = {}
+    // Re-initialize all filterable attributes as empty arrays
+    if (props.attributes) {
+        props.attributes.filter(attr => attr.is_filterable).forEach(attr => {
+            const key = `attribute_${attr.id}`
+            localAttributeFilters.value[key] = []
+        })
+    }
+}
 
 const cities = ref<string[]>(citiesList || [])
 
@@ -420,6 +476,14 @@ const resetAllFilters = () => {
 
 const getBrandAdCount = (brandId: number) => ads.value.filter((ad: any) => ad.brand_id === brandId).length
 
+// Helper for attribute checkboxes (used only in mobile)
+const ensureAttributeArray = (attrId: number) => {
+    const key = `attribute_${attrId}`
+    if (!Array.isArray(attributeFilters.value[key])) {
+        attributeFilters.value[key] = []
+    }
+}
+
 // ----------------------
 // INIT & CLEANUP
 // ----------------------
@@ -470,18 +534,11 @@ const toggleCategoriesView = () => {
 }
 
 const priceRanges = [
-    { label: 'Under $100', min: 0, max: 100 },
-    { label: '$100 - $500', min: 100, max: 500 },
-    { label: '$500 - $1000', min: 500, max: 1000 },
-    { label: 'Above $1000', min: 1000, max: null }
+    { label: 'Under 100', min: 0, max: 100 },
+    { label: '100 - 500', min: 100, max: 500 },
+    { label: '500 - 1000', min: 500, max: 1000 },
+    { label: 'Above 1000', min: 1000, max: null }
 ]
-
-const ensureAttributeArray = (attrId: number) => {
-    const key = `attribute_${attrId}`
-    if (!Array.isArray(attributeFilters.value[key])) {
-        attributeFilters.value[key] = []
-    }
-}
 </script>
 
 <template>
@@ -547,7 +604,7 @@ const ensureAttributeArray = (attrId: number) => {
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
                     <!-- Sidebar Filters (Desktop) -->
                     <aside class="lg:col-span-1 space-y-4 hidden lg:block">
-                        <!-- Categories Filter -->
+                        <!-- Categories Filter (Accordion) -->
                         <div class="bg-white rounded-lg shadow-sm p-4">
                             <div class="flex items-center gap-1.5 text-xs text-gray-600 pb-3 border-b border-gray-100">
                                 <Link :href="route('home')" class="hover:text-brand-teal">Home</Link>
@@ -562,29 +619,44 @@ const ensureAttributeArray = (attrId: number) => {
                                         :style="{ color: 'var(--brand-teal)' }" />
                                     Categories
                                 </h3>
-                                <div class="space-y-0.5">
+                                <div class="space-y-1">
                                     <Link :href="route('category.show')"
                                         class="block text-xs py-1.5 px-2 rounded transition-all duration-200"
                                         :class="[!category ? 'bg-brand-blue/10 text-brand-blue font-medium border-l-2 border-brand-blue' : 'hover:bg-gray-50 hover:pl-3']">
                                         All Categories
                                     </Link>
-                                    <template v-for="cat in displayedCategories" :key="cat.id">
-                                        <div v-if="!cat.parent_id" class="space-y-0.5">
-                                            <Link :href="route('category.show', cat.slug)"
-                                                class="block text-xs py-1.5 px-2 rounded transition-all duration-200 font-medium"
-                                                :class="[category?.id === cat.id ? 'bg-brand-blue/10 text-brand-blue border-l-2 border-brand-blue' : 'hover:bg-gray-50 hover:pl-3']">
-                                                {{ cat.name }}
+
+                                    <!-- Parent categories only (filtered by showAllCategories) -->
+                                    <div v-for="parent in topLevelCategories" :key="parent.id"
+                                        v-show="topLevelCategories.indexOf(parent) < (showAllCategories ? Infinity : initialCategoriesToShow)">
+                                        <div class="flex items-center justify-between group">
+                                            <Link :href="route('category.show', parent.slug)"
+                                                class="block flex-1 text-xs py-1.5 px-2 rounded transition-all duration-200"
+                                                :class="[category?.id === parent.id ? 'bg-brand-blue/10 text-brand-blue font-medium border-l-2 border-brand-blue' : 'hover:bg-gray-50 hover:pl-3']">
+                                                {{ parent.name }}
                                             </Link>
-                                            <div v-if="cat.children_recursive?.length" class="ml-3 space-y-0.5">
-                                                <Link v-for="subCat in cat.children_recursive" :key="subCat.id"
-                                                    :href="route('category.show', subCat.slug)"
-                                                    class="block text-xs py-1 px-2 rounded transition-all duration-200"
-                                                    :class="[category?.id === subCat.id ? 'bg-brand-blue/10 text-brand-blue' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900']">
-                                                    {{ subCat.name }}
-                                                </Link>
-                                            </div>
+                                            <button v-if="parent.children_recursive?.length"
+                                                @click="toggleCategory(parent.id)"
+                                                class="p-1 mr-1 rounded hover:bg-gray-100 transition">
+                                                <Icon
+                                                    :icon="expandedCategories.has(parent.id) ? 'mdi:chevron-up' : 'mdi:chevron-down'"
+                                                    class="text-gray-500 text-sm" />
+                                            </button>
                                         </div>
-                                    </template>
+
+                                        <!-- Child categories (visible only if expanded) -->
+                                        <div v-if="parent.children_recursive?.length && expandedCategories.has(parent.id)"
+                                            class="ml-4 space-y-0.5 mt-0.5 border-l border-gray-100 pl-2">
+                                            <Link v-for="subCat in parent.children_recursive" :key="subCat.id"
+                                                :href="route('category.show', subCat.slug)"
+                                                class="block text-xs py-1 px-2 rounded transition-all duration-200"
+                                                :class="[category?.id === subCat.id ? 'bg-brand-blue/10 text-brand-blue' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900']">
+                                                {{ subCat.name }}
+                                            </Link>
+                                        </div>
+                                    </div>
+
+                                    <!-- View More / View Less button -->
                                     <button v-if="topLevelCategories.length > initialCategoriesToShow"
                                         @click="toggleCategoriesView"
                                         class="w-full mt-2 text-xs text-brand-teal hover:text-brand-teal/80 font-medium flex items-center justify-center gap-1 py-1.5 border-t border-gray-100">
@@ -650,8 +722,8 @@ const ensureAttributeArray = (attrId: number) => {
                             </h3>
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between text-xs text-gray-600">
-                                    <span>Min: ${{ minPrice || priceRange?.min || 0 }}</span>
-                                    <span>Max: ${{ maxPrice || priceRange?.max || 10000 }}</span>
+                                    <span>Min: {{ minPrice || priceRange?.min || 0 }}</span>
+                                    <span>Max: {{ maxPrice || priceRange?.max || 10000 }}</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2">
                                     <div>
@@ -701,44 +773,19 @@ const ensureAttributeArray = (attrId: number) => {
                             </div>
                         </div>
 
-                        <!-- Attribute Filters -->
-                        <div v-if="attributes?.filter(attr => attr.is_filterable).length"
-                            class="bg-white rounded-lg shadow-sm p-4">
-                            <h3 class="font-medium text-sm text-gray-800 mb-3 flex items-center gap-1.5">
-                                <Icon icon="mdi:filter-variant" class="text-base"
-                                    :style="{ color: 'var(--brand-teal)' }" />
-                                Specifications
-                            </h3>
-                            <div class="space-y-4">
-                                <div v-for="attribute in attributes.filter(attr => attr.is_filterable)"
-                                    :key="attribute.id">
-                                    <label class="block text-xs font-medium text-gray-700 mb-2">{{ attribute.name
-                                    }}</label>
-                                    <div v-if="attribute.type === 'select' && attribute.options?.length"
-                                        class="space-y-1 max-h-32 overflow-y-auto">
-                                        <label v-for="option in attribute.options" :key="option.id"
-                                            class="flex items-center gap-2 p-1 rounded hover:bg-gray-50 cursor-pointer">
-                                            <input type="checkbox" :value="option.id"
-                                                :checked="attributeFilters[`attribute_${attribute.id}`]?.includes(option.id)"
-                                                @change="() => {
-                                                    ensureAttributeArray(attribute.id)
-                                                    const key = `attribute_${attribute.id}`
-                                                    const arr = attributeFilters[key]
-                                                    if (arr.includes(option.id)) attributeFilters[key] = arr.filter(v => v !== option.id)
-                                                    else attributeFilters[key].push(option.id)
-                                                    applyFilters()
-                                                }" />
-                                            <span class="text-xs text-gray-700">{{ option.value }}</span>
-                                        </label>
-                                    </div>
-                                    <div v-else-if="attribute.type === 'text'">
-                                        <input type="text" :placeholder="`Enter ${attribute.name.toLowerCase()}`"
-                                            v-model="attributeFilters[`attribute_${attribute.id}`]"
-                                            @input="applyFilters"
-                                            class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none text-xs" />
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- More Filters Button (opens attribute modal) -->
+                        <div class="bg-white rounded-lg shadow-sm p-4">
+                            <button @click="openAttributeModal"
+                                class="w-full flex items-center justify-center gap-2 bg-brand-teal/10 text-brand-teal font-medium py-2.5 rounded-lg hover:bg-brand-teal/20 transition">
+                                <Icon icon="mdi:filter-variant" class="text-lg" />
+                                More Filters
+                                <span
+                                    v-if="Object.values(attributeFilters).some(v => v && (Array.isArray(v) ? v.length : true))"
+                                    class="ml-1 bg-brand-teal text-white text-xs px-1.5 py-0.5 rounded-full">
+                                    {{Object.values(attributeFilters).filter(v => v && (Array.isArray(v) ? v.length :
+                                        true)).length}}
+                                </span>
+                            </button>
                         </div>
 
                         <!-- Active Filters Summary -->
@@ -757,7 +804,7 @@ const ensureAttributeArray = (attrId: number) => {
                                 </span>
                                 <span v-if="minPrice || maxPrice"
                                     class="inline-flex items-center gap-1 bg-white text-[10px] px-2 py-1 rounded-full shadow-sm">
-                                    ${{ minPrice || 0 }} - ${{ maxPrice || '∞' }} <button @click="clearPriceFilter"
+                                    {{ minPrice || 0 }} - {{ maxPrice || '∞' }} <button @click="clearPriceFilter"
                                         class="ml-0.5 hover:text-brand-teal">×</button>
                                 </span>
                                 <span v-if="selectedCity !== 'all'"
@@ -843,10 +890,6 @@ const ensureAttributeArray = (attrId: number) => {
                         </div>
 
                         <!-- Loading State -->
-                        <!-- <div v-if="isLoading && !hasAds" class="text-center py-12">
-                            <Icon icon="mdi:loading" class="animate-spin text-3xl text-brand-teal mx-auto mb-3" />
-                            <p class="text-sm text-gray-500">Loading ads...</p>
-                        </div> -->
                         <div v-if="isLoading && !hasAds" class="text-center py-12">
                             <svg class="animate-spin w-10 h-10 text-brand-teal mx-auto mb-3" fill="none"
                                 stroke="currentColor" viewBox="0 0 24 24">
@@ -934,7 +977,7 @@ const ensureAttributeArray = (attrId: number) => {
             </section>
         </div>
 
-        <!-- Mobile Filters -->
+        <!-- Mobile Filters (unchanged) -->
         <div v-if="showMobileFilters" class="fixed inset-0 bg-white z-50 overflow-y-auto lg:hidden">
             <div class="sticky top-0 bg-white border-b border-gray-200">
                 <div class="flex items-center justify-between p-4">
@@ -1004,11 +1047,6 @@ const ensureAttributeArray = (attrId: number) => {
                 </div>
                 <div class="p-4">
                     <p class="text-sm font-semibold text-gray-900 mb-3">Location</p>
-                    <!-- <select v-model="selectedCity" @change="applyCityFilter"
-                        class="w-full border border-gray-300 rounded-lg p-3 text-sm bg-white">
-                        <option value="Pakistan">All Pakistan</option>
-                        <option v-for="city in cities" :key="city.lng" :value="city.name">📍 {{ city.name }}</option>
-                    </select> -->
                     <SelectInput v-model="selectedCity" @update:modelValue="applyCityFilter" placeholder="Select City">
                         <SelectContent>
                             <SelectItem v-for="city in [
@@ -1024,13 +1062,13 @@ const ensureAttributeArray = (attrId: number) => {
                     <p class="text-sm font-semibold text-gray-900 mb-3">Price Range</p>
                     <div class="flex gap-3 mb-4">
                         <div class="flex-1">
-                            <label class="block text-xs text-gray-500 mb-1">Min ($)</label>
+                            <label class="block text-xs text-gray-500 mb-1">Min (Pkr)</label>
                             <input type="number" placeholder="Min" v-model.number="minPrice"
                                 @input="debouncedApplyPriceFilter"
                                 class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-teal focus:border-transparent" />
                         </div>
                         <div class="flex-1">
-                            <label class="block text-xs text-gray-500 mb-1">Max ($)</label>
+                            <label class="block text-xs text-gray-500 mb-1">Max (Pkr)</label>
                             <input type="number" placeholder="Max" v-model.number="maxPrice"
                                 @input="debouncedApplyPriceFilter"
                                 class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-teal focus:border-transparent" />
@@ -1081,6 +1119,64 @@ const ensureAttributeArray = (attrId: number) => {
                 </button>
             </div>
         </div>
+
+        <!-- Attribute Filters Modal (Desktop) - Using shadcn/ui Dialog -->
+        <Dialog v-model:open="showAttributeModal">
+            <DialogContent class="flex max-h-[90vh] w-full max-w-[90vw] flex-col sm:max-w-[700px]">
+                <DialogHeader>
+                    <DialogTitle class="flex items-center gap-2 text-lg font-semibold sm:text-xl">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-teal/10">
+                            <Icon icon="mdi:filter-variant" class="h-4 w-4 text-brand-teal" />
+                        </div>
+                        <span>More Filters</span>
+                    </DialogTitle>
+                    <p class="text-sm text-muted-foreground mt-1">Narrow down your results by selecting specifications
+                    </p>
+                </DialogHeader>
+
+                <!-- Scrollable content -->
+                <div class="flex-1 overflow-y-auto py-2 px-2 pr-3 space-y-5 max-h-[60vh]">
+                    <div v-for="attribute in attributes?.filter(attr => attr.is_filterable)" :key="attribute.id">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ attribute.name }}</label>
+
+                        <!-- Select / checkbox type -->
+                        <div v-if="attribute.type === 'select' && attribute.options?.length" class="space-y-2">
+                            <div v-for="option in attribute.options" :key="option.id" class="flex items-center">
+                                <input type="checkbox" :id="`modal_attr_${attribute.id}_${option.id}`"
+                                    :value="option.id" v-model="localAttributeFilters[`attribute_${attribute.id}`]"
+                                    class="h-4 w-4 rounded border-gray-300 text-brand-teal focus:ring-brand-teal" />
+                                <label :for="`modal_attr_${attribute.id}_${option.id}`"
+                                    class="ml-2 text-sm text-gray-700">
+                                    {{ option.value }}
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Text input type -->
+                        <div v-else-if="attribute.type === 'text'">
+                            <input type="text" :placeholder="`Enter ${attribute.name.toLowerCase()}`"
+                                v-model="localAttributeFilters[`attribute_${attribute.id}`]"
+                                class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-brand-teal focus:border-brand-teal" />
+                        </div>
+                    </div>
+
+                    <div v-if="!attributes?.filter(attr => attr.is_filterable).length"
+                        class="text-center text-gray-500 py-6">
+                        No additional filters available.
+                    </div>
+                </div>
+
+                <DialogFooter class="flex flex-col-reverse gap-2 border-t px-6 sm:flex-row sm:justify-end pt-4">
+                    <Button @click="resetAttributeModal" variant="outline" class="sm:w-auto w-full">
+                        Reset
+                    </Button>
+                    <Button @click="applyAttributeModal"
+                        class="w-full bg-brand-teal text-white hover:bg-brand-teal/90 sm:w-auto">
+                        Apply Filters
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </OlxLayout>
 </template>
 

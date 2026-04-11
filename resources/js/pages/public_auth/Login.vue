@@ -127,21 +127,6 @@
                     </p>
                 </div>
             </div>
-
-            <!-- App Download Links -->
-            <div class="mt-6 text-center">
-                <p class="text-xs text-gray-600 mb-2">Get the app</p>
-                <div class="flex justify-center space-x-2">
-                    <a href="#" class="inline-block">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
-                            alt="Google Play" class="h-8">
-                    </a>
-                    <a href="#" class="inline-block">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
-                            alt="App Store" class="h-8">
-                    </a>
-                </div>
-            </div>
         </div>
 
         <!-- Footer Links -->

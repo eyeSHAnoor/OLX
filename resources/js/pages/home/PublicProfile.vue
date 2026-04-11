@@ -245,7 +245,7 @@
                     <h2 class="text-lg md:text-xl font-semibold text-gray-900">
                         {{ profileUser.name }}'s Ads
                         <span class="text-xs font-normal text-gray-500 ml-2">({{ ads.total || profileUser.total_ads || 0
-                        }} total)</span>
+                            }} total)</span>
                     </h2>
 
                     <!-- Filters and Actions -->
@@ -278,7 +278,7 @@
                             <option value="price_low">Price: Low to High</option>
                             <option value="price_high">Price: High to Low</option>
                         </select> -->
-                        <div class="hidden md:flex items-center space-x-3">
+                        <div class="flex items-center space-x-3">
                             <!-- <span class="text-xs text-gray-600">Sort:</span> -->
                             <SelectInput v-model="sortBy" @update:modelValue="applyFilters" placeholder="Sort By"
                                 class="border border-gray-300 rounded px-3 py-1.5 focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-xs min-w-[140px]">
@@ -299,7 +299,7 @@
                         </div>
 
                         <!-- Add New Ad Button (only for owner) -->
-                        <div v-if="isOwner">
+                        <div v-if="isOwner" class="mt-2">
                             <Link :href="route('user.ads.create')"
                                 class="inline-flex items-center gap-1.5 bg-brand-blue hover:bg-brand-blue/90 text-white px-3 py-1.5 rounded transition-colors text-xs font-medium shadow-sm">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

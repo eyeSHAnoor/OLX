@@ -1,44 +1,13 @@
 <template>
-    <div class="pt-8 pb-6">
-        <div class="container mx-auto px-4">
+    <div class="pt-8 pb-6 bg-gray-900 text-white">
+        <div class="container max-w-7xl mx-auto px-4">
+
+
             <!-- Main Footer Content -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <!-- Popular Categories -->
                 <div>
-                    <h3 class="font-bold text-lg mb-4">POPULAR CATEGORIES</h3>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-300 hover:text-white">Cars</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Flats for rent</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Mobile Phones</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Jobs</a></li>
-                    </ul>
-                </div>
-
-                <!-- Trending Searches -->
-                <div>
-                    <h3 class="font-bold text-lg mb-4">TRENDING SEARCHES</h3>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-300 hover:text-white">Bikes</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Watches</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Books</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Dogs</a></li>
-                    </ul>
-                </div>
-
-                <!-- About Us -->
-                <div>
-                    <h3 class="font-bold text-lg mb-4">ABOUT US</h3>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-300 hover:text-white">About OLX Group</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Careers</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Contact Us</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">OLXPeople</a></li>
-                    </ul>
-                </div>
-
-                <!-- OLX -->
-                <div>
-                    <h3 class="font-bold text-lg mb-4">OLX</h3>
+                    <!-- AMO MERCATUS section (replaces OLX) -->
+                    <h3 class="font-bold text-lg mb-4">AMO MERCATUS</h3>
                     <ul class="space-y-2">
                         <li><a href="#" class="text-gray-300 hover:text-white">Help</a></li>
                         <li><a href="#" class="text-gray-300 hover:text-white">Sitemap</a></li>
@@ -46,23 +15,37 @@
                         <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
                     </ul>
                 </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-4">ABOUT US</h3>
+                    <ul class="space-y-2 mb-6">
+                        <li><a href="#" class="text-gray-300 hover:text-white">About AMO MERCATUS</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Careers</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Contact Us</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Our People</a></li>
+                    </ul>
+                </div>
+                <!-- Dynamic Category Columns (max 3) -->
+                <div v-for="(column, idx) in categoryColumns" :key="idx">
+                    <h3 class="font-bold text-lg mb-4">{{ column.category.name }}</h3>
+                    <ul class="space-y-2">
+                        <li v-if="column.children.length === 0">
+                            <span class="text-gray-400 text-sm">No subcategories</span>
+                        </li>
+                        <li v-for="child in column.children" :key="child.id">
+                            <a href="#" @click.prevent="navigateToCategory(child)"
+                                class="text-gray-300 hover:text-white">
+                                {{ child.name }}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
 
-            <!-- App Store Links -->
+            <!-- App Store Links & Social Media -->
             <div class="mt-8 pt-8 border-t border-gray-700">
                 <div class="flex flex-col md:flex-row justify-between items-center">
                     <div class="mb-4 md:mb-0">
-                        <p class="text-gray-300">Free Android App</p>
-                        <div class="flex space-x-2 mt-2">
-                            <a href="#" class="bg-black p-2 rounded">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
-                                    alt="Play Store" class="h-10">
-                            </a>
-                            <a href="#" class="bg-black p-2 rounded">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
-                                    alt="App Store" class="h-10">
-                            </a>
-                        </div>
+
                     </div>
 
                     <!-- Social Media -->
@@ -91,8 +74,41 @@
 
             <!-- Copyright -->
             <div class="mt-8 text-center text-gray-400 text-sm">
-                <p>&copy; {{ new Date().getFullYear() }} OLX Clone - All Rights Reserved</p>
+                <p>&copy; {{ new Date().getFullYear() }} AMO MERCATUS - All Rights Reserved</p>
             </div>
         </div>
     </div>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { usePage, router } from '@inertiajs/vue3'
+
+// Get shared categories from Inertia (same as in your top bar)
+const page = usePage()
+const topCategories = (page.props.topCategories as any[]) || []
+
+// Prepare up to 3 parent categories with their direct children
+const categoryColumns = computed(() => {
+    // Take first 3 top‑level categories (you can adjust the number)
+    const parents = topCategories.slice(0, 3)
+
+    return parents.map(parent => ({
+        category: parent,
+        // Use direct children (or fallback to children_recursive if needed)
+        children: (parent.children || parent.children_recursive || []).slice(0, 5)
+    }))
+})
+
+// Navigate to category page using the same route as your top bar
+const navigateToCategory = (category: any) => {
+    if (category?.slug) {
+        router.get(route('category.show', { slug: category.slug }), {}, {
+            preserveScroll: true,
+            preserveState: false,
+        })
+    } else {
+        router.get(route('home'))
+    }
+}
+</script>

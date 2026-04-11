@@ -187,33 +187,20 @@
             </div>
         </div>
 
-        <!-- App Download Links -->
-        <div class="mt-6 text-center">
-            <p class="text-xs text-gray-600 mb-2">Get the app</p>
-            <div class="flex justify-center space-x-2">
-                <a href="#" class="inline-block">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
-                        alt="Google Play" class="h-8">
-                </a>
-                <a href="#" class="inline-block">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
-                        alt="App Store" class="h-8">
-                </a>
-            </div>
-        </div>
+
 
         <!-- Footer Links -->
         <div class="mt-6 md:mt-8 text-center">
             <div class="flex flex-wrap justify-center gap-3 text-[10px] text-gray-500">
                 <a href="#" class="hover:text-gray-700 transition-colors">Help</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">Privacy</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">Terms</a>
+                <a :href="route('policy.show', 'privacy')" class="hover:text-gray-700 transition-colors">Privacy</a>
+                <a :href="route('policy.show', 'terms')" class="hover:text-gray-700 transition-colors">Terms</a>
                 <a href="#" class="hover:text-gray-700 transition-colors">Blog</a>
                 <a href="#" class="hover:text-gray-700 transition-colors">Careers</a>
                 <a href="#" class="hover:text-gray-700 transition-colors">About</a>
             </div>
             <p class="mt-2 text-[10px] text-gray-500">
-                © {{ new Date().getFullYear() }} OLX Clone. All rights reserved.
+                © {{ new Date().getFullYear() }} AMO Mercatus. All rights reserved.
             </p>
         </div>
     </div>

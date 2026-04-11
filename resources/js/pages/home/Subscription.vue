@@ -14,6 +14,7 @@
 
         <!-- Main Card -->
         <div class="w-full max-w-3xl">
+
             <!-- Status Messages (Active / Pending) -->
             <div v-if="!canSubscribe && paymentStep === 'select'" class="bg-white rounded-xl shadow-md p-8">
                 <div class="text-center max-w-md mx-auto">
@@ -29,10 +30,10 @@
                         <p class="text-xs text-gray-500 mb-6">
                             Start posting your ads and reach thousands of potential buyers.
                         </p>
-                        <button @click="goToDashboard"
+                        <Link :href="route('user.ads.create')"
                             class="w-full sm:w-auto px-6 py-2.5 bg-brand-blue text-white text-sm font-medium rounded-lg hover:bg-brand-blue/80 transition-all duration-200 active:scale-[0.98]">
-                            Post an Ad Now
-                        </button>
+                            Post Your Ad
+                        </Link>
                     </template>
 
                     <!-- Pending Subscription -->
@@ -93,6 +94,12 @@
             <!-- Plan Selection -->
             <template v-else-if="canSubscribe">
                 <!-- Plan Grid -->
+                <button @click="Back" v-if="paymentStep === 'select'" class="inline-flex items-center gap-1 px-3 py-2 mb-2 rounded-md border border-gray-200 bg-white
+                    text-sm
+                    text-gray-700 hover:bg-gray-50 transition">
+                    <Icon icon="mdi:arrow-left" class="text-base" />
+                    Back
+                </button>
                 <div v-if="paymentStep === 'select'">
                     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div v-for="(plan, index) in plans" :key="plan.id" class="relative">
@@ -110,7 +117,7 @@
                                     <h3 class="text-base font-medium text-gray-900 mb-1">{{ plan.name }}</h3>
                                     <div class="flex items-baseline mb-3">
                                         <span class="text-2xl font-light text-gray-900">{{ formatPrice(plan.price)
-                                        }}</span>
+                                            }}</span>
                                         <span class="text-xs text-gray-500 ml-1">/{{ plan.duration_days }} days</span>
                                     </div>
 
@@ -398,28 +405,14 @@
                 </div>
             </template>
 
-            <!-- App Download Links -->
-            <div v-if="canSubscribe && paymentStep === 'select'" class="mt-6 text-center">
-                <p class="text-xs text-gray-600 mb-2">Get the app</p>
-                <div class="flex justify-center space-x-2">
-                    <a href="#" class="inline-block">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
-                            alt="Google Play" class="h-8" />
-                    </a>
-                    <a href="#" class="inline-block">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
-                            alt="App Store" class="h-8" />
-                    </a>
-                </div>
-            </div>
         </div>
 
         <!-- Footer Links -->
         <div class="mt-6 md:mt-8 text-center">
             <div class="flex flex-wrap justify-center gap-3 text-[10px] text-gray-500">
                 <a href="#" class="hover:text-gray-700 transition-colors">Help</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">Privacy</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">Terms</a>
+                <a :href="route('policy.show', 'privacy')" class="hover:text-gray-700 transition-colors">Privacy</a>
+                <a :href="route('policy.show', 'terms')" class="hover:text-gray-700 transition-colors">Terms</a>
                 <a href="#" class="hover:text-gray-700 transition-colors">Blog</a>
                 <a href="#" class="hover:text-gray-700 transition-colors">Careers</a>
                 <a href="#" class="hover:text-gray-700 transition-colors">About</a>
@@ -458,6 +451,10 @@ const form = useForm({
     receipt: null,
     terms_accepted: false,
 })
+
+const Back = () => {
+    window.history.back()
+}
 
 // Check subscription status
 const hasPendingSubscription = computed(() => {

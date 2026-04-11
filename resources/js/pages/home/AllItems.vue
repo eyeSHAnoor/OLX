@@ -186,13 +186,13 @@
                         <div class="space-y-3">
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label class="block text-[10px] text-gray-500 mb-0.5">Min ($)</label>
+                                    <label class="block text-[10px] text-gray-500 mb-0.5">Min (Pkr)</label>
                                     <input type="number" placeholder="Min" v-model.number="minPrice"
                                         @input="debouncedApplyFilters"
                                         class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-xs" />
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] text-gray-500 mb-0.5">Max ($)</label>
+                                    <label class="block text-[10px] text-gray-500 mb-0.5">Max (Pkr)</label>
                                     <input type="number" placeholder="Max" v-model.number="maxPrice"
                                         @input="debouncedApplyFilters"
                                         class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-xs" />
@@ -265,7 +265,7 @@
                             </span>
                             <span v-if="minPrice || maxPrice"
                                 class="inline-flex items-center gap-1 bg-white text-[10px] px-2 py-1 rounded-full shadow-sm">
-                                ${{ minPrice || 0 }} - ${{ maxPrice || '∞' }}
+                                {{ minPrice || 0 }} - {{ maxPrice || '∞' }}
                                 <button @click="clearPriceFilter" class="ml-0.5 hover:text-brand-teal">×</button>
                             </span>
                             <span v-if="selectedBrands.length"
@@ -1075,10 +1075,10 @@ const clearModelFilter = () => {
 }
 
 const priceRanges = [
-    { label: 'Under $100', min: 0, max: 100 },
-    { label: '$100 - $500', min: 100, max: 500 },
-    { label: '$500 - $1000', min: 500, max: 1000 },
-    { label: '$1000+', min: 1000, max: null }
+    { label: 'Under 100', min: 0, max: 100 },
+    { label: '100 - 500', min: 100, max: 500 },
+    { label: '500 - 1000', min: 500, max: 1000 },
+    { label: '1000+', min: 1000, max: null }
 ]
 
 // Watch for ads changes to re-setup observer
