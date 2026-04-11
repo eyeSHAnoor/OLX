@@ -1,6 +1,6 @@
 <template>
     <div class="pt-8 pb-6 bg-gray-900 text-white">
-        <div class="container max-w-7xl mx-auto px-4">
+        <div class="container min-w-5xl mx-auto px-4">
 
 
             <!-- Main Footer Content -->
@@ -91,7 +91,7 @@ const topCategories = (page.props.topCategories as any[]) || []
 // Prepare up to 3 parent categories with their direct children
 const categoryColumns = computed(() => {
     // Take first 3 top‑level categories (you can adjust the number)
-    const parents = topCategories.slice(0, 3)
+    const parents = topCategories.slice(0, 2)
 
     return parents.map(parent => ({
         category: parent,
