@@ -398,16 +398,10 @@ const submit = () => {
             _method: 'PUT',
         })).post(route('ads.update', form.id), {
             preserveScroll: true,
-            onSuccess: () => {
-                router.visit(route('ads.index'));
-            },
         });
     } else {
         formData.post(route('ads.store'), {
-            preserveScroll: true,
-            onSuccess: () => {
-                router.visit(route('ads.index'));
-            },
+            preserveScroll: true
         });
     }
 };

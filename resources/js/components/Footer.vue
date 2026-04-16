@@ -1,4 +1,5 @@
 <template>
+
     <div class="pt-8 pb-6 bg-gray-900 text-white">
         <div class="container min-w-5xl mx-auto px-4">
 
@@ -9,19 +10,29 @@
                     <!-- AMO MERCATUS section (replaces OLX) -->
                     <h3 class="font-bold text-lg mb-4">AMO MERCATUS</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-300 hover:text-white">Help</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Sitemap</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Terms of use</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                        <li><a href="/page/contact" class="text-gray-300 hover:text-white">Help</a></li>
+                        <li><a href="/policy/terms" class="text-gray-300 hover:text-white">Terms of use</a></li>
+                        <li><a href="/policy/privacy" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
                     </ul>
                 </div>
                 <div>
                     <h3 class="font-bold text-lg mb-4">ABOUT US</h3>
                     <ul class="space-y-2 mb-6">
-                        <li><a href="#" class="text-gray-300 hover:text-white">About AMO MERCATUS</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Careers</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Contact Us</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Our People</a></li>
+                        <li>
+                            <Link href="/page/about" class="text-gray-300 hover:text-white">
+                                About Us
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/page/contact" class="text-gray-300 hover:text-white">
+                                Contact Us
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/page/team" class="text-gray-300 hover:text-white">
+                                Our Team
+                            </Link>
+                        </li>
                     </ul>
                 </div>
                 <!-- Dynamic Category Columns (max 3) -->
@@ -82,6 +93,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Link } from '@inertiajs/vue3'
 import { usePage, router } from '@inertiajs/vue3'
 
 // Get shared categories from Inertia (same as in your top bar)

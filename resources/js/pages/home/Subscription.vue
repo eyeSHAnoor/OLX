@@ -70,7 +70,7 @@
                             Go to Dashboard
                         </button>
                         <p class="text-xs text-gray-400 mt-4">
-                            Need help? <a href="#" class="text-blue-600 hover:underline">Contact support</a>
+                            Need help? <a href="/page/contact" class="text-blue-600 hover:underline">Contact support</a>
                         </p>
                     </template>
 
@@ -225,16 +225,18 @@
                             <label class="block text-xs font-medium text-gray-700 mb-2"> Payment method </label>
                             <div class="grid grid-cols-3 gap-2">
                                 <button v-for="method in paymentMethods" :key="method.id" type="button"
-                                    @click="form.payment_method = method.id"
+                                    @click="method.enabled ? form.payment_method = method.id : null"
+                                    :disabled="!method.enabled"
                                     class="flex flex-col items-center p-2.5 border rounded-lg transition-all duration-200"
-                                    :class="form.payment_method === method.id
-                                        ? 'border-blue-500 bg-blue-50/50 shadow-sm'
-                                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                                        ">
+                                    :class="{
+                                        'border-blue-500 bg-blue-50/50 shadow-sm': form.payment_method === method.id && method.enabled,
+                                        'border-gray-200 hover:border-blue-300 hover:bg-gray-50': method.enabled && form.payment_method !== method.id,
+                                        'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200': !method.enabled
+                                    }">
                                     <Icon :icon="method.icon" class="text-base mb-1"
-                                        :class="form.payment_method === method.id ? 'text-blue-600' : 'text-gray-500'" />
-                                    <span class="text-[10px]" :class="form.payment_method === method.id ? 'text-blue-700 font-medium' : 'text-gray-500'
-                                        ">
+                                        :class="form.payment_method === method.id && method.enabled ? 'text-blue-600' : 'text-gray-500'" />
+                                    <span class="text-[10px]"
+                                        :class="form.payment_method === method.id && method.enabled ? 'text-blue-700 font-medium' : 'text-gray-500'">
                                         {{ method.name }}
                                     </span>
                                 </button>
@@ -410,12 +412,10 @@
         <!-- Footer Links -->
         <div class="mt-6 md:mt-8 text-center">
             <div class="flex flex-wrap justify-center gap-3 text-[10px] text-gray-500">
-                <a href="#" class="hover:text-gray-700 transition-colors">Help</a>
+                <a href="/page/contact" class="hover:text-gray-700 transition-colors">Help</a>
                 <a :href="route('policy.show', 'privacy')" class="hover:text-gray-700 transition-colors">Privacy</a>
                 <a :href="route('policy.show', 'terms')" class="hover:text-gray-700 transition-colors">Terms</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">Blog</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">Careers</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">About</a>
+                <a href="/page/about" class="hover:text-gray-700 transition-colors">About</a>
             </div>
             <p class="mt-2 text-[10px] text-gray-500">
                 © {{ new Date().getFullYear() }} AMO Mercatus. All rights reserved.
@@ -488,18 +488,21 @@ const paymentMethods = [
         name: 'JazzCash',
         icon: 'mdi:cash',
         instructions: 'Send payment to the TILL ID above using JazzCash app.',
+        enabled: true,
     },
     {
         id: 'easypaisa',
         name: 'Easypaisa',
         icon: 'mdi:bank-transfer',
         instructions: 'Send payment to 0300-1234567 (Easypaisa account)',
+        enabled: false,
     },
     {
         id: 'bank',
         name: 'Bank Transfer',
         icon: 'mdi:bank',
         instructions: 'Bank: HBL | Account: 1234-5678-9012-3456 | IBAN: PK12HBL1234567890123456',
+        enabled: false,
     },
 ]
 
@@ -545,8 +548,7 @@ function removeFile() {
 
 // Copy TILL ID to clipboard
 function copyTillId() {
-    navigator.clipboard.writeText('1234567890')
-    // Optional: show a small toast message
+    navigator.clipboard.writeText('982295010')
     alert('TILL ID copied!')
 }
 

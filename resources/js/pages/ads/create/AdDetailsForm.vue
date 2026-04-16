@@ -794,7 +794,6 @@ const handleSubmit = () => {
             preserveScroll: true,
             headers: { 'Content-Type': 'multipart/form-data' },
             onSuccess: () => {
-                router.visit(route('user.profile', props.user?.id))
                 clearDraftData()
             },
             onError: (errors) => {
@@ -847,7 +846,6 @@ const handleSubmit = () => {
             onSuccess: () => {
                 clearDraftData()
                 resetFormState()
-                router.visit(route('user.profile', props.user?.id))
             },
             onError: (errors) => {
                 console.error('Create errors:', errors)

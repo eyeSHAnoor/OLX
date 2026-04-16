@@ -40,6 +40,8 @@ Route::post('/set-city', function (\Illuminate\Http\Request $request) {
 })->name('set.city');
 
 Route::get('/policy/{type}', [App\Http\Controllers\PolicyController::class, 'show'])->name('policy.show');
+Route::get('/aboutus', [App\Http\Controllers\AboutController::class, 'index'])->name('aboutus');
+Route::get('/page/{pageKey}', [App\Http\Controllers\AboutController::class, 'show'])->name('public.page');
 
 
 
@@ -227,6 +229,10 @@ Route::middleware([
             // Route::get('api/broadcast-messages/active', [App\Http\Controllers\BroadcastController::class, 'getActive'])
             //     ->name('api.broadcast-messages.active');
 
+               Route::resource('page-contents', App\Http\Controllers\PageContentController::class)->except(['show']);
+    Route::patch('page-contents/{pageContent}/toggle-status', [App\Http\Controllers\PageContentController::class, 'toggleStatus'])->name('page-contents.toggle-status');
+    // Optional: API endpoint for frontend retrieval
+    Route::get('page-contents/by-key/{pageKey}', [App\Http\Controllers\PageContentController::class, 'getByPageKey'])->name('page-contents.by-key');
 
 
 

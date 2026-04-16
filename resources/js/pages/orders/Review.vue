@@ -134,7 +134,8 @@
             <!-- Help Text -->
             <div class="mt-6 text-center">
                 <p class="text-xs text-gray-500">
-                    Need help? <a href="#" class="text-brand-teal hover:text-brand-teal/80">Contact support</a>
+                    Need help? <a href="/page/contact" class="text-brand-teal hover:text-brand-teal/80">Contact
+                        support</a>
                 </p>
             </div>
         </div>
@@ -142,10 +143,10 @@
         <!-- Footer Links -->
         <div class="mt-6 md:mt-8 text-center">
             <div class="flex flex-wrap justify-center gap-3 text-[10px] text-gray-500">
-                <a href="#" class="hover:text-gray-700 transition-colors">Help</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">Privacy</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">Terms</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">About</a>
+                <a href="/page/help" class="hover:text-gray-700 transition-colors">Help</a>
+                <a href="/page/privacy" class="hover:text-gray-700 transition-colors">Privacy</a>
+                <a href="/page/terms" class="hover:text-gray-700 transition-colors">Terms</a>
+                <a href="/page/about" class="hover:text-gray-700 transition-colors">About</a>
             </div>
             <p class="mt-2 text-[10px] text-gray-500">
                 © {{ new Date().getFullYear() }} Amo Mercatus. All rights reserved.

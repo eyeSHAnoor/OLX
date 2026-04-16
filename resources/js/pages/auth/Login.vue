@@ -133,12 +133,10 @@
         <!-- Footer Links -->
         <div class="mt-6 md:mt-8 text-center">
             <div class="flex flex-wrap justify-center gap-3 text-[10px] text-gray-500">
-                <a href="#" class="hover:text-gray-700 transition-colors">Help</a>
+                <a href="/page/contact" class="hover:text-gray-700 transition-colors">Help</a>
                 <a :href="route('policy.show', 'privacy')" class="hover:text-gray-700 transition-colors">Privacy</a>
                 <a :href="route('policy.show', 'terms')" class="hover:text-gray-700 transition-colors">Terms</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">Blog</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">Careers</a>
-                <a href="#" class="hover:text-gray-700 transition-colors">About</a>
+                <a href="/page/about" class="hover:text-gray-700 transition-colors">About</a>
             </div>
             <p class="mt-2 text-[10px] text-gray-500">
                 © {{ new Date().getFullYear() }} AMO Mercatus. All rights reserved.

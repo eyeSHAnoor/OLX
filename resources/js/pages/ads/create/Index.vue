@@ -31,7 +31,7 @@
 
                             <p class="text-xs text-gray-400">
                                 Thank you for your patience! If it takes longer than expected, feel free to
-                                <a href="#" class="text-primary hover:underline">contact support</a>.
+                                <a href="/page/contact" class="text-primary hover:underline">contact support</a>.
                             </p>
                         </div>
                     </template>
@@ -69,7 +69,8 @@
 
                         <div class="mt-6 pt-6 border-t border-gray-100">
                             <p class="text-xs text-gray-400">
-                                Need help? <a href="#" class="text-primary hover:underline">Contact support</a>
+                                Need help? <a href="/page/contact" class="text-primary hover:underline">Contact
+                                    support</a>
                             </p>
                         </div>
                     </template>

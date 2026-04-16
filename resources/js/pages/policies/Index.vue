@@ -1,11 +1,14 @@
 <script setup>
 import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
-import { router } from '@inertiajs/vue3'
+import { router, Head } from '@inertiajs/vue3'
+import Layout from '@/layouts/PublicLayout.vue'
+
+defineOptions({ layout: Layout })
 
 const activeTab = ref('privacy') // privacy, terms, refund
 const lastUpdated = 'March 11, 2026'
-useForceTheme('light');
+
 const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId)
     if (element) {
@@ -43,28 +46,21 @@ const sections = {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-50">
-        <!-- Header with navigation -->
-        <div class="bg-white border-b border-gray-200 sticky top-0 z-10">
-            <div class="max-w-8/10 mx-auto">
-                <div class="flex items-center justify-between h-16">
-                    <div class="flex items-center">
-                        <button @click="goBack"
-                            class="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-                            <Icon icon="mdi:arrow-left" class="text-xl mr-2" />
-                            <span class="text-sm font-medium">Back to Home</span>
-                        </button>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm text-gray-500">Last Updated:</span>
-                        <span class="text-sm font-medium text-teal-600">{{ lastUpdated }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
 
+    <Head title="Policies - AMO Mercatus" />
+
+    <div class="min-h-screen bg-gray-50">
         <!-- Main Content -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="max-w-10/12 mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Back to Home (optional, but useful on mobile) -->
+            <div class="mb-6">
+                <button @click="goBack"
+                    class="inline-flex items-center text-sm text-gray-600 hover:text-primary transition-colors">
+                    <Icon icon="mdi:arrow-left" class="mr-1" />
+                    Back to Home
+                </button>
+            </div>
+
             <div class="lg:grid lg:grid-cols-12 lg:gap-8">
                 <!-- Sidebar Navigation -->
                 <div class="hidden lg:block lg:col-span-3">
@@ -548,17 +544,6 @@ html {
 /* Section highlighting on scroll */
 section {
     scroll-margin-top: 6rem;
-}
-
-/* Transitions */
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
 }
 
 /* Mobile responsiveness */

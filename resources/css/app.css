@@ -173,6 +173,7 @@
     --brand-orange: #f26822;
     --brand-blue: #21428e;
     --brand-teal: #00a6a0;
+    --brand-teal-light: color-mix(in srgb, #a4d3d2 80%, white);
     --brand-black: #000000;
 }
 
