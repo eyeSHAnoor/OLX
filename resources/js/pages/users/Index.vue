@@ -87,6 +87,8 @@ const columns = [
     { accessorKey: 'subscription_status', header: 'Subscription', sortable: false },
     { accessorKey: 'status', header: 'Status', sortable: true },
     { accessorKey: 'purchases', header: 'Subscription starts_at', sortable: true },
+    { accessorKey: 'sub_requested_at', header: 'Subscription requested_at', sortable: true },
+
     { accessorKey: 'created_at', header: 'Joined', sortable: true },
     { accessorKey: 'actions', header: '', sortable: false },
 ];
@@ -200,6 +202,15 @@ const formatDate = (date: string) => {
                         <div v-if="row.original.subscription">
                             <span v-if="row.original.subscription?.starts_at" class="text-sm text-gray-600">
                                 {{ formatDate(row.original.subscription?.starts_at) }}
+                            </span>
+                            <span v-else class="text-sm text-gray-500">approve it to accept or reject</span>
+                        </div>
+                    </template>
+
+                    <template #sub_requested_at-cell="{ row }">
+                        <div v-if="row.original.subscription">
+                            <span v-if="row.original.subscription?.created_at" class="text-sm text-gray-600">
+                                {{ formatDate(row.original.subscription?.created_at) }}
                             </span>
                             <span v-else class="text-sm text-gray-500">approve it to accept or reject</span>
                         </div>
