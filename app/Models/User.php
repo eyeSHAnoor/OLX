@@ -117,6 +117,11 @@ class User extends Authenticatable
         return $this->hasOne(Subscription::class);
     }
 
+    public function latestSubscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class)->latestOfMany();
+    }
+
     // Active subscription: payment completed and ends_at is in the future
     public function activeSubscription()
     {

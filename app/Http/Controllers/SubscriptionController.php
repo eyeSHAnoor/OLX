@@ -85,8 +85,8 @@ class SubscriptionController extends Controller
             // Mark the subscription as active
             $pendingSubscription->update([
                 'payment_status' => 'completed',
-                'start_date' => Carbon::now(),
-                'end_date' => Carbon::now()->addDays($pendingSubscription->plan->duration_days ?? 30),
+                'starts_at' => Carbon::now(),
+                'ends_at' => Carbon::now()->addDays($pendingSubscription->plan->duration_days ?? 30),
             ]);
 
             // Update user subscription status

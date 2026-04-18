@@ -35,23 +35,15 @@ class Subscription extends Model
     {
         // your existing creating logic
         static::creating(function ($subscription) {
-            if (empty($subscription->starts_at)) {
-                $subscription->starts_at = now();
-            }
-            if (empty($subscription->ends_at) && $subscription->plan) {
-                $subscription->ends_at = now()->addDays($subscription->plan->duration_days);
+            if ($subscription->payment_status === 'completed') {
+                if (empty($subscription->starts_at)) {
+                    $subscription->starts_at = now();
+                }
+                if (empty($subscription->ends_at) && $subscription->plan) {
+                    $subscription->ends_at = now()->addDays($subscription->plan->duration_days);
+                }
             }
         });
-
-        // static::addGlobalScope('not_expired', function (Builder $builder) {
-        //     $builder->where(function ($query) {
-        //         $query->where('status', '!=', 'expired')
-        //             ->where(function ($q) {
-        //                 $q->whereNull('ends_at')
-        //                     ->orWhere('ends_at', '>', now());
-        //             });
-        //     });
-        // });
     }
 
     public function plan()

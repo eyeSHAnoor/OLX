@@ -30,6 +30,7 @@ class ExpireSubscriptions extends Command
         foreach ($expiredSubscriptions as $subscription) {
             // Update status
             $subscription->status = 'expired';
+            $subscription->payment_status = 'expired';
             $subscription->save();
 
             $user = $subscription->user;

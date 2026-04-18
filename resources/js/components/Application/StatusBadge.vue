@@ -28,6 +28,8 @@ const colorMap = {
     completed: 'success',
     default: 'gray',
 
+    expired: 'danger',
+
 
 };
 

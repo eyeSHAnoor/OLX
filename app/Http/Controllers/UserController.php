@@ -18,26 +18,33 @@ class UserController extends Controller
      */
     public function index()
     {
-        $columns = [
-            'name',
-            'email',
-            'status',
-            'created_at',
-        ];
+        $columns = ['name', 'email', 'status', 'created_at'];
 
         $globalSearch = getGlobalSearchFilter([...$columns]);
 
         $users = QueryBuilder::for(User::class)
-            ->with('subscription') // load subscription relationship
+            ->with(['activeSubscription', 'latestSubscription'])
             ->defaultSort('-created_at')
             ->allowedSorts($columns)
             ->allowedFilters([
                 $globalSearch,
+                // Add filter for subscription.payment_status
+                AllowedFilter::callback('subscription_payment_status', function ($query, $value) {
+                    if ($value === 'none') {
+                        // Users with NO subscription
+                        $query->whereDoesntHave('subscription');
+                    } else {
+                        // Users with subscription and given payment_status
+                        $query->whereHas('subscription', function ($q) use ($value) {
+                            $q->where('payment_status', $value);
+                        });
+                    }
+                }),
             ])
             ->paginate(getPaginate())
             ->withQueryString();
 
-        // Map subscription status for each user
+        // Map subscription status (unchanged)
         $users->getCollection()->transform(function ($user) {
             $user->subscription_status = $this->getSubscriptionStatus($user);
             return $user;
