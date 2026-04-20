@@ -1,7 +1,7 @@
 <template>
     <OlxLayout>
         <TopCategoriesBar />
-        <div class="max-w-8/10 mx-auto space-y-12 pb-20">
+        <div class="max-w-full px-2 md:max-w-8/10 mx-auto space-y-12 pb-20">
             <!-- Loading State -->
             <div v-if="!ad" class="flex items-center justify-center min-h-[60vh]">
                 <div class="text-center">
@@ -26,7 +26,7 @@
                     </a>
                     <Icon icon="lucide:chevron-right" class="size-3 sm:size-3.5 flex-shrink-0" />
                     <span class="text-gray-700 font-medium truncate max-w-[150px] sm:max-w-[300px]">{{ ad.ad_title
-                    }}</span>
+                        }}</span>
                 </nav>
 
 
@@ -40,7 +40,7 @@
                             <!-- Main Image -->
                             <div class="relative aspect-[16/9] bg-gray-100">
                                 <img v-if="selectedImage" :src="`/storage/${selectedImage}`" :alt="ad.ad_title"
-                                    class="w-full h-full object-contain" />
+                                    class="w-full h-full object-contain" @click="openLightbox(currentImageIndex)" />
                                 <div v-else class="flex items-center justify-center h-full">
                                     <Icon icon="lucide:image" class="size-8 sm:size-10 text-gray-400" />
                                 </div>
@@ -317,7 +317,7 @@
                         <!-- Average Score -->
                         <div class="flex flex-col items-center">
                             <span class="text-4xl sm:text-5xl font-bold text-gray-900">{{ adAvgRating.toFixed(1)
-                                }}</span>
+                            }}</span>
                             <span class="text-xs text-gray-500 mt-1">out of 5</span>
                         </div>
 
@@ -372,7 +372,7 @@
                                 <div class="flex items-center gap-3">
                                     <span v-if="userCurrentRating > 0" class="text-sm text-gray-600">
                                         You rated this <span class="font-medium text-gray-900">{{ userCurrentRating
-                                            }}/5</span>
+                                        }}/5</span>
                                     </span>
                                     <span v-else class="text-sm text-gray-500">Click a star to rate</span>
 
@@ -421,7 +421,7 @@
                                         </Link>
                                         <span class="text-xs text-gray-500">•</span>
                                         <span class="text-xs text-gray-500">{{ formatRelativeTime(rating.created_at)
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <div class="flex gap-1">
                                         <Icon v-for="i in 5" :key="i" icon="lucide:star" class="size-3.5"
@@ -461,6 +461,54 @@
         <ReportModal v-model="showReportModal" :ad="ad" :reasons="reportReasons" @submitted="handleReportSubmitted" />
         <OrderModal v-model="showModal" :ad="ad" @order-placed="handleOrderPlaced"
             @success="showToastMessage('Order placed successfully! The seller has been notified.')" />
+        <!-- Lightbox Modal -->
+        <Teleport to="body">
+            <div v-if="lightboxOpen" class="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center"
+                style="height: 100dvh; width: 100dvw;" @click.self="closeLightbox">
+                <!-- Close button (always visible) -->
+                <button @click="closeLightbox"
+                    class="absolute top-4 right-4 z-20 text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition touch-manipulation">
+                    <Icon icon="lucide:x" class="size-6" />
+                </button>
+
+                <!-- Navigation arrows (larger hit area for mobile) -->
+                <button v-if="ad?.images?.length > 1" @click="prevImageLightbox"
+                    class="absolute left-2 top-1/2 -translate-y-1/2 text-white bg-black/50 rounded-full p-3 hover:bg-black/70 transition touch-manipulation">
+                    <Icon icon="lucide:chevron-left" class="size-8" />
+                </button>
+                <button v-if="ad?.images?.length > 1" @click="nextImageLightbox"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-black/50 rounded-full p-3 hover:bg-black/70 transition touch-manipulation">
+                    <Icon icon="lucide:chevron-right" class="size-8" />
+                </button>
+
+                <!-- Zoom controls (bottom center) -->
+                <div
+                    class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4 bg-black/60 rounded-full px-5 py-2 backdrop-blur-sm z-10">
+                    <button @click="zoomOut" class="text-white text-2xl font-bold px-2 touch-manipulation">−</button>
+                    <button @click="resetZoomAndPan" class="text-white text-sm px-3">Reset</button>
+                    <button @click="zoomIn" class="text-white text-2xl font-bold px-2 touch-manipulation">+</button>
+                </div>
+
+                <!-- Image counter -->
+                <div v-if="ad?.images?.length > 1"
+                    class="absolute top-4 left-1/2 -translate-x-1/2 text-white bg-black/50 px-4 py-1.5 rounded-full text-sm z-10">
+                    {{ lightboxIndex + 1 }} / {{ ad.images.length }}
+                </div>
+
+                <!-- Full-screen draggable image container -->
+                <div class="w-full h-full flex items-center justify-center overflow-hidden touch-none"
+                    @mousedown="startDrag" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag"
+                    @touchstart="startDrag" @touchmove="onDrag" @touchend="stopDrag"
+                    @wheel.prevent="(e) => { if (e.deltaY < 0) zoomIn(); else zoomOut(); }">
+                    <img :src="`/storage/${ad.images[lightboxIndex]?.path}`" :alt="ad.ad_title"
+                        class="max-w-[95vw] max-h-[95vh] object-contain transition-transform duration-200 select-none"
+                        :style="{
+                            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
+                            cursor: zoomLevel > 1 ? 'grab' : 'default'
+                        }" draggable="false" />
+                </div>
+            </div>
+        </Teleport>
     </OlxLayout>
 </template>
 
@@ -500,6 +548,111 @@ const similarAds = computed(() => page.props.similarAds || []);
 const hasOrdered = computed(() => page.props.hasOrdered || false)
 const userId = computed(() => page.props.auth?.user?.id || null)
 const { handleShowModal, showModal, selectedItem } = useModal();
+
+const lightboxOpen = ref(false)
+const lightboxIndex = ref(0)
+const zoomLevel = ref(1)
+const pan = ref({ x: 0, y: 0 })
+const isDragging = ref(false)
+const dragStart = ref({ x: 0, y: 0, panX: 0, panY: 0 })
+
+// Zoom limits
+const MIN_ZOOM = 1
+const MAX_ZOOM = 3
+
+// Open lightbox at a specific image index
+const openLightbox = (index: number) => {
+    lightboxIndex.value = index
+    lightboxOpen.value = true
+    resetZoomAndPan()
+    document.body.style.overflow = 'hidden'
+}
+
+// Close lightbox
+const closeLightbox = () => {
+    lightboxOpen.value = false
+    document.body.style.overflow = ''
+    resetZoomAndPan()
+}
+
+// Reset zoom and pan
+const resetZoomAndPan = () => {
+    zoomLevel.value = 1
+    pan.value = { x: 0, y: 0 }
+}
+
+// Navigation
+const nextImageLightbox = () => {
+    if (!ad.value?.images?.length) return
+    lightboxIndex.value = (lightboxIndex.value + 1) % ad.value.images.length
+    resetZoomAndPan()
+}
+
+const prevImageLightbox = () => {
+    if (!ad.value?.images?.length) return
+    lightboxIndex.value = (lightboxIndex.value - 1 + ad.value.images.length) % ad.value.images.length
+    resetZoomAndPan()
+}
+
+// Zoom controls
+const zoomIn = () => {
+    zoomLevel.value = Math.min(MAX_ZOOM, zoomLevel.value + 0.25)
+}
+
+const zoomOut = () => {
+    zoomLevel.value = Math.max(MIN_ZOOM, zoomLevel.value - 0.25)
+    if (zoomLevel.value === 1) pan.value = { x: 0, y: 0 }
+}
+
+// Handle mouse/touch drag for panning when zoomed
+const startDrag = (e: MouseEvent | TouchEvent) => {
+    if (zoomLevel.value === 1) return
+    isDragging.value = true
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    dragStart.value = {
+        x: clientX,
+        y: clientY,
+        panX: pan.value.x,
+        panY: pan.value.y,
+    }
+}
+
+const onDrag = (e: MouseEvent | TouchEvent) => {
+    if (!isDragging.value) return
+    e.preventDefault()
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    const dx = clientX - dragStart.value.x
+    const dy = clientY - dragStart.value.y
+    pan.value = {
+        x: dragStart.value.panX + dx,
+        y: dragStart.value.panY + dy,
+    }
+}
+
+const stopDrag = () => {
+    isDragging.value = false
+}
+
+// Keyboard navigation
+const handleKeydown = (e: KeyboardEvent) => {
+    if (!lightboxOpen.value) return
+    if (e.key === 'ArrowLeft') prevImageLightbox()
+    if (e.key === 'ArrowRight') nextImageLightbox()
+    if (e.key === 'Escape') closeLightbox()
+    if (e.key === '+' || e.key === '=') zoomIn()
+    if (e.key === '-') zoomOut()
+    if (e.key === '0') resetZoomAndPan()
+}
+
+// Watch for keydown events
+onMounted(() => {
+    window.addEventListener('keydown', handleKeydown)
+})
+onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeydown)
+})
 
 const handleOrderPlaced = () => {
     // Optional: Do something specific when order is placed

@@ -10,7 +10,7 @@
                 Back to Categories
             </button>
 
-            <div class="border-b border-gray-200 pb-4">
+            <div class="border-b border-gray-200 pb-4 px-3">
                 <h2 class="text-3xl font-light text-gray-900">{{ editMode ? 'Edit Ad' : 'Ad Details' }}</h2>
                 <p class="text-gray-500 mt-1 text-sm">
                     {{ editMode ? 'Update your ad information below' : 'Fill in the information below to create your ad'

@@ -1,6 +1,6 @@
 <template>
     <OlxLayout>
-        <div class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
+        <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 py-4 md:py-6">
             <!-- Header with back button -->
             <div class="flex items-center gap-3 mb-4">
                 <Link :href="route('user.profile', { id: user.id })"
@@ -47,7 +47,7 @@
                             </button>
                         </div>
                         <p v-if="form.errors.cover_image" class="mt-1 text-xs text-red-600">{{ form.errors.cover_image
-                        }}</p>
+                            }}</p>
                     </div>
 
                     <!-- Profile Image Section -->

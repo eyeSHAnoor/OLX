@@ -1,11 +1,11 @@
 <template>
     <OlxLayout>
-        <AppContainer class="max-w-full mx-auto px-0 sm:px-4">
+        <AppContainer class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 sm:px-4">
 
             <Head title="My Account" />
 
             <!-- Account Sections -->
-            <div class="p-4 space-y-6">
+            <div class=" space-y-6">
                 <!-- Main Navigation Cards -->
                 <div class="grid grid-cols-2 gap-3">
                     <Link href="/motors"
@@ -26,15 +26,15 @@
                 </div>
 
                 <!-- Account Settings Section -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-4 border-b border-gray-100">
+                <div class="overflow-hidden">
+                    <div class=" border-b border-gray-100">
                         <h2 class="font-semibold text-gray-800">Account Settings</h2>
                     </div>
 
                     <div class="divide-y divide-gray-100">
                         <!-- Profile -->
                         <Link :href="route('user.profile', user?.id)"
-                            class="flex items-center gap-3 p-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
+                            class="flex items-center gap-3 py-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
                             <div class="w-10 h-10 rounded-full bg-brand-teal/10 flex items-center justify-center">
                                 <Icon icon="mdi:account-outline" class="text-xl text-brand-teal" />
                             </div>
@@ -47,7 +47,7 @@
 
                         <!-- My Ads -->
                         <Link :href="route('user.ads')"
-                            class="flex items-center gap-3 p-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
+                            class="flex items-center gap-3 py-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
                             <div class="w-10 h-10 rounded-full bg-brand-blue/10 flex items-center justify-center">
                                 <Icon icon="mdi:bullhorn-outline" class="text-xl text-brand-blue" />
                             </div>
@@ -60,7 +60,7 @@
 
                         <!-- Orders -->
                         <Link href="/orders"
-                            class="flex items-center gap-3 p-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
+                            class="flex items-center gap-3 py-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
                             <div class="w-10 h-10 rounded-full bg-brand-teal/10 flex items-center justify-center">
                                 <Icon icon="mdi:package-variant" class="text-xl text-brand-teal" />
                             </div>
@@ -73,7 +73,7 @@
 
                         <!-- Favourites -->
                         <Link href="/favorites"
-                            class="flex items-center gap-3 p-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
+                            class="flex items-center gap-3 py-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
                             <div class="w-10 h-10 rounded-full bg-brand-blue/10 flex items-center justify-center">
                                 <Icon icon="mdi:heart-outline" class="text-xl text-brand-blue" />
                             </div>
@@ -86,7 +86,7 @@
 
                         <!-- Chats -->
                         <Link href="/chat"
-                            class="flex items-center gap-3 p-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
+                            class="flex items-center gap-3 py-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
                             <div class="w-10 h-10 rounded-full bg-brand-teal/10 flex items-center justify-center">
                                 <Icon icon="mdi:chat-outline" class="text-xl text-brand-teal" />
                             </div>
@@ -100,15 +100,15 @@
                 </div>
 
                 <!-- Subscription & Settings Section -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-4 border-b border-gray-100">
+                <div class="overflow-hidden">
+                    <div class=" border-b border-gray-100">
                         <h2 class="font-semibold text-gray-800">More</h2>
                     </div>
 
-                    <div class="divide-y divide-gray-100">
+                    <div class="divide-y ">
                         <!-- Subscription with Premium Badge -->
                         <Link :href="route('subscriptions.index')"
-                            class="flex items-center gap-3 p-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
+                            class="flex items-center gap-3 py-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
                             <div
                                 class="w-10 h-10 rounded-full bg-gradient-to-r from-brand-teal to-brand-blue flex items-center justify-center">
                                 <Icon icon="mdi:crown-outline" class="text-xl text-white" />
@@ -126,13 +126,25 @@
 
                         <!-- Settings -->
                         <Link href="/amo/setting"
-                            class="flex items-center gap-3 p-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
+                            class="flex items-center gap-3 py-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
                             <div class="w-10 h-10 rounded-full bg-brand-teal/10 flex items-center justify-center">
                                 <Icon icon="mdi:cog-outline" class="text-xl text-brand-teal" />
                             </div>
                             <div class="flex-1">
                                 <p class="font-medium text-gray-800">Settings</p>
                                 <p class="text-xs text-gray-500">App preferences</p>
+                            </div>
+                            <Icon icon="mdi:chevron-right" class="text-gray-400 text-lg" />
+                        </Link>
+
+                        <Link href="/page/contact"
+                            class="flex items-center gap-3 py-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
+                            <div class="w-10 h-10 rounded-full bg-brand-teal/10 flex items-center justify-center">
+                                <Icon icon="mdi:message-text-outline" class="text-xl text-brand-teal" />
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-gray-800">Contact Us</p>
+                                <p class="text-xs text-gray-500">Get help and support</p>
                             </div>
                             <Icon icon="mdi:chevron-right" class="text-gray-400 text-lg" />
                         </Link>

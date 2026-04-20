@@ -2,7 +2,7 @@
     <!-- TOP BAR -->
     <div class="w-full bg-white border-t border-b py-1 md:py-2 relative">
         <div
-            class="max-w-8/10 mx-auto px-3 md:px-4 py-1 md:py-2 flex items-center space-x-4 md:space-x-5 overflow-x-auto no-scrollbar text-base md:text-sm">
+            class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 py-1 md:py-2 flex items-center space-x-4 md:space-x-5 overflow-x-auto no-scrollbar text-base md:text-sm">
 
             <!-- ALL CATEGORIES BUTTON - Visible on all screens -->
             <div @click="toggleMega"

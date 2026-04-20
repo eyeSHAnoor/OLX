@@ -576,7 +576,7 @@ const priceRanges = [
         </section>
 
         <div>
-            <section class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
+            <section class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3  sm:px-4 py-4 md:py-6">
                 <div class="py-3">
                     <button @click="goBack"
                         class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
@@ -610,7 +610,7 @@ const priceRanges = [
                                 <Link :href="route('home')" class="hover:text-brand-teal">Home</Link>
                                 <Icon icon="mdi:chevron-right" class="text-gray-400 text-sm" />
                                 <span v-if="category" class="text-gray-900 font-medium text-xs">{{ category.name
-                                }}</span>
+                                    }}</span>
                                 <span v-else class="text-gray-900 font-medium text-xs">All Categories</span>
                             </div>
                             <div class="mt-3">
@@ -837,7 +837,7 @@ const priceRanges = [
                                 <div>
                                     <h1 class="text-xl md:text-2xl font-semibold text-gray-900 mb-1">{{ category?.name
                                         || 'All Categories'
-                                    }}</h1>
+                                        }}</h1>
                                     <p class="text-gray-600 text-xs md:text-sm flex items-center gap-1.5">
                                         <span>{{ totalAds }} ads found</span>
                                         <span v-if="selectedCity !== 'all'" class="text-brand-teal">• in {{

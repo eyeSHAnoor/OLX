@@ -32,7 +32,7 @@
             </div>
         </section>
 
-        <section class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
+        <section class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 sm:px-4 py-4 md:py-6">
             <div class=" py-3">
                 <button @click="goBack"
                     class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">

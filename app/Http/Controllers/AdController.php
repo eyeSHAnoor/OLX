@@ -435,8 +435,14 @@ class AdController extends Controller
                 $ad->features()->detach();
             }
 
-            return redirect()
-                ->back()
+            $user = auth()->user();
+
+            if ($user->hasRole('super_admin')) {
+                return redirect()->route('ads.index')
+                    ->with('success', 'Ad created successfully.');
+            }
+
+            return redirect()->route('user.profile', $user->id)
                 ->with('success', 'Ad updated successfully.');
         });
     }

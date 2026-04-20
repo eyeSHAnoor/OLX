@@ -2,7 +2,7 @@
     <nav class="border-b">
         <!-- TOP BAR -->
         <div class="w-full bg-gradient-to-r from-brand-blue/15 via-brand-teal/15 to-brand-orange/15">
-            <div class="max-w-9/11 mx-auto px-3 py-4 flex items-center justify-between">
+            <div class="max-w-full md:max-w-9/11 mx-auto px-4 md:px-3 py-4 flex items-center justify-between">
 
                 <!-- Logo + Hamburger -->
                 <div class="flex items-center gap-3 w-full md:w-auto justify-between">
@@ -181,6 +181,15 @@
                         </Link>
                     </div>
 
+
+                </div>
+                <div class="flex md:hidden items-center gap-4">
+
+                    <Link :href="route('subscriptions.index')"
+                        class="flex items-center justify-between  text-gray-700 hover:bg-gray-50 transition-colors">
+                        <Icon icon="mdi:crown" class="text-brand-orange text-4xl shrink-0" />
+
+                    </Link>
 
                 </div>
             </div>

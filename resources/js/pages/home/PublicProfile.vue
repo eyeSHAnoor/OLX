@@ -1,6 +1,6 @@
 <template>
     <OlxLayout>
-        <div class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
+        <div class=" max-w-full md:max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
             <div class="pb-2 sm:hidden visible">
                 <button @click="goBack"
                     class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
@@ -28,11 +28,11 @@
             <!-- Order Statistics - Total, Completed, Ratings -->
             <div v-if="profileUser.orderStats" class="mb-5">
                 <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <div class="px-4 py-3 border-b border-gray-100">
+                    <div class="px-2 sm:px-4 py-3 border-b border-gray-100">
                         <h3 class="text-sm font-semibold text-gray-900">Order Statistics</h3>
                     </div>
 
-                    <div class="p-4">
+                    <div class="py-4 px-2 sm:px-4">
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <!-- Total Orders -->
                             <div class="text-left bg-gray-50 p-4 rounded-lg">
@@ -82,7 +82,7 @@
                 </div>
 
                 <!-- Profile Content -->
-                <div class="px-5 pb-5 relative">
+                <div class="px-2 sm:px-5 pb-5 relative">
                     <!-- Edit Button -->
                     <div v-if="isOwner" class="absolute top-0 right-5">
                         <Link :href="route('profile.edit')"

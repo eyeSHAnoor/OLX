@@ -1,7 +1,7 @@
 <template>
     <OlxLayout>
         <TopCategoriesBar />
-        <div class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
+        <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3  py-4 md:py-6">
             <div class="pb-2 sm:hidden visible">
                 <button @click="goBack"
                     class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
@@ -23,66 +23,69 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
                 <div class="p-4 md:p-5">
                     <!-- Search and Filter Row -->
-                    <div class="flex flex-wrap gap-2 items-center">
-                        <!-- Search Bar -->
-                        <div class="flex-1 min-w-[150px] relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
+                    <!-- Container -->
+                    <div class="flex flex-col gap-2">
+
+                        <!-- 🔍 Row 1: Search (always full width on mobile) -->
+                        <div class="w-full">
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+
+                                <input v-model="filters.global" type="text"
+                                    placeholder="Search by title, description..."
+                                    class="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none transition text-sm sm:text-xs" />
                             </div>
-                            <input v-model="filters.global" type="text"
-                                placeholder="Search by title, description, location, or brand..."
-                                class="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none transition text-sm sm:text-xs" />
                         </div>
 
-                        <!-- Category Filter -->
-                        <SelectInput v-model="filters.category" placeholder="Select Category"
-                            class="flex-shrink-0 px-2 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[110px]">
-                            <SelectContent>
-                                <SelectItem v-for="cat in categories" :key="cat.id" :value="cat.id">
-                                    {{ cat.name }}
-                                </SelectItem>
-                            </SelectContent>
-                        </SelectInput>
+                        <!-- ⚙️ Row 2: Filters -->
+                        <div class="flex flex-wrap gap-2 items-center">
 
-                        <!-- Brand Filter -->
-                        <SelectInput v-model="filters.brand" placeholder="Select Brand"
-                            class="flex-shrink-0 px-2 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[110px]">
-                            <SelectContent>
-                                <SelectItem v-for="brand in brands" :key="brand.id" :value="brand.id">
-                                    {{ brand.name }}
-                                </SelectItem>
-                            </SelectContent>
-                        </SelectInput>
+                            <!-- Category -->
+                            <SelectInput v-model="filters.category" class="flex-1 " placeholder="Categories">
+                                <SelectContent>
+                                    <SelectItem v-for="cat in categories" :key="cat.id" :value="cat.id">
+                                        {{ cat.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </SelectInput>
 
-                        <!-- Sort Filter -->
-                        <SelectInput v-model="sort" placeholder="Sort By"
-                            class="flex-shrink-0 px-2  border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[120px]">
-                            <SelectContent>
-                                <SelectItem value="newest">
-                                    Newest First
-                                </SelectItem>
-                                <SelectItem value="price_low">
-                                    Price: Low to High
-                                </SelectItem>
-                                <SelectItem value="price_high">
-                                    Price: High to Low
-                                </SelectItem>
-                            </SelectContent>
-                        </SelectInput>
+                            <!-- Brand -->
+                            <SelectInput v-model="filters.brand" class="flex-1 sm:w-1/2" placeholder="Brands">
+                                <SelectContent>
+                                    <SelectItem v-for="brand in brands" :key="brand.id" :value="brand.id">
+                                        {{ brand.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </SelectInput>
 
-                        <!-- Action Buttons -->
-                        <button @click="applyFilters"
-                            class="flex-1 md:flex-none px-3 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition text-sm sm:text-xs">
-                            Apply
-                        </button>
-                        <button v-if="isFiltered" @click="resetFilters"
-                            class="flex-1 md:flex-none px-3 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm sm:text-xs">
-                            Reset
-                        </button>
+                            <!-- Sort -->
+                            <SelectInput v-model="sort" class="flex-1 min-w-[100px] sm:flex-none sm:min-w-[120px]">
+                                <SelectContent>
+                                    <SelectItem value="newest">Newest First</SelectItem>
+                                    <SelectItem value="price_low">Price: Low to High</SelectItem>
+                                    <SelectItem value="price_high">Price: High to Low</SelectItem>
+                                </SelectContent>
+                            </SelectInput>
+
+                            <!-- Apply -->
+                            <button @click="applyFilters"
+                                class="flex-1 sm:flex-none px-3 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition text-sm sm:text-xs">
+                                Apply
+                            </button>
+
+                            <!-- Reset -->
+                            <button v-if="isFiltered" @click="resetFilters"
+                                class="flex-1 sm:flex-none px-3 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm sm:text-xs">
+                                Reset
+                            </button>
+                        </div>
+
                     </div>
 
                     <!-- Active Filters Tags -->
@@ -203,7 +206,7 @@
                 <h3 class="text-lg font-semibold text-gray-900 mb-1">No favorite ads yet</h3>
                 <p class="text-sm text-gray-600 mb-4">Start exploring and save ads you're interested in</p>
                 <Link :href="route('home')"
-                    class="inline-flex items-center gap-2 bg-gradient-to-r from-brand-teal to-brand-blue text-white px-4 py-2 rounded-lg hover:from-brand-teal/90 hover:to-brand-blue/90 transition text-sm font-medium">
+                    class="inline-flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-brand-blue/90 transition text-sm font-medium">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

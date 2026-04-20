@@ -1,10 +1,10 @@
 <template>
     <OlxLayout :hide-search-bar="true">
         <div class="min-h-screen bg-gray-50">
-            <div class="max-w-3xl mx-auto px-4 py-6 md:py-8">
+            <div class="max-w-full mx-auto px-4 py-6 md:py-8">
                 <!-- Header -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 overflow-hidden">
-                    <div class="px-5 py-4 border-b border-gray-100">
+                <div class="mb-4 overflow-hidden">
+                    <div class=" md:px-5 px-2 py-4 border-b border-gray-100">
                         <div class="flex items-center justify-between">
                             <div>
                                 <h1 class="text-2xl font-bold text-gray-900">Notifications</h1>
@@ -91,7 +91,7 @@
                                 notification.read_at ? 'border-gray-100' : 'border-l-4 border-l-blue-500 border-gray-100',
                                 'hover:bg-gray-50/50'
                             ]">
-                            <div class="p-4">
+                            <div class="md:p-4 py-4 px-2">
                                 <div class="flex gap-3">
                                     <!-- Icon -->
                                     <div :class="[

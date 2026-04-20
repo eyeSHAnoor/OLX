@@ -168,7 +168,7 @@ const canRequestReview = (order) => {
 
 <template>
     <OlxLayout>
-        <div class="max-w-9/11 mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-full md:max-w-9/11 mx-auto py-6 sm:py-8 px-6 sm:px-6 lg:px-8">
             <div class="pb-2 sm:hidden visible">
                 <button @click="goBack"
                     class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">

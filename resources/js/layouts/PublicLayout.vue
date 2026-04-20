@@ -18,7 +18,7 @@ const closeMenu = () => {
     <div class="min-h-screen bg-gray-50 flex flex-col">
         <!-- Header -->
         <header class="bg-[#bbdedd] z-50 shadow-sm sticky top-0">
-            <div class="max-w-10/12 mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="max-w-full md:max-w-10/12 mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <div class="flex justify-between items-center">
                     <!-- Logo -->
                     <Link href="/" class="text-xl font-bold text-primary hover:text-primary/80 transition">
@@ -72,6 +72,10 @@ const closeMenu = () => {
                             <Link href="/page/team" @click="closeMenu"
                                 class="text-gray-600 hover:text-primary py-2 px-3 rounded-lg hover:bg-gray-100 transition">
                                 Team
+                            </Link>
+                            <Link href="/policy/terms" @click="closeMenu"
+                                class="text-gray-600 hover:text-primary py-2 px-3 rounded-lg hover:bg-gray-100 transition">
+                                Terms of Service
                             </Link>
                         </div>
                     </nav>

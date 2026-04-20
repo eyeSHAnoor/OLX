@@ -51,7 +51,7 @@ const sections = {
 
     <div class="min-h-screen bg-gray-50">
         <!-- Main Content -->
-        <div class="max-w-10/12 mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="max-w-full md:max-w-10/12 mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Back to Home (optional, but useful on mobile) -->
             <div class="mb-6">
                 <button @click="goBack"

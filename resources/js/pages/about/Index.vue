@@ -1,7 +1,7 @@
 <template>
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
         <!-- Hero Section -->
-        <div class="max-w-10/12mx-auto text-center mb-12">
+        <div class="max-w-full px-2 md:px-1 md:max-w-10/12 mx-auto text-center mb-12">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                 {{ page.title || 'About Us' }}
             </h1>
@@ -10,7 +10,7 @@
             </p>
         </div>
 
-        <div class="max-w-10/12 mx-auto space-y-10">
+        <div class="max-w-full px-2 md:px-1  md:max-w-10/12 mx-auto space-y-10">
             <!-- Who We Are (description) -->
             <div v-if="content.description" class="bg-white rounded-2xl shadow-md p-6 md:p-8">
                 <div class="flex flex-col md:flex-row gap-6 items-center">

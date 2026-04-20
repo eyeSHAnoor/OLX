@@ -35,7 +35,7 @@
         <template v-if="!isSearching">
             <!-- Categories -->
             <section class="py-12 bg-gray-50">
-                <div class="max-w-10/12 mx-auto">
+                <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 ">
                     <h2 class="text-lg md:text-xl font-semibold mb-8 text-center">Browse Categories</h2>
                     <div class="grid grid-cols-3 md:grid-cols-7 gap-4">
                         <div v-for="category in categories" :key="category.id" @click="navigateToCategory(category)"
@@ -68,7 +68,7 @@
             </section>
 
             <!-- Category Ads -->
-            <section class="max-w-8/10 mx-auto space-y-12 pb-20">
+            <section class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3  space-y-12 pb-20">
                 <CategoryAds v-for="cat in topCategories" :key="cat.id" :category="cat" />
             </section>
 

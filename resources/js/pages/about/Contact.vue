@@ -77,7 +77,7 @@ const contactMethods = computed(() => {
     <div class="bg-gray-50 min-h-screen">
         <!-- Hero / Header -->
 
-        <div class="max-w-10/12 mx-auto text-center my-12">
+        <div class="max-w-full px-4 md-px-1 md:max-w-10/12 mx-auto text-center my-12">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ page.title || page.page_key }}</h1>
             <p class="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
                 {{ page.subtitle }}
@@ -85,7 +85,7 @@ const contactMethods = computed(() => {
         </div>
 
         <!-- Main Content -->
-        <div class="max-w-10/12 mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        <div class="max-w-full md:max-w-10/12 mx-auto px-4 py-8 sm:px-6 lg:px-8">
             <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                 <div class="p-6 sm:p-8">
                     <!-- Conditional rendering based on page_key -->

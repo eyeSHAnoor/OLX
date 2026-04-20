@@ -1,7 +1,7 @@
 <template>
     <OlxLayout>
         <TopCategoriesBar />
-        <div class="max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
+        <div class="max-w-full md:max-w-9/11 mx-auto px-5 sm:px-4 py-4 md:py-6">
             <!-- Header Section -->
             <div class="mb-6 md:mb-8">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

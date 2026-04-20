@@ -1,6 +1,6 @@
 <template>
     <div class="w-full bg-white border-t">
-        <div class="max-w-9/11 mx-auto px-3 py-4">
+        <div class="max-w-full md:max-w-9/11 mx-auto px-4 md:px-3 py-4">
             <!-- Desktop layout: row with city dropdown + search bar -->
             <div class="hidden md:flex md:flex-row md:items-stretch md:gap-3">
                 <!-- Location Trigger (opens dropdown) -->

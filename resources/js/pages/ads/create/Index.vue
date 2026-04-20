@@ -1,6 +1,6 @@
 <template>
     <OlxLayout>
-        <div class="max-w-8/10 mx-auto space-y-12 py-10">
+        <div class="max-w-full px-4 md:px-0 md:max-w-8/10 mx-auto space-y-12 py-10">
             <!-- Subscription Check -->
             <!-- Subscription Check -->
             <div v-if="!canCreateAd" class="bg-white rounded-lg shadow-sm p-8 text-center">
@@ -98,7 +98,7 @@
                                     currentStep === index + 1 ? 'text-gray-900' : 'text-gray-500'
                                 ]">{{ step }}</span>
                             </div>
-                            <div v-if="index < steps.length - 1" class="w-16 h-0.5 mx-4 bg-gray-200"></div>
+                            <div v-if="index < steps.length - 1" class="w-32 md:w-16 h-0.5 mx-4 bg-gray-200"></div>
                         </div>
                     </div>
                 </div>
