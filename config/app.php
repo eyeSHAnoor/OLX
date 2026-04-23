@@ -126,9 +126,9 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
-    'provider' => ServiceProvider::defaultProviders()->merge([
-        App\Providers\AppServiceProvider::class
-    ]),
+    // 'providers' => ServiceProvider::defaultProviders()->merge([
+    //     App\Providers\AppServiceProvider::class
+    // ]),
 
     'queue_cron_token' => env('QUEUE_CRON_TOKEN'),
 ];
