@@ -76,6 +76,7 @@ class AdController extends Controller
    // Store a new ad
     public function store(Request $request)
     {
+        // dd($request->all());
         $request->validate([
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
@@ -85,6 +86,7 @@ class AdController extends Controller
             'price' => 'required|numeric|min:0',
             'location' => 'required|string|max:255',
             'city' => 'required|string|max:255',
+            'region' => 'nullable|string|max:255',
             'seller_name' => 'required|string|max:255',
             'seller_phone' => 'required|string|max:20',
             'images' => 'nullable|array|max:10',
@@ -117,6 +119,7 @@ class AdController extends Controller
                 'seller_name' => $request->seller_name,
                 'seller_phone' => $request->seller_phone,
                 'search_keywords' => $request->input('search_keywords', []),
+                'region' => $request->region,
             ]);
             // dd($request->attributes);
             // ----------------------
@@ -344,6 +347,7 @@ class AdController extends Controller
                 'price' => $request->price,
                 'location' => $request->location,
                 'city' => $request->city,
+                'region' => $request->region,
                 'seller_name' => $request->seller_name,
                 'seller_phone' => $request->seller_phone,
                 'search_keywords' => $request->input('search_keywords', []),

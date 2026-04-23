@@ -24,6 +24,8 @@ class CategoryController extends Controller
     {
         $selectedCitySession = strtolower(session('city', 'Pakistan'));
         $selectedCitySession = $selectedCitySession === 'pakistan' ? 'all' : $selectedCitySession;
+        $selectedRegion = $request->input('filter.region') 
+                      ?? session('region');
 
         $category = $slug
             ? Category::where('slug', $slug)
@@ -51,6 +53,7 @@ class CategoryController extends Controller
             'min_price'  => $request->input('filter.min_price'),
             'max_price'  => $request->input('filter.max_price'),
             'city'       => $cityInput,
+            'region'     => $selectedRegion,
         ];
 
         $sort = $request->input('sort', 'newest');
@@ -84,6 +87,10 @@ class CategoryController extends Controller
             ->when(
                 !in_array($filters['city'], ['pakistan', 'all', ''], true),
                 fn ($q) => $q->whereRaw('LOWER(city) = ?', [$filters['city']])
+            )
+            ->when(
+                $filters['city'] !== 'all' && !empty($filters['region']),
+                fn ($q) => $q->whereRaw('LOWER(region) = ?', [strtolower($filters['region'])])
             )
 
             ->when($filters['global'], function ($q) use ($filters) {

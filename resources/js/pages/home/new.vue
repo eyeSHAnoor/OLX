@@ -2,7 +2,7 @@
     <OlxLayout :hide-search-bar="true">
         <div
             class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center p-3 sm:p-4">
-            <!-- Logo & heading -->
+            <!-- Logo -->
             <div class="mb-6 md:mb-8">
                 <img src="/images/logo.png" alt="OLX Clone Logo" class="h-10 md:h-14 w-auto mx-auto" />
                 <h1 class="mt-2 text-xl md:text-2xl font-semibold text-center text-gray-800">
@@ -13,195 +13,99 @@
                 </p>
             </div>
 
-            <div class="w-full max-w-5xl">
-                <!-- ========== STATUS MESSAGES (unchanged) ========== -->
-                <div v-if="!canSubscribe && paymentStep === 'select'" class="max-w-md mx-auto">
+            <!-- Main Card -->
+            <div class="w-full max-w-3xl">
 
-                    <!-- Header -->
-                    <div class="rounded-t-3xl p-6 text-white text-center" :class="hasActiveSubscription
-                        ? 'bg-gradient-to-r from-brand-teal/70 to-brand-teal/90'
-                        : hasPendingSubscription
-                            ? 'bg-gradient-to-r from-brand-blue/70 to-brand-blue/90'
-                            : 'bg-gradient-to-r from-gray-500 to-gray-600'">
-
-                        <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-white/20 flex items-center justify-center">
-                            <Icon v-if="hasActiveSubscription" icon="mdi:check-circle" class="text-2xl" />
-                            <Icon v-else-if="hasPendingSubscription" icon="mdi:clock-outline" class="text-2xl" />
-                            <Icon v-else icon="mdi:information" class="text-2xl" />
-                        </div>
-
-                        <h2 class="text-lg font-semibold">
-                            <span v-if="hasActiveSubscription">You're All Set 🎉</span>
-                            <span v-else-if="hasPendingSubscription">Processing Payment ⏳</span>
-                            <span v-else>Subscription Status</span>
-                        </h2>
-
-                        <p class="text-xs opacity-80 mt-1">
-                            <span v-if="hasActiveSubscription">
-                                Your subscription is active
-                            </span>
-                            <span v-else-if="hasPendingSubscription">
-                                We're verifying your payment
-                            </span>
-                            <span v-else>
-                                {{ user?.subscription_status || 'inactive' }}
-                            </span>
-                        </p>
-                    </div>
-
-                    <!-- Body -->
-                    <div class="bg-white rounded-b-3xl px-5 py-6 shadow-md -mt-4 text-center space-y-4">
-
-                        <!-- ACTIVE -->
+                <!-- Status Messages (Active / Pending) -->
+                <div v-if="!canSubscribe && paymentStep === 'select'" class="bg-white rounded-xl shadow-md p-8">
+                    <div class="text-center max-w-md mx-auto">
+                        <!-- Active Subscription -->
                         <template v-if="hasActiveSubscription">
-
-                            <p class="text-sm text-gray-600">
-                                You can now post ads and reach more buyers.
+                            <div
+                                class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                                <Icon icon="mdi:check-circle" class="text-3xl text-green-600" />
+                            </div>
+                            <h2 class="text-xl font-medium text-gray-900 mb-2">You're All Set! 🎉</h2>
+                            <p class="text-sm text-gray-600 mb-2">
+                                Your subscription is active and ready to go.
                             </p>
-
+                            <p class="text-xs text-gray-500 mb-6">
+                                Start posting your ads and reach thousands of potential buyers.
+                            </p>
                             <Link :href="route('user.ads.create')"
-                                class="block w-full py-3 rounded-full text-white font-semibold bg-gradient-to-r from-brand-teal/70 to-brand-teal/100 hover:opacity-90 transition">
+                                class="w-full sm:w-auto px-6 py-2.5 bg-brand-blue text-white text-sm font-medium rounded-lg hover:bg-brand-blue/80 transition-all duration-200 active:scale-[0.98]">
                                 Post Your Ad
                             </Link>
-
                         </template>
 
-                        <!-- PENDING -->
+                        <!-- Pending Subscription -->
                         <template v-else-if="hasPendingSubscription">
-
-                            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-left">
-                                <p class="text-xs font-semibold text-blue-700 mb-2">
-                                    What happens next?
-                                </p>
-
-                                <ul class="space-y-1 text-xs text-blue-600">
-                                    <li class="flex items-start gap-1">
-                                        <Icon icon="mdi:check" class="mt-0.5" />
-                                        We review your receipt
+                            <div
+                                class="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
+                                <Icon icon="mdi:clock-outline" class="text-3xl text-blue-600" />
+                            </div>
+                            <h2 class="text-xl font-medium text-gray-900 mb-2">Almost There! ⏳</h2>
+                            <p class="text-sm text-gray-600 mb-2">
+                                Your subscription request is being processed.
+                            </p>
+                            <p class="text-xs text-gray-500 mb-4">
+                                We'll notify you as soon as it's approved – usually within a few minutes.
+                            </p>
+                            <div class="bg-blue-50 rounded-lg p-3 mb-6 text-left">
+                                <p class="text-xs text-blue-800 font-medium mb-1">What happens next?</p>
+                                <ul class="text-xs text-blue-700 space-y-1">
+                                    <li class="flex items-start">
+                                        <Icon icon="mdi:check" class="text-blue-600 mr-1.5 mt-0.5" />
+                                        <span>Our team reviews your payment receipt</span>
                                     </li>
-                                    <li class="flex items-start gap-1">
-                                        <Icon icon="mdi:check" class="mt-0.5" />
-                                        Payment gets approved
+                                    <li class="flex items-start">
+                                        <Icon icon="mdi:check" class="text-blue-600 mr-1.5 mt-0.5" />
+                                        <span>Once approved, you'll receive a confirmation email</span>
                                     </li>
-                                    <li class="flex items-start gap-1">
-                                        <Icon icon="mdi:check" class="mt-0.5" />
-                                        You can start posting ads
+                                    <li class="flex items-start">
+                                        <Icon icon="mdi:check" class="text-blue-600 mr-1.5 mt-0.5" />
+                                        <span>Then you can start posting ads immediately</span>
                                     </li>
                                 </ul>
                             </div>
-
                             <button @click="goToDashboard"
-                                class="w-full py-3 rounded-full border border-blue-500 text-blue-600 font-semibold hover:bg-blue-50 transition">
+                                class="w-full sm:w-auto px-6 py-2.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:border-blue-500 hover:text-blue-600 transition-all duration-200">
                                 Go to Dashboard
                             </button>
-
-                        </template>
-
-                        <!-- INACTIVE -->
-                        <template v-else>
-
-                            <p class="text-sm text-gray-600">
-                                You don’t have an active subscription.
+                            <p class="text-xs text-gray-400 mt-4">
+                                Need help? <a href="/page/contact" class="text-blue-600 hover:underline">Contact
+                                    support</a>
                             </p>
-
-                            <button @click="goToDashboard"
-                                class="w-full py-3 rounded-full text-white font-semibold bg-gradient-to-r from-gray-500 to-gray-600">
-                                Go to Dashboard
-                            </button>
-
                         </template>
 
-                        <!-- Footer -->
-                        <p class="text-[10px] text-gray-400">
-                            Need help?
-                            <a href="/page/contact" class="text-indigo-600">Contact support</a>
-                        </p>
-
+                        <!-- Fallback (should rarely happen) -->
+                        <template v-else>
+                            <div
+                                class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                                <Icon icon="mdi:information" class="text-3xl text-gray-600" />
+                            </div>
+                            <h2 class="text-lg font-medium text-gray-900 mb-2">Subscription Status</h2>
+                            <p class="text-sm text-gray-500 mb-6">
+                                Your subscription is currently {{ user?.subscription_status || 'inactive' }}.
+                            </p>
+                            <button @click="goToDashboard"
+                                class="w-full sm:w-auto px-6 py-2.5 bg-brand-blue text-white text-sm font-medium rounded-lg hover:bg-brand-blue/80 transition-all duration-200">
+                                Go to Dashboard
+                            </button>
+                        </template>
                     </div>
                 </div>
 
-                <!-- ========== PLAN SELECTION & PAYMENT FLOW ========== -->
+                <!-- Plan Selection -->
                 <template v-else-if="canSubscribe">
-                    <!-- Back button -->
-                    <button v-if="paymentStep === 'select'" @click="Back"
-                        class="inline-flex items-center gap-1 px-3 py-2 mb-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
-                        <Icon icon="mdi:arrow-left" class="text-base" /> Back
+                    <!-- Plan Grid -->
+                    <button @click="Back" v-if="paymentStep === 'select'" class="inline-flex items-center gap-1 px-3 py-2 mb-2 rounded-md border border-gray-200 bg-white
+                    text-sm
+                    text-gray-700 hover:bg-gray-50 transition">
+                        <Icon icon="mdi:arrow-left" class="text-base" />
+                        Back
                     </button>
-                    <div v-if="paymentStep !== 'select'" class="mb-4 max-w-xl mx-auto">
-                        <button @click="goBack"
-                            class="flex items-center text-xs text-gray-500 hover:text-gray-700 transition-colors">
-                            <Icon icon="mdi:arrow-left" class="text-sm" /> Back to plans
-                        </button>
-                    </div>
-
-                    <!-- ========== STEP 1: PLAN SELECTION (Redesigned Cards) ========== -->
-                    <div v-if="paymentStep === 'select'" class="max-w-md md:hidden mx-auto">
-
-                        <!-- Header -->
-                        <div
-                            class="rounded-t-3xl bg-gradient-to-r from-brand-blue/70 to-brand-blue/90 h-36 flex items-center justify-center text-white">
-                            <span class="text-lg font-semibold">Choose Your Plan</span>
-                        </div>
-
-                        <!-- Body -->
-                        <div class="bg-white rounded-b-3xl px-5 py-6 shadow-md -mt-6">
-
-                            <!-- Plans -->
-                            <div class="space-y-4">
-
-                                <div v-for="plan in plans" :key="plan.id" @click="choosePlan(plan)"
-                                    class="rounded-2xl p-4 transition-all cursor-pointer border" :class="plan.is_popular
-                                        ? 'border-brand-orange bg-orange-50 shadow-md'
-                                        : 'border-gray-200 bg-gray-50 hover:bg-gray-100'">
-
-                                    <!-- Top Row -->
-                                    <div class="flex justify-between items-center mb-2">
-                                        <div>
-                                            <p class="text-sm font-bold text-gray-800">
-                                                {{ plan.name }}
-                                            </p>
-                                            <p class="text-xs text-gray-500">
-                                                {{ plan.duration_days }} days access
-                                            </p>
-                                        </div>
-
-                                        <div class="text-right">
-                                            <p class="text-sm font-bold text-gray-900">
-                                                Rs {{ plan.price }}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Popular Badge -->
-                                    <div v-if="plan.is_popular"
-                                        class="inline-block text-[10px] bg-brand-orange text-white px-2 py-0.5 rounded mb-2 font-semibold">
-                                        MOST POPULAR
-                                    </div>
-
-                                    <!-- Features -->
-                                    <ul class="mt-2 space-y-1">
-                                        <li v-for="feature in plan.features" :key="feature"
-                                            class="flex items-start text-xs text-gray-600">
-                                            <span class="text-green-500 mr-1">✔</span>
-                                            <span>{{ feature }}</span>
-                                        </li>
-                                    </ul>
-
-                                </div>
-
-                            </div>
-
-                            <!-- Continue Button -->
-                            <button v-if="plans.length" @click="choosePlan(selectedPlan || plans[0])"
-                                class="mt-6 w-full bg-gradient-to-r from-brand-blue/80 to-brand-blue/100 text-white py-3 rounded-full font-semibold shadow-md hover:opacity-90 transition">
-                                Continue
-                            </button>
-
-                        </div>
-                    </div>
-
-                    <div v-if="paymentStep === 'select'" class="hidden md:flex md:flex-col">
-                        <!-- <div>{{ plan }}</div> -->
+                    <div v-if="paymentStep === 'select'">
                         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div v-for="(plan, index) in plans" :key="plan.id" class="relative">
                                 <!-- Popular badge -->
@@ -218,7 +122,7 @@
                                         <h3 class="text-base font-medium text-gray-900 mb-1">{{ plan.name }}</h3>
                                         <div class="flex items-baseline mb-3">
                                             <span class="text-2xl font-light text-gray-900">{{ formatPrice(plan.price)
-                                            }}</span>
+                                                }}</span>
                                             <span class="text-xs text-gray-500 ml-1">/{{ plan.duration_days }}
                                                 days</span>
                                         </div>
@@ -270,164 +174,17 @@
                         </div>
                     </div>
 
-                    <!-- ========== STEP 2: PAYMENT FORM (unchanged) ========== -->
-                    <div v-if="paymentStep === 'payment' && selectedPlan" class="md:hidden max-w-md mx-auto">
-
-                        <!-- Header -->
-                        <div class="rounded-t-3xl bg-gradient-to-r from-brand-blue/90 to-brand-blue/70 p-5 text-white">
-                            <p class="text-sm opacity-80">You're subscribing to</p>
-                            <div class="flex justify-between items-center mt-1">
-                                <div>
-                                    <h2 class="text-lg font-semibold">{{ selectedPlan.name }}</h2>
-                                    <p class="text-xs opacity-80">{{ selectedPlan.duration_days }} days</p>
-                                </div>
-                                <p class="text-lg font-bold">
-                                    Rs {{ selectedPlan.price }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Body -->
-                        <div class="bg-white rounded-b-3xl px-5 py-6 shadow-md -mt-4 space-y-5">
-
-                            <!-- Payment Methods -->
-                            <div>
-                                <p class="text-xs font-semibold text-gray-500 mb-2">Select Payment Method</p>
-
-                                <div class="grid grid-cols-3 gap-2">
-                                    <button v-for="method in paymentMethods" :key="method.id"
-                                        @click="method.enabled ? form.payment_method = method.id : null"
-                                        :disabled="!method.enabled"
-                                        class="rounded-xl p-3 border text-center transition-all" :class="{
-                                            'border-brand-blue bg-brand-blue/10': form.payment_method === method.id && method.enabled,
-                                            'border-gray-200 bg-gray-50': method.enabled && form.payment_method !== method.id,
-                                            'opacity-40 cursor-not-allowed': !method.enabled
-                                        }">
-
-                                        <Icon :icon="method.icon" class="text-lg mb-1"
-                                            :class="form.payment_method === method.id ? 'text-indigo-600' : 'text-gray-500'" />
-
-                                        <p class="text-[10px]"
-                                            :class="form.payment_method === method.id ? 'text-indigo-600 font-medium' : 'text-gray-500'">
-                                            {{ method.name }}
-                                        </p>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Instructions -->
-                            <div v-if="form.payment_method"
-                                class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-center">
-
-                                <p class="text-xs font-semibold text-indigo-700 mb-2">
-                                    Payment Instructions
-                                </p>
-
-                                <!-- JazzCash -->
-                                <div v-if="form.payment_method === 'jazzcash'" class="space-y-3">
-
-                                    <img src="/images/jazzcashQR.jpeg"
-                                        class="w-32 h-32 mx-auto rounded-lg border p-1 bg-white" />
-
-                                    <div>
-                                        <p class="text-xs text-gray-500">TILL ID</p>
-                                        <p class="font-mono text-sm font-semibold text-gray-800">
-                                            982295010
-                                        </p>
-
-                                        <button @click="copyTillId" class="text-[10px] text-indigo-600 mt-1">
-                                            Copy ID
-                                        </button>
-                                    </div>
-
-                                    <p class="text-[11px] text-gray-600">
-                                        Send exact amount via JazzCash and upload receipt below.
-                                    </p>
-                                </div>
-
-                                <!-- Other Methods -->
-                                <p v-else class="text-xs text-gray-600">
-                                    {{ currentPaymentMethod.instructions }}
-                                </p>
-                            </div>
-
-                            <!-- Upload -->
-                            <div>
-                                <p class="text-xs font-semibold text-gray-500 mb-2">Upload Receipt</p>
-
-                                <!-- Empty -->
-                                <label v-if="!uploadedFileName" for="receipt-upload"
-                                    class="flex flex-col items-center justify-center h-28 border-2 border-dashed rounded-xl cursor-pointer text-center hover:bg-gray-50 transition">
-
-                                    <Icon icon="mdi:cloud-upload" class="text-2xl text-gray-400 mb-1" />
-
-                                    <p class="text-xs text-gray-600">
-                                        Click to upload or drag file
-                                    </p>
-
-                                    <p class="text-[10px] text-gray-400">
-                                        PNG, JPG, PDF (max 5MB)
-                                    </p>
-
-                                    <input id="receipt-upload" type="file" @change="handleFileUpload"
-                                        accept="image/*,.pdf" class="hidden" />
-                                </label>
-
-                                <!-- Selected -->
-                                <div v-else class="flex items-center justify-between border rounded-xl p-3">
-                                    <div class="flex items-center gap-2">
-                                        <Icon icon="mdi:file-document" class="text-lg text-indigo-500" />
-                                        <div>
-                                            <p class="text-xs font-medium text-gray-800">{{ uploadedFileName }}</p>
-                                            <p class="text-[10px] text-gray-400">
-                                                {{ formatFileSize(form.receipt?.size) }}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <button @click="removeFile">
-                                        <Icon icon="mdi:close" class="text-gray-400" />
-                                    </button>
-                                </div>
-
-                                <p v-if="form.errors.receipt" class="text-[10px] text-red-500 mt-1">
-                                    {{ form.errors.receipt }}
-                                </p>
-                            </div>
-
-                            <!-- Terms -->
-                            <label class="flex items-start gap-2 text-xs text-gray-600">
-                                <input type="checkbox" v-model="form.terms_accepted"
-                                    class="mt-1 w-4 h-4 text-indigo-600 rounded" />
-
-                                <span>
-                                    I agree to the
-                                    <Link :href="route('policy.show', 'terms')" class="text-indigo-600">Terms</Link>
-                                    &
-                                    <Link :href="route('policy.show', 'privacy')" class="text-indigo-600">Privacy</Link>
-                                </span>
-                            </label>
-
-                            <!-- Submit -->
-                            <button @click="submit" :disabled="form.processing || !form.receipt || !form.terms_accepted"
-                                class="w-full py-3 rounded-full text-white font-semibold transition-all" :class="form.processing
-                                    ? 'bg-gray-400'
-                                    : 'bg-gradient-to-r from-brand-blue/80 to-brand-blue/100 hover:opacity-90'">
-
-                                <span v-if="form.processing" class="flex items-center justify-center gap-2">
-                                    <Icon icon="mdi:loading" class="animate-spin" />
-                                    Processing...
-                                </span>
-
-                                <span v-else>
-                                    Confirm Payment
-                                </span>
-                            </button>
-
-                        </div>
+                    <!-- Payment Form -->
+                    <!-- Breadcrumb -->
+                    <div v-if="paymentStep !== 'select'" class="mb-4 max-w-xl mx-auto">
+                        <button @click="goBack"
+                            class="flex items-center text-xs text-gray-500 hover:text-gray-700 transition-colors">
+                            <Icon icon="mdi:arrow-left" class="text-sm" />
+                            Back to plans
+                        </button>
                     </div>
                     <div v-if="paymentStep === 'payment' && selectedPlan"
-                        class="hidden md:flex md:flex-col bg-white rounded-xl shadow-md overflow-hidden max-w-xl mx-auto py-4">
+                        class="bg-white rounded-xl shadow-md overflow-hidden max-w-xl mx-auto py-4">
                         <!-- Progress Steps -->
                         <div class="border-b border-gray-100 bg-gray-50/50 px-5 py-3">
                             <div class="flex items-center justify-between max-w-sm mx-auto">
@@ -613,48 +370,58 @@
                         </div>
                     </div>
 
-                    <!-- ========== STEP 3: CONFIRMATION (unchanged) ========== -->
+                    <!-- Confirmation -->
                     <div v-if="paymentStep === 'confirmation'" class="bg-white rounded-xl shadow-md p-8">
                         <div class="text-center max-w-sm mx-auto">
                             <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center">
                                 <Icon icon="mdi:check" class="text-2xl text-teal-600" />
                             </div>
+
                             <h2 class="text-lg font-medium text-gray-900 mb-2">Payment submitted</h2>
                             <p class="text-xs text-gray-500 mb-5">{{ successMessage }}</p>
+
+                            <!-- Status Timeline -->
                             <div class="rounded-lg p-4 mb-5">
-                                <div class="flex items-center justify-between text-xs mb-3"><span
-                                        class="text-gray-600">Status</span><span
-                                        class="font-medium text-blue-600">Pending verification</span></div>
+                                <div class="flex items-center justify-between text-xs mb-3">
+                                    <span class="text-gray-600">Status</span>
+                                    <span class="font-medium text-blue-600">Pending verification</span>
+                                </div>
                                 <div class="relative">
                                     <div class="absolute top-1.5 left-0 w-full h-0.5 bg-gray-200"></div>
                                     <div class="relative flex justify-between">
                                         <div class="flex flex-col items-center">
-                                            <div class="w-3 h-3 bg-teal-600 rounded-full mb-1"></div><span
-                                                class="text-[10px] text-gray-500">Submitted</span>
+                                            <div class="w-3 h-3 bg-teal-600 rounded-full mb-1"></div>
+                                            <span class="text-[10px] text-gray-500">Submitted</span>
                                         </div>
                                         <div class="flex flex-col items-center">
-                                            <div class="w-3 h-3 bg-blue-400 rounded-full mb-1"></div><span
-                                                class="text-[10px] text-gray-500">Verifying</span>
+                                            <div class="w-3 h-3 bg-blue-400 rounded-full mb-1"></div>
+                                            <span class="text-[10px] text-gray-500">Verifying</span>
                                         </div>
                                         <div class="flex flex-col items-center">
-                                            <div class="w-3 h-3 bg-gray-300 rounded-full mb-1"></div><span
-                                                class="text-[10px] text-gray-400">Approved</span>
+                                            <div class="w-3 h-3 bg-gray-300 rounded-full mb-1"></div>
+                                            <span class="text-[10px] text-gray-400">Approved</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="space-y-2"><button @click="goHome"
-                                    class="w-full bg-brand-blue text-white py-2.5 px-4 rounded-lg text-xs font-medium hover:bg-brand-blue/70 transition-all duration-200 active:scale-[0.98]">Go
-                                    to dashboard</button><button @click="goBack"
-                                    class="w-full border border-gray-300 text-gray-700 py-2.5 px-4 rounded-lg text-xs font-medium hover:border-teal-500 hover:text-teal-600 transition-colors">Choose
-                                    another plan</button></div>
+
+                            <div class="space-y-2">
+                                <button @click="goHome"
+                                    class="w-full bg-brand-blue text-white py-2.5 px-4 rounded-lg text-xs font-medium hover:bg-brand-blue/70 transition-all duration-200 active:scale-[0.98]">
+                                    Go to dashboard
+                                </button>
+                                <button @click="goBack"
+                                    class="w-full border border-gray-300 text-gray-700 py-2.5 px-4 rounded-lg text-xs font-medium hover:border-teal-500 hover:text-teal-600 transition-colors">
+                                    Choose another plan
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </template>
 
             </div>
 
-            <!-- Footer -->
+            <!-- Footer Links -->
             <div class="mt-6 md:mt-8 text-center">
                 <div class="flex flex-wrap justify-center gap-3 text-[10px] text-gray-500">
                     <a href="/page/contact" class="hover:text-gray-700 transition-colors">Help</a>
@@ -662,8 +429,9 @@
                     <a :href="route('policy.show', 'terms')" class="hover:text-gray-700 transition-colors">Terms</a>
                     <a href="/page/about" class="hover:text-gray-700 transition-colors">About</a>
                 </div>
-                <p class="mt-2 text-[10px] text-gray-500">© {{ new Date().getFullYear() }} AMO Mercatus. All rights
-                    reserved.</p>
+                <p class="mt-2 text-[10px] text-gray-500">
+                    © {{ new Date().getFullYear() }} AMO Mercatus. All rights reserved.
+                </p>
             </div>
         </div>
     </OlxLayout>
@@ -680,23 +448,10 @@ const props = defineProps({
     plans: Array,
 })
 
-console.log('Available subscription plans:', props.plans)
-
-// Generic premium features (from the first screenshot)
-const genericFeatures = ['No Ads', 'Faster Connection', 'Worldwide Location', 'Link up to 10 Devices']
-
-// Auth user
+// Get auth user from page props
 const page = usePage()
 const user = computed(() => page.props.auth?.user)
 
-// Subscription status checks
-const hasPendingSubscription = computed(() => user.value?.subscription_status === 'pending')
-const hasActiveSubscription = computed(() => user.value?.subscription_status === 'active')
-const hasExpiredSubscription = computed(() => user.value?.subscription_status === 'expired')
-const hasNoSubscription = computed(() => !user.value?.subscription_status || user.value?.subscription_status === 'none' || user.value?.subscription_status === null)
-const canSubscribe = computed(() => hasNoSubscription.value || hasExpiredSubscription.value)
-
-// Component state
 const selectedPlan = ref(null)
 const paymentStep = ref('select')
 const showSuccessMessage = ref(false)
@@ -711,16 +466,59 @@ const form = useForm({
     terms_accepted: false,
 })
 
-const Back = () => window.history.back()
+const Back = () => {
+    window.history.back()
+}
 
-// Payment methods (only JazzCash enabled)
+// Check subscription status
+const hasPendingSubscription = computed(() => {
+    return user.value?.subscription_status === 'pending'
+})
+
+const hasActiveSubscription = computed(() => {
+    return user.value?.subscription_status === 'active'
+})
+
+const hasExpiredSubscription = computed(() => {
+    return user.value?.subscription_status === 'expired'
+})
+
+const hasNoSubscription = computed(() => {
+    return (
+        !user.value?.subscription_status ||
+        user.value?.subscription_status === 'none' ||
+        user.value?.subscription_status === null
+    )
+})
+
+// Popular plan detection
+const popularPlanIndex = computed(() => {
+    return props.plans?.length === 3 ? 1 : 0
+})
+
 const paymentMethods = [
-    { id: 'jazzcash', name: 'JazzCash', icon: 'mdi:cash', instructions: 'Send payment to the TILL ID above using JazzCash app.', enabled: true },
-    { id: 'easypaisa', name: 'Easypaisa', icon: 'mdi:bank-transfer', instructions: 'Send payment to 0300-1234567 (Easypaisa account)', enabled: false },
-    { id: 'bank', name: 'Bank Transfer', icon: 'mdi:bank', instructions: 'Bank: HBL | Account: 1234-5678-9012-3456 | IBAN: PK12HBL1234567890123456', enabled: false },
+    {
+        id: 'jazzcash',
+        name: 'JazzCash',
+        icon: 'mdi:cash',
+        instructions: 'Send payment to the TILL ID above using JazzCash app.',
+        enabled: true,
+    },
+    {
+        id: 'easypaisa',
+        name: 'Easypaisa',
+        icon: 'mdi:bank-transfer',
+        instructions: 'Send payment to 0300-1234567 (Easypaisa account)',
+        enabled: false,
+    },
+    {
+        id: 'bank',
+        name: 'Bank Transfer',
+        icon: 'mdi:bank',
+        instructions: 'Bank: HBL | Account: 1234-5678-9012-3456 | IBAN: PK12HBL1234567890123456',
+        enabled: false,
+    },
 ]
-
-const currentPaymentMethod = computed(() => paymentMethods.find(m => m.id === form.payment_method) || paymentMethods[0])
 
 function choosePlan(plan) {
     selectedPlan.value = plan
@@ -729,7 +527,6 @@ function choosePlan(plan) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// File upload handlers
 function handleFileUpload(event) {
     const file = event.target.files[0]
     if (file) {
@@ -741,6 +538,7 @@ function handleFileUpload(event) {
 function handleDrop(event) {
     event.preventDefault()
     isDragging.value = false
+
     const file = event.dataTransfer.files[0]
     if (file && (file.type.startsWith('image/') || file.type === 'application/pdf')) {
         form.receipt = file
@@ -748,10 +546,21 @@ function handleDrop(event) {
     }
 }
 
-function handleDragOver(event) { event.preventDefault(); isDragging.value = true }
-function handleDragLeave() { isDragging.value = false }
-function removeFile() { form.receipt = null; uploadedFileName.value = '' }
+function handleDragOver(event) {
+    event.preventDefault()
+    isDragging.value = true
+}
 
+function handleDragLeave() {
+    isDragging.value = false
+}
+
+function removeFile() {
+    form.receipt = null
+    uploadedFileName.value = ''
+}
+
+// Copy TILL ID to clipboard
 function copyTillId() {
     navigator.clipboard.writeText('982295010')
     alert('TILL ID copied!')
@@ -762,13 +571,20 @@ function submit() {
         onSuccess: (response) => {
             router.visit('/')
             showSuccessMessage.value = true
-            successMessage.value = response.props?.flash?.message || "Payment submitted successfully. We'll notify you once it's verified."
+            successMessage.value =
+                response.props?.flash?.message ||
+                "Payment submitted successfully. We'll notify you once it's verified."
             paymentStep.value = 'confirmation'
             form.reset()
             uploadedFileName.value = ''
-            setTimeout(() => { showSuccessMessage.value = false }, 5000)
+
+            setTimeout(() => {
+                showSuccessMessage.value = false
+            }, 5000)
         },
-        onError: (errors) => console.error('Payment submission failed', errors),
+        onError: (errors) => {
+            console.error('Payment submission failed', errors)
+        },
     })
 }
 
@@ -780,15 +596,36 @@ function goBack() {
     showSuccessMessage.value = false
 }
 
-function goHome() { router.visit('/') }
-function goToDashboard() { router.visit('/') }
+function goHome() {
+    router.visit('/')
+}
+
+function goToDashboard() {
+    router.visit('/')
+}
 
 const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    return new Intl.NumberFormat('en-PK', {
+        style: 'currency',
+        currency: 'PKR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    })
         .format(price)
         .replace('PKR', '₨')
 }
 
+// Get current payment method details
+const currentPaymentMethod = computed(() => {
+    return paymentMethods.find((m) => m.id === form.payment_method) || paymentMethods[0]
+})
+
+// Check if user can subscribe
+const canSubscribe = computed(() => {
+    return hasNoSubscription.value || hasExpiredSubscription.value
+})
+
+// Format file size
 const formatFileSize = (bytes) => {
     if (!bytes) return '0 Bytes'
     const k = 1024
@@ -799,7 +636,38 @@ const formatFileSize = (bytes) => {
 </script>
 
 <style scoped>
-/* Keep only essential animations – all visual styles come from Tailwind */
+/* Smooth transitions */
+* {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Custom focus styles */
+input:focus {
+    box-shadow: 0 0 0 2px rgba(var(--brand-teal-rgb), 0.1);
+}
+
+/* Button hover effects */
+button:not(:disabled):hover {
+    transform: translateY(-1px);
+}
+
+/* Smooth scale animation */
+@keyframes gentleScale {
+    0% {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.bg-white {
+    animation: gentleScale 0.3s ease-out;
+}
+
 @keyframes spin {
     from {
         transform: rotate(0deg);
@@ -814,18 +682,22 @@ const formatFileSize = (bytes) => {
     animation: spin 1s linear infinite;
 }
 
-/* Custom scrollbar for the carousel (optional) */
-.overflow-x-auto::-webkit-scrollbar {
-    height: 4px;
+/* Custom scrollbar for form */
+::-webkit-scrollbar {
+    width: 4px;
 }
 
-.overflow-x-auto::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 2px;
 }
 
-.overflow-x-auto::-webkit-scrollbar-thumb {
-    background: #00a6a0;
+::-webkit-scrollbar-thumb {
+    background: #14b8a6;
     border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #2563eb;
 }
 </style>

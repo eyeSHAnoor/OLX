@@ -29,6 +29,7 @@
         "lat": 34.00337,
         "lng": 72.12561
     },
+
     {
         "country": "PK",
         "name": "Aliabad",
@@ -59,6 +60,7 @@
         "lat": 34.92039,
         "lng": 72.63265
     },
+
     {
         "country": "PK",
         "name": "Aman Garh",
@@ -95,6 +97,7 @@
         "lat": 33.76671,
         "lng": 72.35977
     },
+
     {
         "country": "PK",
         "name": "Awaran",
@@ -137,6 +140,7 @@
         "lat": 29.99835,
         "lng": 73.25272
     },
+
     {
         "country": "PK",
         "name": "Bahawalnagar",
@@ -179,6 +183,7 @@
         "lat": 29.89773,
         "lng": 69.52558
     },
+
     {
         "country": "PK",
         "name": "Basirpur",
@@ -227,6 +232,7 @@
         "lat": 29.04174,
         "lng": 67.82394
     },
+
     {
         "country": "PK",
         "name": "Bhakkar",
@@ -299,6 +305,7 @@
         "lat": 30.16667,
         "lng": 72.65
     },
+
     {
         "country": "PK",
         "name": "Chak",
@@ -377,6 +384,7 @@
         "lat": 31.75511,
         "lng": 72.91403
     },
+
     {
         "country": "PK",
         "name": "Cherat Cantonement",
@@ -467,6 +475,7 @@
         "lat": 34.51106,
         "lng": 72.48438
     },
+
     {
         "country": "PK",
         "name": "Daira Din Panah",
@@ -551,6 +560,7 @@
         "lat": 28.37353,
         "lng": 68.35078
     },
+
     {
         "country": "PK",
         "name": "Dera Bugti",
@@ -617,6 +627,7 @@
         "lat": 32.64101,
         "lng": 73.72039
     },
+
     {
         "country": "PK",
         "name": "Dipalpur",
@@ -689,6 +700,7 @@
         "lat": 29.46799,
         "lng": 73.03489
     },
+
     {
         "country": "PK",
         "name": "Faruka",
@@ -779,6 +791,7 @@
         "lat": 31.14926,
         "lng": 72.68323
     },
+
     {
         "country": "PK",
         "name": "Goth Garelo",
@@ -881,6 +894,7 @@
         "lat": 29.69221,
         "lng": 72.54566
     },
+
     {
         "country": "PK",
         "name": "Hattian Bala",
@@ -977,6 +991,7 @@
         "lat": 33.43304,
         "lng": 72.01877
     },
+
     {
         "country": "PK",
         "name": "Jandiala Sher Khan",
@@ -1079,6 +1094,7 @@
         "lat": 29.6243,
         "lng": 71.91437
     },
+
     {
         "country": "PK",
         "name": "Kahuta",
@@ -1163,6 +1179,7 @@
         "lat": 28.24574,
         "lng": 69.17974
     },
+
     {
         "country": "PK",
         "name": "Kandiari",
@@ -1271,6 +1288,7 @@
         "lat": 29.58139,
         "lng": 72.23804
     },
+
     {
         "country": "PK",
         "name": "Khalabat",
@@ -1373,6 +1391,7 @@
         "lat": 27.34156,
         "lng": 68.70821
     },
+
     {
         "country": "PK",
         "name": "Kot Ghulam Muhammad",
@@ -1463,6 +1482,7 @@
         "lat": 33.38291,
         "lng": 71.33733
     },
+
     {
         "country": "PK",
         "name": "Ladhewala Waraich",
@@ -1565,6 +1585,7 @@
         "lat": 32.55449,
         "lng": 73.21274
     },
+
     {
         "country": "PK",
         "name": "Malakwal City",
@@ -1661,6 +1682,7 @@
         "lat": 30.44067,
         "lng": 72.35679
     },
+
     {
         "country": "PK",
         "name": "Mianke Mor",
@@ -1763,6 +1785,7 @@
         "lat": 31.80258,
         "lng": 74.25772
     },
+
     {
         "country": "PK",
         "name": "Murree",
@@ -1853,6 +1876,7 @@
         "lat": 26.23939,
         "lng": 68.40369
     },
+
     {
         "country": "PK",
         "name": "Nazir Town",
@@ -1955,6 +1979,7 @@
         "lat": 25.26302,
         "lng": 63.46921
     },
+
     {
         "country": "PK",
         "name": "Pasrur",
@@ -2051,6 +2076,7 @@
         "lat": 28.41987,
         "lng": 70.30345
     },
+
     {
         "country": "PK",
         "name": "Raiwind",
@@ -2147,6 +2173,7 @@
         "lat": 31.97386,
         "lng": 72.33109
     },
+
     {
         "country": "PK",
         "name": "Sahiwal",

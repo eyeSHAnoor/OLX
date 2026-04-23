@@ -6,8 +6,11 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use NotificationChannels\WebPush\WebPushMessage;
+use NotificationChannels\WebPush\WebPushChannel;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\DatabaseMessage;
+use Illuminate\Support\Facades\Log;
 
 class NewMessageNotification extends Notification implements ShouldQueue
 {
@@ -19,7 +22,7 @@ class NewMessageNotification extends Notification implements ShouldQueue
 
     public function via($notifiable)
     {
-        return ['database', 'broadcast'];
+        return ['database', 'broadcast', WebPushChannel::class];
     }
 
     public function toArray($notifiable)
@@ -46,5 +49,24 @@ class NewMessageNotification extends Notification implements ShouldQueue
             'sender_name' => $this->message->sender->name ?? 'Unknown',
             'url' => route('chat.show', $this->chat->id, false)
         ]);
+    }
+
+    public function toWebPush($notifiable, $notification)
+    {
+        Log::info('Sending Web Push Notification', [
+            'chat_id' => $this->chat->id,
+            'message' => "{$this->message->sender->name} sends You a message",
+            'sender_id' => $this->message->sender_id,
+            'sender_name' => $this->message->sender->name ?? 'Unknown',
+            'url' => route('chat.show', $this->chat->id, false)
+        ]);
+        return (new WebPushMessage)
+            ->title('New Message')
+            ->icon('/icon.png')
+            ->body("{$this->message->sender->name} sent you a message")
+            ->data([
+                'chat_id' => $this->chat->id,
+                'url' => route('chat.show', $this->chat->id, false),
+            ]);
     }
 }

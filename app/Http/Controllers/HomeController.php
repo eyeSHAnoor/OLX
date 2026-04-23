@@ -6,9 +6,11 @@ use App\Models\Category;
 use App\Models\Brand;
 use App\Models\Ad;
 use App\Models\Banner;
+use App\Models\AdView;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB; // only if you don't already have it
 use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
@@ -18,6 +20,8 @@ class HomeController extends Controller
         Log::info('home controller opened');
 
         $selectedCity = strtolower(session('city', 'Pakistan'));
+        $selectedRegion = $request->input('filter.region') 
+                      ?? session('region');  
 
         // Filters
         $searchTerm    = $request->input('filter.global');
@@ -28,6 +32,38 @@ class HomeController extends Controller
         $endDate       = $request->input('end_date');
 
         $isSearching = $searchTerm || $categoryFilter || $brandFilter || $startDate || $endDate;
+
+        /*
+        |--------------------------------------------------------------------------
+        | STEP: Get current user's recently viewed ads (max 10)
+        |--------------------------------------------------------------------------
+        */
+        $recentAds = collect();
+        if (Auth::check()) {
+            // Get latest view time per ad, ordered, limited to 10 ad IDs
+            $recentAdViews = AdView::where('user_id', Auth::id())
+                ->select('ad_id', DB::raw('MAX(created_at) as last_viewed'))
+                ->groupBy('ad_id')
+                ->orderBy('last_viewed', 'desc')
+                ->limit(10)
+                ->get();
+
+            $adIds = $recentAdViews->pluck('ad_id');
+            if ($adIds->isNotEmpty()) {
+                // Fetch full ad models with relations
+                $ads = Ad::with(['images', 'brand', 'category'])
+                    ->whereIn('id', $adIds)
+                    ->where('status', 'active')
+                    ->get()
+                    // Preserve the order from the grouped query
+                    ->sortBy(function ($ad) use ($adIds) {
+                        return array_search($ad->id, $adIds->toArray());
+                    })
+                    ->values();
+
+                $recentAds = $ads;
+            }
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -88,6 +124,7 @@ class HomeController extends Controller
                 $ads = $this->buildAdQuery(
                     $ids,
                     $selectedCity,
+                    $selectedRegion,
                     $searchTerm,
                     $brandFilter,
                     $startDate,
@@ -112,6 +149,7 @@ class HomeController extends Controller
             $categories = $categories->map(function ($category) use (
                 $getAllChildIds,
                 $selectedCity,
+                $selectedRegion,
                 $searchTerm,
                 $brandFilter,
                 $startDate,
@@ -124,6 +162,7 @@ class HomeController extends Controller
                 $ads = $this->buildAdQuery(
                     $ids,
                     $selectedCity,
+                    $selectedRegion, 
                     $searchTerm,
                     $brandFilter,
                     $startDate,
@@ -156,6 +195,7 @@ class HomeController extends Controller
         return Inertia::render('home/Index', [
             'categories' => $categories,
             'banners' => $banners,
+            'recentAds' => $recentAds,  
             'brands' => $brands,
             'filters' => [
                 'filter' => [
@@ -176,15 +216,19 @@ class HomeController extends Controller
     | REUSABLE AD QUERY (CLEAN)
     |--------------------------------------------------------------------------
     */
-    private function buildAdQuery($categoryIds, $city, $searchTerm, $brandFilter, $startDate, $endDate, $sort)
+    private function buildAdQuery($categoryIds, $city,$region,  $searchTerm, $brandFilter, $startDate, $endDate, $sort)
     {
         return Ad::with(['images', 'brand', 'category'])
             ->where('status', 'active') 
             ->whereIn('category_id', $categoryIds)
             ->excludeReportedBy(Auth::id())
-            ->when($city !== 'pakistan', fn($q) =>
-                $q->whereRaw('LOWER(city) = ?', [$city])
-            )
+            ->when($city !== 'pakistan', function ($q) use ($city, $region) {
+                $q->whereRaw('LOWER(city) = ?', [$city]);
+
+                if ($region) {   // region is not null and not empty
+                    $q->whereRaw('LOWER(region) = ?', [strtolower($region)]);
+                }
+            })
 
             ->when($searchTerm, function ($q) use ($searchTerm) {
                 $term = strtolower($searchTerm);

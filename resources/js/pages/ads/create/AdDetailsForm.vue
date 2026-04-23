@@ -231,6 +231,28 @@
                                 {{ form.errors.city }}
                             </p>
                         </div>
+                        <!-- Region (appears after city selected) -->
+                        <div v-if="form.city">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Region / Area <span class="text-gray-400 text-xs font-normal">(optional)</span>
+                            </label>
+                            <SearchableSelectInput v-model="form.region" :items="regionOptions" key-by="name"
+                                :searchable-fields="['name']" placeholder="Select Region" :disabled="isLoadingRegions">
+                                <template #item="{ item }">
+                                    <div
+                                        class="flex w-3/4 cursor-pointer items-center px-3 py-2 text-left text-sm hover:bg-gray-100">
+                                        <span>{{ item.name }}</span>
+                                    </div>
+                                </template>
+                                <template #selected="{ item }">
+                                    <span v-if="isLoadingRegions">Loading regions...</span>
+                                    <span v-else>{{ item?.name ?? 'All areas' }}</span>
+                                </template>
+                            </SearchableSelectInput>
+                            <p v-if="form.errors.region" class="text-red-500 text-xs mt-1.5">
+                                {{ form.errors.region }}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -433,6 +455,8 @@ const props = defineProps({
     adData: { type: Object, default: null }
 })
 
+console.log('AdDetailsForm props:', props.adData)
+
 const STORAGE_KEY = 'ad_form_draft'
 
 // Dynamic attributes and models
@@ -442,6 +466,42 @@ const brandModels = ref([])
 const localSelectedBrand = ref(null)
 const localSelectedModel = ref(null)
 const isLoadingModels = ref(false)
+
+const regions = ref([])
+const isLoadingRegions = ref(false)
+
+// Region options formatted for SearchableSelectInput
+const regionOptions = computed(() => {
+    return regions.value.map(region => ({
+        name: region.name,
+        // You can include other fields if needed
+    }))
+})
+
+// Fetch regions when city changes
+const fetchRegions = async (cityName) => {
+    if (!cityName) {
+        regions.value = []
+        return
+    }
+
+    isLoadingRegions.value = true
+    try {
+        const response = await axios.get(`/regions/${encodeURIComponent(cityName)}`)
+        if (response.data.regions) {
+            regions.value = response.data.regions
+        } else {
+            regions.value = []
+        }
+    } catch (error) {
+        console.error('Failed to fetch regions:', error)
+        regions.value = []
+    } finally {
+        isLoadingRegions.value = false
+    }
+}
+
+
 
 // Image compression state
 const isCompressing = ref(false)
@@ -566,6 +626,19 @@ const initializeForm = () => {
 }
 
 const form = useForm(initializeForm())
+
+// Watch for city changes
+watch(() => form.city, (newCity, oldCity) => {
+    if (newCity !== oldCity) {
+        // Clear previously selected region when city changes
+        form.region = null
+        if (newCity) {
+            fetchRegions(newCity)
+        } else {
+            regions.value = []
+        }
+    }
+})
 
 // Initialize features
 if (props.editMode && props.adData?.features) {
@@ -738,6 +811,7 @@ const handleSubmit = () => {
         price: form.price,
         location: form.location,
         city: form.city,
+        region: form.region,
         seller_name: form.seller_name,
         seller_phone: form.seller_phone,
         search_keywords: form.search_keywords,
@@ -870,6 +944,13 @@ onMounted(() => {
     window.addEventListener('beforeunload', handleBeforeUnload)
     if (props.selectedCategory?.id) {
         fetchAttributes(props.selectedCategory.id)
+    }
+    if (props.editMode && props.adData?.city) {
+        fetchRegions(props.adData.city)
+        // Optionally set the region if it exists
+        if (props.adData.region) {
+            form.region = props.adData.region
+        }
     }
     setInitialBrandAndModel()
 })

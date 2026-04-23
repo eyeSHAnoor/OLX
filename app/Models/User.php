@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -18,7 +19,7 @@ use Carbon\Carbon;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles, Fileable;
+    use HasFactory, Notifiable, HasRoles, Fileable, HasPushSubscriptions;
 
     protected $fillable = [
         'name',

@@ -10,13 +10,10 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AdController;
 use Illuminate\Support\Facades\Mail;
 
-Route::get('/test-mail', function () {
-    Mail::raw('This is a test email from Laravel!', function ($message) {
-        $message->to('www.prisha7@gmail.com')
-                ->subject('Test Email');
-    });
-    return 'Test email sent!';
-});
+use App\Http\Controllers\PushSubscriptionController;
+
+Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])
+    ->middleware('auth');
 
 Route::get('/cities/{city}/regions', function (City $city) {
     return $city->regions()->pluck('name');
@@ -36,12 +33,14 @@ Route::post('/orders/{order}/complete', [App\Http\Controllers\OrderController::c
 Route::post('/orders/{order}/cancel', [App\Http\Controllers\OrderController::class,'cancel'])->name('orders.cancel');
 Route::post('/set-city', function (\Illuminate\Http\Request $request) {
     session(['city' => $request->city]);
+    session(['region' => $request->region]); // Clear region if city is Pakistan
     return back();
 })->name('set.city');
 
 Route::get('/policy/{type}', [App\Http\Controllers\PolicyController::class, 'show'])->name('policy.show');
 Route::get('/aboutus', [App\Http\Controllers\AboutController::class, 'index'])->name('aboutus');
 Route::get('/page/{pageKey}', [App\Http\Controllers\AboutController::class, 'show'])->name('public.page');
+Route::get('/regions/{cityName}', [App\Http\Controllers\RegionController::class, 'getByCityName']);
 
 
 

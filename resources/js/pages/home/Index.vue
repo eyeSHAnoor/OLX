@@ -1,6 +1,21 @@
 <template>
     <OlxLayout>
+        <!-- SEO & Favicon -->
+
+        <Head>
+            <title>Marketplace - Buy & Sell New & Used Items</title>
+            <meta name="description"
+                content="Find great deals on new and used items in your city. Post free ads, buy and sell electronics, cars, furniture, and more." />
+            <meta name="keywords" content="classifieds, buy sell, marketplace, used items, free ads" />
+            <meta property="og:title" content="Marketplace - Best Local Deals" />
+            <meta property="og:description" content="Find great deals on new and used items in your city." />
+            <meta property="og:type" content="website" />
+            <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+            <link rel="shortcut icon" href="/favicon.ico" />
+        </Head>
+
         <TopCategoriesBar />
+
         <!-- HERO BANNER -->
         <section v-if="homepageBanners.length"
             class="relative bg-gray-100 h-[180px] md:h-[400px] lg:h-[500px] overflow-hidden">
@@ -12,7 +27,6 @@
                 </a>
             </div>
 
-            <!-- Navigation buttons (optional, keep as is) -->
             <button v-if="homepageBanners.length > 1" @click="prevSlide"
                 class="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 rounded-full p-3">
                 <Icon icon="mdi:chevron-left" class="text-2xl" />
@@ -22,7 +36,6 @@
                 <Icon icon="mdi:chevron-right" class="text-2xl" />
             </button>
 
-            <!-- Dots -->
             <div v-if="homepageBanners.length > 1" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
                 <button v-for="(_, index) in homepageBanners" :key="index" @click="currentSlide = index"
                     class="h-2 rounded-full transition-all"
@@ -31,11 +44,40 @@
             </div>
         </section>
 
+        <!-- ========== RECENTLY VIEWED SECTION (RESPONSIVE: GRID + CAROUSEL) ========== -->
+        <section v-if="recentAds.length" class="py-8 bg-white border-b border-gray-100">
+            <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold flex items-center gap-2">
+                        <Icon icon="mdi:history" class="text-2xl text-yellow-500" />
+                        Recently Viewed
+                    </h2>
+                    <!-- Optional "View All" link – uncomment if you have a dedicated page -->
+                    <!-- <button @click="viewAllRecent" class="text-sm text-brand-blue hover:underline">
+                        View All
+                    </button> -->
+                </div>
+
+                <!-- Desktop/Tablet Grid (hidden on mobile) -->
+                <div class="hidden sm:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <AdCard v-for="ad in recentAds" :key="ad.id" :ad="ad" :size="'normal'" />
+                </div>
+
+                <!-- Mobile Carousel (visible only on mobile) -->
+                <div class="block sm:hidden overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
+                    <div class="flex flex-nowrap gap-3">
+                        <div v-for="ad in recentAds" :key="ad.id" class="w-[260px] flex-shrink-0">
+                            <AdCard :ad="ad" :size="'small'" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- MAIN CONTENT -->
         <template v-if="!isSearching">
-            <!-- Categories -->
             <section class="py-12 bg-gray-50">
-                <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 ">
+                <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3">
                     <h2 class="text-lg md:text-xl font-semibold mb-8 text-center">Browse Categories</h2>
                     <div class="grid grid-cols-3 md:grid-cols-7 gap-4">
                         <div v-for="category in categories" :key="category.id" @click="navigateToCategory(category)"
@@ -55,7 +97,6 @@
                 </div>
             </section>
 
-            <!-- Promo Banners -->
             <section v-if="promotionalBanners.length" class="py-5">
                 <div class="max-w-7xl mx-auto px-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -67,12 +108,10 @@
                 </div>
             </section>
 
-            <!-- Category Ads -->
-            <section class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3  space-y-12 pb-20">
+            <section class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 space-y-12 pb-20">
                 <CategoryAds v-for="cat in topCategories" :key="cat.id" :category="cat" />
             </section>
 
-            <!-- Bottom Banner -->
             <section v-if="bottomBanner" class="relative h-64 md:h-80 overflow-hidden">
                 <a :href="bottomBanner.link || '#'" class="block w-full h-full">
                     <img :src="bottomBanner.image_url" :alt="bottomBanner.title" class="w-full h-full object-cover" />
@@ -80,7 +119,6 @@
             </section>
         </template>
 
-        <!-- SEARCH RESULTS -->
         <template v-else>
             <div class="max-w-7xl mx-auto px-4 py-4">
                 <button @click="goBack" class="flex items-center px-5 py-3 text-gray-700">
@@ -95,21 +133,21 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { Head, usePage, router } from '@inertiajs/vue3';
 import OlxLayout from '@/layouts/OlxLayout.vue'
-import { usePage, router } from '@inertiajs/vue3';
 import CategoryAds from '@/components/CategoryAds.vue'
 import SearchResults from './_partials/SearchResults.vue';
+import AdCard from '@/components/AdCard.vue';   // <-- imported for recent ads
 import { Icon } from '@iconify/vue';
 import { useForceTheme } from '@/composables/useForceTheme'
 
 const page = usePage();
-
-console.log('Page Props:', page.props);
 const categories = computed(() => page.props.categories || [])
 const banners = computed(() => page.props.banners || [])
 const isSearching = computed(() => page.props.isSearching || false)
+const recentAds = computed(() => page.props.recentAds || [])
 
-// Carousel
+// Hero carousel (unchanged)
 const currentSlide = ref(0);
 let interval: any;
 
@@ -129,7 +167,6 @@ const prevSlide = () => {
     }
 };
 
-// Auto-play
 const startAutoPlay = () => {
     if (homepageBanners.value.length > 1) {
         stopAutoPlay();
@@ -144,13 +181,9 @@ const stopAutoPlay = () => {
     }
 };
 
-// Form
 const form = ref({ filter: { global: '' } });
-
-// Top categories
 const topCategories = computed(() => categories.value.filter(c => !c.parent_id).slice(0, 7));
 
-// Navigation
 const navigateToCategory = (category: any) => {
     if (category.slug) {
         router.get(route('category.show', { slug: category.slug }));
@@ -161,7 +194,6 @@ const goBack = () => {
     router.get(route('home'));
 };
 
-// Lifecycle
 onMounted(() => {
     useForceTheme('light');
     startAutoPlay();
@@ -178,3 +210,15 @@ onUnmounted(() => {
     carousel?.removeEventListener('mouseleave', startAutoPlay);
 });
 </script>
+
+<style scoped>
+/* Hide scrollbar on mobile carousel */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+</style>

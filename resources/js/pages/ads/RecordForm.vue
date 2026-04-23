@@ -35,6 +35,7 @@ interface AdFormData {
     price: string | number;
     location: string;
     city: string;
+    region?: string;
     seller_name: string;
     seller_phone: string;
     search_keywords: string[];
@@ -61,6 +62,23 @@ const brandModels = ref<any[]>([]);
 const isLoadingAttributes = ref(false);
 const isLoadingModels = ref(false);
 const isInitialLoad = ref(true);
+// At the top of <script setup>, after other imports
+import citiesData from '@/data/cities.json';
+
+// Inside the setup, after existing refs:
+const cityOptions = computed(() => {
+    return citiesData
+        .filter((c: any) => c.country === 'PK')
+        .map((c: any) => ({ id: c.name, name: c.name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+});
+
+const regions = ref<any[]>([]);
+const isLoadingRegions = ref(false);
+
+const regionOptions = computed(() => {
+    return regions.value.map((r: any) => ({ id: r.id, name: r.name }));
+});
 
 const getDefaultForm = (item: App.Data.AdData | undefined): AdFormData => ({
     id: item?.id ?? '',
@@ -71,6 +89,7 @@ const getDefaultForm = (item: App.Data.AdData | undefined): AdFormData => ({
     description: item?.description ?? '',
     price: item?.price ?? '',
     city: item?.city ?? '',
+    region: item?.region ?? '',
     location: item?.location ?? '',
     seller_name: item?.seller_name ?? '',
     seller_phone: item?.seller_phone ?? '',
@@ -107,6 +126,34 @@ const form = useForm<AdFormData>({ ...getDefaultForm(ad.value) });
 const existingImages = ref<AdImageData[]>(ad.value?.images || []);
 const newKeyword = ref('');
 
+const fetchRegions = async (cityName: string) => {
+    if (!cityName) {
+        regions.value = [];
+        return;
+    }
+    isLoadingRegions.value = true;
+    try {
+        const response = await axios.get(`/regions/${encodeURIComponent(cityName)}`);
+        regions.value = response.data.regions || [];
+    } catch (error) {
+        console.error('Failed to fetch regions:', error);
+        regions.value = [];
+    } finally {
+        isLoadingRegions.value = false;
+    }
+};
+
+// Watch for city changes
+watch(() => form.city, (newCity, oldCity) => {
+    if (newCity !== oldCity) {
+        form.region = ''; // reset region when city changes
+        if (newCity) {
+            fetchRegions(newCity);
+        } else {
+            regions.value = [];
+        }
+    }
+});
 // Computed filtered brands based on selected category
 const filteredBrands = computed(() => {
     if (!form.category_id) return [];
@@ -220,6 +267,12 @@ onMounted(async () => {
         // Fetch attributes if category exists
         if (ad.value.category_id) {
             await fetchAttributes(ad.value.category_id);
+        }
+        if (ad.value?.city) {
+            await fetchRegions(ad.value.city);
+            if (ad.value.region) {
+                form.region = ad.value.region;
+            }
         }
 
         // Fetch models if brand exists
@@ -520,8 +573,43 @@ const primaryImage = computed(() => {
                             <TextInput label="Location *" v-model="form.location" :error="form.errors.location"
                                 placeholder="Enter location" required />
 
-                            <TextInput label="City *" v-model="form.city" :error="form.errors.city"
-                                placeholder="Enter City" required />
+                            <div>
+                                <label class="text-sm font-medium block mb-2">City *</label>
+                                <SearchableSelectInput v-model="form.city" :items="cityOptions" key-by="id"
+                                    :searchable-fields="['name']" placeholder="Select City" :error="form.errors.city">
+                                    <template #item="{ item }">
+                                        <div
+                                            class="flex w-full cursor-pointer items-center px-3 py-2 text-left text-sm hover:bg-gray-100">
+                                            <span>{{ item.name }}</span>
+                                        </div>
+                                    </template>
+                                    <template #selected="{ item }">
+                                        {{ item?.name ?? 'Select City' }}
+                                    </template>
+                                </SearchableSelectInput>
+                                <p v-if="form.errors.city" class="text-sm text-destructive mt-1">{{ form.errors.city }}
+                                </p>
+                            </div>
+                            <div v-if="form.city">
+                                <label class="text-sm font-medium block mb-2">Region / Area <span
+                                        class="text-muted-foreground text-xs font-normal">(optional)</span></label>
+                                <SearchableSelectInput v-model="form.region" :items="regionOptions" key-by="name"
+                                    :searchable-fields="['name']" placeholder="Select Region"
+                                    :disabled="isLoadingRegions" :error="form.errors.region">
+                                    <template #item="{ item }">
+                                        <div
+                                            class="flex w-full cursor-pointer items-center px-3 py-2 text-left text-sm hover:bg-gray-100">
+                                            <span>{{ item.name }}</span>
+                                        </div>
+                                    </template>
+                                    <template #selected="{ item }">
+                                        <span v-if="isLoadingRegions">Loading regions...</span>
+                                        <span v-else>{{ item?.name ?? 'All areas' }}</span>
+                                    </template>
+                                </SearchableSelectInput>
+                                <p v-if="form.errors.region" class="text-sm text-destructive mt-1">{{ form.errors.region
+                                    }}</p>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

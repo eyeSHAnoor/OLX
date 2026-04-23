@@ -21,13 +21,15 @@ class DatabaseSeeder extends Seeder
         $this->call(PermissionsSeeder::class);
         $this->call(CategorySeeder::class);
         $this->call(BrandSeeder::class);
-        // $this->call(AdSeeder::class);
+        $this->call(AdSeeder::class);
         $this->call(PlanSeeder::class);
         $this->call(FeatureSeeder::class);
         $this->call(AttributeGroupSeeder::class);
         $this->call(CategoryAttributeSeeder::class);
         $this->call(AttributeOptionSeeder::class);
         $this->call(BrandModelSeeder::class);
+        $this->call(CitySeeder::class);
+        $this->call(RegionsSeeder::class);
       
     }
 }
