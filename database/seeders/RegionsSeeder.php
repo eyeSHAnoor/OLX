@@ -1984,6 +1984,7 @@ class RegionsSeeder extends Seeder
                 'New Karachi', 'Federal B Area', 'Gulshan-e-Maymar', 'SITE Area', 'Shershah', 'Mauripur',
                 'Keamari', 'Manora', 'Hawkesbay', 'Saeedabad', 'Metroville', 'Nazimabad', 'Liaquatabad',
                 'Paposh Nagar', 'Karachi Bypass', 'Super Highway', 'Shahrah-e-Faisal', 'Korangi Creek',
+                'Gulshan e hadeed', 'Gulshan e maymar', 'Gulshan e iqbal', 'Gulistan e jauhar', 'North nazimabad', 'Korangi',
                 'Ibrahim Hyderi', 'Rehri Goth', 'Bhains Colony', 'DHA City', 'Bahria Town Karachi'
             ]
         ],
@@ -2441,7 +2442,7 @@ class RegionsSeeder extends Seeder
                 
                 // Outskirts & nearby towns
                 'Chunian', 'Kot Abdul Malik', 'Kot Lakhpat', 'Sundar', 'Kahna Nau', 'Jallo',
-                'Thokar Niaz Baig', 'Manga Mandi', 'Harbanspura', 'Nishtar Colony', 'Punjab Cooperative Society',
+                'Thokar Niaz Baig', 'Manga Mandi', 'Harbanspura', 'Nishtar Colony', 'Taj bagh','Qanchi bazar','Punjab Cooperative Society',
                 
                 // Additional notable areas
                 'Mall Road', 'Liberty Market', 'Fortress Stadium', 'Cavalry Ground', 'Gulberg II', 'Gulberg III',
