@@ -22,7 +22,8 @@ class NewMessageNotification extends Notification implements ShouldQueue
 
     public function via($notifiable)
     {
-        return ['database', 'broadcast', WebPushChannel::class];
+        // return ['database', 'broadcast', WebPushChannel::class];
+        return ['database', 'broadcast', 'webpush'];
     }
 
     public function toArray($notifiable)
