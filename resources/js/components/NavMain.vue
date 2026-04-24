@@ -86,6 +86,13 @@ const navItems = computed(() => [
                 icon: 'material-symbols:docs-outline',
                 isActive: page.url === '/page-contents' || route().current('page-contents.*'),
             },
+            // {
+            //     visible: true,
+            //     title: 'Cities',
+            //     href: '/cities',
+            //     icon: 'material-symbols:location-city-outline',
+            //     isActive: page.url === '/cities' || route().current('cities.*'),
+            // },
         ],
     },
 ]);

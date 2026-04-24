@@ -47,27 +47,44 @@
         <!-- ========== RECENTLY VIEWED SECTION (RESPONSIVE: GRID + CAROUSEL) ========== -->
         <section v-if="recentAds.length" class="py-8 bg-white border-b border-gray-100">
             <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3">
+                <!-- Header -->
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-semibold flex items-center gap-2">
                         <Icon icon="mdi:history" class="text-2xl text-yellow-500" />
                         Recently Viewed
                     </h2>
-                    <!-- Optional "View All" link – uncomment if you have a dedicated page -->
+                    <!-- Uncomment if you have a "View All" page -->
                     <!-- <button @click="viewAllRecent" class="text-sm text-brand-blue hover:underline">
-                        View All
-                    </button> -->
+          View All
+        </button> -->
                 </div>
 
-                <!-- Desktop/Tablet Grid (hidden on mobile) -->
-                <div class="hidden sm:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    <AdCard v-for="ad in recentAds" :key="ad.id" :ad="ad" :size="'normal'" />
-                </div>
+                <!-- Carousel Container (horizontal scroll) -->
+                <div class="relative">
+                    <!-- Optional: Navigation Buttons (uncomment if needed) -->
+                    <button v-if="showPrevButton" @click="scrollPrev"
+                        class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full p-2 shadow-md hover:bg-white focus:outline-none"
+                        :class="{ 'hidden': !canScrollLeft }">
+                        <Icon icon="mdi:chevron-left" class="w-5 h-5" />
+                    </button>
+                    <button v-if="showNextButton" @click="scrollNext"
+                        class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full p-2 shadow-md hover:bg-white focus:outline-none"
+                        :class="{ 'hidden': !canScrollRight }">
+                        <Icon icon="mdi:chevron-right" class="w-5 h-5" />
+                    </button>
 
-                <!-- Mobile Carousel (visible only on mobile) -->
-                <div class="block sm:hidden overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
-                    <div class="flex flex-nowrap gap-3">
-                        <div v-for="ad in recentAds" :key="ad.id" class="w-[260px] flex-shrink-0">
-                            <AdCard :ad="ad" :size="'small'" />
+                    <!-- Scrollable Track -->
+                    <div ref="scrollContainer" class="overflow-x-auto overflow-y-hidden pb-4 -mx-4 px-4 scrollbar-hide"
+                        style="scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none;">
+                        <div class="flex flex-nowrap gap-4">
+                            <!-- Each card takes width based on screen size: 
+                 mobile: full width (w-full) but flex-shrink-0 makes it side-scrollable.
+                 Better to use fixed widths: 
+                 on sm: 2 items (50% minus gap), md: 3 items (33.333%), lg: 4 items (25%) -->
+                            <div v-for="ad in recentAds" :key="ad.id"
+                                class="flex-shrink-0 w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.666rem)] lg:w-[calc(25%-0.75rem)]">
+                                <AdCard :ad="ad" :size="'normal'" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -209,6 +226,63 @@ onUnmounted(() => {
     carousel?.removeEventListener('mouseenter', stopAutoPlay);
     carousel?.removeEventListener('mouseleave', startAutoPlay);
 });
+
+const updateScrollButtons = () => {
+    if (!scrollContainer.value) return
+    const { scrollLeft, scrollWidth, clientWidth } = scrollContainer.value
+    canScrollLeft.value = scrollLeft > 20
+    canScrollRight.value = scrollLeft + clientWidth < scrollWidth - 20
+}
+
+// Optional navigation logic (if you uncomment the buttons)
+const scrollContainer = ref(null)
+
+// Optionally show/hide navigation buttons based on scroll position
+const canScrollLeft = ref(false)
+const canScrollRight = ref(false)
+
+const scrollPrev = () => {
+    if (scrollContainer.value) {
+        scrollContainer.value.scrollBy({ left: -300, behavior: 'smooth' })
+    }
+}
+
+const scrollNext = () => {
+    if (scrollContainer.value) {
+        scrollContainer.value.scrollBy({ left: 300, behavior: 'smooth' })
+    }
+}
+
+// Watch scroll events to update button visibility
+const handleScroll = () => {
+    updateScrollButtons()
+}
+
+// Resize observer to recalc on window resize (optional)
+const handleResize = () => {
+    updateScrollButtons()
+}
+
+onMounted(() => {
+    const container = scrollContainer.value
+    if (container) {
+        container.addEventListener('scroll', handleScroll)
+        window.addEventListener('resize', handleResize)
+        updateScrollButtons()
+    }
+})
+
+onUnmounted(() => {
+    const container = scrollContainer.value
+    if (container) {
+        container.removeEventListener('scroll', handleScroll)
+        window.removeEventListener('resize', handleResize)
+    }
+})
+
+// Optional: set true if you want navigation buttons always visible
+const showPrevButton = true
+const showNextButton = true
 </script>
 
 <style scoped>

@@ -4,7 +4,7 @@
         <Head title="Account Settings" />
 
         <div class="py-12">
-            <div class="max-w-8/10 mx-auto space-y-12">
+            <div class="max-w-full px-4 md:px-0 md:max-w-8/10 mx-auto space-y-12">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <!-- Tabs Header -->
                     <div class="border-b border-gray-200">

@@ -137,7 +137,7 @@
                             <Icon icon="mdi:chevron-right" class="text-gray-400 text-lg" />
                         </Link>
 
-                        <Link href="/page/contact"
+                        <Link href="/page"
                             class="flex items-center gap-3 py-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
                             <div class="w-10 h-10 rounded-full bg-brand-teal/10 flex items-center justify-center">
                                 <Icon icon="mdi:message-text-outline" class="text-xl text-brand-teal" />

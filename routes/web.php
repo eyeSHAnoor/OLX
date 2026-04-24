@@ -40,7 +40,10 @@ Route::post('/set-city', function (\Illuminate\Http\Request $request) {
 Route::get('/policy/{type}', [App\Http\Controllers\PolicyController::class, 'show'])->name('policy.show');
 Route::get('/aboutus', [App\Http\Controllers\AboutController::class, 'index'])->name('aboutus');
 Route::get('/page/{pageKey}', [App\Http\Controllers\AboutController::class, 'show'])->name('public.page');
+Route::get('/page', [App\Http\Controllers\AboutController::class, 'nav']);
 Route::get('/regions/{cityName}', [App\Http\Controllers\RegionController::class, 'getByCityName']);
+Route::post('/contact/send', [App\Http\Controllers\AboutController::class, 'send'])->name('contact.send');
+
 
 
 
@@ -228,12 +231,25 @@ Route::middleware([
             // Route::get('api/broadcast-messages/active', [App\Http\Controllers\BroadcastController::class, 'getActive'])
             //     ->name('api.broadcast-messages.active');
 
-               Route::resource('page-contents', App\Http\Controllers\PageContentController::class)->except(['show']);
-    Route::patch('page-contents/{pageContent}/toggle-status', [App\Http\Controllers\PageContentController::class, 'toggleStatus'])->name('page-contents.toggle-status');
-    // Optional: API endpoint for frontend retrieval
-    Route::get('page-contents/by-key/{pageKey}', [App\Http\Controllers\PageContentController::class, 'getByPageKey'])->name('page-contents.by-key');
+            Route::resource('page-contents', App\Http\Controllers\PageContentController::class)->except(['show']);
+            Route::patch('page-contents/{pageContent}/toggle-status', [App\Http\Controllers\PageContentController::class, 'toggleStatus'])->name('page-contents.toggle-status');
+            // Optional: API endpoint for frontend retrieval
+            Route::get('page-contents/by-key/{pageKey}', [App\Http\Controllers\PageContentController::class, 'getByPageKey'])->name('page-contents.by-key');
 
+            // City resource routes (index, create, store, show, edit, update, destroy)
+            Route::resource('cities', App\Http\Controllers\CityController::class);
 
+            // Additional routes for managing regions under a city
+            Route::prefix('cities/{city}')->group(function () {
+                Route::get('regions', [App\Http\Controllers\CityController::class, 'getRegions'])->name('cities.regions');
+                Route::post('regions', [App\Http\Controllers\CityController::class, 'storeRegions'])->name('cities.regions.store');
+            });
+
+            // Routes for direct region management (update/delete)
+            Route::prefix('regions')->group(function () {
+                Route::put('{region}', [App\Http\Controllers\CityController::class, 'updateRegion'])->name('regions.update');
+                Route::delete('{region}', [App\Http\Controllers\CityController::class, 'destroyRegion'])->name('regions.destroy');
+            });
 
                 }
     );
