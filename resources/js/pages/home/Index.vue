@@ -51,7 +51,7 @@
                 <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3">
                     <h2 class="text-lg md:text-xl font-semibold mb-6 text-center">Browse Categories</h2>
 
-                    <div v-if="!isCarouselMode" class="grid grid-cols-4 md:grid-cols-7 gap-4">
+                    <div class="grid grid-cols-4 md:grid-cols-7 gap-4">
                         <div v-for="category in categories" :key="category.id" @click="navigateToCategory(category)"
                             class="flex flex-col items-center cursor-pointer group">
                             <div
@@ -69,7 +69,7 @@
                     </div>
 
                     <!-- MOBILE / TABLET: carousel with 2 rows, 4 columns per view -->
-                    <div v-else>
+                    <div class="hidden">
                         <div class="relative">
                             <!-- Scrollable grid container (2 rows, 4 columns) -->
                             <div ref="carouselContainer"
