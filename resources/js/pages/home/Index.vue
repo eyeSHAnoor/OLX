@@ -3,7 +3,7 @@
         <!-- SEO & Favicon -->
 
         <Head>
-            <title>Marketplace - Buy & Sell New & Used Items</title>
+            <title>Amo mercatus - Buy & Sell New & Used Items</title>
             <meta name="description"
                 content="Find great deals on new and used items in your city. Post free ads, buy and sell electronics, cars, furniture, and more." />
             <meta name="keywords" content="classifieds, buy sell, marketplace, used items, free ads" />
