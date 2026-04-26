@@ -374,10 +374,17 @@ const subscribeToPush = async () => {
         // Get service worker registration
         const registration = await navigator.serviceWorker.ready
 
-        // Subscribe to push manager
-        const subscription = await registration.pushManager.subscribe({
+        // CHECK & REMOVE OLD SUBSCRIPTION FIRST
+        let subscription = await registration.pushManager.getSubscription()
+
+        if (subscription) {
+            console.log('Old subscription found → removing...');
+            await subscription.unsubscribe();
+        }
+
+        // CREATE NEW SUBSCRIPTION
+        subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            // applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY
             applicationServerKey: urlBase64ToUint8Array(vapidKey),
         })
 

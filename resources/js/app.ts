@@ -90,13 +90,13 @@ createInertiaApp({
             });
 
         // =========================================
-        // ✅ SERVICE WORKER (PUSH NOTIFICATIONS)
+        // SERVICE WORKER (PUSH NOTIFICATIONS)
         // =========================================
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker
                 .register('/sw.js')
                 .then((registration) => {
-                    console.log('✅ Service Worker registered:', registration.scope);
+                    console.log('Service Worker registered:', registration.scope);
                 })
                 .catch((err) => {
                     console.error('❌ Service Worker error:', err);

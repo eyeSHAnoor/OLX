@@ -16,7 +16,12 @@ class PushSubscriptionController extends Controller
 
         $user = $request->user();
 
-        // Save subscription
+        if (!$user) {
+            return response()->json([
+                'error' => 'Unauthenticated'
+            ], 401);
+        }
+
         $user->updatePushSubscription(
             $request->endpoint,
             $request->keys['p256dh'],

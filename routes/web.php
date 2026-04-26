@@ -12,8 +12,6 @@ use Illuminate\Support\Facades\Mail;
 
 use App\Http\Controllers\PushSubscriptionController;
 
-Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])
-    ->middleware('auth');
 
 Route::get('/cities/{city}/regions', function (City $city) {
     return $city->regions()->pluck('name');
@@ -250,6 +248,10 @@ Route::middleware([
                 Route::put('{region}', [App\Http\Controllers\CityController::class, 'updateRegion'])->name('regions.update');
                 Route::delete('{region}', [App\Http\Controllers\CityController::class, 'destroyRegion'])->name('regions.destroy');
             });
+
+            
+            Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])
+                ->middleware('auth');
 
                 }
     );
