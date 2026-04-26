@@ -187,7 +187,7 @@
 
                     <Link :href="route('subscriptions.index')"
                         class="flex items-center justify-between  text-gray-700 hover:bg-gray-50 transition-colors">
-                        <Icon icon="mdi:crown" class="text-brand-orange text-4xl shrink-0" />
+                        <Icon icon="mdi:crown" class="text-brand-teal text-3xl shrink-0" />
 
                     </Link>
 

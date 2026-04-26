@@ -19,6 +19,7 @@ class Ad extends Model
         'ad_title',
         'description',
         'price',
+        'discount',
         'city',
         'region',
         'location',
