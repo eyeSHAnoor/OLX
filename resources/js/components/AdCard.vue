@@ -21,13 +21,13 @@
                     </svg>
                 </div>
 
-                <!-- Price Badge -->
+                <!-- Price Badge (ONLY final price when discount present, otherwise full price) -->
                 <div class="absolute top-2 left-2">
                     <span :class="[
                         'bg-white/95 backdrop-blur-sm rounded-full font-medium text-gray-900 shadow-sm',
                         size === 'small' ? 'px-2 py-1 text-[10px]' : 'px-3 py-1.5 text-xs'
                     ]">
-                        Rs {{ formatPrice(ad.price) }}
+                        Rs {{ formatPrice(ad.discount && ad.discount > 0 ? discountedPrice : ad.price) }}
                     </span>
                 </div>
 
@@ -74,6 +74,35 @@
                     {{ ad.ad_title || 'Untitled' }}
                 </h3>
 
+                <!-- Discount info (NEW – below title, inside text area) -->
+                <div v-if="ad.discount && ad.discount > 0" :class="[
+                    'flex items-center gap-2 mb-2',
+                    size === 'small' ? 'gap-1' : 'gap-2'
+                ]">
+                    <!-- Discounted price (prominent) -->
+                    <span :class="[
+                        'font-bold text-gray-900',
+                        size === 'small' ? 'text-xs' : 'text-sm sm:text-base'
+                    ]">
+                        Rs {{ formatPrice(discountedPrice) }}
+                    </span>
+                    <!-- Original price (line-through) -->
+                    <span :class="[
+                        'text-gray-400 line-through',
+                        size === 'small' ? 'text-[10px]' : 'text-xs'
+                    ]">
+                        Rs {{ formatPrice(ad.price) }}
+                    </span>
+                    <!-- Discount % badge -->
+                    <span :class="[
+                        'text-green-700 bg-green-50 font-medium rounded-full',
+                        size === 'small' ? 'text-[9px] px-1.5 py-0.5' : 'text-xs px-2 py-1'
+                    ]">
+                        -{{ ad.discount }}%
+                    </span>
+                </div>
+
+                <!-- Location & Category -->
                 <div :class="[
                     'flex flex-col text-gray-600',
                     size === 'small' ? 'gap-1 mb-2' : 'gap-1.5 mb-3'
@@ -108,13 +137,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span :class="size === 'small' ? 'text-[9px]' : 'text-[10px] sm:text-xs'">{{
-                            timeAgo(ad.created_at) }}</span>
+                        <span :class="size === 'small' ? 'text-[9px]' : 'text-[10px] sm:text-xs'">
+                            {{ timeAgo(ad.created_at) }}
+                        </span>
                     </div>
                     <div class="flex items-center text-gray-500">
-                        <span :class="size === 'small' ? 'text-[9px]' : 'text-[10px] sm:text-xs'">{{ ad.views_count || 0
-                        }}
-                            views</span>
+                        <span :class="size === 'small' ? 'text-[9px]' : 'text-[10px] sm:text-xs'">
+                            {{ ad.views_count || 0 }} views
+                        </span>
                     </div>
                 </div>
             </div>
@@ -123,13 +153,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 
 interface Ad {
     id: number
     ad_title: string
     price: number
+    discount?: number
     location: string
     created_at: string
     is_featured?: boolean
@@ -141,7 +172,7 @@ interface Ad {
 
 interface Props {
     ad: Ad
-    size?: 'normal' | 'small'  // new prop for responsive sizing
+    size?: 'normal' | 'small'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -150,6 +181,15 @@ const props = withDefaults(defineProps<Props>(), {
 
 const isFavorited = ref(!!props.ad.is_favorited)
 const isFavoriteLoading = ref(false)
+
+const discountedPrice = computed(() => {
+    const price = parseFloat(String(props.ad.price))
+    const discount = parseFloat(String(props.ad.discount ?? 0))
+    if (discount > 0 && discount <= 100) {
+        return Math.round(price * (1 - discount / 100))
+    }
+    return price
+})
 
 const toggleFavorite = async () => {
     if (isFavoriteLoading.value) return

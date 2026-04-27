@@ -23,7 +23,7 @@ const categories = computed(() => page.props.categories);
 const brands = computed(() => page.props.brands);
 const features = computed(() => page.props.features);
 
-//console.log('Ad data:', ad.value);
+console.log('Ad data:', ad.value);
 
 interface AdFormData {
     id?: string | number;
@@ -33,6 +33,7 @@ interface AdFormData {
     ad_title: string;
     description: string;
     price: string | number;
+    discount?: string | number;
     location: string;
     city: string;
     region?: string;
@@ -55,6 +56,60 @@ interface AdImageData {
     is_primary: boolean;
 }
 
+// ---------- Discount related reactive state ----------
+const discountType = ref<'percentage' | 'amount'>('percentage');
+const discountValue = ref<number>(0);
+
+const discountedPrice = computed(() => {
+    const originalPrice = Number(form.price);
+    if (isNaN(originalPrice) || originalPrice <= 0) return 0;
+    if (discountValue.value < 0) return originalPrice;
+
+    if (discountType.value === 'percentage') {
+        if (discountValue.value > 100) return 0;
+        const discountAmount = originalPrice * (discountValue.value / 100);
+        return Math.max(0, originalPrice - discountAmount);
+    } else {
+        // Fixed amount
+        if (discountValue.value > originalPrice) return 0;
+        return Math.max(0, originalPrice - discountValue.value);
+    }
+});
+
+const discountPercentageDisplay = computed(() => {
+    const original = Number(form.price);
+    const final = discountedPrice.value;
+    if (original && original > 0 && final < original) {
+        return ((1 - final / original) * 100).toFixed(0);
+    }
+    return 0;
+});
+
+// Initialise discount fields from existing ad (edit mode)
+const initDiscountFromAd = () => {
+    if (!ad.value) return;
+    const original = Number(ad.value.price);
+    const discounted = Number(ad.value.discount);
+    if (isNaN(original) || isNaN(discounted) || original <= 0 || discounted >= original) {
+        // No discount or invalid data – reset
+        discountValue.value = 0;
+        discountType.value = 'percentage';
+        return;
+    }
+    const discountAmount = original - discounted;
+    // Prefer percentage view if it gives an integer, else amount
+    const percent = (discountAmount / original) * 100;
+    if (percent === Math.floor(percent)) {
+        discountType.value = 'percentage';
+        discountValue.value = Math.round(percent);
+    } else {
+        discountType.value = 'amount';
+        discountValue.value = Math.round(discountAmount * 100) / 100;
+    }
+};
+
+// ---------- Discount related reactive state end ----------
+
 // Dynamic attributes and models
 const categoryAttributes = ref<any[]>([]);
 const selectedAttributeValues = ref<Record<number, string | number>>({});
@@ -62,10 +117,8 @@ const brandModels = ref<any[]>([]);
 const isLoadingAttributes = ref(false);
 const isLoadingModels = ref(false);
 const isInitialLoad = ref(true);
-// At the top of <script setup>, after other imports
 import citiesData from '@/data/cities.json';
 
-// Inside the setup, after existing refs:
 const cityOptions = computed(() => {
     return citiesData
         .filter((c: any) => c.country === 'PK')
@@ -88,6 +141,7 @@ const getDefaultForm = (item: App.Data.AdData | undefined): AdFormData => ({
     ad_title: item?.ad_title ?? '',
     description: item?.description ?? '',
     price: item?.price ?? '',
+    discount: item?.discount ?? '', // we'll override later on submit
     city: item?.city ?? '',
     region: item?.region ?? '',
     location: item?.location ?? '',
@@ -143,10 +197,9 @@ const fetchRegions = async (cityName: string) => {
     }
 };
 
-// Watch for city changes
 watch(() => form.city, (newCity, oldCity) => {
     if (newCity !== oldCity) {
-        form.region = ''; // reset region when city changes
+        form.region = '';
         if (newCity) {
             fetchRegions(newCity);
         } else {
@@ -154,7 +207,7 @@ watch(() => form.city, (newCity, oldCity) => {
         }
     }
 });
-// Computed filtered brands based on selected category
+
 const filteredBrands = computed(() => {
     if (!form.category_id) return [];
     return brands.value.filter((brand) =>
@@ -162,7 +215,6 @@ const filteredBrands = computed(() => {
     );
 });
 
-// Function to fetch attributes
 const fetchAttributes = async (categoryId: string | number) => {
     isLoadingAttributes.value = true;
     try {
@@ -173,7 +225,6 @@ const fetchAttributes = async (categoryId: string | number) => {
             categoryAttributes.value = response.data.attributes || [];
         }
 
-        // After loading attributes, populate existing values
         if (ad.value?.attributes && ad.value.attributes.length > 0) {
             ad.value.attributes.forEach((attr: any) => {
                 const attributeId = attr.category_attribute_id || attr.attribute?.id;
@@ -190,7 +241,6 @@ const fetchAttributes = async (categoryId: string | number) => {
     }
 };
 
-// Function to fetch models
 const fetchModels = async (brandId: string | number) => {
     isLoadingModels.value = true;
     try {
@@ -208,25 +258,17 @@ const fetchModels = async (brandId: string | number) => {
     }
 };
 
-// Watch for category changes to load attributes
 watch(() => form.category_id, async (newCategoryId, oldCategoryId) => {
-    // Skip if initial load and category already set
     if (isInitialLoad.value && ad.value?.category_id == newCategoryId) {
         return;
     }
-
     if (newCategoryId && newCategoryId !== oldCategoryId) {
-        // Only reset brand and model if it's a user change, not initial load
         if (!isInitialLoad.value) {
             form.brand_id = '';
             form.model_id = '';
         }
         brandModels.value = [];
-
-        // Clear previous attribute values
         selectedAttributeValues.value = {};
-
-        // Fetch attributes for this category
         await fetchAttributes(newCategoryId);
     } else if (!newCategoryId) {
         categoryAttributes.value = [];
@@ -234,17 +276,12 @@ watch(() => form.category_id, async (newCategoryId, oldCategoryId) => {
     }
 }, { immediate: true });
 
-// Watch for brand changes to load models
 watch(() => form.brand_id, async (newBrandId, oldBrandId) => {
-    // Skip if initial load and brand already set
     if (isInitialLoad.value && ad.value?.brand_id == newBrandId) {
         return;
     }
-
     if (newBrandId && newBrandId !== oldBrandId) {
         await fetchModels(newBrandId);
-
-        // Only reset model if it's a user change
         if (!isInitialLoad.value) {
             form.model_id = '';
         }
@@ -256,15 +293,12 @@ watch(() => form.brand_id, async (newBrandId, oldBrandId) => {
     }
 }, { immediate: true });
 
-// Initial load for edit mode
 onMounted(async () => {
-    // Set form values directly
     if (ad.value) {
         form.category_id = ad.value.category_id;
         form.brand_id = ad.value.brand_id;
         form.model_id = ad.value.brand_model_id || '';
 
-        // Fetch attributes if category exists
         if (ad.value.category_id) {
             await fetchAttributes(ad.value.category_id);
         }
@@ -274,12 +308,8 @@ onMounted(async () => {
                 form.region = ad.value.region;
             }
         }
-
-        // Fetch models if brand exists
         if (ad.value.brand_id) {
             await fetchModels(ad.value.brand_id);
-
-            // Auto-select model after models are loaded
             if (ad.value.brand_model_id && brandModels.value.length > 0) {
                 const modelExists = brandModels.value.some(model => model.id == ad.value.brand_model_id);
                 if (modelExists) {
@@ -287,15 +317,15 @@ onMounted(async () => {
                 }
             }
         }
-    }
 
-    // Set initial load flag to false after everything is loaded
+        // Initialise discount fields from existing ad
+        initDiscountFromAd();
+    }
     setTimeout(() => {
         isInitialLoad.value = false;
     }, 500);
 });
 
-// Search Keywords Handling
 const addKeyword = () => {
     if (newKeyword.value.trim()) {
         const keyword = newKeyword.value.trim().toLowerCase();
@@ -321,7 +351,6 @@ const generateKeywords = () => {
     if (!form.ad_title && !form.description && !form.category_id) return;
 
     const keywords: string[] = [];
-
     if (form.ad_title) {
         const titleWords = form.ad_title.toLowerCase()
             .replace(/[^a-z0-9\s]/gi, '')
@@ -329,21 +358,18 @@ const generateKeywords = () => {
             .filter(word => word.length > 2);
         keywords.push(...titleWords);
     }
-
     if (form.category_id) {
         const category = categories.value.find(c => c.id == form.category_id);
         if (category?.name) {
             keywords.push(category.name.toLowerCase());
         }
     }
-
     if (form.brand_id && filteredBrands.value.length > 0) {
         const brand = filteredBrands.value.find(b => b.id == form.brand_id);
         if (brand?.name) {
             keywords.push(brand.name.toLowerCase());
         }
     }
-
     if (form.city) {
         keywords.push(form.city.toLowerCase());
     }
@@ -366,7 +392,6 @@ const generateKeywords = () => {
     }
 };
 
-// File upload handling
 const imagePreviews = ref<string[]>([]);
 
 const onFilesSelected = (event: Event) => {
@@ -394,7 +419,6 @@ const handleFiles = (files: File[]) => {
 
     validFiles.forEach(file => {
         form.images.push(file);
-
         const reader = new FileReader();
         reader.onload = (e) => {
             imagePreviews.value.push(e.target?.result as string);
@@ -421,14 +445,12 @@ const removeExistingImage = (imageId: string | number) => {
 
 const setPrimaryImage = async (imageId: string | number) => {
     if (!form.id) return;
-
     try {
         await router.post(route('ads.set-primary-image', form.id), {
             image_id: imageId,
         }, {
             preserveScroll: true,
         });
-
         existingImages.value = existingImages.value.map(img => ({
             ...img,
             is_primary: img.id === imageId
@@ -439,6 +461,9 @@ const setPrimaryImage = async (imageId: string | number) => {
 };
 
 const submit = () => {
+    // Attach the computed discounted price to the form data
+    form.discount = discountedPrice.value;
+
     const formData = {
         ...form,
         attributes: selectedAttributeValues.value,
@@ -462,14 +487,12 @@ const submit = () => {
 const alert = useAlertDialog();
 const destroy = async () => {
     if (!form.id) return;
-
     const confirmed = await alert.show({
         title: 'Delete Ad',
         description: `Are you sure you want to delete "${form.ad_title}"? This action cannot be undone.`,
         confirmText: 'Yes, Delete',
         cancelText: 'Cancel',
     });
-
     if (confirmed) {
         form.delete(route('ads.destroy', form.id), {
             preserveScroll: true,
@@ -501,8 +524,7 @@ const primaryImage = computed(() => {
     <AppContainer>
 
         <Head :title="ad ? `Edit: ${ad.ad_title}` : 'Create New Ad'" />
-        <!-- {{ ad }} -->
-        <!-- Page Header -->
+
         <div class="my-8">
             <div class="flex items-center justify-between">
                 <div>
@@ -569,6 +591,36 @@ const primaryImage = computed(() => {
 
                             <TextInput label="Price *" v-model="form.price" :error="form.errors.price" type="number"
                                 placeholder="0.00" required />
+
+                            <!-- Discount Section -->
+                            <div class="space-y-3 rounded-lg border p-4 col-span-2">
+                                <h4 class="text-sm font-medium">Discount (optional)</h4>
+                                <div class="flex items-center gap-4">
+                                    <label class="flex items-center gap-2">
+                                        <input type="radio" v-model="discountType" value="percentage" class="radio" />
+                                        Percentage
+                                    </label>
+                                    <label class="flex items-center gap-2">
+                                        <input type="radio" v-model="discountType" value="amount" class="radio" />
+                                        Amount
+                                    </label>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input v-model.number="discountValue" type="number"
+                                        class="w-full px-3 py-2 border rounded-md" min="0"
+                                        :max="discountType === 'percentage' ? 100 : form.price" />
+                                    <span v-if="discountType === 'percentage'" class="text-sm">%</span>
+                                    <span v-else class="text-sm">off</span>
+                                </div>
+                                <div class="text-sm text-muted-foreground">
+                                    Discounted Price:
+                                    <span class="font-semibold">{{ discountedPrice.toFixed(2) }}Pkr</span>
+                                    <span v-if="discountValue > 0 && discountedPrice < form.price" class="ml-2">
+                                        ({{ discountPercentageDisplay }}% off)
+                                    </span>
+                                </div>
+                            </div>
+                            <!-- End Discount Section -->
 
                             <TextInput label="Location *" v-model="form.location" :error="form.errors.location"
                                 placeholder="Enter location" required />
@@ -727,7 +779,6 @@ const primaryImage = computed(() => {
                     </CardContent>
                 </Card>
 
-                <!-- Features Section -->
                 <Card class="mt-6">
                     <CardHeader>
                         <CardTitle>Ad Features</CardTitle>
@@ -789,7 +840,6 @@ const primaryImage = computed(() => {
                     </CardContent>
                 </Card>
 
-                <!-- Images Section -->
                 <Card class="mt-6">
                     <CardHeader>
                         <CardTitle>Images</CardTitle>

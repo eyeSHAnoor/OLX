@@ -18,15 +18,6 @@
 
         <!-- Mobile Bottom Navigation - Sticky Footer -->
         <MobileBottomNav />
-
-        <!-- <OrderPopup :order="popupOrder" @close="popupOrder = null" /> -->
-        <!-- <div v-if="userId">
-            <OrderPopup v-if="popupOrder" :order="popupOrder"
-                :type="popupOrder?.buyer_id === page.props.auth.user.id ? 'buyer' : 'seller'"
-                @close="popupOrder = null" />
-            <TermsPopup v-if="page.props.auth.user.terms_accepted === 0" />
-            <BroadcastPopup :message="popupBroadcast" @close="popupBroadcast = null" />
-        </div> -->
         <div v-if="userId">
             <OrderPopup v-if="popupOrder && popupType" :order="popupOrder" :type="popupType"
                 @close="popupOrder = null" />

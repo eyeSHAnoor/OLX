@@ -41,6 +41,7 @@ Route::get('/page/{pageKey}', [App\Http\Controllers\AboutController::class, 'sho
 Route::get('/page', [App\Http\Controllers\AboutController::class, 'nav']);
 Route::get('/regions/{cityName}', [App\Http\Controllers\RegionController::class, 'getByCityName']);
 Route::post('/contact/send', [App\Http\Controllers\AboutController::class, 'send'])->name('contact.send');
+Route::get('/search-suggestions', [App\Http\Controllers\SearchController::class, 'suggestions']);
 
 
 
@@ -252,6 +253,7 @@ Route::middleware([
             
             Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])
                 ->middleware('auth');
+            
 
                 }
     );

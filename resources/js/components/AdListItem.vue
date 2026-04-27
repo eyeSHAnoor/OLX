@@ -24,11 +24,11 @@
                         </span>
                     </div>
 
-                    <!-- Price Badge - Mobile only, smaller -->
+                    <!-- Price Badge - Mobile only, shows final price -->
                     <div class="absolute bottom-2 left-2 sm:hidden">
                         <span
                             class="bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full font-medium text-gray-900 text-[10px] shadow">
-                            Rs {{ formatPrice(ad.price) }}
+                            Rs {{ formatPrice(ad.discount && ad.discount > 0 ? discountedPrice : ad.price) }}
                         </span>
                     </div>
                 </div>
@@ -41,9 +41,21 @@
                             <!-- Price & Title Row -->
                             <div class="flex items-start justify-between gap-2 mb-1.5">
                                 <div class="flex-1 min-w-0">
-                                    <!-- Mobile Price -->
+                                    <!-- Mobile Price & Discount -->
                                     <div class="sm:hidden mb-0.5">
-                                        <span class="font-medium text-gray-900 text-xs">
+                                        <div v-if="ad.discount && ad.discount > 0" class="flex items-center gap-1.5">
+                                            <span class="font-medium text-gray-900 text-xs">
+                                                Rs {{ formatPrice(discountedPrice) }}
+                                            </span>
+                                            <span class="text-gray-400 line-through text-[10px]">
+                                                Rs {{ formatPrice(ad.price) }}
+                                            </span>
+                                            <span
+                                                class="text-green-700 bg-green-50 text-[9px] px-1 py-0.5 rounded-full">
+                                                -{{ ad.discount }}%
+                                            </span>
+                                        </div>
+                                        <span v-else class="font-medium text-gray-900 text-xs">
                                             Rs {{ formatPrice(ad.price) }}
                                         </span>
                                     </div>
@@ -55,7 +67,19 @@
 
                                     <!-- Desktop Price & Condition -->
                                     <div class="hidden sm:flex items-center gap-2 mt-1">
-                                        <span class="font-medium text-gray-900 text-sm">
+                                        <div v-if="ad.discount && ad.discount > 0" class="flex items-center gap-1.5">
+                                            <span class="font-medium text-gray-900 text-sm">
+                                                Rs {{ formatPrice(discountedPrice) }}
+                                            </span>
+                                            <span class="text-gray-400 line-through text-xs">
+                                                Rs {{ formatPrice(ad.price) }}
+                                            </span>
+                                            <span
+                                                class="text-green-700 bg-green-50 text-[10px] px-1.5 py-0.5 rounded-full">
+                                                -{{ ad.discount }}%
+                                            </span>
+                                        </div>
+                                        <span v-else class="font-medium text-gray-900 text-sm">
                                             Rs {{ formatPrice(ad.price) }}
                                         </span>
                                         <span v-if="ad.condition"
@@ -162,7 +186,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 
 interface Brand {
@@ -173,6 +197,7 @@ interface Ad {
     id: number
     ad_title: string
     price: number
+    discount?: number  // discount percentage (e.g., 10 for 10%)
     location: string
     created_at: string
     description?: string
@@ -193,6 +218,15 @@ interface Props {
 const props = defineProps<Props>()
 
 const isFavorited = ref(false)
+
+const discountedPrice = computed(() => {
+    const price = parseFloat(String(props.ad.price))
+    const discount = parseFloat(String(props.ad.discount ?? 0))
+    if (discount > 0 && discount <= 100) {
+        return Math.round(price * (1 - discount / 100))
+    }
+    return price
+})
 
 const toggleFavorite = () => {
     isFavorited.value = !isFavorited.value

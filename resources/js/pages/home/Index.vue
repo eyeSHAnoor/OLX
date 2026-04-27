@@ -48,10 +48,10 @@
         <template v-if="!isSearching">
             <!-- BROWSE CATEGORIES SECTION -->
             <section class="py-8 bg-gray-50">
-                <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3">
+                <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 ">
                     <h2 class="text-lg md:text-xl font-semibold mb-6 text-center">Browse Categories</h2>
 
-                    <div class="grid grid-cols-4 md:grid-cols-7 gap-4">
+                    <div class="md:grid hidden grid-cols-4 md:grid-cols-7 gap-4">
                         <div v-for="category in categories" :key="category.id" @click="navigateToCategory(category)"
                             class="flex flex-col items-center cursor-pointer group">
                             <div
@@ -69,7 +69,7 @@
                     </div>
 
                     <!-- MOBILE / TABLET: carousel with 2 rows, 4 columns per view -->
-                    <div class="hidden">
+                    <div class="md:hidden">
                         <div class="relative">
                             <!-- Scrollable grid container (2 rows, 4 columns) -->
                             <div ref="carouselContainer"
@@ -374,54 +374,4 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
-/* Hide scrollbar for carousels */
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
-}
-
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-/* Categories carousel: 2 rows, 3 columns (grid-auto-flow: column) */
-.carousel-grid-container {
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.carousel-grid-container::-webkit-scrollbar {
-    display: none;
-}
-
-.carousel-grid-inner {
-    display: grid;
-    grid-template-rows: repeat(2, 1fr);
-    /* exactly 2 rows */
-    grid-auto-flow: column;
-    /* items flow horizontally */
-    grid-auto-columns: minmax(0, calc((100% - 0.5rem) / 3));
-    /* 3 columns visible per page, tighter spacing */
-    gap: 0.25rem;
-    /* very small gap for compact cards */
-    width: max-content;
-}
-
-.carousel-card {
-    scroll-snap-align: start;
-    min-width: 0;
-}
-
-/* Ensure line-clamp works */
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-</style>
+<style scoped></style>

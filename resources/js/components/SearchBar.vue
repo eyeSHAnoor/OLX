@@ -78,11 +78,24 @@
                     </div>
                 </div>
 
-                <!-- Search Input -->
+                <!-- DESKTOP Search Input with suggestions -->
                 <div class="flex flex-1 relative">
                     <input v-model="searchTerm" @keyup.enter="performSearch" @input="checkResetFilters"
+                        @focus="onSearchFocus" @blur="onSearchBlur"
                         class="border border-r-0 px-3 py-3 text-sm rounded-l-md w-full focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
                         placeholder="Search for item, brand, category..." />
+
+                    <!-- SUGGESTIONS DROPDOWN -->
+                    <ul v-if="showSuggestions && suggestions.length > 0"
+                        class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-30 mt-1 max-h-60 overflow-y-auto">
+                        <li v-for="(suggestion, idx) in suggestions" :key="idx"
+                            @mousedown.prevent="selectSuggestion(suggestion)"
+                            class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex items-center">
+                            <Icon icon="mdi:magnify" class="text-gray-400 mr-2 text-sm" />
+                            {{ suggestion }}
+                        </li>
+                    </ul>
+
                     <button @click="performSearch"
                         class="bg-brand-blue -ml-4 px-4 text-white rounded-r-md flex items-center hover:bg-blue-700 transition-colors">
                         <Icon icon="mdi:magnify" class="text-base" />
@@ -90,13 +103,26 @@
                 </div>
             </div>
 
-            <!-- Mobile layout -->
+            <!-- MOBILE layout -->
             <div class="block md:hidden">
-                <!-- Search Input -->
-                <div class="flex w-full">
+                <!-- MOBILE Search Input with suggestions -->
+                <div class="flex w-full relative">
                     <input v-model="searchTerm" @keyup.enter="performSearch" @input="checkResetFilters"
+                        @focus="onSearchFocus" @blur="onSearchBlur"
                         class="border border-r-0 px-3 py-3 text-sm rounded-l-md w-full focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
                         placeholder="Search for item, brand, category..." />
+
+                    <!-- SUGGESTIONS DROPDOWN (mobile) -->
+                    <ul v-if="showSuggestions && suggestions.length > 0"
+                        class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-30 mt-1 max-h-60 overflow-y-auto">
+                        <li v-for="(suggestion, idx) in suggestions" :key="idx"
+                            @mousedown.prevent="selectSuggestion(suggestion)"
+                            class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex items-center">
+                            <Icon icon="mdi:magnify" class="text-gray-400 mr-2 text-sm" />
+                            {{ suggestion }}
+                        </li>
+                    </ul>
+
                     <button @click="performSearch"
                         class="bg-brand-blue -ml-4 px-4 text-white rounded-r-md flex items-center hover:bg-blue-700 transition-colors">
                         <Icon icon="mdi:magnify" class="text-base" />
@@ -231,6 +257,11 @@ const modalOpen = ref(false)
 const modalView = ref<'cities' | 'regions'>('cities')
 const modalSearchQuery = ref('')
 
+// Suggestion state
+const showSuggestions = ref(false)
+const suggestions = ref<string[]>([])
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
 // Computed location display
 const locationDisplay = computed(() => {
     if (selectedCity.value === 'Pakistan') return 'Pakistan'
@@ -303,24 +334,22 @@ const detectUserCity = (): Promise<string | null> => {
 
 // Use current location (desktop dropdown)
 const useCurrentLocation = async () => {
-    dropdownOpen.value = false // Close dropdown temporarily to show loading state? We can keep it open and show loading.
-    // But we'll just process and then update UI accordingly.
+    dropdownOpen.value = false
     const city = await detectUserCity()
     if (city) {
         selectedCity.value = city
         selectedRegion.value = null
         localStorage.removeItem('selectedRegion')
         await fetchRegions(city)
-        // After setting city, we want to show regions view if regions exist
         if (regions.value.length > 0) {
             showRegionsInDropdown.value = true
-            dropdownOpen.value = true // Re-open with regions view
+            dropdownOpen.value = true
         } else {
             dropdownOpen.value = false
         }
     } else {
         alert('Could not detect your location or city not in our list.')
-        dropdownOpen.value = true // Keep open maybe?
+        dropdownOpen.value = true
     }
 }
 
@@ -463,6 +492,7 @@ watch([selectedCity, selectedRegion], ([city, region], [oldCity, oldRegion]) => 
 
 // Search function
 const performSearch = () => {
+    showSuggestions.value = false  // hide suggestions
     router.visit(route('all.items'), {
         method: 'get',
         data: {
@@ -478,7 +508,7 @@ const performSearch = () => {
     })
 }
 
-// Reset filters if search cleared
+// Reset filters if search cleared – also fetch suggestions
 const checkResetFilters = () => {
     if (!searchTerm.value) {
         selectedCategory.value = ''
@@ -496,5 +526,48 @@ const checkResetFilters = () => {
             preserveState: true
         })
     }
+    // Fetch suggestions with debounce
+    if (debounceTimer) clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => {
+        fetchSuggestions(searchTerm.value)
+    }, 300)
+}
+
+// Fetch suggestions from API
+const fetchSuggestions = async (query: string) => {
+    if (query.length < 2) {
+        suggestions.value = []
+        return
+    }
+    try {
+        const response = await fetch(`/search-suggestions?query=${encodeURIComponent(query)}`)
+        const data = await response.json()
+        suggestions.value = Array.isArray(data) ? data : []
+    } catch (error) {
+        console.error('Failed to fetch suggestions:', error)
+        suggestions.value = []
+    }
+}
+
+// Focus/Blur handlers
+const onSearchFocus = () => {
+    showSuggestions.value = true
+    if (searchTerm.value.length >= 2) {
+        fetchSuggestions(searchTerm.value)
+    }
+}
+
+const onSearchBlur = () => {
+    // Small delay so click on suggestion registers
+    setTimeout(() => {
+        showSuggestions.value = false
+    }, 200)
+}
+
+// Select a suggestion
+const selectSuggestion = (suggestion: string) => {
+    searchTerm.value = suggestion
+    showSuggestions.value = false
+    performSearch()
 }
 </script>

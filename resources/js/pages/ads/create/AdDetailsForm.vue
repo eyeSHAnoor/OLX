@@ -122,74 +122,118 @@
                             {{ form.errors.price }}
                         </p>
                     </div>
-                </div>
-            </div>
 
-            <!-- Category Attributes Section -->
-            <div v-if="categoryAttributes.length > 0"
-                class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <h3 class="font-medium text-gray-900">Product Specifications</h3>
-                    <p class="text-xs text-gray-500 mt-1">Fill in the specifications for your product</p>
-                </div>
-
-                <div class="p-6">
-                    <div class="space-y-4">
-                        <div v-for="attr in categoryAttributes" :key="attr.id"
-                            class="grid grid-cols-3 gap-4 items-start">
-                            <div class="col-span-1">
-                                <label class="block text-sm font-medium text-gray-700">
-                                    {{ attr.name }}
-                                    <span v-if="attr.is_required" class="text-red-500">*</span>
-                                </label>
-                                <div v-if="attr.group?.name" class="text-xs text-gray-400 mt-0.5">
-                                    {{ attr.group.name }}
+                    <!-- Discount (NEW) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Discount (%)
+                            <span class="text-gray-400 text-xs font-normal">(optional)</span>
+                        </label>
+                        <div class="flex items-start gap-4">
+                            <div class="flex-1">
+                                <div class="relative">
+                                    <input v-model.number="form.discount" type="number" min="0" max="100" step="0.01"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                                        placeholder="e.g. 10" />
+                                    <span class="absolute right-4 top-2.5 text-gray-500">%</span>
                                 </div>
+                                <p v-if="form.errors.discount" class="text-red-500 text-xs mt-1.5">
+                                    {{ form.errors.discount }}
+                                </p>
                             </div>
-                            <div class="col-span-2">
-                                <!-- Select type -->
-                                <select v-if="attr.type === 'select'" v-model="selectedAttributeValues[attr.id]"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors bg-white">
-                                    <option value="">Select {{ attr.name }}</option>
-                                    <option v-for="option in attr.options" :key="option.id" :value="option.id">
-                                        {{ option.value }}
-                                    </option>
-                                </select>
-
-                                <!-- Text type -->
-                                <input v-else-if="attr.type === 'text'" v-model="selectedAttributeValues[attr.id]"
-                                    type="text" :placeholder="`Enter ${attr.name.toLowerCase()}`"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors" />
-
-                                <!-- Number type -->
-                                <input v-else-if="attr.type === 'number'" v-model="selectedAttributeValues[attr.id]"
-                                    type="number" step="any" :placeholder="`Enter ${attr.name.toLowerCase()}`"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors" />
-
-                                <!-- Boolean type -->
-                                <div v-else-if="attr.type === 'boolean'" class="flex items-center">
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" v-model="selectedAttributeValues[attr.id]"
-                                            :true-value="1" :false-value="0"
-                                            class="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-400" />
-                                        <span class="ml-2 text-sm text-gray-700">Yes</span>
-                                    </label>
-                                </div>
-
-                                <!-- Textarea type -->
-                                <textarea v-else-if="attr.type === 'textarea'"
-                                    v-model="selectedAttributeValues[attr.id]" rows="3"
-                                    :placeholder="`Enter ${attr.name.toLowerCase()}`"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors resize-none"></textarea>
-
-                                <!-- Default input -->
-                                <input v-else v-model="selectedAttributeValues[attr.id]" type="text"
-                                    :placeholder="`Enter ${attr.name.toLowerCase()}`"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors" />
+                            <!-- Discounted Price Preview -->
+                            <div v-if="form.price !== null && form.price !== '' && form.discount !== null && form.discount !== ''"
+                                class="flex-shrink-0 bg-gray-50 rounded-lg px-4 ">
+                                <p class="text-xs text-gray-500">After discount</p>
+                                <p class="text-sm font-semibold text-gray-900">
+                                    {{ discountedPrice }}
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Specifications (collapsible) -->
+            <div v-if="categoryAttributes.length > 0"
+                class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <!-- Header – click to toggle -->
+                <button type="button" @click="showAttributes = !showAttributes"
+                    class="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors flex justify-between items-center">
+                    <div class="text-left">
+                        <h3 class="font-medium text-gray-900">Product Specifications</h3>
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ showAttributes ? 'Hide specifications' : 'Add detailed specs (optional)' }}
+                        </p>
+                    </div>
+                    <!-- Chevron icon that rotates -->
+                    <svg :class="showAttributes ? 'rotate-180' : ''"
+                        class="w-5 h-5 text-gray-500 transition-transform duration-200" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <!-- Expandable content with smooth animation -->
+                <Transition name="specs-slide">
+                    <div v-if="showAttributes" class="p-6">
+                        <div class="space-y-4">
+                            <div v-for="attr in categoryAttributes" :key="attr.id"
+                                class="grid grid-cols-3 gap-4 items-start">
+                                <div class="col-span-1">
+                                    <label class="block text-sm font-medium text-gray-700">
+                                        {{ attr.name }}
+                                        <span v-if="attr.is_required" class="text-red-500">*</span>
+                                    </label>
+                                    <div v-if="attr.group?.name" class="text-xs text-gray-400 mt-0.5">
+                                        {{ attr.group.name }}
+                                    </div>
+                                </div>
+                                <div class="col-span-2">
+                                    <!-- Select type -->
+                                    <select v-if="attr.type === 'select'" v-model="selectedAttributeValues[attr.id]"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors bg-white">
+                                        <option value="">Select {{ attr.name }}</option>
+                                        <option v-for="option in attr.options" :key="option.id" :value="option.id">
+                                            {{ option.value }}
+                                        </option>
+                                    </select>
+
+                                    <!-- Text type -->
+                                    <input v-else-if="attr.type === 'text'" v-model="selectedAttributeValues[attr.id]"
+                                        type="text" :placeholder="`Enter ${attr.name.toLowerCase()}`"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors" />
+
+                                    <!-- Number type -->
+                                    <input v-else-if="attr.type === 'number'" v-model="selectedAttributeValues[attr.id]"
+                                        type="number" step="any" :placeholder="`Enter ${attr.name.toLowerCase()}`"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors" />
+
+                                    <!-- Boolean type -->
+                                    <div v-else-if="attr.type === 'boolean'" class="flex items-center">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="checkbox" v-model="selectedAttributeValues[attr.id]"
+                                                :true-value="1" :false-value="0"
+                                                class="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-400" />
+                                            <span class="ml-2 text-sm text-gray-700">Yes</span>
+                                        </label>
+                                    </div>
+
+                                    <!-- Textarea type -->
+                                    <textarea v-else-if="attr.type === 'textarea'"
+                                        v-model="selectedAttributeValues[attr.id]" rows="3"
+                                        :placeholder="`Enter ${attr.name.toLowerCase()}`"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors resize-none"></textarea>
+
+                                    <!-- Default input -->
+                                    <input v-else v-model="selectedAttributeValues[attr.id]" type="text"
+                                        :placeholder="`Enter ${attr.name.toLowerCase()}`"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Transition>
             </div>
 
             <!-- Location Section -->
@@ -470,11 +514,13 @@ const isLoadingModels = ref(false)
 const regions = ref([])
 const isLoadingRegions = ref(false)
 
+// Show/hide specifications panel – initially collapsed
+const showAttributes = ref(false)
+
 // Region options formatted for SearchableSelectInput
 const regionOptions = computed(() => {
     return regions.value.map(region => ({
         name: region.name,
-        // You can include other fields if needed
     }))
 })
 
@@ -500,8 +546,6 @@ const fetchRegions = async (cityName) => {
         isLoadingRegions.value = false
     }
 }
-
-
 
 // Image compression state
 const isCompressing = ref(false)
@@ -589,6 +633,17 @@ const handleModelChange = () => {
 
 const availableBrands = computed(() => props.selectedCategory?.brands || [])
 
+// --- NEW: computed discounted price ---
+const discountedPrice = computed(() => {
+    const price = parseFloat(form.price)
+    const discount = parseFloat(form.discount)
+    if (isNaN(price) || isNaN(discount) || discount < 0 || discount > 100) {
+        return null
+    }
+    const discounted = price * (1 - discount / 100)
+    return discounted.toFixed(2) // formatted as currency string
+})
+
 // Initialize form
 const initializeForm = () => {
     const savedDraft = localStorage.getItem(STORAGE_KEY)
@@ -613,6 +668,21 @@ const initializeForm = () => {
         ad_title: props.editMode && props.adData ? props.adData.ad_title : (formData.ad_title || ''),
         description: props.editMode && props.adData ? props.adData.description : (formData.description || ''),
         price: props.editMode && props.adData ? props.adData.price : (formData.price || null),
+        discount: (() => {
+            if (props.editMode && props.adData) {
+                // If editing and discount exists, calculate percentage from discounted price
+                if (props.adData.discount && props.adData.price && props.adData.discount !== props.adData.price) {
+                    const originalPrice = parseFloat(props.adData.price);
+                    const discountedPrice = parseFloat(props.adData.discount);
+                    if (!isNaN(originalPrice) && !isNaN(discountedPrice) && originalPrice > 0) {
+                        const percentage = ((originalPrice - discountedPrice) / originalPrice) * 100;
+                        return percentage.toFixed(2);
+                    }
+                }
+                return null;
+            }
+            return formData.discount || null;
+        })(),
         location: props.editMode && props.adData ? props.adData.location : (formData.location || ''),
         city: props.editMode && props.adData ? props.adData.city : (formData.city || ''),
         seller_name: props.editMode && props.adData ? props.adData.seller_name : (formData.seller_name || ''),
@@ -766,6 +836,7 @@ const resetFormState = () => {
     form.ad_title = ''
     form.description = ''
     form.price = null
+    form.discount = null // NEW: reset discount
     form.location = ''
     form.city = ''
     form.seller_name = ''
@@ -778,6 +849,7 @@ const resetFormState = () => {
     localSelectedBrand.value = null
     localSelectedModel.value = null
     selectedAttributeValues.value = {}
+    showAttributes.value = false
 }
 
 const handleBack = () => {
@@ -809,6 +881,7 @@ const handleSubmit = () => {
         ad_title: form.ad_title,
         description: form.description,
         price: form.price,
+        discount: discountedPrice.value || form.price, // Send discounted price instead of percentage
         location: form.location,
         city: form.city,
         region: form.region,
@@ -971,5 +1044,26 @@ input[type='number']::-webkit-outer-spin-button {
 
 input[type='number'] {
     -moz-appearance: textfield;
+}
+
+/* Smooth slide-open for specifications */
+.specs-slide-enter-active,
+.specs-slide-leave-active {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.specs-slide-enter-from,
+.specs-slide-leave-to {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.specs-slide-enter-to,
+.specs-slide-leave-from {
+    max-height: 2000px;
+    opacity: 1;
 }
 </style>
