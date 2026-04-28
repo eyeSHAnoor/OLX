@@ -10,6 +10,7 @@ class Plan extends Model
     protected $fillable = [
         'name',
         'price',
+        'discount',
         'duration_days',
         'description',
         'features',
@@ -20,6 +21,7 @@ class Plan extends Model
     protected $casts = [
         'features' => 'array',
         'is_popular' => 'boolean',
+        'discount' => 'decimal:2',
         'price' => 'decimal:2'
     ];
 

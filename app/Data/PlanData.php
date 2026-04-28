@@ -11,6 +11,7 @@ class PlanData extends Data
         public int $id,
         public string $name,
         public float $price,
+        public ?float $discount,
         public int $duration_days,
 
         public ?string $description,
@@ -31,6 +32,7 @@ class PlanData extends Data
             name: $plan->name,
 
             price: (float) $plan->price,
+            discount: $plan->discount !== null ? (float) $plan->discount : null,
             duration_days: $plan->duration_days,
 
             description: $plan->description,

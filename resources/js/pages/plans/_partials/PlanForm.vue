@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CardContent } from '@/components/ui/card';
 import { useForm } from '@inertiajs/vue3';
-import { watch, ref, computed } from 'vue';
+import { watch, ref, computed, Text } from 'vue';
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-vue-next';
 
 const { plan } = defineProps<{
@@ -12,6 +12,7 @@ interface PlanFormData {
     id?: string | number;
     name: string;
     price: number | string;
+    discount: number | string;
     duration_days: number | string;
     description?: string;
     features?: string[];
@@ -23,6 +24,7 @@ const getDefaultForm = (item: App.Models.Plan | undefined): PlanFormData => ({
     id: item?.id ?? '',
     name: item?.name ?? '',
     price: item?.price ?? '',
+    discount: item?.discount ?? '',
     duration_days: item?.duration_days ?? '',
     description: item?.description ?? '',
     features: item?.features?.length ? [...item.features] : [''],
@@ -171,6 +173,10 @@ const destroy = async () => {
                             <div class="grid grid-cols-2 gap-6">
                                 <TextInput label="Price (PKR) *" type="number" v-model="form.price"
                                     :error="form.errors.price" min="0" step="0.01" placeholder="0.00" class="w-full" />
+
+                                <TextInput label="Discount price" type="number" v-model="form.discount"
+                                    :error="form.errors.discount" min="0" max="100" step="0.01" placeholder="0"
+                                    class="w-full" />
 
                                 <TextInput label="Duration (Days) *" type="number" v-model="form.duration_days"
                                     :error="form.errors.duration_days" min="1" placeholder="30" class="w-full" />

@@ -166,8 +166,20 @@
                                         </div>
 
                                         <div class="text-right">
-                                            <p class="text-sm font-bold text-gray-900">
+                                            <!-- Discount badge -->
+                                            <!-- <div v-if="plan.discount > 0"
+                                                class="inline-block text-[10px] bg-red-500 text-white px-2 py-0.5 rounded mb-1 font-semibold">
+                                                -{{ plan.discount }}%
+                                            </div> -->
+
+                                            <!-- Old price -->
+                                            <p v-if="plan.discount > 0" class="text-xs text-gray-400 line-through">
                                                 Rs {{ plan.price }}
+                                            </p>
+
+                                            <!-- Final price -->
+                                            <p v-if="plan.discount > 0" class="text-sm font-bold text-gray-900">
+                                                Rs {{ plan.discount }}
                                             </p>
                                         </div>
                                     </div>
@@ -216,9 +228,13 @@
                                     :class="{ 'border-2 border-teal-500': index === popularPlanIndex }">
                                     <div class="p-5">
                                         <h3 class="text-base font-medium text-gray-900 mb-1">{{ plan.name }}</h3>
-                                        <div class="flex items-baseline mb-3">
-                                            <span class="text-2xl font-light text-gray-900">{{ formatPrice(plan.price)
+                                        <div class="flex items-baseline gap-2 mb-3">
+                                            <span class="text-xl font-light line-through text-gray-900">{{
+                                                formatPrice(plan.price)
                                             }}</span>
+                                            <span class="text-xl font-bold  text-gray-900">{{
+                                                formatPrice(plan.discount)
+                                                }}</span>
                                             <span class="text-xs text-gray-500 ml-1">/{{ plan.duration_days }}
                                                 days</span>
                                         </div>
@@ -756,6 +772,8 @@ function copyTillId() {
     navigator.clipboard.writeText('982295010')
     alert('TILL ID copied!')
 }
+
+
 
 function submit() {
     form.post('/subscriptions/manual', {

@@ -75,6 +75,7 @@ class PlanController extends Controller
             'name' => 'required|string|max:255|unique:plans,name',
             'price' => 'required|numeric|min:0',
             'duration_days' => 'required|integer|min:1',
+            'duration_days' => 'required|integer|min:1',
 
             'description' => 'nullable|string',
             'features' => 'nullable|array',
@@ -85,6 +86,7 @@ class PlanController extends Controller
         Plan::create([
             'name' => $request->name,
             'price' => $request->price,
+            'discount' => $request->discount ?? 0,
             'duration_days' => $request->duration_days,
 
             'description' => $request->description,
@@ -108,6 +110,7 @@ class PlanController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:plans,name,' . $plan->id,
             'price' => 'required|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
             'duration_days' => 'required|integer|min:1',
 
             'description' => 'nullable|string',
@@ -119,6 +122,7 @@ class PlanController extends Controller
         $plan->update([
             'name' => $request->name,
             'price' => $request->price,
+            'discount' => $request->discount ?? 0,
             'duration_days' => $request->duration_days,
 
             'description' => $request->description,

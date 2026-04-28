@@ -33,6 +33,7 @@ if (!form.value) {
 const columns = [
     { accessorKey: 'name', header: 'Name', sortable: true, mobileTitle: 'Name' },
     { accessorKey: 'price', header: 'Price', sortable: true, mobileTitle: 'Price' },
+    { accessorKey: 'discount', header: 'Discount', sortable: true, mobileTitle: 'Discount' },
     { accessorKey: 'duration_days', header: 'Duration (Days)', sortable: true, mobileTitle: 'Duration' },
     { accessorKey: 'actions', header: '', sortable: false, mobileTitle: 'Actions' },
 ];

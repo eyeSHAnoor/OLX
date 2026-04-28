@@ -131,11 +131,11 @@
 
                 <!-- Pakistan Button + City/Region Dropdown -->
                 <div class="mt-2 flex flex-row gap-4 items-center justify-start">
-                    <button @click="setPakistanCity"
+                    <!-- <button @click="setPakistanCity"
                         class="text-sm text-brand-teal hover:text-brand-teal/90 transition-colors flex items-center gap-1">
                         <Icon icon="mdi:flag" class="text-sm text-green-600" />
                         <span class="text-sm">Pakistan</span>
-                    </button>
+                    </button> -->
                     <button @click="openModal"
                         class="text-sm text-brand-teal hover:text-brand-teal/90 transition-colors flex items-center gap-1">
                         <Icon icon="mdi:map-marker-outline" class="text-md" />

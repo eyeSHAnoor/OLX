@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Brand;
 use App\Models\Ad;
 use App\Models\Banner;
+use App\Models\BrandModel;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
@@ -342,66 +343,72 @@ class SearchController extends Controller
     }
 
     public function suggestions(Request $request)
-{
-    try {
-        $query = trim($request->input('query', ''));
-        if (strlen($query) < 2) {
+    {
+        try {
+            $query = trim($request->input('query', ''));
+            if (strlen($query) < 2) {
+                return response()->json([]);
+            }
+            $word = strtolower($query);
+
+            // Title suggestions
+            $titleSuggestions = Ad::where('status', 'active')
+                ->whereRaw("LOWER(ad_title) LIKE ?", ["%{$word}%"])
+                ->limit(5)
+                ->pluck('ad_title');
+
+            // Brand suggestions
+            $brandSuggestions = Brand::whereRaw("LOWER(name) LIKE ?", ["{$word}%"])
+                ->limit(3)
+                ->pluck('name')
+                ->map(fn($name) => $name );
+
+            // Category suggestions
+            $categorySuggestions = Category::whereRaw("LOWER(name) LIKE ?", ["{$word}%"])
+                ->limit(3)
+                ->pluck('name')
+                ->map(fn($name) => $name);
+
+            $modelSuggestions = BrandModel::whereRaw("LOWER(name) LIKE ?", ["{$word}%"])
+                ->limit(3)
+                ->pluck('name')
+                ->map(fn($name) => $name );
+            /*
+            |--------------------------------------------------------------------------
+            | 4. Keyword Suggestions (works with model's array cast)
+            |--------------------------------------------------------------------------
+            */
+            $keywordSuggestions = Ad::where('status', 'active')
+                ->whereNotNull('search_keywords')
+                ->limit(20)
+                ->pluck('search_keywords')
+                ->flatMap(function ($keywords) use ($word) {
+                    // Because of the 'array' cast, $keywords is already an array.
+                    // If by any chance it's still a JSON string, fall back to json_decode.
+                    $arr = is_array($keywords) ? $keywords : json_decode($keywords, true);
+                    if (!is_array($arr)) {
+                        return [];
+                    }
+                    return collect($arr)->filter(fn($kw) => str_contains(strtolower($kw), $word));
+                })
+                ->unique()
+                ->values()
+                ->take(5);
+
+            $suggestions = $titleSuggestions
+                ->merge($brandSuggestions)
+                ->merge($categorySuggestions)
+                ->merge($modelSuggestions)
+                ->merge($keywordSuggestions)
+                ->filter()
+                ->unique()
+                ->values()
+                ->take(10);
+
+            return response()->json($suggestions);
+        } catch (\Throwable $e) {
+            \Log::error('Search suggestions error: ' . $e->getMessage());
             return response()->json([]);
         }
-        $word = strtolower($query);
-
-        // Title suggestions
-        $titleSuggestions = Ad::where('status', 'active')
-            ->whereRaw("LOWER(ad_title) LIKE ?", ["%{$word}%"])
-            ->limit(5)
-            ->pluck('ad_title');
-
-        // Brand suggestions
-        $brandSuggestions = Brand::whereRaw("LOWER(name) LIKE ?", ["{$word}%"])
-            ->limit(3)
-            ->pluck('name')
-            ->map(fn($name) => $name . ' (brand)');
-
-        // Category suggestions
-        $categorySuggestions = Category::whereRaw("LOWER(name) LIKE ?", ["{$word}%"])
-            ->limit(3)
-            ->pluck('name')
-            ->map(fn($name) => $name . ' (category)');
-        /*
-        |--------------------------------------------------------------------------
-        | 4. Keyword Suggestions (works with model's array cast)
-        |--------------------------------------------------------------------------
-        */
-        $keywordSuggestions = Ad::where('status', 'active')
-            ->whereNotNull('search_keywords')
-            ->limit(20)
-            ->pluck('search_keywords')
-            ->flatMap(function ($keywords) use ($word) {
-                // Because of the 'array' cast, $keywords is already an array.
-                // If by any chance it's still a JSON string, fall back to json_decode.
-                $arr = is_array($keywords) ? $keywords : json_decode($keywords, true);
-                if (!is_array($arr)) {
-                    return [];
-                }
-                return collect($arr)->filter(fn($kw) => str_contains(strtolower($kw), $word));
-            })
-            ->unique()
-            ->values()
-            ->take(5);
-
-        $suggestions = $titleSuggestions
-            ->merge($brandSuggestions)
-            ->merge($categorySuggestions)
-            ->merge($keywordSuggestions)
-            ->filter()
-            ->unique()
-            ->values()
-            ->take(10);
-
-        return response()->json($suggestions);
-    } catch (\Throwable $e) {
-        \Log::error('Search suggestions error: ' . $e->getMessage());
-        return response()->json([]);
     }
-}
 }
