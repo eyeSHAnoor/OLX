@@ -207,7 +207,6 @@
                                 </div>
 
                                 <!-- Subscription Status -->
-                                <!-- Subscription Status -->
                                 <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                                     <div>
                                         <h3 class="font-medium">Push Notifications</h3>
@@ -236,12 +235,23 @@
                                     </div>
                                 </div>
 
-                                <!-- Browser Support Warning -->
+                                <!-- Browser Support Warning (contextual) -->
                                 <div v-if="!isPushSupported"
                                     class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                    <p class="text-sm text-yellow-700">
-                                        Your browser does not support push notifications. Please use a modern browser
-                                        like Chrome, Firefox, or Edge.
+                                    <p class="text-sm text-yellow-700">{{ supportReason }}</p>
+                                    <p v-if="supportReason.includes('Home Screen')"
+                                        class="text-xs text-yellow-600 mt-1">
+                                        To enable notifications on iOS: open this page in Safari, tap the Share icon,
+                                        then “Add to Home Screen”.
+                                    </p>
+                                    <p v-if="supportReason.includes('HTTPS')" class="text-xs text-yellow-600 mt-1">
+                                        You are currently on HTTP. Switch to the HTTPS version of the site to enable
+                                        notifications.
+                                    </p>
+                                    <p v-else-if="supportReason.includes('does not support')"
+                                        class="text-xs text-yellow-600 mt-1">
+                                        Please use Chrome, Firefox, or Edge on Android, or add this site to your Home
+                                        Screen on iOS 16.4+.
                                     </p>
                                 </div>
                             </div>
@@ -319,21 +329,39 @@ const passwordStrength = computed(() => {
 const isPushSupported = ref(false)
 const isSubscribed = ref(false)
 const isSubscribing = ref(false)
+const isUnsubscribing = ref(false)
 const notificationStatus = ref('Checking browser compatibility...')
+const supportReason = ref('') // contextual reason for lack of support
 
-// Check if service workers and push are supported
 const checkPushSupport = () => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    // 1. Secure context (HTTPS required)
+    if (window.isSecureContext === false) {
         isPushSupported.value = false
-        notificationStatus.value = 'Push notifications not supported in your browser'
+        supportReason.value = 'Push notifications require a secure connection (HTTPS). You are viewing this page over HTTP.'
+        notificationStatus.value = 'Please access this site via HTTPS.'
         return false
     }
+
+    // 2. Check API availability
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        isPushSupported.value = false
+        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
+        if (isIOS) {
+            supportReason.value = 'On iOS, push notifications require iOS 16.4 or later, and the website must be added to the Home Screen.'
+        } else {
+            supportReason.value = 'Your browser does not support the Push API. Please use Chrome, Firefox, or Edge.'
+        }
+        notificationStatus.value = 'Push notifications not supported.'
+        return false
+    }
+
+    // 3. All good – API exists and context secure
     isPushSupported.value = true
+    supportReason.value = ''
     notificationStatus.value = 'Click the button to enable notifications'
     return true
 }
 
-// Get existing subscription
 const checkExistingSubscription = async () => {
     if (!isPushSupported.value) return false
 
@@ -364,7 +392,6 @@ function urlBase64ToUint8Array(base64String) {
     return new Uint8Array([...rawData].map((c) => c.charCodeAt(0)))
 }
 
-// Subscribe to push notifications
 const subscribeToPush = async () => {
     if (!isPushSupported.value) {
         alert('Push notifications are not supported in your browser.')
@@ -374,7 +401,6 @@ const subscribeToPush = async () => {
     try {
         isSubscribing.value = true
 
-        // Request permission
         const permission = await Notification.requestPermission()
         if (permission !== 'granted') {
             alert('Notification permission denied. You can enable it in your browser settings.')
@@ -382,30 +408,24 @@ const subscribeToPush = async () => {
             return
         }
 
-        // Get service worker registration
         const registration = await navigator.serviceWorker.ready
-
-        // CHECK & REMOVE OLD SUBSCRIPTION FIRST
         let subscription = await registration.pushManager.getSubscription()
 
         if (subscription) {
-            console.log('Old subscription found → removing...');
-            await subscription.unsubscribe();
+            console.log('Old subscription found → removing...')
+            await subscription.unsubscribe()
         }
 
-        // CREATE NEW SUBSCRIPTION
         subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(vapidKey),
         })
 
-        // Send subscription to backend
         await axios.post('/push/subscribe', subscription)
 
         isSubscribed.value = true
         notificationStatus.value = 'Successfully subscribed to push notifications'
         alert('You will now receive notifications!')
-
     } catch (error) {
         console.error('Push subscription error:', error)
         notificationStatus.value = 'Subscription failed – try again'
@@ -415,37 +435,29 @@ const subscribeToPush = async () => {
     }
 }
 
-// In the <script setup> section, after existing vars:
-const isUnsubscribing = ref(false);
-
-// Unsubscribe from push notifications
 const unsubscribeFromPush = async () => {
     try {
-        isUnsubscribing.value = true;
+        isUnsubscribing.value = true
 
-        // 1. Get current subscription from browser
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.getSubscription();
+        const registration = await navigator.serviceWorker.ready
+        const subscription = await registration.pushManager.getSubscription()
 
         if (subscription) {
-            // 2. Tell your backend to delete the subscription
             await axios.post('/push/unsubscribe', {
                 endpoint: subscription.endpoint,
-            });
-
-            // 3. Unsubscribe in the browser
-            await subscription.unsubscribe();
+            })
+            await subscription.unsubscribe()
         }
 
-        isSubscribed.value = false;
-        notificationStatus.value = 'You have been unsubscribed from push notifications';
+        isSubscribed.value = false
+        notificationStatus.value = 'You have been unsubscribed from push notifications'
     } catch (error) {
-        console.error('Unsubscribe error:', error);
-        notificationStatus.value = 'Failed to unsubscribe – please try again';
+        console.error('Unsubscribe error:', error)
+        notificationStatus.value = 'Failed to unsubscribe – please try again'
     } finally {
-        isUnsubscribing.value = false;
+        isUnsubscribing.value = false
     }
-};
+}
 
 // Initialize service worker on mount
 onMounted(async () => {
