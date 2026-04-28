@@ -93,14 +93,23 @@ createInertiaApp({
         // SERVICE WORKER (PUSH NOTIFICATIONS)
         // =========================================
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker
-                .register('/sw.js')
-                .then((registration) => {
-                    console.log('Service Worker registered:', registration.scope);
-                })
-                .catch((err) => {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js', {
+                        scope: '/',
+                    });
+
+                    console.log('✅ Service Worker registered:', registration.scope);
+
+                    // 🔥 FORCE it to take control immediately
+                    if (navigator.serviceWorker.controller === null) {
+                        console.log('⚠️ No controller yet, reloading...');
+                        window.location.reload();
+                    }
+                } catch (err) {
                     console.error('❌ Service Worker error:', err);
-                });
+                }
+            });
         }
 
         app.mount(el);
