@@ -374,7 +374,7 @@ onUnmounted(() => {
 });
 </script>
 
-<style>
+<style scoped>
 /* Categories carousel: 2 rows, 3 columns */
 .carousel-grid-container {
     overflow-x: auto;
