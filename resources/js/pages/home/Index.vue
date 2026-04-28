@@ -71,31 +71,26 @@
 
                     <!-- MOBILE / TABLET: carousel with 2 rows, 3 columns per view (Tailwind only) -->
                     <!-- MOBILE / TABLET: carousel with 2 rows, 4 columns per view -->
+                    <!-- MOBILE / TABLET: carousel with 2 rows, fixed-size cards -->
                     <div class="md:hidden">
                         <div class="relative">
                             <div ref="carouselContainer"
                                 class="overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-none"
                                 @scroll="updateCarouselScroll">
-                                <!-- 
-        grid-rows-2    → 2 equal rows
-        grid-flow-col  → items flow horizontally
-        auto-cols-[calc((100%-0.25rem)/4)] → 4 columns per page (smaller cards)
-        gap-0.5        → very tight spacing (0.125rem)
-        w-max          → container expands to hold all columns
-      -->
-                                <div
-                                    class="grid grid-rows-2 grid-flow-col auto-cols-[calc((100%-0.25rem)/7)] gap-0.5 w-max">
+                                <div class="grid grid-rows-2 grid-flow-col gap-1 w-max"
+                                    style="grid-auto-columns: 80px;">
                                     <div v-for="category in categories" :key="category.id"
                                         @click="navigateToCategory(category)"
                                         class="snap-start cursor-pointer group transition-transform hover:scale-105">
                                         <div class="flex flex-col items-center">
+                                            <!-- Image container: square, fixed width inherited from grid column -->
                                             <div
                                                 class="w-full aspect-square rounded-xl overflow-hidden bg-white shadow-sm group-hover:shadow-md transition">
                                                 <img v-if="category.files?.length" :src="category.files[0].file_url"
                                                     class="w-full h-full object-cover" :alt="category.name" />
                                                 <div v-else
                                                     class="w-full h-full flex items-center justify-center text-gray-400">
-                                                    <Icon icon="mdi:image-off" class="text-3xl" />
+                                                    <Icon icon="mdi:image-off" class="text-xl" />
                                                 </div>
                                             </div>
                                             <span
@@ -258,8 +253,13 @@ const goBack = () => {
 const carouselContainer = ref<HTMLElement | null>(null);
 const canScrollLeftCarousel = ref(false);
 const canScrollRightCarousel = ref(false);
-const itemsPerPage = ref(10); // 2 rows × 3 columns
-
+// const itemsPerPage = ref(10); // 2 rows × 3 columns
+const itemsPerPage = computed(() => {
+    const el = carouselContainer.value;
+    if (!el) return 8;
+    const cardWidth = 80 + 4; // 80px card + 4px gap (0.25rem = 4px)
+    return Math.floor(el.clientWidth / cardWidth) * 2; // times 2 rows
+});
 const totalPages = computed(() => {
     return Math.ceil(categories.value.length / itemsPerPage.value);
 });
