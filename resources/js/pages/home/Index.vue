@@ -71,8 +71,7 @@
                     <!-- MOBILE / TABLET: carousel with 2 rows, 4 columns per view -->
                     <div class="md:hidden">
                         <div class="relative">
-                            <div ref="carouselContainer"
-                                class="overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-none"
+                            <div ref="carouselContainer" class="overflow-x-auto snap-x snap-mandatory  scrollbar-none"
                                 @scroll="updateCarouselScroll">
                                 <div class="grid grid-rows-2 grid-flow-col gap-1 w-max"
                                     style="grid-auto-columns: 80px;">
@@ -98,14 +97,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Dot indicators -->
-                        <div v-if="categories.length > itemsPerPage" class="flex justify-center gap-2 mt-6">
-                            <button v-for="(_, idx) in totalPages" :key="idx" @click="scrollToPage(idx)"
-                                class="h-1.5 rounded-full transition-all duration-300"
-                                :class="[currentPage === idx ? 'w-6 bg-brand-teal' : 'w-1.5 bg-gray-300']">
-                            </button>
                         </div>
                     </div>
                 </div>
