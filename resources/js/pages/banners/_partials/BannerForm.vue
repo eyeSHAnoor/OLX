@@ -12,13 +12,10 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:modelValue', 'success']);
 
-// Destructure banner prop for template access
 const { banner, categories } = props;
 
-// Modal visibility
 const isOpen = defineModel<boolean>('modelValue', { default: false });
 
-// Form state
 const form = useForm({
     title: '',
     image_url: '',
@@ -33,6 +30,30 @@ const form = useForm({
 // Image preview
 const imagePreview = ref<string | null>(null);
 const imageError = ref(false);
+
+// New: file upload handling
+const fileInput = ref<HTMLInputElement | null>(null);
+const selectedFile = ref<File | null>(null);
+
+const triggerFileUpload = () => {
+    fileInput.value?.click();
+};
+
+const onFileSelected = (event: Event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+        form.errors.image_url = 'Please select a valid image (JPEG, PNG, GIF, or WebP).';
+        return;
+    }
+
+    form.clearErrors('image_url');
+    selectedFile.value = file;
+    imagePreview.value = URL.createObjectURL(file);
+    imageError.value = false;
+};
 
 // Date range
 const dateRange = computed({
@@ -53,7 +74,6 @@ const dateRange = computed({
     }
 });
 
-// Position options
 const positionOptions = [
     { value: 'homepage', label: 'Homepage', icon: 'lucide:home', description: 'Display on the main homepage' },
     { value: 'category', label: 'Category Pages', icon: 'lucide:layout-grid', description: 'Display on category listing pages' },
@@ -73,38 +93,37 @@ watch(() => props.banner, (newBanner) => {
         form.end_date = newBanner.end_date || null;
         form.status = newBanner.status ?? true;
 
-        // Set image preview
         if (newBanner.image_url) {
             imagePreview.value = newBanner.image_url;
             imageError.value = false;
         }
+        selectedFile.value = null; // Reset file selection when editing
     } else {
         form.reset();
         imagePreview.value = null;
         imageError.value = false;
+        selectedFile.value = null;
     }
 }, { immediate: true });
 
-// Watch for image URL changes
 watch(() => form.image_url, (newUrl) => {
     if (newUrl) {
         imagePreview.value = newUrl;
         imageError.value = false;
-    } else {
+    } else if (!selectedFile.value) {
         imagePreview.value = null;
     }
 });
 
-// Close modal
 const closeModal = () => {
     isOpen.value = false;
     form.reset();
     form.clearErrors();
     imagePreview.value = null;
     imageError.value = false;
+    selectedFile.value = null;
 };
 
-// Submit form
 const submit = () => {
     const options = {
         preserveScroll: true,
@@ -112,22 +131,43 @@ const submit = () => {
             closeModal();
             emit('success');
         },
-        onError: (errors: any) => {
-            console.error('Form errors:', errors);
-        }
+        onError: (errors: any) => console.error('Form errors:', errors),
     };
 
-    if (props.banner?.id) {
-        router.post(route('banners.update', props.banner.id), {
-            ...form.data(),
-            _method: 'PUT',
-        }, options);
+    if (selectedFile.value) {
+        // Send as FormData when a file is attached
+        const formData = new FormData();
+        formData.append('_method', banner?.id ? 'PUT' : 'POST');
+        formData.append('title', form.title);
+        formData.append('image', selectedFile.value); // the file field
+        formData.append('link', form.link);
+        formData.append('position', form.position);
+        if (form.target_category_id) formData.append('target_category_id', String(form.target_category_id));
+        if (form.start_date) formData.append('start_date', form.start_date);
+        if (form.end_date) formData.append('end_date', form.end_date);
+        formData.append('status', form.status ? '1' : '0');
+
+        const url = banner?.id
+            ? route('banners.update', banner.id)
+            : route('banners.store');
+
+        router.post(url, formData, {
+            ...options,
+            forceFormData: true,
+        });
     } else {
-        router.post(route('banners.store'), form.data(), options);
+        // Standard Inertia request (JSON)
+        const payload = { ...form.data(), _method: banner?.id ? 'PUT' : undefined };
+        router.post(
+            banner?.id
+                ? route('banners.update', banner.id)
+                : route('banners.store'),
+            payload,
+            options
+        );
     }
 };
 
-// Test image URL
 const testImageUrl = () => {
     if (form.image_url) {
         imageError.value = false;
@@ -138,7 +178,8 @@ const testImageUrl = () => {
 
 <template>
     <Dialog :open="isOpen" @update:open="closeModal">
-        <DialogContent class="!w-8/12 !max-w-6xl !overflow-y-auto px-7 max-h-[90vh]">
+        <!-- Responsive dialog: full width on mobile, 8/12 on md+ -->
+        <DialogContent class="!w-full md:!w-8/12 !max-w-6xl !overflow-y-auto px-4 sm:px-7 max-h-[90vh]">
             <DialogHeader>
                 <DialogTitle class="flex items-center gap-2">
                     <Icon :icon="banner ? 'lucide:edit' : 'lucide:plus-circle'" class="size-5" />
@@ -169,20 +210,21 @@ const testImageUrl = () => {
                     <p v-if="form.errors.title" class="text-sm text-destructive mt-1">{{ form.errors.title }}</p>
                 </div>
 
-                <!-- Image URL -->
+                <!-- Image URL + Upload -->
                 <div>
                     <label class="text-sm font-medium block mb-2">
                         Image URL <span class="text-destructive">*</span>
                     </label>
-                    <div class="flex gap-2">
+                    <div class="flex flex-col sm:flex-row gap-2">
                         <div class="flex-1">
                             <input v-model="form.image_url" type="url" placeholder="https://example.com/banner.jpg"
                                 class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                                 :class="{ 'border-destructive': form.errors.image_url }" @blur="testImageUrl" />
                         </div>
-                        <AppButton type="button" variant="outline" @click="testImageUrl" :disabled="!form.image_url">
-                            <Icon icon="lucide:refresh-cw" class="size-4" />
-                        </AppButton>
+                        <Button type="button" variant="secondary" @click="triggerFileUpload" class="w-full sm:w-auto">
+                            <Icon icon="lucide:upload" class="size-4" />
+                            Gallery
+                        </Button>
                     </div>
                     <p v-if="form.errors.image_url" class="text-sm text-destructive mt-1">{{ form.errors.image_url }}
                     </p>
@@ -190,7 +232,8 @@ const testImageUrl = () => {
                     <!-- Image Preview -->
                     <div v-if="imagePreview" class="mt-3">
                         <p class="text-xs text-muted-foreground mb-2">Preview:</p>
-                        <div class="relative aspect-[16/9] max-w-md rounded-lg overflow-hidden border bg-gray-50">
+                        <div
+                            class="relative aspect-[16/9] w-full max-w-md rounded-lg overflow-hidden border bg-gray-50">
                             <img :src="imagePreview" alt="Banner preview" class="w-full h-full object-contain"
                                 @error="imageError = true" />
                             <div v-if="imageError"
@@ -204,6 +247,9 @@ const testImageUrl = () => {
                     </div>
                 </div>
 
+                <!-- Hidden file input -->
+                <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileSelected" />
+
                 <!-- Link URL -->
                 <div>
                     <label class="text-sm font-medium block mb-2">Link URL (Optional)</label>
@@ -211,8 +257,7 @@ const testImageUrl = () => {
                         class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                         :class="{ 'border-destructive': form.errors.link }" />
                     <p class="text-xs text-muted-foreground mt-1">Where users will be redirected when clicking the
-                        banner
-                    </p>
+                        banner</p>
                     <p v-if="form.errors.link" class="text-sm text-destructive mt-1">{{ form.errors.link }}</p>
                 </div>
 
@@ -221,7 +266,8 @@ const testImageUrl = () => {
                     <label class="text-sm font-medium block mb-2">
                         Position <span class="text-destructive">*</span>
                     </label>
-                    <div class="grid grid-cols-2 gap-3">
+                    <!-- Responsive grid: single column on mobile, 2 columns from sm breakpoint -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button v-for="option in positionOptions" :key="option.value" type="button"
                             @click="form.position = option.value"
                             class="flex flex-col items-start p-3 border rounded-lg transition-colors" :class="[
@@ -252,8 +298,7 @@ const testImageUrl = () => {
                     </select>
                     <p class="text-xs text-muted-foreground mt-1">Leave empty to show on all category pages</p>
                     <p v-if="form.errors.target_category_id" class="text-sm text-destructive mt-1">{{
-                        form.errors.target_category_id
-                    }}</p>
+                        form.errors.target_category_id }}</p>
                 </div>
 
                 <!-- Date Range -->
@@ -285,12 +330,14 @@ const testImageUrl = () => {
                 </div>
 
                 <!-- Form Actions -->
-                <div class="flex items-center justify-end gap-3 pt-4 border-t">
-                    <AppButton type="button" variant="outline" @click="closeModal" :disabled="form.processing">
+                <!-- Stack on mobile, horizontal on sm+ -->
+                <div class="flex flex-col sm:flex-row sm:justify-end gap-3 pt-4 border-t">
+                    <AppButton type="button" variant="outline" @click="closeModal" :disabled="form.processing"
+                        class="w-full sm:w-auto">
                         Cancel
                     </AppButton>
                     <AppButton type="submit" :processing="form.processing"
-                        :label="banner ? 'Update Banner' : 'Create Banner'" />
+                        :label="banner ? 'Update Banner' : 'Create Banner'" class="w-full sm:w-auto" />
                 </div>
             </form>
         </DialogContent>

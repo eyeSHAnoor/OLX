@@ -207,6 +207,7 @@
                                 </div>
 
                                 <!-- Subscription Status -->
+                                <!-- Subscription Status -->
                                 <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                                     <div>
                                         <h3 class="font-medium">Push Notifications</h3>
@@ -214,15 +215,25 @@
                                             {{ notificationStatus }}
                                         </p>
                                     </div>
-                                    <button @click="subscribeToPush" :disabled="isSubscribing || !isPushSupported"
-                                        class="px-4 py-2 rounded-lg text-white transition-colors" :class="{
-                                            'bg-brand-teal hover:bg-brand-teal/80': !isSubscribed,
-                                            'bg-gray-400 cursor-not-allowed': isSubscribed || !isPushSupported,
-                                            'opacity-50': isSubscribing
-                                        }">
-                                        {{ isSubscribing ? 'Subscribing...' : (isSubscribed ? 'Subscribed' :
-                                            'Enable Notifications') }}
-                                    </button>
+                                    <div class="flex gap-2">
+                                        <!-- Subscribe button (shown when NOT subscribed) -->
+                                        <button v-if="!isSubscribed" @click="subscribeToPush"
+                                            :disabled="isSubscribing || !isPushSupported"
+                                            class="px-4 py-2 rounded-lg text-white transition-colors" :class="{
+                                                'bg-brand-teal hover:bg-brand-teal/80': !isSubscribing && isPushSupported,
+                                                'bg-gray-400 cursor-not-allowed': !isPushSupported,
+                                                'opacity-50': isSubscribing
+                                            }">
+                                            {{ isSubscribing ? 'Subscribing...' : 'Enable Notifications' }}
+                                        </button>
+
+                                        <!-- Unsubscribe button (shown when subscribed) -->
+                                        <button v-if="isSubscribed" @click="unsubscribeFromPush"
+                                            :disabled="isUnsubscribing"
+                                            class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50">
+                                            {{ isUnsubscribing ? 'Unsubscribing...' : 'Unsubscribe' }}
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- Browser Support Warning -->
@@ -403,6 +414,38 @@ const subscribeToPush = async () => {
         isSubscribing.value = false
     }
 }
+
+// In the <script setup> section, after existing vars:
+const isUnsubscribing = ref(false);
+
+// Unsubscribe from push notifications
+const unsubscribeFromPush = async () => {
+    try {
+        isUnsubscribing.value = true;
+
+        // 1. Get current subscription from browser
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+
+        if (subscription) {
+            // 2. Tell your backend to delete the subscription
+            await axios.post('/push/unsubscribe', {
+                endpoint: subscription.endpoint,
+            });
+
+            // 3. Unsubscribe in the browser
+            await subscription.unsubscribe();
+        }
+
+        isSubscribed.value = false;
+        notificationStatus.value = 'You have been unsubscribed from push notifications';
+    } catch (error) {
+        console.error('Unsubscribe error:', error);
+        notificationStatus.value = 'Failed to unsubscribe – please try again';
+    } finally {
+        isUnsubscribing.value = false;
+    }
+};
 
 // Initialize service worker on mount
 onMounted(async () => {

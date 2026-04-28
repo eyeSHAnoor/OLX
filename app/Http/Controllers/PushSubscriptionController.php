@@ -32,4 +32,23 @@ class PushSubscriptionController extends Controller
             'message' => 'Subscribed successfully'
         ]);
     }
+
+    public function destroy(Request $request)
+    {
+        $request->validate([
+            'endpoint' => 'required|string',
+        ]);
+
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        // Delete the subscription by endpoint
+        $user->pushSubscriptions()
+            ->where('endpoint', $request->endpoint)
+            ->delete();
+
+        return response()->json(['message' => 'Unsubscribed successfully']);
+    }
 }

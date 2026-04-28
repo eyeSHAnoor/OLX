@@ -31,11 +31,11 @@ class UserController extends Controller
                 // Add filter for subscription.payment_status
                 AllowedFilter::callback('subscription_payment_status', function ($query, $value) {
                     if ($value === 'none') {
-                        // Users with NO subscription
-                        $query->whereDoesntHave('subscription');
+                        // Users with NO subscriptions at all
+                        $query->whereDoesntHave('latestSubscription');
                     } else {
-                        // Users with subscription and given payment_status
-                        $query->whereHas('subscription', function ($q) use ($value) {
+                        // Filter based on ONLY latest subscription
+                        $query->whereHas('latestSubscription', function ($q) use ($value) {
                             $q->where('payment_status', $value);
                         });
                     }

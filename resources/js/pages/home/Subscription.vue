@@ -165,12 +165,13 @@
                                             </p>
                                         </div>
 
-                                        <div class="text-right">
+                                        <div class="text-right flex flex-col items-end space-y-1">
+
                                             <!-- Discount badge -->
-                                            <!-- <div v-if="plan.discount > 0"
-                                                class="inline-block text-[10px] bg-red-500 text-white px-2 py-0.5 rounded mb-1 font-semibold">
-                                                -{{ plan.discount }}%
-                                            </div> -->
+                                            <div v-if="plan.discount > 0"
+                                                class="inline-flex items-center text-[10px] bg-red-500 text-white px-2 py-0.5 rounded font-semibold">
+                                                -{{ getDiscountPercentage(plan) }}%
+                                            </div>
 
                                             <!-- Old price -->
                                             <p v-if="plan.discount > 0" class="text-xs text-gray-400 line-through">
@@ -178,9 +179,10 @@
                                             </p>
 
                                             <!-- Final price -->
-                                            <p v-if="plan.discount > 0" class="text-sm font-bold text-gray-900">
+                                            <p class="text-sm font-bold text-gray-900">
                                                 Rs {{ plan.discount }}
                                             </p>
+
                                         </div>
                                     </div>
 
@@ -697,6 +699,12 @@ const props = defineProps({
 })
 
 console.log('Available subscription plans:', props.plans)
+const getDiscountPercentage = (plan) => {
+    if (!plan.price || !plan.discount) return 0
+
+    const discount = ((plan.price - plan.discount) / plan.price) * 100
+    return Math.round(discount)
+}
 
 // Generic premium features (from the first screenshot)
 const genericFeatures = ['No Ads', 'Faster Connection', 'Worldwide Location', 'Link up to 10 Devices']

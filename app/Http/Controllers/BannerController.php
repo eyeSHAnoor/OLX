@@ -7,6 +7,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
+use Illuminate\Support\Facades\Storage;
 use App\Data\CategoryData;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -57,14 +58,12 @@ class BannerController extends Controller
         return response()->json($banner);
     }
 
-    /**
-     * Store a new banner
-     */
     public function store(Request $request)
     {
         $request->validate([
             'title'              => 'required|string|max:255',
-            'image_url'          => 'required|string|max:1024',
+            'image_url'          => 'nullable|string|max:1024',   // now nullable if file present
+            'image'              => 'nullable|image|max:2048',     // new file field
             'link'               => 'nullable|url|max:1024',
             'position'           => 'required|in:homepage,category,sidebar,floating',
             'target_category_id' => 'nullable|exists:categories,id',
@@ -73,30 +72,36 @@ class BannerController extends Controller
             'status'             => 'required|boolean',
         ]);
 
-        DB::transaction(function () use ($request) {
-            Banner::create($request->only([
-                'title',
-                'image_url',
-                'link',
-                'position',
-                'target_category_id',
-                'start_date',
-                'end_date',
-                'status',
-            ]));
+        // Ensure at least one image source is provided
+        if (!$request->filled('image_url') && !$request->hasFile('image')) {
+            return back()->withErrors(['image_url' => 'Please provide either an image URL or upload an image.']);
+        }
+
+        $data = $request->only([
+            'title', 'link', 'position', 'target_category_id', 'start_date', 'end_date', 'status'
+        ]);
+
+        // Handle image
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('banners', 'public');
+            $data['image_url'] = Storage::url($path);
+        } else {
+            $data['image_url'] = $request->input('image_url');
+        }
+
+        DB::transaction(function () use ($data) {
+            Banner::create($data);
         });
 
         return redirect()->back()->with('success', 'Banner created successfully.');
     }
 
-    /**
-     * Update an existing banner
-     */
     public function update(Request $request, Banner $banner)
     {
         $request->validate([
             'title'              => 'required|string|max:255',
-            'image_url'          => 'required|string|max:1024',
+            'image_url'          => 'nullable|string|max:1024',
+            'image'              => 'nullable|image|max:2048',
             'link'               => 'nullable|url|max:1024',
             'position'           => 'required|in:homepage,category,sidebar,floating',
             'target_category_id' => 'nullable|exists:categories,id',
@@ -105,17 +110,24 @@ class BannerController extends Controller
             'status'             => 'required|boolean',
         ]);
 
-        DB::transaction(function () use ($request, $banner) {
-            $banner->update($request->only([
-                'title',
-                'image_url',
-                'link',
-                'position',
-                'target_category_id',
-                'start_date',
-                'end_date',
-                'status',
-            ]));
+        $data = $request->only([
+            'title', 'link', 'position', 'target_category_id', 'start_date', 'end_date', 'status'
+        ]);
+
+        // If a new file is uploaded, use it; otherwise keep existing or fallback to URL
+        if ($request->hasFile('image')) {
+            // Optionally delete old file if it exists on disk
+            if ($banner->image_url && \Storage::disk('public')->exists(str_replace('/storage/', '', $banner->image_url))) {
+                \Storage::disk('public')->delete(str_replace('/storage/', '', $banner->image_url));
+            }
+            $path = $request->file('image')->store('banners', 'public');
+            $data['image_url'] = Storage::url($path);
+        } elseif ($request->filled('image_url')) {
+            $data['image_url'] = $request->input('image_url');
+        }
+
+        DB::transaction(function () use ($banner, $data) {
+            $banner->update($data);
         });
 
         return redirect()->back()->with('success', 'Banner updated successfully.');

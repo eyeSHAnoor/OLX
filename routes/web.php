@@ -172,6 +172,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/orders/{order}/accept', [App\Http\Controllers\OrderController::class, 'accept'])->name('orders.accept');
     Route::post('/orders/{order}/reject', [App\Http\Controllers\OrderController::class, 'reject'])->name('orders.reject');
     // Route::post('/orders/{order}/request-review', [App\Http\Controllers\OrderController::class, 'requestReview'])->name('orders.requestReview');
+    Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])->name('push.subscribe');
+    Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'destroy'])->name('push.unsubscribe');
+    
 });
 
 Route::middleware([
@@ -249,12 +252,6 @@ Route::middleware([
                 Route::put('{region}', [App\Http\Controllers\CityController::class, 'updateRegion'])->name('regions.update');
                 Route::delete('{region}', [App\Http\Controllers\CityController::class, 'destroyRegion'])->name('regions.destroy');
             });
-
-            
-            Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])
-                ->middleware('auth');
-            
-
                 }
     );
 

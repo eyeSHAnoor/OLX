@@ -68,10 +68,7 @@
                             </span>
                         </div>
                     </div>
-
-                    <!-- MOBILE / TABLET: carousel with 2 rows, 3 columns per view (Tailwind only) -->
                     <!-- MOBILE / TABLET: carousel with 2 rows, 4 columns per view -->
-                    <!-- MOBILE / TABLET: carousel with 2 rows, fixed-size cards -->
                     <div class="md:hidden">
                         <div class="relative">
                             <div ref="carouselContainer"
@@ -139,7 +136,7 @@
                             style="scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none;">
                             <div class="flex flex-nowrap gap-4">
                                 <div v-for="ad in recentAds" :key="ad.id"
-                                    class="flex-shrink-0 w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.666rem)] lg:w-[calc(25%-0.75rem)]">
+                                    class="flex-shrink-0 w-[260px] sm:w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.666rem)] lg:w-[calc(25%-0.75rem)]">
                                     <AdCard :ad="ad" :size="'normal'" />
                                 </div>
                             </div>

@@ -112,7 +112,7 @@ function formatDuration(days: number): string {
 
                     <template #price-cell="{ row }">
                         <span class="font-semibold">
-                            {{ formatPrice(row.original.price) }}
+                            {{ row.original.price }}
                         </span>
                     </template>
 
