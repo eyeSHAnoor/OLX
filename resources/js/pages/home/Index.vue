@@ -68,7 +68,7 @@
                         </div>
                     </div>
 
-                    <!-- MOBILE / TABLET: carousel with 2 rows, 4 columns per view -->
+                    <!-- MOBILE / TABLET: carousel with 2 rows, 3 columns per view -->
                     <div class="md:hidden">
                         <div class="relative">
                             <!-- Scrollable grid container (2 rows, 4 columns) -->
@@ -374,4 +374,48 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped></style>
+<style>
+/* Categories carousel: 2 rows, 3 columns */
+.carousel-grid-container {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.carousel-grid-container::-webkit-scrollbar {
+    display: none;
+}
+
+.carousel-grid-inner {
+    display: grid;
+    grid-template-rows: repeat(2, 1fr);
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, calc((100% - 0.5rem) / 3));
+    gap: 0.25rem;
+    width: max-content;
+}
+
+.carousel-card {
+    scroll-snap-align: start;
+    min-width: 0;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+</style>
