@@ -51,6 +51,7 @@
                 <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 ">
                     <h2 class="text-lg md:text-xl font-semibold mb-6 text-center">Browse Categories</h2>
 
+                    <!-- Desktop grid (unchanged) -->
                     <div class="md:grid hidden grid-cols-4 md:grid-cols-7 gap-4">
                         <div v-for="category in categories" :key="category.id" @click="navigateToCategory(category)"
                             class="flex flex-col items-center cursor-pointer group">
@@ -68,17 +69,25 @@
                         </div>
                     </div>
 
-                    <!-- MOBILE / TABLET: carousel with 2 rows, 3 columns per view -->
+                    <!-- MOBILE / TABLET: carousel with 2 rows, 3 columns per view (Tailwind only) -->
+                    <!-- MOBILE / TABLET: carousel with 2 rows, 4 columns per view -->
                     <div class="md:hidden">
                         <div class="relative">
-                            <!-- Scrollable grid container (2 rows, 4 columns) -->
                             <div ref="carouselContainer"
-                                class="carousel-grid-container overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4"
+                                class="overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-none"
                                 @scroll="updateCarouselScroll">
-                                <div class="carousel-grid-inner">
+                                <!-- 
+        grid-rows-2    → 2 equal rows
+        grid-flow-col  → items flow horizontally
+        auto-cols-[calc((100%-0.25rem)/4)] → 4 columns per page (smaller cards)
+        gap-0.5        → very tight spacing (0.125rem)
+        w-max          → container expands to hold all columns
+      -->
+                                <div
+                                    class="grid grid-rows-2 grid-flow-col auto-cols-[calc((100%-0.25rem)/7)] gap-0.5 w-max">
                                     <div v-for="category in categories" :key="category.id"
                                         @click="navigateToCategory(category)"
-                                        class="carousel-card snap-start cursor-pointer group transition-transform hover:scale-105">
+                                        class="snap-start cursor-pointer group transition-transform hover:scale-105">
                                         <div class="flex flex-col items-center">
                                             <div
                                                 class="w-full aspect-square rounded-xl overflow-hidden bg-white shadow-sm group-hover:shadow-md transition">
@@ -245,20 +254,11 @@ const goBack = () => {
     router.get(route('home'));
 };
 
-// --- Responsive carousel detection (breakpoint = 1024px) ---
-const isCarouselMode = ref(false);
-let resizeObserver: ResizeObserver | null = null;
-
-const updateCarouselMode = () => {
-    // Use 1024px as the threshold: below that we use the carousel, above we use static grid
-    isCarouselMode.value = window.innerWidth < 1024;
-};
-
-// --- Categories carousel logic (only used when isCarouselMode = true) ---
+// --- Categories carousel logic ---
 const carouselContainer = ref<HTMLElement | null>(null);
 const canScrollLeftCarousel = ref(false);
 const canScrollRightCarousel = ref(false);
-const itemsPerPage = ref(6); // 2 rows * 3 columns
+const itemsPerPage = ref(10); // 2 rows × 3 columns
 
 const totalPages = computed(() => {
     return Math.ceil(categories.value.length / itemsPerPage.value);
@@ -282,7 +282,6 @@ const updateCarouselScroll = () => {
     canScrollLeftCarousel.value = scrollLeft > 10;
     canScrollRightCarousel.value = maxScroll - scrollLeft > 10;
 };
-
 
 const scrollToPage = (pageIndex: number) => {
     const el = carouselContainer.value;
@@ -338,10 +337,6 @@ onMounted(() => {
     heroCarousel?.addEventListener('mouseenter', stopAutoPlay);
     heroCarousel?.addEventListener('mouseleave', startAutoPlay);
 
-    // Initialize carousel mode
-    updateCarouselMode();
-    window.addEventListener('resize', updateCarouselMode);
-
     // Categories carousel listeners
     if (carouselContainer.value) {
         carouselContainer.value.addEventListener('scroll', updateCarouselScroll);
@@ -362,8 +357,6 @@ onUnmounted(() => {
     heroCarousel?.removeEventListener('mouseenter', stopAutoPlay);
     heroCarousel?.removeEventListener('mouseleave', startAutoPlay);
 
-    window.removeEventListener('resize', updateCarouselMode);
-
     if (carouselContainer.value) {
         carouselContainer.value.removeEventListener('scroll', updateCarouselScroll);
     }
@@ -374,48 +367,4 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
-/* Categories carousel: 2 rows, 3 columns */
-.carousel-grid-container {
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.carousel-grid-container::-webkit-scrollbar {
-    display: none;
-}
-
-.carousel-grid-inner {
-    display: grid;
-    grid-template-rows: repeat(2, 1fr);
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, calc((100% - 0.5rem) / 3));
-    gap: 0.25rem;
-    width: max-content;
-}
-
-.carousel-card {
-    scroll-snap-align: start;
-    min-width: 0;
-}
-
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
-}
-
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-</style>
+<!-- ⚠️ No custom <style> block needed. All styling is Tailwind utilities. -->
