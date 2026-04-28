@@ -366,7 +366,7 @@ const checkExistingSubscription = async () => {
     if (!isPushSupported.value) return false
 
     try {
-        const registration = await navigator.serviceWorker.ready
+        const registration = await navigator.serviceWorker.getRegistration()
         const subscription = await registration.pushManager.getSubscription()
         if (subscription) {
             isSubscribed.value = true
@@ -408,7 +408,7 @@ const subscribeToPush = async () => {
             return
         }
 
-        const registration = await navigator.serviceWorker.ready
+        const registration = await navigator.serviceWorker.getRegistration()
         let subscription = await registration.pushManager.getSubscription()
 
         if (subscription) {
@@ -439,7 +439,7 @@ const unsubscribeFromPush = async () => {
     try {
         isUnsubscribing.value = true
 
-        const registration = await navigator.serviceWorker.ready
+        const registration = await navigator.serviceWorker.getRegistration()
         const subscription = await registration.pushManager.getSubscription()
 
         if (subscription) {
@@ -461,14 +461,14 @@ const unsubscribeFromPush = async () => {
 
 // Initialize service worker on mount
 onMounted(async () => {
-    if ('serviceWorker' in navigator) {
-        try {
-            await navigator.serviceWorker.register('/sw.js')
-            console.log('Service Worker registered')
-        } catch (err) {
-            console.error('Service Worker registration failed:', err)
-        }
-    }
+    // if ('serviceWorker' in navigator) {
+    //     try {
+    //         await navigator.serviceWorker.register('/sw.js')
+    //         console.log('Service Worker registered')
+    //     } catch (err) {
+    //         console.error('Service Worker registration failed:', err)
+    //     }
+    // }
 
     if (checkPushSupport()) {
         await checkExistingSubscription()
