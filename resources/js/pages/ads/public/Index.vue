@@ -7,7 +7,9 @@
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <h1 class="text-2xl md:text-3xl font-bold text-gray-900">My Ads</h1>
-                        <p class="text-sm text-gray-600 mt-1">Manage and track all your marketplace listings</p>
+                        <p class="text-sm text-gray-600 mt-1">
+                            Manage and track all your marketplace listings
+                        </p>
                     </div>
 
                     <!-- Create New Ad Button -->
@@ -75,7 +77,9 @@
                         <select v-model="filters.category" @change="handleCategoryChange"
                             class="flex-shrink-0 px-2 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[110px]">
                             <option value="">All Categories</option>
-                            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                                {{ cat.name }}
+                            </option>
                         </select>
 
                         <!-- Sort Filter -->
@@ -102,7 +106,10 @@
                         <span v-if="filters.global"
                             class="inline-flex items-center gap-1 px-3 py-1 bg-brand-teal/10 text-brand-teal rounded-full text-xs sm:text-[10px]">
                             Search: "{{ truncateText(filters.global, 30) }}"
-                            <button @click="filters.global = ''; applyFilters()" class="hover:text-brand-teal/80">
+                            <button @click="
+                                filters.global = '';
+                            applyFilters();
+                            " class="hover:text-brand-teal/80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -113,8 +120,11 @@
                         <span v-if="filters.category"
                             class="inline-flex items-center gap-1 px-3 py-1 bg-brand-teal/10 text-brand-teal rounded-full text-xs sm:text-[10px]">
                             Category: {{ getCategoryName(filters.category) }}
-                            <button @click="filters.category = ''; handleCategoryChange(); applyFilters()"
-                                class="hover:text-brand-teal/80">
+                            <button @click="
+                                filters.category = '';
+                            handleCategoryChange();
+                            applyFilters();
+                            " class="hover:text-brand-teal/80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -125,7 +135,10 @@
                         <span v-if="filters.brand"
                             class="inline-flex items-center gap-1 px-3 py-1 bg-brand-blue/10 text-brand-blue rounded-full text-xs sm:text-[10px]">
                             Brand: {{ getBrandName(filters.brand) }}
-                            <button @click="filters.brand = ''; applyFilters()" class="hover:text-brand-blue/80">
+                            <button @click="
+                                filters.brand = '';
+                            applyFilters();
+                            " class="hover:text-brand-blue/80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -135,9 +148,13 @@
 
                         <span v-if="filters.min_price || filters.max_price"
                             class="inline-flex items-center gap-1 px-3 py-1 bg-brand-teal/10 text-brand-teal rounded-full text-xs sm:text-[10px]">
-                            Price: {{ formatPrice(filters.min_price) }} - {{ formatPrice(filters.max_price) }}
-                            <button @click="filters.min_price = ''; filters.max_price = ''; applyFilters()"
-                                class="hover:text-brand-teal/80">
+                            Price: {{ formatPrice(filters.min_price) }} -
+                            {{ formatPrice(filters.max_price) }}
+                            <button @click="
+                                filters.min_price = '';
+                            filters.max_price = '';
+                            applyFilters();
+                            " class="hover:text-brand-teal/80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -148,7 +165,10 @@
                         <span v-if="sort !== 'newest'"
                             class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-[10px]">
                             Sort: {{ getSortLabel(sort) }}
-                            <button @click="sort = 'newest'; applyFilters()" class="hover:text-gray-900">
+                            <button @click="
+                                sort = 'newest';
+                            applyFilters();
+                            " class="hover:text-gray-900">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -167,29 +187,23 @@
             <!-- Status Tabs -->
             <!-- Status Tabs -->
             <div class="border-b border-gray-200 my-4 sm:my-6">
-
                 <nav class="-mb-px flex overflow-x-auto no-scrollbar space-x-4 sm:space-x-6 px-1" aria-label="Tabs">
-
                     <button v-for="tab in statusTabs" :key="tab.value" @click="setStatusFilter(tab.value)" :class="[
                         'flex items-center whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition',
                         activeStatusTab === tab.value
                             ? 'border-brand-teal text-brand-teal'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
                     ]">
                         {{ tab.label }}
-
                     </button>
-
                 </nav>
-
             </div>
 
             <!-- Loading Spinner (when filters applied and no ads yet) -->
             <div v-if="loading && allLoadedAds.length === 0" class="text-center py-12">
                 <svg class="animate-spin w-10 h-10 text-brand-teal mx-auto mb-3" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                    </circle>
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor"
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                     </path>
@@ -201,12 +215,10 @@
             <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
                 <div v-for="ad in allLoadedAds" :key="ad.id"
                     class="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-200">
-
                     <!-- Image Container -->
                     <div class="relative aspect-square bg-gray-100">
-                        <img v-if="ad.images?.length"
-                            :src="`/storage/${ad.images.find(img => img.is_primary)?.path || ad.images[0].path}`"
-                            :alt="ad.ad_title"
+                        <img v-if="ad.images?.length" :src="`/storage/${ad.images.find((img) => img.is_primary)?.path || ad.images[0].path
+                            }`" :alt="ad.ad_title"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         <div v-else class="w-full h-full flex items-center justify-center">
                             <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -220,9 +232,9 @@
                             <span :class="{
                                 'bg-green-500': ad.status === 'active',
                                 'bg-yellow-500': ad.status === 'pending',
-                                'bg-gray-500': ad.status === 'sold' || ad.status === 'expired'
+                                'bg-gray-500': ad.status === 'sold' || ad.status === 'expired',
                             }" class="px-2 py-1 text-xs font-medium text-white rounded-md">
-                                {{ ad.status || 'active' }}
+                                {{ ad.status || "active" }}
                             </span>
                         </div>
 
@@ -278,7 +290,24 @@
 
                     <!-- Ad Details -->
                     <div class="p-3">
-                        <div class="text-lg font-bold text-brand-teal mb-1">
+                        <!-- Price with Discount Info -->
+                        <div v-if="ad.discount && ad.discount > 0" class="mb-2">
+                            <!-- Discounted price (prominent) -->
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-lg font-bold text-brand-teal">
+                                    {{ formatPrice(ad.discount) }}
+                                </span>
+                                <!-- Original price (line-through) -->
+                                <span class="text-xs text-gray-400 line-through">
+                                    {{ formatPrice(ad.price) }}
+                                </span>
+                                <!-- Discount % badge -->
+                                <span class="text-xs text-green-700 bg-green-50 font-medium px-2 py-0.5 rounded-full">
+                                    -{{ calculateDiscountPercentage(ad.price, ad.discount).toFixed(1) }}%
+                                </span>
+                            </div>
+                        </div>
+                        <div v-else class="text-lg font-bold text-brand-teal mb-1">
                             {{ formatPrice(ad.price) }}
                         </div>
                         <h3 class="font-medium text-gray-900 mb-1 line-clamp-2 text-sm">
@@ -301,7 +330,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                {{ ad.location || 'Location not set' }}
+                                {{ ad.location || "Location not set" }}
                             </div>
                             <div class="flex items-center gap-1">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -343,8 +372,9 @@
             <div ref="loadMoreTrigger" v-if="hasMorePages && !loading && allLoadedAds.length > 0" class="h-10"></div>
 
             <!-- No more items message -->
-            <div v-if="!hasMorePages && allLoadedAds.length > 0 && allLoadedAds.length === totalAds"
-                class="text-center py-6">
+            <div v-if="
+                !hasMorePages && allLoadedAds.length > 0 && allLoadedAds.length === totalAds
+            " class="text-center py-6">
                 <p class="text-sm text-gray-400">You've seen all {{ totalAds }} ads</p>
             </div>
 
@@ -371,323 +401,379 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { router, Link } from '@inertiajs/vue3'
-import OlxLayout from '@/layouts/OlxLayout.vue'
-import debounce from 'lodash/debounce'
-import { useShadcnAlert } from '@/composables/useShadcnAlert'
-import ShadcnAlertDialog from '@/components/ShadcnAlertDialog.vue'
-import TopCategoriesBar from '@/components/TopCategoriesBar.vue'
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
+import { router, Link } from "@inertiajs/vue3";
+import OlxLayout from "@/layouts/OlxLayout.vue";
+import debounce from "lodash/debounce";
+import { useShadcnAlert } from "@/composables/useShadcnAlert";
+import ShadcnAlertDialog from "@/components/ShadcnAlertDialog.vue";
+import TopCategoriesBar from "@/components/TopCategoriesBar.vue";
 
 interface Props {
     ads: {
-        data: any[]
-        current_page: number
-        last_page: number
-        total: number
-        from: number
-        to: number
-        next_page_url: string | null
-        prev_page_url: string | null
-    }
-    categories: any[]
-    brands: any[]
+        data: any[];
+        current_page: number;
+        last_page: number;
+        total: number;
+        from: number;
+        to: number;
+        next_page_url: string | null;
+        prev_page_url: string | null;
+    };
+    categories: any[];
+    brands: any[];
     filters: {
         filter: {
-            global: string | null
-            category: string | null
-            brand: string | null
-            min_price: string | null
-            max_price: string | null
-            status: string | null
-        }
-        sort: string
-    }
+            global: string | null;
+            category: string | null;
+            brand: string | null;
+            min_price: string | null;
+            max_price: string | null;
+            status: string | null;
+        };
+        sort: string;
+    };
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 // ==================== ALL REFS (MUST BE DEFINED BEFORE ANY WATCH THAT USES THEM) ====================
-const allLoadedAds = ref<any[]>([])
-const currentPage = ref(1)
-const totalPages = ref(1)
-const totalAds = ref(0)
-const loading = ref(false)           // <-- Moved up to fix ReferenceError
+const allLoadedAds = ref<any[]>([]);
+const currentPage = ref(1);
+const totalPages = ref(1);
+const totalAds = ref(0);
+const loading = ref(false); // <-- Moved up to fix ReferenceError
 
 // Status tabs
-const activeStatusTab = ref(props.filters?.filter?.status || 'all')
+const activeStatusTab = ref(props.filters?.filter?.status || "all");
 const statusTabs = [
-    { label: 'All Ads', value: 'all' },
-    { label: 'Active', value: 'active' },
-    { label: 'Inactive', value: 'inactive' },
-    { label: 'Sold', value: 'sold' },
-]
+    { label: "All Ads", value: "all" },
+    { label: "Active", value: "active" },
+    { label: "Inactive", value: "inactive" },
+    { label: "Sold", value: "sold" },
+];
 
 // Filter states
 const filters = ref({
-    global: props.filters?.filter?.global || '',
-    category: props.filters?.filter?.category || '',
-    brand: props.filters?.filter?.brand || '',
-    min_price: props.filters?.filter?.min_price || '',
-    max_price: props.filters?.filter?.max_price || '',
-    status: props.filters?.filter?.status || ''
-})
+    global: props.filters?.filter?.global || "",
+    category: props.filters?.filter?.category || "",
+    brand: props.filters?.filter?.brand || "",
+    min_price: props.filters?.filter?.min_price || "",
+    max_price: props.filters?.filter?.max_price || "",
+    status: props.filters?.filter?.status || "",
+});
 
-const sort = ref(props.filters?.sort || 'newest')
+const sort = ref(props.filters?.sort || "newest");
 
 // Infinite scroll refs
-const loadMoreTrigger = ref<HTMLElement | null>(null)
-let observer: IntersectionObserver | null = null
+const loadMoreTrigger = ref<HTMLElement | null>(null);
+let observer: IntersectionObserver | null = null;
 
 // ==================== WATCHES ====================
 // This watch now has access to 'loading' because it's defined above
-watch(() => props.ads, (newData) => {
-    if (newData) {
-        if (newData.current_page === 1) {
-            allLoadedAds.value = [...newData.data]
-        } else {
-            allLoadedAds.value = [...allLoadedAds.value, ...newData.data]
+watch(
+    () => props.ads,
+    (newData) => {
+        if (newData) {
+            if (newData.current_page === 1) {
+                allLoadedAds.value = [...newData.data];
+            } else {
+                allLoadedAds.value = [...allLoadedAds.value, ...newData.data];
+            }
+            currentPage.value = newData.current_page;
+            totalPages.value = newData.last_page;
+            totalAds.value = newData.total;
+            loading.value = false; // Safe now
         }
-        currentPage.value = newData.current_page
-        totalPages.value = newData.last_page
-        totalAds.value = newData.total
-        loading.value = false   // Safe now
-    }
-}, { immediate: true, deep: true })
+    },
+    { immediate: true, deep: true }
+);
 
 // ==================== COMPUTED ====================
-const hasMorePages = computed(() => currentPage.value < totalPages.value)
+const hasMorePages = computed(() => currentPage.value < totalPages.value);
 
-const activeAds = computed(() => allLoadedAds.value.filter(ad => ad.status === 'active').length)
-const pendingAds = computed(() => allLoadedAds.value.filter(ad => ad.status === 'pending').length)
-const totalViews = computed(() => allLoadedAds.value.reduce((sum, ad) => sum + (ad.views || 0), 0))
+const activeAds = computed(
+    () => allLoadedAds.value.filter((ad) => ad.status === "active").length
+);
+const pendingAds = computed(
+    () => allLoadedAds.value.filter((ad) => ad.status === "pending").length
+);
+const totalViews = computed(() =>
+    allLoadedAds.value.reduce((sum, ad) => sum + (ad.views || 0), 0)
+);
 
 const isFiltered = computed(() => {
-    return filters.value.global ||
+    return (
+        filters.value.global ||
         filters.value.category ||
         filters.value.brand ||
         filters.value.min_price ||
         filters.value.max_price ||
-        sort.value !== 'newest'
-})
+        sort.value !== "newest"
+    );
+});
 
 // ==================== METHODS ====================
 const setStatusFilter = (status: string) => {
-    activeStatusTab.value = status
-    filters.value.status = status === 'all' ? '' : status
-    applyFilters()
-}
+    activeStatusTab.value = status;
+    filters.value.status = status === "all" ? "" : status;
+    applyFilters();
+};
 
 const getStatusCount = (status: string) => {
-    if (status === 'all') return totalAds.value
-    return allLoadedAds.value.filter(ad => ad.status === status).length
-}
+    if (status === "all") return totalAds.value;
+    return allLoadedAds.value.filter((ad) => ad.status === status).length;
+};
 
 const toggleAdStatus = async (ad: any) => {
-    const newStatus = ad.status === 'active' ? 'inactive' : 'active'
-    await updateAdStatus(ad.id, newStatus)
-}
+    const newStatus = ad.status === "active" ? "inactive" : "active";
+    await updateAdStatus(ad.id, newStatus);
+};
 
 const reactivateSoldAd = async (ad: any) => {
-    await updateAdStatus(ad.id, 'active')
-}
+    await updateAdStatus(ad.id, "active");
+};
 
 const updateAdStatus = async (adId: number, newStatus: string) => {
-    router.patch(route('user.ads.status', { ad: adId }), { status: newStatus }, {
-        preserveScroll: true,
-        onSuccess: () => {
-            const adIndex = allLoadedAds.value.findIndex(a => a.id === adId)
-            if (adIndex !== -1) {
-                allLoadedAds.value[adIndex].status = newStatus
-            }
+    router.patch(
+        route("user.ads.status", { ad: adId }),
+        { status: newStatus },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                const adIndex = allLoadedAds.value.findIndex((a) => a.id === adId);
+                if (adIndex !== -1) {
+                    allLoadedAds.value[adIndex].status = newStatus;
+                }
+            },
         }
-    })
-}
+    );
+};
 
 const formatPrice = (price: number | string) => {
-    if (!price) return 'Any'
-    const num = typeof price === 'string' ? parseFloat(price) : price
+    if (!price) return "Any";
+    const num = typeof price === "string" ? parseFloat(price) : price;
     if (num >= 100000) {
-        return 'Rs. ' + (num / 100000).toFixed(1) + 'L'
+        return "Rs. " + (num / 100000).toFixed(1) + "L";
     } else if (num >= 1000) {
-        return 'Rs. ' + (num / 1000).toFixed(1) + 'K'
+        return "Rs. " + (num / 1000).toFixed(1) + "K";
     }
-    return 'Rs. ' + num.toString()
-}
+    return "Rs. " + num.toString();
+};
+
+const calculateDiscountPercentage = (price: number, discountedPrice: number) => {
+    const p = parseFloat(String(price));
+    const dp = parseFloat(String(discountedPrice));
+    if (dp > 0 && dp < p) {
+        return ((p - dp) / p) * 100;
+    }
+    return 0;
+};
 
 const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    });
+};
 
 const getCategoryName = (id: string) => {
-    const category = props.categories?.find(c => c.id == id)
-    return category?.name || id
-}
+    const category = props.categories?.find((c) => c.id == id);
+    return category?.name || id;
+};
 
 const getBrandName = (id: string) => {
-    const brand = props.brands?.find(b => b.id == id)
-    return brand?.name || id
-}
+    const brand = props.brands?.find((b) => b.id == id);
+    return brand?.name || id;
+};
 
 const getSortLabel = (sortValue: string) => {
     const labels: Record<string, string> = {
-        'newest': 'Newest First',
-        'price_low': 'Price: Low to High',
-        'price_high': 'Price: High to Low'
-    }
-    return labels[sortValue] || sortValue
-}
+        newest: "Newest First",
+        price_low: "Price: Low to High",
+        price_high: "Price: High to Low",
+    };
+    return labels[sortValue] || sortValue;
+};
 
 const truncateText = (text: string, maxLength: number) => {
-    if (!text) return ''
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
-}
+    if (!text) return "";
+    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+};
 
 const handleCategoryChange = () => {
-    filters.value.brand = ''
-}
+    filters.value.brand = "";
+};
 
 const setupObserver = () => {
-    if (observer) observer.disconnect()
-    observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && !loading.value && hasMorePages.value) {
-            loadMore()
-        }
-    }, { threshold: 0.1, rootMargin: '100px' })
-    if (loadMoreTrigger.value) observer.observe(loadMoreTrigger.value)
-}
+    if (observer) observer.disconnect();
+    observer = new IntersectionObserver(
+        (entries) => {
+            if (entries[0].isIntersecting && !loading.value && hasMorePages.value) {
+                loadMore();
+            }
+        },
+        { threshold: 0.1, rootMargin: "100px" }
+    );
+    if (loadMoreTrigger.value) observer.observe(loadMoreTrigger.value);
+};
 
 const loadMore = () => {
-    if (loading.value || !hasMorePages.value) return
-    const nextPage = currentPage.value + 1
-    if (nextPage > totalPages.value) return
+    if (loading.value || !hasMorePages.value) return;
+    const nextPage = currentPage.value + 1;
+    if (nextPage > totalPages.value) return;
 
-    loading.value = true
-    router.get(route('user.ads'), {
-        page: nextPage,
-        filter: {
-            global: filters.value.global,
-            category: filters.value.category,
-            brand: filters.value.brand,
-            min_price: filters.value.min_price,
-            max_price: filters.value.max_price,
-            status: filters.value.status
+    loading.value = true;
+    router.get(
+        route("user.ads"),
+        {
+            page: nextPage,
+            filter: {
+                global: filters.value.global,
+                category: filters.value.category,
+                brand: filters.value.brand,
+                min_price: filters.value.min_price,
+                max_price: filters.value.max_price,
+                status: filters.value.status,
+            },
+            sort: sort.value,
         },
-        sort: sort.value
-    }, {
-        preserveState: true,
-        preserveScroll: true,
-        only: ['ads'],
-        onSuccess: () => {
-            loading.value = false
-            setTimeout(setupObserver, 100)
-        },
-        onError: () => {
-            loading.value = false
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ["ads"],
+            onSuccess: () => {
+                loading.value = false;
+                setTimeout(setupObserver, 100);
+            },
+            onError: () => {
+                loading.value = false;
+            },
         }
-    })
-}
+    );
+};
 
 const applyFilters = () => {
-    allLoadedAds.value = []
-    currentPage.value = 1
-    loading.value = true
+    allLoadedAds.value = [];
+    currentPage.value = 1;
+    loading.value = true;
 
-    router.get(route('user.ads'), {
-        filter: {
-            global: filters.value.global,
-            category: filters.value.category,
-            brand: filters.value.brand,
-            min_price: filters.value.min_price,
-            max_price: filters.value.max_price,
-            status: filters.value.status
+    router.get(
+        route("user.ads"),
+        {
+            filter: {
+                global: filters.value.global,
+                category: filters.value.category,
+                brand: filters.value.brand,
+                min_price: filters.value.min_price,
+                max_price: filters.value.max_price,
+                status: filters.value.status,
+            },
+            sort: sort.value,
+            page: 1,
         },
-        sort: sort.value,
-        page: 1
-    }, {
-        preserveState: true,
-        preserveScroll: true,
-        onSuccess: () => {
-            loading.value = false
-        },
-        onError: () => {
-            loading.value = false
+        {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                loading.value = false;
+            },
+            onError: () => {
+                loading.value = false;
+            },
         }
-    })
-}
+    );
+};
 
 const resetFilters = () => {
     filters.value = {
-        global: '',
-        category: '',
-        brand: '',
-        min_price: '',
-        max_price: '',
-        status: ''
-    }
-    sort.value = 'newest'
-    applyFilters()
-}
+        global: "",
+        category: "",
+        brand: "",
+        min_price: "",
+        max_price: "",
+        status: "",
+    };
+    sort.value = "newest";
+    applyFilters();
+};
 
 const editAd = (adId: number) => {
-    router.get(route('user.ads.edit', { id: adId }))
-}
+    router.get(route("user.ads.edit", { id: adId }));
+};
 
 const viewAd = (adId: number) => {
-    router.get(route('ads.show', { id: adId }))
-}
+    router.get(route("ads.show", { id: adId }));
+};
 
-const alert = useShadcnAlert()
+const alert = useShadcnAlert();
 const confirmDeleteAd = async (ad: any) => {
     const confirmed = await alert.show({
-        type: 'destructive',
-        title: 'Delete Ad',
+        type: "destructive",
+        title: "Delete Ad",
         description: `Are you sure you want to delete "${ad.ad_title}"? This action cannot be undone.`,
-        confirmText: 'Yes, Delete',
-        cancelText: 'Cancel'
-    })
+        confirmText: "Yes, Delete",
+        cancelText: "Cancel",
+    });
     if (confirmed) {
-        router.delete(route('ads.destroy', { id: ad.id }), {
+        router.delete(route("ads.destroy", { id: ad.id }), {
             preserveScroll: true,
             onSuccess: () => {
-                const index = allLoadedAds.value.findIndex(a => a.id === ad.id)
+                const index = allLoadedAds.value.findIndex((a) => a.id === ad.id);
                 if (index !== -1) {
-                    allLoadedAds.value.splice(index, 1)
-                    totalAds.value--
+                    allLoadedAds.value.splice(index, 1);
+                    totalAds.value--;
                 }
-            }
-        })
+            },
+        });
     }
-}
+};
 
 // ==================== WATCHERS (continued) ====================
 const debouncedApplyFilters = debounce(() => {
-    applyFilters()
-}, 500)
+    applyFilters();
+}, 500);
 
-watch(() => filters.value.global, () => {
-    debouncedApplyFilters()
-})
-
-watch([() => filters.value.category, () => filters.value.brand, () => filters.value.min_price, () => filters.value.max_price, sort], () => {
-    applyFilters()
-})
-
-watch(allLoadedAds, (newAds) => {
-    if (hasMorePages.value && newAds.length > 0) {
-        setTimeout(setupObserver, 100)
+watch(
+    () => filters.value.global,
+    () => {
+        debouncedApplyFilters();
     }
-}, { deep: true })
+);
+
+watch(
+    [
+        () => filters.value.category,
+        () => filters.value.brand,
+        () => filters.value.min_price,
+        () => filters.value.max_price,
+        sort,
+    ],
+    () => {
+        applyFilters();
+    }
+);
+
+watch(
+    allLoadedAds,
+    (newAds) => {
+        if (hasMorePages.value && newAds.length > 0) {
+            setTimeout(setupObserver, 100);
+        }
+    },
+    { deep: true }
+);
 
 // ==================== LIFECYCLE ====================
 onMounted(() => {
-    setTimeout(setupObserver, 100)
-})
+    setTimeout(setupObserver, 100);
+});
 
 onUnmounted(() => {
-    if (observer) observer.disconnect()
-})
+    if (observer) observer.disconnect();
+});
 </script>
 
 <style scoped>
