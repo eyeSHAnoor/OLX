@@ -34,6 +34,12 @@ Route::post('/set-city', function (\Illuminate\Http\Request $request) {
         session(['city' => $request->city]);
         session(['region' => $request->region]); // Clear region if city is Pakistan
         session()->save(); 
+
+        Log::error('Set-city session write', [
+        'city' => session('city'),
+        'region' => session('region'),
+        'session_id' => session()->getId()
+    ]);
         // return back();
         // return response()->json(['status' => 'ok']);
         return Inertia::location(url()->previous());
