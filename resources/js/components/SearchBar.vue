@@ -132,11 +132,6 @@
 
                 <!-- Pakistan Button + City/Region Dropdown -->
                 <div class="mt-2 flex flex-row gap-4 items-center justify-start">
-                    <!-- <button @click="setPakistanCity"
-                        class="text-sm text-brand-teal hover:text-brand-teal/90 transition-colors flex items-center gap-1">
-                        <Icon icon="mdi:flag" class="text-sm text-green-600" />
-                        <span class="text-sm">Pakistan</span>
-                    </button> -->
                     <button @click="openModal"
                         class="text-sm text-brand-teal hover:text-brand-teal/90 transition-colors flex items-center gap-1">
                         <Icon icon="mdi:map-marker-outline" class="text-md" />
@@ -507,22 +502,32 @@ watch([selectedCity, selectedRegion], ([city, region], [oldCity, oldRegion]) => 
         { city, region },
         {
             preserveScroll: true,
-            onSuccess: () => router.reload({ only: ["selectedCity", "selectedRegion"] }),
+            onSuccess: () => {
+                // Build the current URL but remove any existing location filter params
+                const url = new URL(window.location.href);
+                url.searchParams.delete("filter[city]");
+                url.searchParams.delete("filter[region]");
+
+                // Reload the page cleanly
+                router.visit(url.pathname + url.search, {
+                    preserveScroll: true,
+                    preserveState: false, // fresh page load so server re‑reads session
+                });
+            },
         }
     );
 });
 
 // Search function
 const performSearch = () => {
-    showSuggestions.value = false; // hide suggestions
+    showSuggestions.value = false;
     router.visit(route("all.items"), {
         method: "get",
         data: {
             filter: {
                 global: searchTerm.value,
                 category: selectedCategory.value,
-                city: selectedCity.value,
-                region: selectedRegion.value,
+                // city and region are intentionally omitted – session handles location
             },
         },
         preserveScroll: true,
@@ -540,8 +545,7 @@ const checkResetFilters = () => {
                 filter: {
                     global: "",
                     category: "",
-                    city: selectedCity.value,
-                    region: selectedRegion.value,
+                    // again, no city/region
                 },
             },
             preserveScroll: true,
