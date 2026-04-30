@@ -149,7 +149,7 @@
                     <!-- Modal Header -->
                     <div class="flex items-center justify-between p-4 border-b">
                         <div class="flex items-center">
-                            <button v-if="modalView === 'regions'" @click="modalView = 'cities'"
+                            <button v-if="modalView === 'regions'" @click="goBackToCitiesFromModal"
                                 class="mr-3 text-gray-600">
                                 <Icon icon="mdi:arrow-left" class="text-xl" />
                             </button>
@@ -406,14 +406,12 @@ const useCurrentLocationInModal = async () => {
 // ────────────────────────────────────────────────────────
 const toggleDropdown = () => {
     dropdownOpen.value = !dropdownOpen.value;
+
     if (dropdownOpen.value) {
         citySearchQuery.value = "";
-        // If a city is already active and regions are loaded, show regions directly
-        if (selectedCity.value !== "Pakistan" && regions.value.length > 0) {
-            showRegionsInDropdown.value = true;
-        } else {
-            showRegionsInDropdown.value = false;
-        }
+
+        // ALWAYS start from cities
+        showRegionsInDropdown.value = false;
     }
 };
 
@@ -460,6 +458,14 @@ const openModal = () => {
 };
 const closeModal = () => {
     modalOpen.value = false;
+};
+
+const goBackToCitiesFromModal = () => {
+    modalView.value = "cities";
+    modalSearchQuery.value = "";
+
+    // Optional (recommended for clean UX)
+    // don't wipe selectedCity, just UI cleanup
 };
 
 const selectCityFromModal = async (city: string) => {
