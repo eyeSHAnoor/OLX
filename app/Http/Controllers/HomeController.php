@@ -18,11 +18,16 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         // Log::info('home controller opened');
-        Log::info('Incoming region:', [
-    'request' => $request->input('filter.region'),
-    'has' => $request->has('filter.region'),
-    'session' => session('region')
-]);
+        Log::error('Incoming region:', [
+            'request' => $request->input('filter.region'),
+            'has' => $request->has('filter.region'),
+            'session' => session('region')
+        ]);
+        Log::error('Incoming city:', [
+            'request' => $request->input('filter.city'),
+            'has' => $request->has('filter.city'),
+            'session' => session('city')
+        ]);
 
         $selectedCity = strtolower(session('city', 'Pakistan'));
         $selectedRegion = $request->input('filter.region') 
@@ -33,8 +38,8 @@ class HomeController extends Controller
             $selectedRegion = null;
         } 
 
-        Log::info('Selected city: ' . $selectedCity);
-        Log::info('Selected region: ' . $selectedRegion);
+        Log::error('Selected city: ' . $selectedCity);
+        Log::error('Selected region: ' . $selectedRegion);
 
         // Filters
         $searchTerm    = $request->input('filter.global');

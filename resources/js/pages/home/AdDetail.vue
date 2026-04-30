@@ -29,8 +29,6 @@
                         }}</span>
                 </nav>
 
-
-
                 <!-- Main Content Grid -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                     <!-- Left Column - Images and Main Details -->
@@ -68,7 +66,9 @@
                                     <Icon :icon="isFavorited ? 'mdi:heart' : 'lucide:heart'"
                                         class="size-4 sm:size-5 transition-colors" :class="[
                                             isFavorited ? 'text-red-500' : 'text-gray-600',
-                                            isFavoriteLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                                            isFavoriteLoading
+                                                ? 'opacity-50 cursor-not-allowed'
+                                                : 'cursor-pointer',
                                         ]" />
                                 </button>
                             </div>
@@ -79,7 +79,10 @@
                                     <button v-for="(image, index) in ad.images" :key="image.id"
                                         @click="selectImage(index)"
                                         class="relative flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all"
-                                        :class="currentImageIndex === index ? 'border-primary' : 'border-transparent hover:border-gray-300'">
+                                        :class="currentImageIndex === index
+                                                ? 'border-primary'
+                                                : 'border-transparent hover:border-gray-300'
+                                            ">
                                         <img :src="`/storage/${image.path}`" :alt="`Thumbnail ${index + 1}`"
                                             class="w-full h-full object-cover" />
                                         <div v-if="image.is_primary"
@@ -94,16 +97,18 @@
                         <!-- Ad Details Card -->
                         <div class="bg-white rounded-lg sm:rounded-xl shadow-sm p-4 sm:p-5 lg:p-6">
                             <div class="flex items-start justify-between gap-3 mb-3 sm:mb-4">
-                                <h1 class="text-md sm:text-lg lg:text-xl font-semibold mb-3 sm:mb-4">{{ ad.ad_title }}
+                                <h1 class="text-md sm:text-lg lg:text-xl font-semibold mb-3 sm:mb-4">
+                                    {{ ad.ad_title }}
                                 </h1>
 
                                 <div class="flex items-center gap-2 sm:gap-3">
                                     <button @click="!hasOrdered && ad?.user?.id !== userId && handleShowModal()"
                                         :disabled="hasOrdered || ad?.user?.id === userId"
                                         class="group relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-200 shadow-md"
-                                        :class="(hasOrdered || ad?.user?.id === userId)
-                                            ? 'bg-gray-200 cursor-not-allowed opacity-60'
-                                            : 'bg-white hover:bg-gray-200 hover:scale-105 active:scale-95 hover:shadow-lg'">
+                                        :class="hasOrdered || ad?.user?.id === userId
+                                                ? 'bg-gray-200 cursor-not-allowed opacity-60'
+                                                : 'bg-white hover:bg-gray-200 hover:scale-105 active:scale-95 hover:shadow-lg'
+                                            ">
                                         <Icon icon="lucide:shopping-cart" class="size-4 sm:size-5" />
                                         <span class="text-xs sm:text-sm font-medium hidden sm:inline">Order</span>
                                         <!-- Tooltip for mobile -->
@@ -118,21 +123,27 @@
                                             isFavorited
                                                 ? 'border-red-200 bg-red-50 hover:bg-red-100'
                                                 : 'border-gray-200 hover:border-red-200 hover:bg-red-50',
-                                            isFavoriteLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                                            isFavoriteLoading
+                                                ? 'opacity-50 cursor-not-allowed'
+                                                : 'cursor-pointer',
                                         ]" :disabled="isFavoriteLoading">
                                         <Icon :icon="isFavorited ? 'mdi:heart' : 'lucide:heart'"
                                             class="size-4 sm:size-5 transition-colors" :class="[
-                                                isFavorited ? 'text-red-500' : 'text-gray-500 group-hover:text-red-500'
+                                                isFavorited
+                                                    ? 'text-red-500'
+                                                    : 'text-gray-500 group-hover:text-red-500',
                                             ]" />
                                         <span class="text-xs sm:text-sm font-medium hidden sm:inline" :class="[
-                                            isFavorited ? 'text-red-600' : 'text-gray-600 group-hover:text-red-600'
+                                            isFavorited
+                                                ? 'text-red-600'
+                                                : 'text-gray-600 group-hover:text-red-600',
                                         ]">
-                                            {{ isFavorited ? 'Saved' : 'Save' }}
+                                            {{ isFavorited ? "Saved" : "Save" }}
                                         </span>
                                         <!-- Tooltip for mobile -->
                                         <span
                                             class="sm:hidden absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                            {{ isFavorited ? 'Remove from favorites' : 'Add to favorites' }}
+                                            {{ isFavorited ? "Remove from favorites" : "Add to favorites" }}
                                         </span>
                                     </button>
                                 </div>
@@ -145,7 +156,7 @@
                                     </span>
                                     <span
                                         class="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-green-100 text-green-700 rounded-full text-xs sm:text-sm font-medium">
-                                        {{ ad.is_featured ? 'Featured' : 'Regular' }}
+                                        {{ ad.is_featured ? "Featured" : "Regular" }}
                                     </span>
                                 </div>
                                 <span class="text-xs sm:text-sm text-gray-500">
@@ -158,15 +169,22 @@
                                 class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg mb-4 sm:mb-5">
                                 <div>
                                     <p class="text-xs text-gray-500 mb-0.5">Brand</p>
-                                    <p class="text-sm font-medium">{{ ad.brand?.name || 'Not specified' }}</p>
+                                    <p class="text-sm font-medium">
+                                        {{ ad.brand?.name || "Not specified" }}
+                                    </p>
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500 mb-0.5">Category</p>
-                                    <p class="text-sm font-medium">{{ ad.category?.name || 'Not specified' }}</p>
+                                    <p class="text-sm font-medium">
+                                        {{ ad.category?.name || "Not specified" }}
+                                    </p>
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500 mb-0.5">Location</p>
-                                    <p class="text-sm font-medium">{{ ad.location }}, {{ ad.city }}</p>
+                                    <p class="text-sm font-medium">
+                                        {{ ad.location }}{{ ad.region ? `, ${ad.region}` : "" }},
+                                        {{ ad.city }}
+                                    </p>
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500 mb-0.5">Seller</p>
@@ -176,14 +194,18 @@
 
                             <!-- Description -->
                             <div class="mb-4 sm:mb-5">
-                                <h2 class="text-base sm:text-md font-semibold mb-2 sm:mb-3">Description</h2>
-                                <p class="text-xs sm:text-sm text-gray-700 leading-relaxed whitespace-pre-line">{{
-                                    ad.description }}</p>
+                                <h2 class="text-base sm:text-md font-semibold mb-2 sm:mb-3">
+                                    Description
+                                </h2>
+                                <p class="text-xs sm:text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                                    {{ ad.description }}
+                                </p>
                             </div>
 
                             <!-- Features/Specifications -->
                             <div v-if="ad.features?.length" class="border-t pt-4 sm:pt-5">
-                                <h2 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Features & Specifications
+                                <h2 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
+                                    Features & Specifications
                                 </h2>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                                     <div v-for="feature in ad.features" :key="feature.id"
@@ -202,7 +224,9 @@
 
                             <!-- Search Keywords -->
                             <div v-if="ad.search_keywords?.length" class="border-t pt-4 sm:pt-5 mt-4 sm:mt-5">
-                                <h2 class="text-base sm:text-md font-semibold mb-2 sm:mb-3">Related Keywords</h2>
+                                <h2 class="text-base sm:text-md font-semibold mb-2 sm:mb-3">
+                                    Related Keywords
+                                </h2>
                                 <div class="flex flex-wrap gap-1.5 sm:gap-2">
                                     <span v-for="keyword in ad.search_keywords.slice(0, 15)" :key="keyword"
                                         class="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-gray-100 text-gray-700 rounded-full text-xs hover:bg-gray-200 transition-colors cursor-default">
@@ -220,7 +244,9 @@
                     <div class="space-y-4 sm:space-y-5">
                         <!-- Seller Card -->
                         <div class="bg-white rounded-lg sm:rounded-xl shadow-sm p-4 sm:p-5">
-                            <h2 class="text-base sm:text-md font-semibold mb-3 sm:mb-4">Seller Information</h2>
+                            <h2 class="text-base sm:text-md font-semibold mb-3 sm:mb-4">
+                                Seller Information
+                            </h2>
 
                             <Link :href="route('user.profile', ad?.user?.id)"
                                 class="flex items-center gap-3 mb-4 sm:mb-5">
@@ -230,8 +256,9 @@
                                 </div>
                                 <div>
                                     <p class="font-medium text-sm sm:text-md">{{ ad?.user?.name }}</p>
-                                    <p class="text-xs text-gray-500">Member since {{
-                                        formatMemberSince(ad.user?.created_at) }}</p>
+                                    <p class="text-xs text-gray-500">
+                                        Member since {{ formatMemberSince(ad.user?.created_at) }}
+                                    </p>
                                 </div>
                             </Link>
 
@@ -305,9 +332,11 @@
                 <!-- Ad Rating Section - Beautifully designed at the end -->
                 <div class="bg-white rounded-lg sm:rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 mt-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Customer Ratings</h2>
+                        <h2 class="text-lg sm:text-xl font-semibold text-gray-800">
+                            Customer Ratings
+                        </h2>
                         <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
-                            {{ adRatingCount }} {{ adRatingCount === 1 ? 'Rating' : 'Ratings' }}
+                            {{ adRatingCount }} {{ adRatingCount === 1 ? "Rating" : "Ratings" }}
                         </span>
                     </div>
 
@@ -316,8 +345,9 @@
                         class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-6 pb-6 border-b border-gray-100">
                         <!-- Average Score -->
                         <div class="flex flex-col items-center">
-                            <span class="text-4xl sm:text-5xl font-bold text-gray-900">{{ adAvgRating.toFixed(1)
-                            }}</span>
+                            <span class="text-4xl sm:text-5xl font-bold text-gray-900">{{
+                                adAvgRating.toFixed(1)
+                                }}</span>
                             <span class="text-xs text-gray-500 mt-1">out of 5</span>
                         </div>
 
@@ -326,8 +356,10 @@
                             <!-- Average Stars Display -->
                             <div class="flex items-center gap-2 mb-3">
                                 <div class="flex gap-1">
-                                    <Icon v-for="i in 5" :key="i" icon="lucide:star" class="size-5"
-                                        :class="i <= Math.round(adAvgRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'" />
+                                    <Icon v-for="i in 5" :key="i" icon="lucide:star" class="size-5" :class="i <= Math.round(adAvgRating)
+                                            ? 'text-yellow-400 fill-yellow-400'
+                                            : 'text-gray-200'
+                                        " />
                                 </div>
                                 <span class="text-sm text-gray-600">Average Rating</span>
                             </div>
@@ -364,15 +396,15 @@
                                             star <= (hoverRating || userCurrentRating)
                                                 ? 'text-yellow-400 fill-yellow-400'
                                                 : 'text-gray-300 hover:text-yellow-200',
-                                            isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                                            isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
                                         ]" />
                                     </button>
                                 </div>
 
                                 <div class="flex items-center gap-3">
                                     <span v-if="userCurrentRating > 0" class="text-sm text-gray-600">
-                                        You rated this <span class="font-medium text-gray-900">{{ userCurrentRating
-                                        }}/5</span>
+                                        You rated this
+                                        <span class="font-medium text-gray-900">{{ userCurrentRating }}/5</span>
                                     </span>
                                     <span v-else class="text-sm text-gray-500">Click a star to rate</span>
 
@@ -417,15 +449,18 @@
                                     <div class="flex items-center gap-2 mb-1">
                                         <Link :href="route('user.profile', rating.rater?.id)"
                                             class="font-medium text-sm hover:text-primary transition-colors">
-                                            {{ rating.rater?.name || 'Anonymous' }}
+                                            {{ rating.rater?.name || "Anonymous" }}
                                         </Link>
                                         <span class="text-xs text-gray-500">•</span>
-                                        <span class="text-xs text-gray-500">{{ formatRelativeTime(rating.created_at)
-                                        }}</span>
+                                        <span class="text-xs text-gray-500">{{
+                                            formatRelativeTime(rating.created_at)
+                                            }}</span>
                                     </div>
                                     <div class="flex gap-1">
-                                        <Icon v-for="i in 5" :key="i" icon="lucide:star" class="size-3.5"
-                                            :class="i <= rating.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'" />
+                                        <Icon v-for="i in 5" :key="i" icon="lucide:star" class="size-3.5" :class="i <= rating.rating
+                                                ? 'text-yellow-400 fill-yellow-400'
+                                                : 'text-gray-200'
+                                            " />
                                     </div>
                                 </div>
                             </div>
@@ -435,13 +470,17 @@
                     <!-- No ratings yet -->
                     <div v-else class="text-center py-6">
                         <Icon icon="lucide:star" class="size-10 text-gray-300 mx-auto mb-2" />
-                        <p class="text-sm text-gray-500">No ratings yet. Be the first to rate this ad!</p>
+                        <p class="text-sm text-gray-500">
+                            No ratings yet. Be the first to rate this ad!
+                        </p>
                     </div>
                 </div>
 
                 <!-- Similar Ads Section -->
                 <div v-if="similarAds?.length" class="mt-8 sm:mt-10 lg:mt-12">
-                    <h2 class="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-5">Similar Ads</h2>
+                    <h2 class="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-5">
+                        Similar Ads
+                    </h2>
                     <CategoryAds :ads="similarAds" />
                 </div>
             </div>
@@ -459,12 +498,13 @@
         </div>
         <!-- Report Modal -->
         <ReportModal v-model="showReportModal" :ad="ad" :reasons="reportReasons" @submitted="handleReportSubmitted" />
-        <OrderModal v-model="showModal" :ad="ad" @order-placed="handleOrderPlaced"
-            @success="showToastMessage('Order placed successfully! The seller has been notified.')" />
+        <OrderModal v-model="showModal" :ad="ad" @order-placed="handleOrderPlaced" @success="
+            showToastMessage('Order placed successfully! The seller has been notified.')
+            " />
         <!-- Lightbox Modal -->
         <Teleport to="body">
             <div v-if="lightboxOpen" class="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center"
-                style="height: 100dvh; width: 100dvw;" @click.self="closeLightbox">
+                style="height: 100dvh; width: 100dvw" @click.self="closeLightbox">
                 <!-- Close button (always visible) -->
                 <button @click="closeLightbox"
                     class="absolute top-4 right-4 z-20 text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition touch-manipulation">
@@ -484,9 +524,13 @@
                 <!-- Zoom controls (bottom center) -->
                 <div
                     class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4 bg-black/60 rounded-full px-5 py-2 backdrop-blur-sm z-10">
-                    <button @click="zoomOut" class="text-white text-2xl font-bold px-2 touch-manipulation">−</button>
+                    <button @click="zoomOut" class="text-white text-2xl font-bold px-2 touch-manipulation">
+                        −
+                    </button>
                     <button @click="resetZoomAndPan" class="text-white text-sm px-3">Reset</button>
-                    <button @click="zoomIn" class="text-white text-2xl font-bold px-2 touch-manipulation">+</button>
+                    <button @click="zoomIn" class="text-white text-2xl font-bold px-2 touch-manipulation">
+                        +
+                    </button>
                 </div>
 
                 <!-- Image counter -->
@@ -498,13 +542,17 @@
                 <!-- Full-screen draggable image container -->
                 <div class="w-full h-full flex items-center justify-center overflow-hidden touch-none"
                     @mousedown="startDrag" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag"
-                    @touchstart="startDrag" @touchmove="onDrag" @touchend="stopDrag"
-                    @wheel.prevent="(e) => { if (e.deltaY < 0) zoomIn(); else zoomOut(); }">
+                    @touchstart="startDrag" @touchmove="onDrag" @touchend="stopDrag" @wheel.prevent="
+                        (e) => {
+                            if (e.deltaY < 0) zoomIn();
+                            else zoomOut();
+                        }
+                    ">
                     <img :src="`/storage/${ad.images[lightboxIndex]?.path}`" :alt="ad.ad_title"
                         class="max-w-[95vw] max-h-[95vh] object-contain transition-transform duration-200 select-none"
                         :style="{
                             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
-                            cursor: zoomLevel > 1 ? 'grab' : 'default'
+                            cursor: zoomLevel > 1 ? 'grab' : 'default',
                         }" draggable="false" />
                 </div>
             </div>
@@ -513,15 +561,15 @@
 </template>
 
 <script setup lang="ts">
-import OlxLayout from '@/layouts/OlxLayout.vue'
-import { usePage, router } from '@inertiajs/vue3';
-import CategoryAds from '@/components/CategoryAds.vue'
-import TopCategoriesBar from '@/components/TopCategoriesBar.vue'
-import ReportModal from './_partials/ReportModal.vue';
-import { ref, computed, onMounted } from 'vue'
-import { Icon } from '@iconify/vue'
-import { Link } from '@inertiajs/vue3'
-import OrderModal from './_partials/OrderModal.vue'
+import OlxLayout from "@/layouts/OlxLayout.vue";
+import { usePage, router } from "@inertiajs/vue3";
+import CategoryAds from "@/components/CategoryAds.vue";
+import TopCategoriesBar from "@/components/TopCategoriesBar.vue";
+import ReportModal from "./_partials/ReportModal.vue";
+import { ref, computed, onMounted } from "vue";
+import { Icon } from "@iconify/vue";
+import { Link } from "@inertiajs/vue3";
+import OrderModal from "./_partials/OrderModal.vue";
 
 interface PageProps extends InertiaPageProps {
     ad?: any;
@@ -532,170 +580,171 @@ interface PageProps extends InertiaPageProps {
         user?: {
             id: number;
             name: string;
-        }
-    }
+        };
+    };
 }
 
 // Theme
 const useForceTheme = (theme: string) => {
-    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute("data-theme", theme);
 };
-useForceTheme('light');
+useForceTheme("light");
 
 const page = usePage<PageProps>();
 const ad = computed(() => page.props.ad);
 const similarAds = computed(() => page.props.similarAds || []);
-const hasOrdered = computed(() => page.props.hasOrdered || false)
-const userId = computed(() => page.props.auth?.user?.id || null)
+const hasOrdered = computed(() => page.props.hasOrdered || false);
+const userId = computed(() => page.props.auth?.user?.id || null);
 const { handleShowModal, showModal, selectedItem } = useModal();
 
-const lightboxOpen = ref(false)
-const lightboxIndex = ref(0)
-const zoomLevel = ref(1)
-const pan = ref({ x: 0, y: 0 })
-const isDragging = ref(false)
-const dragStart = ref({ x: 0, y: 0, panX: 0, panY: 0 })
+const lightboxOpen = ref(false);
+const lightboxIndex = ref(0);
+const zoomLevel = ref(1);
+const pan = ref({ x: 0, y: 0 });
+const isDragging = ref(false);
+const dragStart = ref({ x: 0, y: 0, panX: 0, panY: 0 });
 
 // Zoom limits
-const MIN_ZOOM = 1
-const MAX_ZOOM = 3
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 3;
 
 // Open lightbox at a specific image index
 const openLightbox = (index: number) => {
-    lightboxIndex.value = index
-    lightboxOpen.value = true
-    resetZoomAndPan()
-    document.body.style.overflow = 'hidden'
-}
+    lightboxIndex.value = index;
+    lightboxOpen.value = true;
+    resetZoomAndPan();
+    document.body.style.overflow = "hidden";
+};
 
 // Close lightbox
 const closeLightbox = () => {
-    lightboxOpen.value = false
-    document.body.style.overflow = ''
-    resetZoomAndPan()
-}
+    lightboxOpen.value = false;
+    document.body.style.overflow = "";
+    resetZoomAndPan();
+};
 
 // Reset zoom and pan
 const resetZoomAndPan = () => {
-    zoomLevel.value = 1
-    pan.value = { x: 0, y: 0 }
-}
+    zoomLevel.value = 1;
+    pan.value = { x: 0, y: 0 };
+};
 
 // Navigation
 const nextImageLightbox = () => {
-    if (!ad.value?.images?.length) return
-    lightboxIndex.value = (lightboxIndex.value + 1) % ad.value.images.length
-    resetZoomAndPan()
-}
+    if (!ad.value?.images?.length) return;
+    lightboxIndex.value = (lightboxIndex.value + 1) % ad.value.images.length;
+    resetZoomAndPan();
+};
 
 const prevImageLightbox = () => {
-    if (!ad.value?.images?.length) return
-    lightboxIndex.value = (lightboxIndex.value - 1 + ad.value.images.length) % ad.value.images.length
-    resetZoomAndPan()
-}
+    if (!ad.value?.images?.length) return;
+    lightboxIndex.value =
+        (lightboxIndex.value - 1 + ad.value.images.length) % ad.value.images.length;
+    resetZoomAndPan();
+};
 
 // Zoom controls
 const zoomIn = () => {
-    zoomLevel.value = Math.min(MAX_ZOOM, zoomLevel.value + 0.25)
-}
+    zoomLevel.value = Math.min(MAX_ZOOM, zoomLevel.value + 0.25);
+};
 
 const zoomOut = () => {
-    zoomLevel.value = Math.max(MIN_ZOOM, zoomLevel.value - 0.25)
-    if (zoomLevel.value === 1) pan.value = { x: 0, y: 0 }
-}
+    zoomLevel.value = Math.max(MIN_ZOOM, zoomLevel.value - 0.25);
+    if (zoomLevel.value === 1) pan.value = { x: 0, y: 0 };
+};
 
 // Handle mouse/touch drag for panning when zoomed
 const startDrag = (e: MouseEvent | TouchEvent) => {
-    if (zoomLevel.value === 1) return
-    isDragging.value = true
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    if (zoomLevel.value === 1) return;
+    isDragging.value = true;
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
     dragStart.value = {
         x: clientX,
         y: clientY,
         panX: pan.value.x,
         panY: pan.value.y,
-    }
-}
+    };
+};
 
 const onDrag = (e: MouseEvent | TouchEvent) => {
-    if (!isDragging.value) return
-    e.preventDefault()
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-    const dx = clientX - dragStart.value.x
-    const dy = clientY - dragStart.value.y
+    if (!isDragging.value) return;
+    e.preventDefault();
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    const dx = clientX - dragStart.value.x;
+    const dy = clientY - dragStart.value.y;
     pan.value = {
         x: dragStart.value.panX + dx,
         y: dragStart.value.panY + dy,
-    }
-}
+    };
+};
 
 const stopDrag = () => {
-    isDragging.value = false
-}
+    isDragging.value = false;
+};
 
 // Keyboard navigation
 const handleKeydown = (e: KeyboardEvent) => {
-    if (!lightboxOpen.value) return
-    if (e.key === 'ArrowLeft') prevImageLightbox()
-    if (e.key === 'ArrowRight') nextImageLightbox()
-    if (e.key === 'Escape') closeLightbox()
-    if (e.key === '+' || e.key === '=') zoomIn()
-    if (e.key === '-') zoomOut()
-    if (e.key === '0') resetZoomAndPan()
-}
+    if (!lightboxOpen.value) return;
+    if (e.key === "ArrowLeft") prevImageLightbox();
+    if (e.key === "ArrowRight") nextImageLightbox();
+    if (e.key === "Escape") closeLightbox();
+    if (e.key === "+" || e.key === "=") zoomIn();
+    if (e.key === "-") zoomOut();
+    if (e.key === "0") resetZoomAndPan();
+};
 
 // Watch for keydown events
 onMounted(() => {
-    window.addEventListener('keydown', handleKeydown)
-})
+    window.addEventListener("keydown", handleKeydown);
+});
 onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeydown)
-})
+    window.removeEventListener("keydown", handleKeydown);
+});
 
 const handleOrderPlaced = () => {
     // Optional: Do something specific when order is placed
     //console.log('Order placed successfully');
-}
+};
 //console.log(page.props)
 // Favorite state
-const isFavorited = ref(false)
-const isFavoriteLoading = ref(false)
+const isFavorited = ref(false);
+const isFavoriteLoading = ref(false);
 
 // Report modal state - use ref for v-model
-const showReportModal = ref(false)
+const showReportModal = ref(false);
 
 const reportReasons = {
-    scam: 'Scam or Fraud',
-    spam: 'Spam',
-    abusive: 'Abusive Behavior',
-    fake_listing: 'Fake Listing',
-    inappropriate: 'Inappropriate Content',
-    other: 'Other',
-}
+    scam: "Scam or Fraud",
+    spam: "Spam",
+    abusive: "Abusive Behavior",
+    fake_listing: "Fake Listing",
+    inappropriate: "Inappropriate Content",
+    other: "Other",
+};
 
 const openReportModal = () => {
     if (!page.props.auth?.user) {
-        router.visit('/login')
-        return
+        router.visit("/login");
+        return;
     }
-    showReportModal.value = true
-}
+    showReportModal.value = true;
+};
 
 const handleReportSubmitted = () => {
-    showToastMessage('Report submitted successfully')
-}
+    showToastMessage("Report submitted successfully");
+};
 
 // Check if ad is favorited by current user
 const checkIfFavorited = () => {
-    if (!page.props.auth?.user || !ad.value) return false
-    return ad.value?.is_favorited || false
-}
+    if (!page.props.auth?.user || !ad.value) return false;
+    return ad.value?.is_favorited || false;
+};
 
 // Initialize favorite state
 onMounted(() => {
-    isFavorited.value = checkIfFavorited()
+    isFavorited.value = checkIfFavorited();
 
     if (ad.value?.images?.length) {
         const primaryIndex = ad.value.images.findIndex((img: any) => img.is_primary);
@@ -703,151 +752,165 @@ onMounted(() => {
             currentImageIndex.value = primaryIndex;
         }
     }
-})
+});
 
 // Toggle favorite
 const toggleFavorite = () => {
     if (!page.props.auth?.user) {
-        router.visit('/login')
-        return
+        router.visit("/login");
+        return;
     }
 
-    if (isFavoriteLoading.value) return
+    if (isFavoriteLoading.value) return;
 
-    isFavoriteLoading.value = true
+    isFavoriteLoading.value = true;
 
-    router.post(route('ads.favorite', ad.value?.id), {}, {
-        preserveScroll: true,
-        onSuccess: (response: any) => {
-            isFavorited.value = !isFavorited.value
-            isFavoriteLoading.value = false
-            showToastMessage(isFavorited.value ? 'Added to favorites' : 'Removed from favorites')
-        },
-        onError: (errors) => {
-            isFavoriteLoading.value = false
-            showToastMessage('Failed to update favorite')
-            console.error(errors)
+    router.post(
+        route("ads.favorite", ad.value?.id),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: (response: any) => {
+                isFavorited.value = !isFavorited.value;
+                isFavoriteLoading.value = false;
+                showToastMessage(
+                    isFavorited.value ? "Added to favorites" : "Removed from favorites"
+                );
+            },
+            onError: (errors) => {
+                isFavoriteLoading.value = false;
+                showToastMessage("Failed to update favorite");
+                console.error(errors);
+            },
         }
-    })
-}
+    );
+};
 const goBack = () => {
-    window.history.back()
-}
+    window.history.back();
+};
 // Rating state for ad
-const hoverRating = ref(0)
-const isSubmitting = ref(false)
+const hoverRating = ref(0);
+const isSubmitting = ref(false);
 
 // Toast state
-const showToast = ref(false)
-const toastMessage = ref('')
+const showToast = ref(false);
+const toastMessage = ref("");
 
 // Computed properties for ad ratings
 const adAvgRating = computed(() => {
-    if (!ad.value?.ratings || ad.value.ratings.length === 0) return 0
-    const sum = ad.value.ratings.reduce((acc: number, curr: any) => acc + curr.rating, 0)
-    return sum / ad.value.ratings.length
-})
+    if (!ad.value?.ratings || ad.value.ratings.length === 0) return 0;
+    const sum = ad.value.ratings.reduce((acc: number, curr: any) => acc + curr.rating, 0);
+    return sum / ad.value.ratings.length;
+});
 
 const adRatingCount = computed(() => {
-    return ad.value?.ratings?.length || 0
-})
+    return ad.value?.ratings?.length || 0;
+});
 
 // Check if current user has rated this ad
 const userCurrentRating = computed(() => {
-    if (!ad.value?.ratings || !page.props.auth?.user?.id) return 0
+    if (!ad.value?.ratings || !page.props.auth?.user?.id) return 0;
     const userRating = ad.value.ratings.find(
         (r: any) => r.rater_id === page.props.auth?.user?.id
-    )
-    return userRating?.rating || 0
-})
+    );
+    return userRating?.rating || 0;
+});
 
 // Get recent ratings for this ad
 const recentRatings = computed(() => {
-    if (!ad.value?.ratings) return []
-    return [...ad.value.ratings]
-        .sort((a: any, b: any) =>
+    if (!ad.value?.ratings) return [];
+    return [...ad.value.ratings].sort(
+        (a: any, b: any) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )
-})
+    );
+});
 
 // Rating distribution
 const ratingDistribution = computed(() => {
-    if (!ad.value?.ratings) return { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    if (!ad.value?.ratings) return { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
 
-    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     ad.value.ratings.forEach((r: any) => {
-        distribution[r.rating as keyof typeof distribution]++
-    })
-    return distribution
-})
+        distribution[r.rating as keyof typeof distribution]++;
+    });
+    return distribution;
+});
 
 const getRatingPercentage = (star: number) => {
-    if (adRatingCount.value === 0) return 0
-    return (ratingDistribution.value[star as keyof typeof ratingDistribution.value] / adRatingCount.value) * 100
-}
+    if (adRatingCount.value === 0) return 0;
+    return (
+        (ratingDistribution.value[star as keyof typeof ratingDistribution.value] /
+            adRatingCount.value) *
+        100
+    );
+};
 
 const getRatingCount = (star: number) => {
-    return ratingDistribution.value[star as keyof typeof ratingDistribution.value] || 0
-}
+    return ratingDistribution.value[star as keyof typeof ratingDistribution.value] || 0;
+};
 
 // Submit rating for this ad (no review required)
 const submitRating = (rating: number) => {
     if (!page.props.auth?.user) {
-        router.visit('/login')
-        return
+        router.visit("/login");
+        return;
     }
 
     if (page.props.auth.user.id === ad.value?.user_id) {
-        showToastMessage('You cannot rate your own ad')
-        return
+        showToastMessage("You cannot rate your own ad");
+        return;
     }
 
-    if (isSubmitting.value) return
+    if (isSubmitting.value) return;
 
-    isSubmitting.value = true
+    isSubmitting.value = true;
 
-    router.post(route('ratings.store'), {
-        rated_user_id: ad.value?.user_id,
-        ad_id: ad.value?.id,
-        rating: rating,
-        review: null
-    }, {
-        preserveScroll: true,
-        onSuccess: () => {
-            hoverRating.value = 0
-            isSubmitting.value = false
-            showToastMessage('Rating submitted successfully!')
+    router.post(
+        route("ratings.store"),
+        {
+            rated_user_id: ad.value?.user_id,
+            ad_id: ad.value?.id,
+            rating: rating,
+            review: null,
         },
-        onError: (errors) => {
-            isSubmitting.value = false
-            showToastMessage('Failed to submit rating')
-            console.error(errors)
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                hoverRating.value = 0;
+                isSubmitting.value = false;
+                showToastMessage("Rating submitted successfully!");
+            },
+            onError: (errors) => {
+                isSubmitting.value = false;
+                showToastMessage("Failed to submit rating");
+                console.error(errors);
+            },
         }
-    })
-}
+    );
+};
 
 // Show toast message
 const showToastMessage = (message: string) => {
-    toastMessage.value = message
-    showToast.value = true
+    toastMessage.value = message;
+    showToast.value = true;
     setTimeout(() => {
-        showToast.value = false
-    }, 2000)
-}
+        showToast.value = false;
+    }, 2000);
+};
 
 // Helper function for relative time
 const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (diffInSeconds < 60) return 'just now'
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`
+    if (diffInSeconds < 60) return "just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
 
-    return formatDate(dateString)
-}
+    return formatDate(dateString);
+};
 
 // Image Gallery State
 const currentImageIndex = ref(0);
@@ -867,23 +930,24 @@ const nextImage = () => {
 
 const prevImage = () => {
     if (!ad.value?.images?.length) return;
-    currentImageIndex.value = (currentImageIndex.value - 1 + ad.value.images.length) % ad.value.images.length;
+    currentImageIndex.value =
+        (currentImageIndex.value - 1 + ad.value.images.length) % ad.value.images.length;
 };
 
 // Helper Functions
 const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
+    return new Date(date).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
     });
 };
 
 const formatMemberSince = (date: string) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short'
+    if (!date) return "N/A";
+    return new Date(date).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
     });
 };
 
@@ -891,8 +955,10 @@ const getFeatureValue = (feature: any) => {
     if (feature.pivot?.custom_value) {
         return feature.pivot.custom_value;
     }
-    const value = feature.values?.find((v: any) => v.id === feature.pivot?.feature_value_id);
-    return value?.value || 'Not specified';
+    const value = feature.values?.find(
+        (v: any) => v.id === feature.pivot?.feature_value_id
+    );
+    return value?.value || "Not specified";
 };
 
 // Copy phone number
@@ -910,19 +976,19 @@ const copyPhoneNumber = () => {
 
 // WhatsApp function
 const getWhatsAppLink = () => {
-    if (!ad.value?.seller_phone) return '#';
+    if (!ad.value?.seller_phone) return "#";
 
     // Clean the phone number
-    let phoneNumber = ad.value.seller_phone.replace(/[^0-9+]/g, '');
+    let phoneNumber = ad.value.seller_phone.replace(/[^0-9+]/g, "");
 
     // Ensure it has country code
-    if (phoneNumber.startsWith('0')) {
-        phoneNumber = '92' + phoneNumber.substring(1);
-    } else if (!phoneNumber.startsWith('+') && !phoneNumber.startsWith('92')) {
-        phoneNumber = '92' + phoneNumber;
+    if (phoneNumber.startsWith("0")) {
+        phoneNumber = "92" + phoneNumber.substring(1);
+    } else if (!phoneNumber.startsWith("+") && !phoneNumber.startsWith("92")) {
+        phoneNumber = "92" + phoneNumber;
     }
 
-    phoneNumber = phoneNumber.replace('+', '');
+    phoneNumber = phoneNumber.replace("+", "");
 
     const message = encodeURIComponent(
         `Hi, I'm interested in your ad: ${ad.value.ad_title}\n` +
@@ -934,41 +1000,49 @@ const getWhatsAppLink = () => {
 };
 
 const openChat = () => {
-    if (!ad.value?.user?.id) return
+    if (!ad.value?.user?.id) return;
 
-    router.post('/chat/start', {
-        seller_id: ad.value.user.id,
-        product_id: ad.value.id
-    }, {
-        preserveScroll: true,
-        onSuccess: (response: any) => {
-            if (response.props?.conversation_id) {
-                router.visit(`/chat/${response.props.conversation_id}`)
-            }
+    router.post(
+        "/chat/start",
+        {
+            seller_id: ad.value.user.id,
+            product_id: ad.value.id,
+        },
+        {
+            preserveScroll: true,
+            onSuccess: (response: any) => {
+                if (response.props?.conversation_id) {
+                    router.visit(`/chat/${response.props.conversation_id}`);
+                }
+            },
         }
-    })
-}
+    );
+};
 
 const orderAd = () => {
     if (!page.props.auth?.user) {
-        router.visit('/login');
+        router.visit("/login");
         return;
     }
 
-    router.post(route('orders.store'), {
-        ad_id: ad.value?.id,
-        qty: 1 // optional, you can make it dynamic later
-    }, {
-        preserveScroll: true,
-        onSuccess: (response) => {
-            showToastMessage('Item is ordered! Owner has been notified.');
+    router.post(
+        route("orders.store"),
+        {
+            ad_id: ad.value?.id,
+            qty: 1, // optional, you can make it dynamic later
         },
-        onError: (errors) => {
-            console.error(errors);
-            showToastMessage('Failed to place order.');
+        {
+            preserveScroll: true,
+            onSuccess: (response) => {
+                showToastMessage("Item is ordered! Owner has been notified.");
+            },
+            onError: (errors) => {
+                console.error(errors);
+                showToastMessage("Failed to place order.");
+            },
         }
-    });
-}
+    );
+};
 </script>
 
 <style scoped>
