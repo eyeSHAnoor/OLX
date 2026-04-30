@@ -30,7 +30,7 @@ Route::get('/orders/{order}/review', [App\Http\Controllers\OrderController::clas
 Route::post('/orders/{order}/complete', [App\Http\Controllers\OrderController::class,'completed'])->name('orders.complete');
 Route::post('/orders/{order}/cancel', [App\Http\Controllers\OrderController::class,'cancel'])->name('orders.cancel');
 Route::post('/set-city', function (\Illuminate\Http\Request $request) {
-    Log::info('Set-city session write', ['city' => $request->city, 'region' => $request->region]);
+    Log::error('Set-city session write', ['city' => $request->city, 'region' => $request->region]);
         session(['city' => $request->city]);
         session(['region' => $request->region]); // Clear region if city is Pakistan
         session()->save(); 
