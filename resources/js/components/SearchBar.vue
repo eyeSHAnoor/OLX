@@ -229,78 +229,79 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { router, usePage } from "@inertiajs/vue3";
 import { Icon } from "@iconify/vue";
 import citiesList from "@/data/cities.json";
 
 const page = usePage();
+
+// ────────────────────────────────────────────────────────
+//  Data
+// ────────────────────────────────────────────────────────
 const cities = ref<string[]>([
     ...(Array.isArray(citiesList)
         ? citiesList.map((c: any) => (typeof c === "string" ? c : c.name))
         : []),
 ]);
 
-// Initialise from session via shared Inertia props (no localStorage needed, but kept for backward compatibility)
-const selectedCity = ref(
-    localStorage.getItem("selectedCity") || page.props.selectedCity || "Pakistan"
-);
-const selectedRegion = ref(
-    localStorage.getItem("selectedRegion") || page.props.selectedRegion || null
-);
-const userSelectedCity = ref(!!localStorage.getItem("selectedCity"));
+// Initial values come from shared Inertia props (cookies)
+const selectedCity = ref(page.props.selectedCity || "Pakistan");
+const selectedRegion = ref(page.props.selectedRegion || null);
+
 const searchTerm = ref(page.props.filters?.filter?.global || "");
 const selectedCategory = ref(page.props.filters?.filter?.category || "");
 
-// Desktop dropdown state
+// Desktop dropdown
 const dropdownOpen = ref(false);
 const citySearchQuery = ref("");
 const dropdownContainer = ref<HTMLElement | null>(null);
 const showRegionsInDropdown = ref(false);
 
-// Regions data
+// Regions
 const regions = ref<any[]>([]);
 const loadingRegions = ref(false);
 
-// Mobile modal state
+// Mobile modal
 const modalOpen = ref(false);
 const modalView = ref<"cities" | "regions">("cities");
 const modalSearchQuery = ref("");
 
-// Suggestion state
+// Suggestions
 const showSuggestions = ref(false);
 const suggestions = ref<string[]>([]);
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-// Computed location display
+// ────────────────────────────────────────────────────────
+//  Computed
+// ────────────────────────────────────────────────────────
 const locationDisplay = computed(() => {
     if (selectedCity.value === "Pakistan") return "Pakistan";
     if (selectedRegion.value) return `${selectedRegion.value}, ${selectedCity.value}`;
     return selectedCity.value;
 });
 
-// Filtered cities for desktop dropdown
 const filteredCities = computed(() => {
     if (!citySearchQuery.value.trim()) return cities.value;
-    const query = citySearchQuery.value.toLowerCase();
-    return cities.value.filter((city) => city.toLowerCase().includes(query));
+    const q = citySearchQuery.value.toLowerCase();
+    return cities.value.filter((city) => city.toLowerCase().includes(q));
 });
 
-// Filtered cities for mobile modal
 const filteredModalCities = computed(() => {
     if (!modalSearchQuery.value.trim()) return cities.value;
-    const query = modalSearchQuery.value.toLowerCase();
-    return cities.value.filter((city) => city.toLowerCase().includes(query));
+    const q = modalSearchQuery.value.toLowerCase();
+    return cities.value.filter((city) => city.toLowerCase().includes(q));
 });
 
-// Filtered regions for mobile modal
 const filteredModalRegions = computed(() => {
     if (!modalSearchQuery.value.trim()) return regions.value;
-    const query = modalSearchQuery.value.toLowerCase();
-    return regions.value.filter((region: any) => region.name.toLowerCase().includes(query));
+    const q = modalSearchQuery.value.toLowerCase();
+    return regions.value.filter((r: any) => r.name.toLowerCase().includes(q));
 });
 
-// Helper: fetch regions for a city
+// ────────────────────────────────────────────────────────
+//  Helpers
+// ────────────────────────────────────────────────────────
 const fetchRegions = async (cityName: string) => {
     if (cityName === "Pakistan") {
         regions.value = [];
@@ -308,37 +309,30 @@ const fetchRegions = async (cityName: string) => {
     }
     loadingRegions.value = true;
     try {
-        const response = await fetch(`/regions/${encodeURIComponent(cityName)}`);
-        const data = await response.json();
+        const res = await fetch(`/regions/${encodeURIComponent(cityName)}`);
+        const data = await res.json();
         regions.value = data.regions || [];
-    } catch (error) {
-        console.error("Failed to fetch regions:", error);
+    } catch (e) {
+        console.error("Failed to fetch regions:", e);
         regions.value = [];
     } finally {
         loadingRegions.value = false;
     }
 };
 
-// Geolocation logic to detect user's city
 const detectUserCity = (): Promise<string | null> => {
     return new Promise((resolve) => {
-        if (!navigator.geolocation) {
-            resolve(null);
-            return;
-        }
+        if (!navigator.geolocation) return resolve(null);
         navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
+            async (pos) => {
                 try {
                     const res = await fetch(
-                        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
+                        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&localityLanguage=en`
                     );
                     const data = await res.json();
                     const userCity = data.locality;
                     resolve(userCity && cities.value.includes(userCity) ? userCity : null);
-                } catch (error) {
-                    console.warn("Geolocation API failed", error);
+                } catch {
                     resolve(null);
                 }
             },
@@ -347,66 +341,101 @@ const detectUserCity = (): Promise<string | null> => {
     });
 };
 
-// Use current location (desktop dropdown)
+// ─────────────────────────────────────────────────────────────────
+//  THE ONE FUNCTION THAT ACTUALLY APPLIES THE LOCATION & RELOADS
+// ─────────────────────────────────────────────────────────────────
+const applyLocation = (city: string, region: string | null) => {
+    // Update local state for instant UI feedback
+    selectedCity.value = city;
+    selectedRegion.value = region;
+
+    // Sync localStorage (optional, as a backup)
+    localStorage.setItem("selectedCity", city);
+    region
+        ? localStorage.setItem("selectedRegion", region)
+        : localStorage.removeItem("selectedRegion");
+
+    // POST to server → server sets cookies → Inertia::location() → ONE reload
+    router.post(route("set.city"), { city, region });
+};
+
+// ────────────────────────────────────────────────────────
+//  Geolocation
+// ────────────────────────────────────────────────────────
 const useCurrentLocation = async () => {
     dropdownOpen.value = false;
     const city = await detectUserCity();
     if (city) {
-        selectedCity.value = city;
-        selectedRegion.value = null;
-        localStorage.removeItem("selectedRegion");
+        // If city has regions, show them; otherwise apply immediately
         await fetchRegions(city);
         if (regions.value.length > 0) {
+            // Update local city, prepare regions view
+            selectedCity.value = city;
+            selectedRegion.value = null;
+            localStorage.removeItem("selectedRegion");
             showRegionsInDropdown.value = true;
-            dropdownOpen.value = true;
+            dropdownOpen.value = true; // keep dropdown open for region pick
         } else {
-            dropdownOpen.value = false;
+            applyLocation(city, null);
         }
     } else {
-        alert("Could not detect your location or city not in our list.");
-        dropdownOpen.value = true;
+        alert("Could not detect your location.");
     }
 };
 
-// Use current location in mobile modal
 const useCurrentLocationInModal = async () => {
     const city = await detectUserCity();
     if (city) {
-        selectedCity.value = city;
-        selectedRegion.value = null;
-        localStorage.removeItem("selectedRegion");
         await fetchRegions(city);
         if (regions.value.length > 0) {
+            selectedCity.value = city;
+            selectedRegion.value = null;
+            localStorage.removeItem("selectedRegion");
             modalView.value = "regions";
             modalSearchQuery.value = "";
         } else {
-            closeModal();
+            applyLocation(city, null);
         }
     } else {
-        alert("Could not detect your location or city not in our list.");
+        alert("Could not detect your location.");
     }
 };
 
-// Desktop dropdown methods
+// ────────────────────────────────────────────────────────
+//  Desktop dropdown behaviour
+// ────────────────────────────────────────────────────────
 const toggleDropdown = () => {
     dropdownOpen.value = !dropdownOpen.value;
     if (dropdownOpen.value) {
         citySearchQuery.value = "";
-        showRegionsInDropdown.value = false;
+        // If a city is already active and regions are loaded, show regions directly
+        if (selectedCity.value !== "Pakistan" && regions.value.length > 0) {
+            showRegionsInDropdown.value = true;
+        } else {
+            showRegionsInDropdown.value = false;
+        }
     }
 };
 
 const selectCity = async (city: string) => {
+    if (city === "Pakistan") {
+        applyLocation("Pakistan", null);
+        dropdownOpen.value = false;
+        return;
+    }
+
+    // Fetch regions and decide
+    await fetchRegions(city);
     selectedCity.value = city;
     selectedRegion.value = null;
     localStorage.removeItem("selectedRegion");
 
-    if (city !== "Pakistan") {
-        await fetchRegions(city);
+    if (regions.value.length > 0) {
+        // Show region list inside the dropdown
         showRegionsInDropdown.value = true;
     } else {
-        regions.value = [];
-        showRegionsInDropdown.value = false;
+        // No regions – apply immediately
+        applyLocation(city, null);
         dropdownOpen.value = false;
     }
 };
@@ -417,11 +446,13 @@ const backToCitiesInDropdown = () => {
 };
 
 const selectRegion = (regionName: string | null) => {
-    selectedRegion.value = regionName;
     dropdownOpen.value = false;
+    applyLocation(selectedCity.value, regionName);
 };
 
-// Mobile modal methods
+// ────────────────────────────────────────────────────────
+//  Mobile modal behaviour (preserves two‑step flow)
+// ────────────────────────────────────────────────────────
 const openModal = () => {
     modalOpen.value = true;
     modalView.value = "cities";
@@ -430,35 +461,38 @@ const openModal = () => {
 const closeModal = () => {
     modalOpen.value = false;
 };
-const setPakistanCity = () => {
-    if (modalOpen.value) closeModal();
-    selectedCity.value = "Pakistan";
-    selectedRegion.value = null;
-    localStorage.removeItem("selectedRegion");
-    regions.value = [];
-};
 
 const selectCityFromModal = async (city: string) => {
+    if (city === "Pakistan") {
+        closeModal();
+        applyLocation("Pakistan", null);
+        return;
+    }
+
+    await fetchRegions(city);
     selectedCity.value = city;
     selectedRegion.value = null;
     localStorage.removeItem("selectedRegion");
 
-    if (city !== "Pakistan") {
-        await fetchRegions(city);
+    if (regions.value.length > 0) {
+        // Stay in the same modal, switch to region view
         modalView.value = "regions";
         modalSearchQuery.value = "";
     } else {
-        regions.value = [];
+        // No regions – apply immediately
         closeModal();
+        applyLocation(city, null);
     }
 };
 
 const selectRegionFromModal = (regionName: string | null) => {
-    selectedRegion.value = regionName;
     closeModal();
+    applyLocation(selectedCity.value, regionName);
 };
 
-// Close desktop dropdown when clicking outside
+// ────────────────────────────────────────────────────────
+//  Outside click (desktop)
+// ────────────────────────────────────────────────────────
 const handleClickOutside = (e: MouseEvent) => {
     if (dropdownContainer.value && !dropdownContainer.value.contains(e.target as Node)) {
         dropdownOpen.value = false;
@@ -468,19 +502,8 @@ const handleClickOutside = (e: MouseEvent) => {
 
 onMounted(() => {
     document.addEventListener("click", handleClickOutside);
-
-    // Geolocation logic on initial load if user hasn't selected a city manually
-    if (!userSelectedCity.value && navigator.geolocation) {
-        detectUserCity().then((city) => {
-            if (city) {
-                selectedCity.value = city;
-            }
-        });
-    }
-
-    // If a city is already selected and not Pakistan, fetch its regions
     if (selectedCity.value && selectedCity.value !== "Pakistan") {
-        fetchRegions(selectedCity.value);
+        fetchRegions(selectedCity.value); // pre‑load for dropdown
     }
 });
 
@@ -488,27 +511,9 @@ onBeforeUnmount(() => {
     document.removeEventListener("click", handleClickOutside);
 });
 
-// ─────────────────────────────────────────────────────────────────
-// UPDATED WATCHER – single page reload after session update
-// ─────────────────────────────────────────────────────────────────
-watch([selectedCity, selectedRegion], ([city, region], [oldCity]) => {
-    if (oldCity !== city) userSelectedCity.value = true;
-
-    localStorage.setItem("selectedCity", city);
-    if (region) {
-        localStorage.setItem("selectedRegion", region);
-    } else {
-        localStorage.removeItem("selectedRegion");
-    }
-
-    router.post(
-        route("set.city"),
-        { city, region },
-        { preserveScroll: true } // no onSuccess needed
-    );
-});
-
-// Search function – no city/region in request, backend reads from session
+// ────────────────────────────────────────────────────────
+//  Search (unchanged, city/region not sent – cookies handle it)
+// ────────────────────────────────────────────────────────
 const performSearch = () => {
     showSuggestions.value = false;
     router.visit(route("all.items"), {
@@ -517,7 +522,6 @@ const performSearch = () => {
             filter: {
                 global: searchTerm.value,
                 category: selectedCategory.value,
-                // city and region are intentionally omitted – session handles location
             },
         },
         preserveScroll: true,
@@ -525,63 +529,43 @@ const performSearch = () => {
     });
 };
 
-// Reset filters if search cleared – also fetch suggestions
 const checkResetFilters = () => {
     if (!searchTerm.value) {
         selectedCategory.value = "";
         router.visit(route("home"), {
             method: "get",
-            data: {
-                filter: {
-                    global: "",
-                    category: "",
-                },
-            },
+            data: { filter: { global: "", category: "" } },
             preserveScroll: true,
             preserveState: true,
         });
     }
-    // Fetch suggestions with debounce
     if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        fetchSuggestions(searchTerm.value);
-    }, 300);
+    debounceTimer = setTimeout(() => fetchSuggestions(searchTerm.value), 300);
 };
 
-// Fetch suggestions from API
 const fetchSuggestions = async (query: string) => {
     if (query.length < 2) {
         suggestions.value = [];
         return;
     }
     try {
-        const response = await fetch(
-            `/search-suggestions?query=${encodeURIComponent(query)}`
-        );
-        const data = await response.json();
+        const res = await fetch(`/search-suggestions?query=${encodeURIComponent(query)}`);
+        const data = await res.json();
         suggestions.value = Array.isArray(data) ? data : [];
-    } catch (error) {
-        console.error("Failed to fetch suggestions:", error);
+    } catch (e) {
         suggestions.value = [];
     }
 };
 
-// Focus/Blur handlers
 const onSearchFocus = () => {
     showSuggestions.value = true;
-    if (searchTerm.value.length >= 2) {
-        fetchSuggestions(searchTerm.value);
-    }
+    if (searchTerm.value.length >= 2) fetchSuggestions(searchTerm.value);
 };
-
 const onSearchBlur = () => {
-    // Small delay so click on suggestion registers
     setTimeout(() => {
         showSuggestions.value = false;
     }, 200);
 };
-
-// Select a suggestion
 const selectSuggestion = (suggestion: string) => {
     searchTerm.value = suggestion;
     showSuggestions.value = false;

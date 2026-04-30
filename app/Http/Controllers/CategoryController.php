@@ -22,9 +22,10 @@ class CategoryController extends Controller
 {
     public function show(Request $request, $slug = null)
     {
-        $selectedCitySession = strtolower(session('city', 'Pakistan'));
+        // $selectedCitySession = strtolower(session('city', 'Pakistan'));
+        $selectedCitySession = strtolower($request->cookie('user_city', 'Pakistan'));
         $selectedCitySession = $selectedCitySession === 'pakistan' ? 'all' : $selectedCitySession;
-        $selectedRegion = $request->input('filter.region') 
+        $selectedRegion = $request->cookie('user_region') 
                       ?? session('region');
 
         $category = $slug

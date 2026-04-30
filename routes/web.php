@@ -9,7 +9,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AdController;
 use Illuminate\Support\Facades\Mail;
-
+use Illuminate\Support\Facades\Cookie;
 use App\Http\Controllers\PushSubscriptionController;
 
 
@@ -30,19 +30,13 @@ Route::get('/orders/{order}/review', [App\Http\Controllers\OrderController::clas
 Route::post('/orders/{order}/complete', [App\Http\Controllers\OrderController::class,'completed'])->name('orders.complete');
 Route::post('/orders/{order}/cancel', [App\Http\Controllers\OrderController::class,'cancel'])->name('orders.cancel');
 Route::post('/set-city', function (\Illuminate\Http\Request $request) {
-    Log::error('Set-city session write', ['city' => $request->city, 'region' => $request->region]);
-        session(['city' => $request->city]);
-        session(['region' => $request->region]); // Clear region if city is Pakistan
-        session()->save(); 
+    $minutes = 525600; // same lifetime as your session
 
-        Log::error('Set-city session write', [
-        'city' => session('city'),
-        'region' => session('region'),
-        'session_id' => session()->getId()
-    ]);
-        // return back();
-        // return response()->json(['status' => 'ok']);
-        return Inertia::location(url()->previous());
+    $cityCookie   = cookie('user_city', $request->city, $minutes);
+    $regionCookie = cookie('user_region', $request->region, $minutes);
+
+    return back()->with('success', 'Location updated')->withCookies([$cityCookie, $regionCookie]);
+        //    ->withCookies([$cityCookie, $regionCookie]);
 })->name('set.city');
 
 

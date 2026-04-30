@@ -16,7 +16,11 @@ class SearchController extends Controller
 {
     public function allItems(Request $request)
     {
-        $selectedCity = strtolower(session('city', 'Pakistan'));
+        // $selectedCity = strtolower(session('city', 'Pakistan'));
+        $selectedCity = strtolower($request->cookie('user_city', 'Pakistan'));
+        $selectedCity = $selectedCity === 'pakistan' ? 'all' : $selectedCity;
+        $selectedRegion = $request->cookie('user_region') 
+                      ?? session('region');
 
         // Search / filter inputs
         $searchTerm = trim($request->input('filter.global', ''));

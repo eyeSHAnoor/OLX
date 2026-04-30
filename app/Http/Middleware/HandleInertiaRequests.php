@@ -119,8 +119,10 @@ class HandleInertiaRequests extends Middleware
 
             return $categories;
             },
-            'selectedCity' => session('city', 'Pakistan'),
-            'selectedRegion' => session('region'),
+            // 'selectedCity' => session('city', 'Pakistan'),
+            // 'selectedRegion' => session('region'),
+            'selectedCity'   => $request->cookie('user_city', 'Pakistan'),
+            'selectedRegion' => $request->cookie('user_region'),
             'notifications' => fn() => $user 
                 ? $user->notifications()->latest()->take(10)->get()->map(function ($notification) {
                     return [

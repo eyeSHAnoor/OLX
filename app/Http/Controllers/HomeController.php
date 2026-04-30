@@ -19,10 +19,12 @@ class HomeController extends Controller
     {
         // Log::info('home controller opened');
 
-        Log::error('Home controller loads', ['city' => session('city'), 'region' => session('region')]);
+        // Log::error('Home controller loads', ['city' => session('city'), 'region' => session('region')]);
 
-        $selectedCity = strtolower(session('city', 'Pakistan'));
-         $selectedRegion = session('region'); 
+        $selectedCity   = strtolower($request->cookie('user_city', 'Pakistan'));
+        $selectedRegion = $request->cookie('user_region');
+
+        Log::error('Home controller loads', ['city' => $selectedCity, 'region' => $selectedRegion]);
 
         // Filters
         $searchTerm    = $request->input('filter.global');
