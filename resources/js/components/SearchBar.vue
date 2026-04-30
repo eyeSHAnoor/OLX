@@ -491,10 +491,9 @@ onBeforeUnmount(() => {
 // ─────────────────────────────────────────────────────────────────
 // UPDATED WATCHER – single page reload after session update
 // ─────────────────────────────────────────────────────────────────
-watch([selectedCity, selectedRegion], ([city, region], [oldCity, oldRegion]) => {
+watch([selectedCity, selectedRegion], ([city, region], [oldCity]) => {
     if (oldCity !== city) userSelectedCity.value = true;
 
-    // Keep localStorage in sync (optional, can be removed if you rely entirely on session)
     localStorage.setItem("selectedCity", city);
     if (region) {
         localStorage.setItem("selectedRegion", region);
@@ -502,17 +501,10 @@ watch([selectedCity, selectedRegion], ([city, region], [oldCity, oldRegion]) => 
         localStorage.removeItem("selectedRegion");
     }
 
-    // Send the selection to the server (session is the single source of truth)
     router.post(
         route("set.city"),
         { city, region },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                // One clean reload – no extra Inertia visit
-                window.location.reload();
-            },
-        }
+        { preserveScroll: true } // no onSuccess needed
     );
 });
 

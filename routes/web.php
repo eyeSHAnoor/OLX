@@ -30,24 +30,15 @@ Route::get('/orders/{order}/review', [App\Http\Controllers\OrderController::clas
 Route::post('/orders/{order}/complete', [App\Http\Controllers\OrderController::class,'completed'])->name('orders.complete');
 Route::post('/orders/{order}/cancel', [App\Http\Controllers\OrderController::class,'cancel'])->name('orders.cancel');
 Route::post('/set-city', function (\Illuminate\Http\Request $request) {
-
-Log::info('Set-city session write', ['city' => $request->city, 'region' => $request->region]);
-    session(['city' => $request->city]);
-    session(['region' => $request->region]); // Clear region if city is Pakistan
-    return back();
+    Log::info('Set-city session write', ['city' => $request->city, 'region' => $request->region]);
+        session(['city' => $request->city]);
+        session(['region' => $request->region]); // Clear region if city is Pakistan
+        session()->save(); 
+        // return back();
+        // return response()->json(['status' => 'ok']);
+        return Inertia::location(url()->previous());
 })->name('set.city');
 
-// Route::post('/set-city', function (\Illuminate\Http\Request $request) {
-//     session(['city' => $request->city]);
-    
-//     if ($request->city === 'Pakistan' || empty($request->region)) {
-//         session()->forget('region');
-//     } else {
-//         session(['region' => $request->region]);
-//     }
-    
-//     return back();
-// })->name('set.city');
 
 Route::get('/policy/{type}', [App\Http\Controllers\PolicyController::class, 'show'])->name('policy.show');
 Route::get('/aboutus', [App\Http\Controllers\AboutController::class, 'index'])->name('aboutus');
