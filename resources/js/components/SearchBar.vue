@@ -527,6 +527,8 @@ const performSearch = () => {
             filter: {
                 global: searchTerm.value,
                 category: selectedCategory.value,
+                city: selectedCity.value === "Pakistan" ? "" : selectedCity.value,
+                region: selectedRegion.value || "",
                 // city and region are intentionally omitted – session handles location
             },
         },

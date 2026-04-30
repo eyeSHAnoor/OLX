@@ -17,29 +17,11 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        // Log::info('home controller opened');
-        Log::error('Incoming region:', [
-            'request' => $request->input('filter.region'),
-            'has' => $request->has('filter.region'),
-            'session' => session('region')
-        ]);
-        Log::error('Incoming city:', [
-            'request' => $request->input('filter.city'),
-            'has' => $request->has('filter.city'),
-            'session' => session('city')
-        ]);
+        Log::info('home controller opened');
 
         $selectedCity = strtolower(session('city', 'Pakistan'));
         $selectedRegion = $request->input('filter.region') 
-                      ?? session('region'); 
-        // $selectedRegion = $request->input('filter.region');
-
-        if (empty($selectedRegion)) {
-            $selectedRegion = null;
-        } 
-
-        Log::error('Selected city: ' . $selectedCity);
-        Log::error('Selected region: ' . $selectedRegion);
+                      ?? session('region');  
 
         // Filters
         $searchTerm    = $request->input('filter.global');
@@ -187,7 +169,7 @@ class HomeController extends Controller
                     $endDate,
                     $sort
                 )
-                ->limit(4) // ✅ ONLY 4 ADS
+                ->limit(4)
                 ->get();
 
                 $category->ads = $ads;
