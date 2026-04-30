@@ -17,11 +17,19 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        Log::info('home controller opened');
+        // Log::info('home controller opened');
 
         $selectedCity = strtolower(session('city', 'Pakistan'));
-        $selectedRegion = $request->input('filter.region') 
-                      ?? session('region');  
+        // $selectedRegion = $request->input('filter.region') 
+        //               ?? session('region'); 
+        $selectedRegion = $request->input('filter.region');
+
+        if (empty($selectedRegion)) {
+            $selectedRegion = null;
+        } 
+
+        Log::info('Selected city: ' . $selectedCity);
+        Log::info('Selected region: ' . $selectedRegion);
 
         // Filters
         $searchTerm    = $request->input('filter.global');

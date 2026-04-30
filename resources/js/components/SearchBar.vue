@@ -32,8 +32,9 @@
                                     Use current location
                                 </div>
                                 <div @click="selectCity('Pakistan')"
-                                    class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
-                                    :class="{ 'bg-blue-50': selectedCity === 'Pakistan' && !selectedRegion }">
+                                    class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm" :class="{
+                                        'bg-blue-50': selectedCity === 'Pakistan' && !selectedRegion,
+                                    }">
                                     Pakistan
                                 </div>
                                 <div v-for="city in filteredCities" :key="city" @click="selectCity(city)"
@@ -139,7 +140,7 @@
                     <button @click="openModal"
                         class="text-sm text-brand-teal hover:text-brand-teal/90 transition-colors flex items-center gap-1">
                         <Icon icon="mdi:map-marker-outline" class="text-md" />
-                        <span class="text-sm">{{ locationDisplay || 'Select location' }}</span>
+                        <span class="text-sm">{{ locationDisplay || "Select location" }}</span>
                     </button>
                 </div>
             </div>
@@ -158,7 +159,11 @@
                                 <Icon icon="mdi:arrow-left" class="text-xl" />
                             </button>
                             <h3 class="text-lg font-medium">
-                                {{ modalView === 'cities' ? 'Select City' : `Select Area in ${selectedCity}` }}
+                                {{
+                                    modalView === "cities"
+                                        ? "Select City"
+                                        : `Select Area in ${selectedCity}`
+                                }}
                             </h3>
                         </div>
                         <button @click="closeModal" class="text-gray-500 hover:text-gray-700">
@@ -229,345 +234,364 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
-import { router, usePage } from '@inertiajs/vue3'
-import { Icon } from '@iconify/vue'
-import citiesList from '@/data/cities.json'
+import { ref, watch, onMounted, onBeforeUnmount, computed } from "vue";
+import { router, usePage } from "@inertiajs/vue3";
+import { Icon } from "@iconify/vue";
+import citiesList from "@/data/cities.json";
 
-const page = usePage()
-const cities = ref<string[]>([...(Array.isArray(citiesList) ? citiesList.map((c: any) => typeof c === 'string' ? c : c.name) : [])])
-const selectedCity = ref(localStorage.getItem('selectedCity') || page.props.selectedCity || 'Pakistan')
-const selectedRegion = ref(localStorage.getItem('selectedRegion') || page.props.selectedRegion || null)
-const userSelectedCity = ref(!!localStorage.getItem('selectedCity'))
-const searchTerm = ref(page.props.filters?.filter?.global || '')
-const selectedCategory = ref(page.props.filters?.filter?.category || '')
+const page = usePage();
+const cities = ref<string[]>([
+    ...(Array.isArray(citiesList)
+        ? citiesList.map((c: any) => (typeof c === "string" ? c : c.name))
+        : []),
+]);
+const selectedCity = ref(
+    localStorage.getItem("selectedCity") || page.props.selectedCity || "Pakistan"
+);
+const selectedRegion = ref(
+    localStorage.getItem("selectedRegion") || page.props.selectedRegion || null
+);
+const userSelectedCity = ref(!!localStorage.getItem("selectedCity"));
+const searchTerm = ref(page.props.filters?.filter?.global || "");
+const selectedCategory = ref(page.props.filters?.filter?.category || "");
 
 // Desktop dropdown state
-const dropdownOpen = ref(false)
-const citySearchQuery = ref('')
-const dropdownContainer = ref<HTMLElement | null>(null)
-const showRegionsInDropdown = ref(false)
+const dropdownOpen = ref(false);
+const citySearchQuery = ref("");
+const dropdownContainer = ref<HTMLElement | null>(null);
+const showRegionsInDropdown = ref(false);
 
 // Regions data
-const regions = ref<any[]>([])
-const loadingRegions = ref(false)
+const regions = ref<any[]>([]);
+const loadingRegions = ref(false);
 
 // Mobile modal state
-const modalOpen = ref(false)
-const modalView = ref<'cities' | 'regions'>('cities')
-const modalSearchQuery = ref('')
+const modalOpen = ref(false);
+const modalView = ref<"cities" | "regions">("cities");
+const modalSearchQuery = ref("");
 
 // Suggestion state
-const showSuggestions = ref(false)
-const suggestions = ref<string[]>([])
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
+const showSuggestions = ref(false);
+const suggestions = ref<string[]>([]);
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Computed location display
 const locationDisplay = computed(() => {
-    if (selectedCity.value === 'Pakistan') return 'Pakistan'
-    if (selectedRegion.value) return `${selectedRegion.value}, ${selectedCity.value}`
-    return selectedCity.value
-})
+    if (selectedCity.value === "Pakistan") return "Pakistan";
+    if (selectedRegion.value) return `${selectedRegion.value}, ${selectedCity.value}`;
+    return selectedCity.value;
+});
 
 // Filtered cities for desktop dropdown
 const filteredCities = computed(() => {
-    if (!citySearchQuery.value.trim()) return cities.value
-    const query = citySearchQuery.value.toLowerCase()
-    return cities.value.filter(city => city.toLowerCase().includes(query))
-})
+    if (!citySearchQuery.value.trim()) return cities.value;
+    const query = citySearchQuery.value.toLowerCase();
+    return cities.value.filter((city) => city.toLowerCase().includes(query));
+});
 
 // Filtered cities for mobile modal
 const filteredModalCities = computed(() => {
-    if (!modalSearchQuery.value.trim()) return cities.value
-    const query = modalSearchQuery.value.toLowerCase()
-    return cities.value.filter(city => city.toLowerCase().includes(query))
-})
+    if (!modalSearchQuery.value.trim()) return cities.value;
+    const query = modalSearchQuery.value.toLowerCase();
+    return cities.value.filter((city) => city.toLowerCase().includes(query));
+});
 
 // Filtered regions for mobile modal
 const filteredModalRegions = computed(() => {
-    if (!modalSearchQuery.value.trim()) return regions.value
-    const query = modalSearchQuery.value.toLowerCase()
-    return regions.value.filter((region: any) => region.name.toLowerCase().includes(query))
-})
+    if (!modalSearchQuery.value.trim()) return regions.value;
+    const query = modalSearchQuery.value.toLowerCase();
+    return regions.value.filter((region: any) => region.name.toLowerCase().includes(query));
+});
 
 // Helper: fetch regions for a city
 const fetchRegions = async (cityName: string) => {
-    if (cityName === 'Pakistan') {
-        regions.value = []
-        return
+    if (cityName === "Pakistan") {
+        regions.value = [];
+        return;
     }
-    loadingRegions.value = true
+    loadingRegions.value = true;
     try {
-        const response = await fetch(`/regions/${encodeURIComponent(cityName)}`)
-        const data = await response.json()
-        regions.value = data.regions || []
+        const response = await fetch(`/regions/${encodeURIComponent(cityName)}`);
+        const data = await response.json();
+        regions.value = data.regions || [];
     } catch (error) {
-        console.error('Failed to fetch regions:', error)
-        regions.value = []
+        console.error("Failed to fetch regions:", error);
+        regions.value = [];
     } finally {
-        loadingRegions.value = false
+        loadingRegions.value = false;
     }
-}
+};
 
 // Geolocation logic to detect user's city
 const detectUserCity = (): Promise<string | null> => {
     return new Promise((resolve) => {
         if (!navigator.geolocation) {
-            resolve(null)
-            return
+            resolve(null);
+            return;
         }
-        navigator.geolocation.getCurrentPosition(async (position) => {
-            const lat = position.coords.latitude
-            const lon = position.coords.longitude
-            try {
-                const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`)
-                const data = await res.json()
-                const userCity = data.locality
-                resolve(userCity && cities.value.includes(userCity) ? userCity : null)
-            } catch (error) {
-                console.warn('Geolocation API failed', error)
-                resolve(null)
-            }
-        }, () => resolve(null))
-    })
-}
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                try {
+                    const res = await fetch(
+                        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
+                    );
+                    const data = await res.json();
+                    const userCity = data.locality;
+                    resolve(userCity && cities.value.includes(userCity) ? userCity : null);
+                } catch (error) {
+                    console.warn("Geolocation API failed", error);
+                    resolve(null);
+                }
+            },
+            () => resolve(null)
+        );
+    });
+};
 
 // Use current location (desktop dropdown)
 const useCurrentLocation = async () => {
-    dropdownOpen.value = false
-    const city = await detectUserCity()
+    dropdownOpen.value = false;
+    const city = await detectUserCity();
     if (city) {
-        selectedCity.value = city
-        selectedRegion.value = null
-        localStorage.removeItem('selectedRegion')
-        await fetchRegions(city)
+        selectedCity.value = city;
+        selectedRegion.value = null;
+        localStorage.removeItem("selectedRegion");
+        await fetchRegions(city);
         if (regions.value.length > 0) {
-            showRegionsInDropdown.value = true
-            dropdownOpen.value = true
+            showRegionsInDropdown.value = true;
+            dropdownOpen.value = true;
         } else {
-            dropdownOpen.value = false
+            dropdownOpen.value = false;
         }
     } else {
-        alert('Could not detect your location or city not in our list.')
-        dropdownOpen.value = true
+        alert("Could not detect your location or city not in our list.");
+        dropdownOpen.value = true;
     }
-}
+};
 
 // Use current location in mobile modal
 const useCurrentLocationInModal = async () => {
-    const city = await detectUserCity()
+    const city = await detectUserCity();
     if (city) {
-        selectedCity.value = city
-        selectedRegion.value = null
-        localStorage.removeItem('selectedRegion')
-        await fetchRegions(city)
+        selectedCity.value = city;
+        selectedRegion.value = null;
+        localStorage.removeItem("selectedRegion");
+        await fetchRegions(city);
         if (regions.value.length > 0) {
-            modalView.value = 'regions'
-            modalSearchQuery.value = ''
+            modalView.value = "regions";
+            modalSearchQuery.value = "";
         } else {
-            closeModal()
+            closeModal();
         }
     } else {
-        alert('Could not detect your location or city not in our list.')
+        alert("Could not detect your location or city not in our list.");
     }
-}
+};
 
 // Desktop dropdown methods
 const toggleDropdown = () => {
-    dropdownOpen.value = !dropdownOpen.value
+    dropdownOpen.value = !dropdownOpen.value;
     if (dropdownOpen.value) {
-        citySearchQuery.value = ''
-        showRegionsInDropdown.value = false
+        citySearchQuery.value = "";
+        showRegionsInDropdown.value = false;
     }
-}
+};
 
 const selectCity = async (city: string) => {
-    selectedCity.value = city
-    selectedRegion.value = null
-    localStorage.removeItem('selectedRegion')
+    selectedCity.value = city;
+    selectedRegion.value = null;
+    localStorage.removeItem("selectedRegion");
 
-    if (city !== 'Pakistan') {
-        await fetchRegions(city)
-        showRegionsInDropdown.value = true
+    if (city !== "Pakistan") {
+        await fetchRegions(city);
+        showRegionsInDropdown.value = true;
     } else {
-        regions.value = []
-        showRegionsInDropdown.value = false
-        dropdownOpen.value = false
+        regions.value = [];
+        showRegionsInDropdown.value = false;
+        dropdownOpen.value = false;
     }
-}
+};
 
 const backToCitiesInDropdown = () => {
-    showRegionsInDropdown.value = false
-    citySearchQuery.value = ''
-}
+    showRegionsInDropdown.value = false;
+    citySearchQuery.value = "";
+};
 
 const selectRegion = (regionName: string | null) => {
-    selectedRegion.value = regionName
-    dropdownOpen.value = false
-}
+    selectedRegion.value = regionName;
+    dropdownOpen.value = false;
+};
 
 // Mobile modal methods
 const openModal = () => {
-    modalOpen.value = true
-    modalView.value = 'cities'
-    modalSearchQuery.value = ''
-}
+    modalOpen.value = true;
+    modalView.value = "cities";
+    modalSearchQuery.value = "";
+};
 const closeModal = () => {
-    modalOpen.value = false
-}
+    modalOpen.value = false;
+};
 const setPakistanCity = () => {
-    if (modalOpen.value) closeModal()
-    selectedCity.value = 'Pakistan'
-    selectedRegion.value = null
-    localStorage.removeItem('selectedRegion')
-    regions.value = []
-}
+    if (modalOpen.value) closeModal();
+    selectedCity.value = "Pakistan";
+    selectedRegion.value = null;
+    localStorage.removeItem("selectedRegion");
+    regions.value = [];
+};
 
 const selectCityFromModal = async (city: string) => {
-    selectedCity.value = city
-    selectedRegion.value = null
-    localStorage.removeItem('selectedRegion')
+    selectedCity.value = city;
+    selectedRegion.value = null;
+    localStorage.removeItem("selectedRegion");
 
-    if (city !== 'Pakistan') {
-        await fetchRegions(city)
-        modalView.value = 'regions'
-        modalSearchQuery.value = ''
+    if (city !== "Pakistan") {
+        await fetchRegions(city);
+        modalView.value = "regions";
+        modalSearchQuery.value = "";
     } else {
-        regions.value = []
-        closeModal()
+        regions.value = [];
+        closeModal();
     }
-}
+};
 
 const selectRegionFromModal = (regionName: string | null) => {
-    selectedRegion.value = regionName
-    closeModal()
-}
+    selectedRegion.value = regionName;
+    closeModal();
+};
 
 // Close desktop dropdown when clicking outside
 const handleClickOutside = (e: MouseEvent) => {
     if (dropdownContainer.value && !dropdownContainer.value.contains(e.target as Node)) {
-        dropdownOpen.value = false
-        showRegionsInDropdown.value = false
+        dropdownOpen.value = false;
+        showRegionsInDropdown.value = false;
     }
-}
+};
 
 onMounted(() => {
-    document.addEventListener('click', handleClickOutside)
+    document.addEventListener("click", handleClickOutside);
 
     // Geolocation logic on initial load if user hasn't selected a city manually
     if (!userSelectedCity.value && navigator.geolocation) {
-        detectUserCity().then(city => {
+        detectUserCity().then((city) => {
             if (city) {
-                selectedCity.value = city
+                selectedCity.value = city;
             }
-        })
+        });
     }
 
     // If a city is already selected and not Pakistan, fetch its regions
-    if (selectedCity.value && selectedCity.value !== 'Pakistan') {
-        fetchRegions(selectedCity.value)
+    if (selectedCity.value && selectedCity.value !== "Pakistan") {
+        fetchRegions(selectedCity.value);
     }
-})
+});
 
 onBeforeUnmount(() => {
-    document.removeEventListener('click', handleClickOutside)
-})
+    document.removeEventListener("click", handleClickOutside);
+});
 
 // Persist selected city and region
 watch([selectedCity, selectedRegion], ([city, region], [oldCity, oldRegion]) => {
-    if (oldCity !== city) userSelectedCity.value = true
+    if (oldCity !== city) userSelectedCity.value = true;
 
-    localStorage.setItem('selectedCity', city)
+    localStorage.setItem("selectedCity", city);
     if (region) {
-        localStorage.setItem('selectedRegion', region)
+        localStorage.setItem("selectedRegion", region);
     } else {
-        localStorage.removeItem('selectedRegion')
+        localStorage.removeItem("selectedRegion");
     }
 
-    router.post(route('set.city'), { city, region }, {
-        preserveScroll: true,
-        onSuccess: () => router.reload({ only: ['selectedCity', 'selectedRegion'] })
-    })
-})
+    router.post(
+        route("set.city"),
+        { city, region },
+        {
+            preserveScroll: true,
+            onSuccess: () => router.reload({ only: ["selectedCity", "selectedRegion"] }),
+        }
+    );
+});
 
 // Search function
 const performSearch = () => {
-    showSuggestions.value = false  // hide suggestions
-    router.visit(route('all.items'), {
-        method: 'get',
+    showSuggestions.value = false; // hide suggestions
+    router.visit(route("all.items"), {
+        method: "get",
         data: {
             filter: {
                 global: searchTerm.value,
                 category: selectedCategory.value,
                 city: selectedCity.value,
-                region: selectedRegion.value
-            }
+                region: selectedRegion.value || null,
+            },
         },
         preserveScroll: true,
-        preserveState: true
-    })
-}
+        preserveState: true,
+    });
+};
 
 // Reset filters if search cleared – also fetch suggestions
 const checkResetFilters = () => {
     if (!searchTerm.value) {
-        selectedCategory.value = ''
-        router.visit(route('home'), {
-            method: 'get',
+        selectedCategory.value = "";
+        router.visit(route("home"), {
+            method: "get",
             data: {
                 filter: {
-                    global: '',
-                    category: '',
+                    global: "",
+                    category: "",
                     city: selectedCity.value,
-                    region: selectedRegion.value
-                }
+                    region: selectedRegion.value || null,
+                },
             },
             preserveScroll: true,
-            preserveState: true
-        })
+            preserveState: true,
+        });
     }
     // Fetch suggestions with debounce
-    if (debounceTimer) clearTimeout(debounceTimer)
+    if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-        fetchSuggestions(searchTerm.value)
-    }, 300)
-}
+        fetchSuggestions(searchTerm.value);
+    }, 300);
+};
 
 // Fetch suggestions from API
 const fetchSuggestions = async (query: string) => {
     if (query.length < 2) {
-        suggestions.value = []
-        return
+        suggestions.value = [];
+        return;
     }
     try {
-        const response = await fetch(`/search-suggestions?query=${encodeURIComponent(query)}`)
-        const data = await response.json()
-        suggestions.value = Array.isArray(data) ? data : []
+        const response = await fetch(
+            `/search-suggestions?query=${encodeURIComponent(query)}`
+        );
+        const data = await response.json();
+        suggestions.value = Array.isArray(data) ? data : [];
     } catch (error) {
-        console.error('Failed to fetch suggestions:', error)
-        suggestions.value = []
+        console.error("Failed to fetch suggestions:", error);
+        suggestions.value = [];
     }
-}
+};
 
 // Focus/Blur handlers
 const onSearchFocus = () => {
-    showSuggestions.value = true
+    showSuggestions.value = true;
     if (searchTerm.value.length >= 2) {
-        fetchSuggestions(searchTerm.value)
+        fetchSuggestions(searchTerm.value);
     }
-}
+};
 
 const onSearchBlur = () => {
     // Small delay so click on suggestion registers
     setTimeout(() => {
-        showSuggestions.value = false
-    }, 200)
-}
+        showSuggestions.value = false;
+    }, 200);
+};
 
 // Select a suggestion
 const selectSuggestion = (suggestion: string) => {
-    searchTerm.value = suggestion
-    showSuggestions.value = false
-    performSearch()
-}
+    searchTerm.value = suggestion;
+    showSuggestions.value = false;
+    performSearch();
+};
 </script>
