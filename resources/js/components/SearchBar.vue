@@ -240,6 +240,8 @@ const cities = ref<string[]>([
         ? citiesList.map((c: any) => (typeof c === "string" ? c : c.name))
         : []),
 ]);
+
+// Initialise from session via shared Inertia props (no localStorage needed, but kept for backward compatibility)
 const selectedCity = ref(
     localStorage.getItem("selectedCity") || page.props.selectedCity || "Pakistan"
 );
@@ -486,10 +488,13 @@ onBeforeUnmount(() => {
     document.removeEventListener("click", handleClickOutside);
 });
 
-// Persist selected city and region
+// ─────────────────────────────────────────────────────────────────
+// UPDATED WATCHER – single page reload after session update
+// ─────────────────────────────────────────────────────────────────
 watch([selectedCity, selectedRegion], ([city, region], [oldCity, oldRegion]) => {
     if (oldCity !== city) userSelectedCity.value = true;
 
+    // Keep localStorage in sync (optional, can be removed if you rely entirely on session)
     localStorage.setItem("selectedCity", city);
     if (region) {
         localStorage.setItem("selectedRegion", region);
@@ -497,28 +502,21 @@ watch([selectedCity, selectedRegion], ([city, region], [oldCity, oldRegion]) => 
         localStorage.removeItem("selectedRegion");
     }
 
+    // Send the selection to the server (session is the single source of truth)
     router.post(
         route("set.city"),
         { city, region },
         {
             preserveScroll: true,
             onSuccess: () => {
-                // Build the current URL but remove any existing location filter params
-                const url = new URL(window.location.href);
-                url.searchParams.delete("filter[city]");
-                url.searchParams.delete("filter[region]");
-
-                // Reload the page cleanly
-                router.visit(url.pathname + url.search, {
-                    preserveScroll: true,
-                    preserveState: false, // fresh page load so server re‑reads session
-                });
+                // One clean reload – no extra Inertia visit
+                window.location.reload();
             },
         }
     );
 });
 
-// Search function
+// Search function – no city/region in request, backend reads from session
 const performSearch = () => {
     showSuggestions.value = false;
     router.visit(route("all.items"), {
@@ -527,8 +525,6 @@ const performSearch = () => {
             filter: {
                 global: searchTerm.value,
                 category: selectedCategory.value,
-                city: selectedCity.value === "Pakistan" ? "" : selectedCity.value,
-                region: selectedRegion.value || "",
                 // city and region are intentionally omitted – session handles location
             },
         },
@@ -547,7 +543,6 @@ const checkResetFilters = () => {
                 filter: {
                     global: "",
                     category: "",
-                    // again, no city/region
                 },
             },
             preserveScroll: true,

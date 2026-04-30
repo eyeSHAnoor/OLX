@@ -10,18 +10,19 @@ use App\Models\AdView;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB; // only if you don't already have it
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        Log::info('home controller opened');
+        // Log::info('home controller opened');
+
+        Log::error('Home controller loads', ['city' => session('city'), 'region' => session('region')]);
 
         $selectedCity = strtolower(session('city', 'Pakistan'));
-        $selectedRegion = $request->input('filter.region') 
-                      ?? session('region');  
+         $selectedRegion = session('region'); 
 
         // Filters
         $searchTerm    = $request->input('filter.global');
