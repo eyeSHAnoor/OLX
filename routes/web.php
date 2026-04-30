@@ -35,6 +35,18 @@ Route::post('/set-city', function (\Illuminate\Http\Request $request) {
     return back();
 })->name('set.city');
 
+// Route::post('/set-city', function (\Illuminate\Http\Request $request) {
+//     session(['city' => $request->city]);
+    
+//     if ($request->city === 'Pakistan' || empty($request->region)) {
+//         session()->forget('region');
+//     } else {
+//         session(['region' => $request->region]);
+//     }
+    
+//     return back();
+// })->name('set.city');
+
 Route::get('/policy/{type}', [App\Http\Controllers\PolicyController::class, 'show'])->name('policy.show');
 Route::get('/aboutus', [App\Http\Controllers\AboutController::class, 'index'])->name('aboutus');
 Route::get('/page/{pageKey}', [App\Http\Controllers\AboutController::class, 'show'])->name('public.page');

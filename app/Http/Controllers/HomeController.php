@@ -18,11 +18,16 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         // Log::info('home controller opened');
+        Log::info('Incoming region:', [
+    'request' => $request->input('filter.region'),
+    'has' => $request->has('filter.region'),
+    'session' => session('region')
+]);
 
         $selectedCity = strtolower(session('city', 'Pakistan'));
-        // $selectedRegion = $request->input('filter.region') 
-        //               ?? session('region'); 
-        $selectedRegion = $request->input('filter.region');
+        $selectedRegion = $request->input('filter.region') 
+                      ?? session('region'); 
+        // $selectedRegion = $request->input('filter.region');
 
         if (empty($selectedRegion)) {
             $selectedRegion = null;
