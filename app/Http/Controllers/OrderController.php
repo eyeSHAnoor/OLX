@@ -177,7 +177,7 @@ class OrderController extends Controller
 
         if ($order->ad) {
             $order->ad->update([
-                'is_active' => false,
+                // 'is_active' => false,
                 'status' => 'sold'
             ]);
         }

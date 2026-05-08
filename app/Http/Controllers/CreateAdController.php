@@ -220,7 +220,7 @@ class CreateAdController extends Controller
     
     public function updateStatus(Request $request, Ad $ad)
     {
-        // Authorize: the ad belongs to the authenticated user
+        // Authorize
         if ($ad->user_id !== auth()->id()) {
             abort(403);
         }
@@ -231,20 +231,30 @@ class CreateAdController extends Controller
 
         $newStatus = $request->status;
 
-        // Allow sold -> active transition (reactivate)
+        // CASE 1: Mark as SOLD (active/inactive → sold)
+        if (in_array($ad->status, ['active', 'inactive']) && $newStatus === 'sold') {
+            $ad->status = 'sold';
+            $ad->is_active = false; // important
+            $ad->save();
+
+            return back()->with('success', 'Ad marked as sold.');
+        }
+
+        // CASE 2: Reactivate (sold → active)
         if ($ad->status === 'sold' && $newStatus === 'active') {
             $ad->status = 'active';
-            $ad->is_active = true; 
+            $ad->is_active = true;
             $ad->save();
+
             return back()->with('success', 'Ad reactivated successfully.');
         }
 
-        // Normal active/inactive toggle
+        // CASE 3: active ↔ inactive
         if (in_array($ad->status, ['active', 'inactive']) && in_array($newStatus, ['active', 'inactive'])) {
             $ad->status = $newStatus;
-            // Update is_active according to status
-            $ad->is_active = $newStatus === 'active' ? true : false;
+            $ad->is_active = $newStatus === 'active';
             $ad->save();
+
             return back()->with('success', 'Ad status updated.');
         }
 

@@ -39,6 +39,7 @@ class UserProfileController extends Controller
         $user = Auth::user();
         
         $validated = $request->validate([
+            'name' => 'required|string|max:255',
             'username' => 'nullable|string|max:255|unique:user_profiles,username,' . $user->id . ',user_id',
             'phone' => 'nullable|string|max:20|unique:users,phone',
             'bio' => 'nullable|string|max:500',
@@ -51,6 +52,7 @@ class UserProfileController extends Controller
 
         if (isset($validated['phone'])) {
                 $user->update([
+                    'name' => $validated['name'] ?? $user->name,
                     'phone' => $validated['phone']
                 ]);
             }

@@ -562,4 +562,5 @@ class AdController extends Controller
             'hasOrdered' => $hasOrdered
         ]);
     }
+    
 }

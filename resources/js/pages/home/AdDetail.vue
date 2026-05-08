@@ -152,10 +152,15 @@
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-5">
                                 <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
                                     <span class="text-md sm:text-lg lg:text-xl font-bold text-primary">
-                                        Rs. {{ Number(ad.price).toLocaleString() }}
+                                        <template v-if="isJobAd">
+                                            Salary: Rs.{{ Number(ad.price).toLocaleString() }}
+                                        </template>
+                                        <template v-else>
+                                            Rs. {{ Number(ad.price).toLocaleString() }}
+                                        </template>
                                     </span>
                                     <span
-                                        class="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-green-100 text-green-700 rounded-full text-xs sm:text-sm font-medium">
+                                        class="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs sm:text-sm font-medium">
                                         {{ ad.is_featured ? "Featured" : "Regular" }}
                                     </span>
                                 </div>
@@ -168,7 +173,9 @@
                             <div
                                 class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg mb-4 sm:mb-5">
                                 <div>
-                                    <p class="text-xs text-gray-500 mb-0.5">Brand</p>
+                                    <p class="text-xs text-gray-500 mb-0.5">
+                                        {{ isJobAd ? "Company" : "Brand" }}
+                                    </p>
                                     <p class="text-sm font-medium">
                                         {{ ad.brand?.name || "Not specified" }}
                                     </p>
@@ -187,7 +194,10 @@
                                     </p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-500 mb-0.5">Seller</p>
+                                    <p class="text-xs text-gray-500 mb-0.5">
+                                        {{ isJobAd ? "Employer" : "Seller" }}
+                                    </p>
+
                                     <p class="text-sm font-medium">{{ ad.seller_name }}</p>
                                 </div>
                             </div>
@@ -542,7 +552,8 @@
                 <!-- Full-screen draggable image container -->
                 <div class="w-full h-full flex items-center justify-center overflow-hidden touch-none"
                     @mousedown="startDrag" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag"
-                    @touchstart="startDrag" @touchmove="onDrag" @touchend="stopDrag" @wheel.prevent="
+                    @touchstart="handleTouchStart" @touchmove.prevent="handleTouchMove" @touchend="handleTouchEnd"
+                    @dblclick="toggleZoom" @wheel.prevent="
                         (e) => {
                             if (e.deltaY < 0) zoomIn();
                             else zoomOut();
@@ -571,26 +582,14 @@ import { Icon } from "@iconify/vue";
 import { Link } from "@inertiajs/vue3";
 import OrderModal from "./_partials/OrderModal.vue";
 
-interface PageProps extends InertiaPageProps {
-    ad?: any;
-    similarAds?: any[];
-    categories?: any[];
-    brands?: any[];
-    auth?: {
-        user?: {
-            id: number;
-            name: string;
-        };
-    };
-}
-
 // Theme
 const useForceTheme = (theme: string) => {
     document.documentElement.setAttribute("data-theme", theme);
 };
 useForceTheme("light");
 
-const page = usePage<PageProps>();
+const page = usePage();
+console.log(page.props);
 const ad = computed(() => page.props.ad);
 const similarAds = computed(() => page.props.similarAds || []);
 const hasOrdered = computed(() => page.props.hasOrdered || false);
@@ -1043,6 +1042,98 @@ const orderAd = () => {
         }
     );
 };
+
+// Swipe detection
+const SWIPE_THRESHOLD = 50;
+const touchStartPos = ref({ x: 0, y: 0 });
+
+// Toggle zoom on double-click
+const toggleZoom = () => {
+    if (zoomLevel.value === 1) {
+        zoomLevel.value = 2.5; // or any comfortable max level
+        pan.value = { x: 0, y: 0 };
+    } else {
+        resetZoomAndPan();
+    }
+};
+
+// Unified touch handlers
+const handleTouchStart = (e: TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartPos.value = { x: touch.clientX, y: touch.clientY };
+
+    // Start drag only if zoomed in (panning)
+    if (zoomLevel.value > 1) {
+        isDragging.value = true;
+        dragStart.value = {
+            x: touch.clientX,
+            y: touch.clientY,
+            panX: pan.value.x,
+            panY: pan.value.y,
+        };
+    }
+};
+
+const handleTouchMove = (e: TouchEvent) => {
+    if (isDragging.value) {
+        // When panning, prevent default to stop page scrolling
+        e.preventDefault();
+        const touch = e.touches[0];
+        const dx = touch.clientX - dragStart.value.x;
+        const dy = touch.clientY - dragStart.value.y;
+        pan.value = {
+            x: dragStart.value.panX + dx,
+            y: dragStart.value.panY + dy,
+        };
+    }
+    // No action needed when not zoomed (swipe detection happens on end)
+};
+
+const handleTouchEnd = (e: TouchEvent) => {
+    if (isDragging.value) {
+        // End panning
+        isDragging.value = false;
+        return;
+    }
+
+    // Swipe navigation – only when not zoomed
+    if (zoomLevel.value === 1) {
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - touchStartPos.value.x;
+        const deltaY = touch.clientY - touchStartPos.value.y;
+
+        if (
+            Math.abs(deltaX) > SWIPE_THRESHOLD &&
+            Math.abs(deltaX) > Math.abs(deltaY) * 1.5 // more horizontal than vertical
+        ) {
+            if (deltaX > 0) {
+                prevImageLightbox();
+            } else {
+                nextImageLightbox();
+            }
+        }
+    }
+};
+
+const jobCategoryIds = computed(() => {
+    const ids = new Set<number>();
+    const jobsCategory = page.props.topCategories?.find((cat: any) => cat.slug === "jobs");
+    if (jobsCategory) {
+        ids.add(jobsCategory.id); // 95
+        const collectIds = (children: any[]) => {
+            children?.forEach((child: any) => {
+                ids.add(child.id);
+                if (child.children_recursive?.length) collectIds(child.children_recursive);
+            });
+        };
+        collectIds(jobsCategory.children_recursive || []);
+    }
+    return ids;
+});
+
+const isJobAd = computed(() => {
+    return ad.value ? jobCategoryIds.value.has(ad.value.category_id) : false;
+});
 </script>
 
 <style scoped>

@@ -20,10 +20,11 @@
         <section v-if="homepageBanners.length"
             class="relative bg-gray-100 h-[180px] md:h-[400px] lg:h-[500px] overflow-hidden">
             <div v-for="(banner, index) in homepageBanners" :key="banner.id"
-                class="absolute inset-0 transition-opacity duration-700"
-                :class="{ 'opacity-100 z-10': currentSlide === index, 'opacity-0': currentSlide !== index }">
+                class="absolute inset-0 transition-opacity duration-700" :class="{
+                    'opacity-100 z-10': currentSlide === index,
+                    'opacity-0': currentSlide !== index,
+                }">
                 <a :href="banner.link || '#'" :target="banner.link ? '_blank' : '_self'" class="block w-full h-full">
-                    <!-- ✅ Optimization: lazy loading for hero images -->
                     <img :src="banner.image_url" :alt="banner.title" class="w-full h-full object-contain"
                         loading="lazy" />
                 </a>
@@ -41,8 +42,7 @@
             <div v-if="homepageBanners.length > 1" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
                 <button v-for="(_, index) in homepageBanners" :key="index" @click="currentSlide = index"
                     class="h-2 rounded-full transition-all"
-                    :class="currentSlide === index ? 'w-8 bg-brand-teal' : 'w-2 bg-white/70'">
-                </button>
+                    :class="currentSlide === index ? 'w-8 bg-brand-teal' : 'w-2 bg-white/70'"></button>
             </div>
         </section>
 
@@ -50,12 +50,13 @@
         <template v-if="!isSearching">
             <!-- BROWSE CATEGORIES SECTION -->
             <section class="py-8 bg-gray-50">
-                <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 ">
-                    <h2 class="text-lg md:text-xl font-semibold mb-6 text-center">Browse Categories</h2>
+                <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3">
+                    <h2 class="text-lg md:text-xl font-semibold mb-6 text-center">
+                        Browse Categories
+                    </h2>
 
-                    <!-- Desktop grid (now uses displayCategories) -->
+                    <!-- Desktop grid (unchanged) -->
                     <div class="md:grid hidden grid-cols-4 md:grid-cols-7 gap-4">
-                        <!-- ✅ Optimization: v-memo and lazy images -->
                         <div v-for="category in displayCategories" :key="category.id"
                             v-memo="[category.id, category.files?.[0]?.file_url]" @click="navigateToCategory(category)"
                             class="flex flex-col items-center cursor-pointer group">
@@ -72,17 +73,16 @@
                             </span>
                         </div>
                     </div>
+
                     <!-- MOBILE / TABLET: carousel -->
                     <div class="md:hidden">
                         <div class="relative">
                             <div ref="carouselContainer" class="overflow-x-auto snap-x snap-mandatory scrollbar-none"
                                 @scroll="throttledCarouselScroll">
-                                <div class="grid grid-rows-2 grid-flow-col gap-1 w-max"
-                                    style="grid-auto-columns: 80px;">
-                                    <!-- ✅ Optimization: limit categories and add v-memo + lazy -->
+                                <div class="grid grid-rows-2 grid-flow-col gap-1 w-max" style="grid-auto-columns: 80px">
                                     <div v-for="category in displayCategories" :key="category.id"
                                         v-memo="[category.id, category.files?.[0]?.file_url]"
-                                        @click="navigateToCategory(category)"
+                                        @click="handleCategoryClick(category)"
                                         class="snap-start cursor-pointer group transition-transform hover:scale-105">
                                         <div class="flex flex-col items-center">
                                             <div
@@ -120,18 +120,20 @@
                     <div class="relative">
                         <button v-if="showPrevButton" @click="scrollPrev"
                             class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full p-2 shadow-md hover:bg-white focus:outline-none"
-                            :class="{ 'hidden': !canScrollLeftRecent }">
+                            :class="{ hidden: !canScrollLeftRecent }">
                             <Icon icon="mdi:chevron-left" class="w-5 h-5" />
                         </button>
                         <button v-if="showNextButton" @click="scrollNext"
                             class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full p-2 shadow-md hover:bg-white focus:outline-none"
-                            :class="{ 'hidden': !canScrollRightRecent }">
+                            :class="{ hidden: !canScrollRightRecent }">
                             <Icon icon="mdi:chevron-right" class="w-5 h-5" />
                         </button>
                         <div ref="recentScrollContainer"
-                            class="overflow-x-auto overflow-y-hidden pb-4 -mx-4 px-4 scrollbar-hide"
-                            style="scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none;"
-                            @scroll="throttledRecentScroll">
+                            class="overflow-x-auto overflow-y-hidden pb-4 -mx-4 px-4 scrollbar-hide" style="
+                scroll-behavior: smooth;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+              " @scroll="throttledRecentScroll">
                             <div class="flex flex-nowrap gap-4">
                                 <div v-for="ad in recentAds" :key="ad.id"
                                     class="flex-shrink-0 w-[260px] sm:w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.666rem)] lg:w-[calc(25%-0.75rem)]">
@@ -158,7 +160,6 @@
 
             <!-- CATEGORY ADS (heavy component – keep an eye on this) -->
             <section class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 space-y-12 pb-20">
-                <!-- ✅ Note: CategoryAds may still be the biggest bottleneck – optimize it next -->
                 <CategoryAds v-for="cat in topCategories" :key="cat.id" :category="cat" />
             </section>
 
@@ -179,35 +180,106 @@
                 </button>
             </div>
         </template>
+
+        <!-- MOBILE SUB-CATEGORY SIDEBAR (stable, no animation) -->
+        <Teleport to="body">
+            <div v-if="selectedParentCategory" class="fixed inset-0 z-[100] flex" @click.self="closeSidebar">
+                <!-- Backdrop -->
+                <div class="absolute inset-0 bg-black/50"></div>
+
+                <!-- Sidebar panel -->
+                <div class="relative w-4/5 max-w-xs bg-white h-full shadow-xl overflow-y-auto">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between p-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-800 truncate">
+                            {{ selectedParentCategory.name }}
+                        </h3>
+                        <button @click="closeSidebar" class="p-1 hover:bg-gray-100 rounded-full">
+                            <Icon icon="mdi:close" class="text-2xl text-gray-600" />
+                        </button>
+                    </div>
+
+                    <!-- Subcategory list -->
+                    <div class="p-2">
+                        <button v-for="child in selectedParentCategory.children" :key="child.id"
+                            @click="navigateToCategory(child)"
+                            class="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition flex items-center gap-3">
+                            <Icon icon="mdi:chevron-right" class="text-gray-400" />
+                            <span class="text-sm font-medium">{{ child.name }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </OlxLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { Head, usePage, router } from '@inertiajs/vue3';
-import OlxLayout from '@/layouts/OlxLayout.vue'
-import CategoryAds from '@/components/CategoryAds.vue'
-import AdCard from '@/components/AdCard.vue';
-import { Icon } from '@iconify/vue';
-import { useForceTheme } from '@/composables/useForceTheme'
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { Head, usePage, router } from "@inertiajs/vue3";
+import OlxLayout from "@/layouts/OlxLayout.vue";
+import CategoryAds from "@/components/CategoryAds.vue";
+import AdCard from "@/components/AdCard.vue";
+import { Icon } from "@iconify/vue";
+import { useForceTheme } from "@/composables/useForceTheme";
 
 // --- Page data ---
 const page = usePage();
-const categories = computed(() => page.props.categories || [])
-const banners = computed(() => page.props.banners || [])
-const isSearching = computed(() => page.props.isSearching || false)
-const recentAds = computed(() => page.props.recentAds || [])
+const categories = computed(() => page.props.categories || []);
+const banners = computed(() => page.props.banners || []);
+const isSearching = computed(() => page.props.isSearching || false);
+const recentAds = computed(() => page.props.recentAds || []);
 
-// ✅ Optimization: limit categories to first 20 to reduce DOM
-const displayCategories = computed(() => categories.value.slice(0, 20))
+console.log(page.props);
 
-// --- Hero carousel (with tab-pause fix) ---
+const displayCategories = computed(() => categories.value.slice(0, 20));
+
+// --- Mobile sidebar (stable) ---
+const selectedParentCategory = ref<any>(null);
+
+function openSidebar(category: any) {
+    // Only allow on screens smaller than 768px and when there are subcategories
+    if (window.innerWidth < 768 && category.children?.length) {
+        selectedParentCategory.value = category;
+    }
+}
+
+function closeSidebar() {
+    selectedParentCategory.value = null;
+}
+
+function selectSubCategory(child: any) {
+    closeSidebar();
+    router.get(route("category.show", { slug: child.slug }));
+}
+
+// Auto close sidebar if window is resized to desktop size
+function onWindowResize() {
+    if (window.innerWidth >= 768 && selectedParentCategory.value) {
+        closeSidebar();
+    }
+}
+
+// Click handler for mobile categories
+function handleCategoryClick(category: any) {
+    if (window.innerWidth < 768 && category.children?.length) {
+        openSidebar(category);
+    } else {
+        navigateToCategory(category);
+    }
+}
+
+// --- Hero carousel (unchanged) ---
 const currentSlide = ref(0);
 let interval: ReturnType<typeof setInterval> | null = null;
 
-const homepageBanners = computed(() => banners.value.filter(b => b.position === 'homepage'));
-const promotionalBanners = computed(() => banners.value.filter(b => ['category', 'sidebar'].includes(b.position)).slice(0, 2));
-const bottomBanner = computed(() => banners.value.find(b => b.position === 'floating'));
+const homepageBanners = computed(() =>
+    banners.value.filter((b) => b.position === "homepage")
+);
+const promotionalBanners = computed(() =>
+    banners.value.filter((b) => ["category", "sidebar"].includes(b.position)).slice(0, 2)
+);
+const bottomBanner = computed(() => banners.value.find((b) => b.position === "floating"));
 
 const nextSlide = () => {
     if (homepageBanners.value.length) {
@@ -217,11 +289,12 @@ const nextSlide = () => {
 
 const prevSlide = () => {
     if (homepageBanners.value.length) {
-        currentSlide.value = (currentSlide.value - 1 + homepageBanners.value.length) % homepageBanners.value.length;
+        currentSlide.value =
+            (currentSlide.value - 1 + homepageBanners.value.length) %
+            homepageBanners.value.length;
     }
 };
 
-// ✅ Optimization: auto-play with pause on hidden tab
 const startAutoPlay = () => {
     if (homepageBanners.value.length > 1 && !interval) {
         interval = setInterval(nextSlide, 5000);
@@ -235,7 +308,6 @@ const stopAutoPlay = () => {
     }
 };
 
-// Handler for visibility change
 const handleVisibilityChange = () => {
     if (document.hidden) {
         stopAutoPlay();
@@ -245,19 +317,22 @@ const handleVisibilityChange = () => {
 };
 
 // --- General methods ---
-const topCategories = computed(() => categories.value.filter(c => !c.parent_id).slice(0, 7));
+const topCategories = computed(() =>
+    categories.value.filter((c) => !c.parent_id).slice(0, 7)
+);
 
 const navigateToCategory = (category: any) => {
+    console.log("Navigating to category:", category);
     if (category.slug) {
-        router.get(route('category.show', { slug: category.slug }));
+        router.get(route("category.show", { slug: category.slug }));
     }
 };
 
 const goBack = () => {
-    router.get(route('home'));
+    router.get(route("home"));
 };
 
-// --- Categories carousel logic (throttled) ---
+// --- Categories carousel logic (unchanged) ---
 const carouselContainer = ref<HTMLElement | null>(null);
 const canScrollLeftCarousel = ref(false);
 const canScrollRightCarousel = ref(false);
@@ -265,10 +340,12 @@ const canScrollRightCarousel = ref(false);
 const itemsPerPage = computed(() => {
     const el = carouselContainer.value;
     if (!el) return 8;
-    const cardWidth = 80 + 4; // 80px card + 4px gap
+    const cardWidth = 80 + 4;
     return Math.floor(el.clientWidth / cardWidth) * 2;
 });
-const totalPages = computed(() => Math.ceil(categories.value.length / itemsPerPage.value));
+const totalPages = computed(() =>
+    Math.ceil(categories.value.length / itemsPerPage.value)
+);
 
 const currentPage = computed(() => {
     const el = carouselContainer.value;
@@ -280,7 +357,6 @@ const currentPage = computed(() => {
     return Math.max(0, page);
 });
 
-// ✅ Optimization: throttled scroll handler
 let carouselScrollRAF: number | null = null;
 const updateCarouselScroll = () => {
     const el = carouselContainer.value;
@@ -302,21 +378,23 @@ const throttledCarouselScroll = () => {
 const scrollToPage = (pageIndex: number) => {
     const el = carouselContainer.value;
     if (el) {
-        el.scrollTo({ left: pageIndex * el.clientWidth, behavior: 'smooth' });
+        el.scrollTo({ left: pageIndex * el.clientWidth, behavior: "smooth" });
     }
 };
 
-// Reset carousel scroll when categories change
-watch(() => categories.value.length, () => {
-    setTimeout(() => {
-        if (carouselContainer.value) {
-            carouselContainer.value.scrollLeft = 0;
-            updateCarouselScroll();
-        }
-    }, 100);
-});
+watch(
+    () => categories.value.length,
+    () => {
+        setTimeout(() => {
+            if (carouselContainer.value) {
+                carouselContainer.value.scrollLeft = 0;
+                updateCarouselScroll();
+            }
+        }, 100);
+    }
+);
 
-// --- Recently viewed carousel logic (throttled) ---
+// --- Recently viewed carousel logic (unchanged) ---
 const recentScrollContainer = ref<HTMLElement | null>(null);
 const canScrollLeftRecent = ref(false);
 const canScrollRightRecent = ref(false);
@@ -339,52 +417,65 @@ const throttledRecentScroll = () => {
 };
 
 const scrollPrev = () => {
-    recentScrollContainer.value?.scrollBy({ left: -300, behavior: 'smooth' });
+    recentScrollContainer.value?.scrollBy({ left: -300, behavior: "smooth" });
 };
 
 const scrollNext = () => {
-    recentScrollContainer.value?.scrollBy({ left: 300, behavior: 'smooth' });
+    recentScrollContainer.value?.scrollBy({ left: 300, behavior: "smooth" });
 };
 
 const showPrevButton = true;
 const showNextButton = true;
 
+// --- Keyboard handler for sidebar ---
+function handleEscape(e: KeyboardEvent) {
+    if (e.key === "Escape" && selectedParentCategory.value) {
+        closeSidebar();
+    }
+}
+
 // --- Lifecycle ---
 onMounted(() => {
-    useForceTheme('light');
+    useForceTheme("light");
 
-    // Start auto-play and listen to tab visibility
     startAutoPlay();
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // Hero carousel mouse pause
-    const heroCarousel = document.querySelector('.relative.bg-gray-100');
-    heroCarousel?.addEventListener('mouseenter', stopAutoPlay);
-    heroCarousel?.addEventListener('mouseleave', startAutoPlay);
+    const heroCarousel = document.querySelector(".relative.bg-gray-100");
+    heroCarousel?.addEventListener("mouseenter", stopAutoPlay);
+    heroCarousel?.addEventListener("mouseleave", startAutoPlay);
 
-    // Categories carousel listeners
-    carouselContainer.value?.addEventListener('scroll', throttledCarouselScroll, { passive: true });
+    carouselContainer.value?.addEventListener("scroll", throttledCarouselScroll, {
+        passive: true,
+    });
     updateCarouselScroll();
 
-    // Recently viewed listeners
-    recentScrollContainer.value?.addEventListener('scroll', throttledRecentScroll, { passive: true });
-    window.addEventListener('resize', throttledRecentScroll, { passive: true });
+    recentScrollContainer.value?.addEventListener("scroll", throttledRecentScroll, {
+        passive: true,
+    });
+    window.addEventListener("resize", throttledRecentScroll, { passive: true });
     updateRecentScrollButtons();
+
+    // Sidebar resize listener
+    window.addEventListener("resize", onWindowResize);
+    document.addEventListener("keydown", handleEscape);
 });
 
 onUnmounted(() => {
     stopAutoPlay();
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
 
-    const heroCarousel = document.querySelector('.relative.bg-gray-100');
-    heroCarousel?.removeEventListener('mouseenter', stopAutoPlay);
-    heroCarousel?.removeEventListener('mouseleave', startAutoPlay);
+    const heroCarousel = document.querySelector(".relative.bg-gray-100");
+    heroCarousel?.removeEventListener("mouseenter", stopAutoPlay);
+    heroCarousel?.removeEventListener("mouseleave", startAutoPlay);
 
-    carouselContainer.value?.removeEventListener('scroll', throttledCarouselScroll);
-    recentScrollContainer.value?.removeEventListener('scroll', throttledRecentScroll);
-    window.removeEventListener('resize', throttledRecentScroll);
+    carouselContainer.value?.removeEventListener("scroll", throttledCarouselScroll);
+    recentScrollContainer.value?.removeEventListener("scroll", throttledRecentScroll);
+    window.removeEventListener("resize", throttledRecentScroll);
 
-    // Clean up any pending animation frames
+    window.removeEventListener("resize", onWindowResize);
+    document.removeEventListener("keydown", handleEscape);
+
     if (carouselScrollRAF) cancelAnimationFrame(carouselScrollRAF);
     if (recentScrollRAF) cancelAnimationFrame(recentScrollRAF);
 });

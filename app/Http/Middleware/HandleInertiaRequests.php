@@ -59,7 +59,7 @@ class HandleInertiaRequests extends Middleware
            'auth' => [
                 'user' => $user ? [
                     'id' => $user->id,
-                    'name' => $user->name,
+                    'name' => $user->profile?->username ?? $user->name,
                     'terms_accepted' => $user->terms_accepted,
                     'email' => $user->email,
 

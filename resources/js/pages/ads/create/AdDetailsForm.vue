@@ -11,9 +11,14 @@
             </button>
 
             <div class="border-b border-gray-200 pb-4 px-3">
-                <h2 class="text-3xl font-light text-gray-900">{{ editMode ? 'Edit Ad' : 'Ad Details' }}</h2>
+                <h2 class="text-3xl font-light text-gray-900">
+                    {{ editMode ? "Edit Ad" : "Ad Details" }}
+                </h2>
                 <p class="text-gray-500 mt-1 text-sm">
-                    {{ editMode ? 'Update your ad information below' : 'Fill in the information below to create your ad'
+                    {{
+                        editMode
+                            ? "Update your ad information below"
+                            : "Fill in the information below to create your ad"
                     }}
                 </p>
             </div>
@@ -110,8 +115,10 @@
 
                     <!-- Price -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Price <span
-                                class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <template v-if="isJobAd">Salary <span class="text-red-500">*</span></template>
+                            <template v-else>Price <span class="text-red-500">*</span></template>
+                        </label>
                         <div class="relative">
                             <span class="absolute left-4 top-2.5 text-gray-500"></span>
                             <input v-model.number="form.price" type="number" min="0" step="0.01"
@@ -124,7 +131,7 @@
                     </div>
 
                     <!-- Discount (NEW) -->
-                    <div>
+                    <div v-if="!isJobAd">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Discount (%)
                             <span class="text-gray-400 text-xs font-normal">(optional)</span>
@@ -142,8 +149,12 @@
                                 </p>
                             </div>
                             <!-- Discounted Price Preview -->
-                            <div v-if="form.price !== null && form.price !== '' && form.discount !== null && form.discount !== ''"
-                                class="flex-shrink-0 bg-gray-50 rounded-lg px-4 ">
+                            <div v-if="
+                                form.price !== null &&
+                                form.price !== '' &&
+                                form.discount !== null &&
+                                form.discount !== ''
+                            " class="flex-shrink-0 bg-gray-50 rounded-lg px-4">
                                 <p class="text-xs text-gray-500">After discount</p>
                                 <p class="text-sm font-semibold text-gray-900">
                                     {{ discountedPrice }}
@@ -161,9 +172,13 @@
                 <button type="button" @click="showAttributes = !showAttributes"
                     class="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors flex justify-between items-center">
                     <div class="text-left">
-                        <h3 class="font-medium text-gray-900">Product Specifications</h3>
+                        <h3 class="font-medium text-gray-900">
+                            {{ isJobAd ? "Job Details" : "Product Specifications" }}
+                        </h3>
                         <p class="text-xs text-gray-500 mt-1">
-                            {{ showAttributes ? 'Hide specifications' : 'Add detailed specs (optional)' }}
+                            {{
+                                showAttributes ? "Hide specifications" : "Add detailed specs (optional)"
+                            }}
                         </p>
                     </div>
                     <!-- Chevron icon that rotates -->
@@ -268,7 +283,7 @@
                                     </div>
                                 </template>
                                 <template #selected="{ item }">
-                                    {{ item?.name ?? 'Select City' }}
+                                    {{ item?.name ?? "Select City" }}
                                 </template>
                             </SearchableSelectInput>
                             <p v-if="form.errors.city" class="text-red-500 text-xs mt-1.5">
@@ -278,7 +293,8 @@
                         <!-- Region (appears after city selected) -->
                         <div v-if="form.city">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Region / Area <span class="text-gray-400 text-xs font-normal">(optional)</span>
+                                Region / Area
+                                <span class="text-gray-400 text-xs font-normal">(optional)</span>
                             </label>
                             <SearchableSelectInput v-model="form.region" :items="regionOptions" key-by="name"
                                 :searchable-fields="['name']" placeholder="Select Region" :disabled="isLoadingRegions">
@@ -290,7 +306,7 @@
                                 </template>
                                 <template #selected="{ item }">
                                     <span v-if="isLoadingRegions">Loading regions...</span>
-                                    <span v-else>{{ item?.name ?? 'All areas' }}</span>
+                                    <span v-else>{{ item?.name ?? "All areas" }}</span>
                                 </template>
                             </SearchableSelectInput>
                             <p v-if="form.errors.region" class="text-red-500 text-xs mt-1.5">
@@ -304,14 +320,18 @@
             <!-- Seller Information Section -->
             <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <h3 class="font-medium text-gray-900">Seller Information</h3>
+                    <h3 class="font-medium text-gray-900">
+                        {{ !isJobAd ? "Seller Information" : "Contact Information" }}
+                    </h3>
                 </div>
 
                 <div class="p-6">
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Seller Name <span
-                                    class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ !isJobAd ? "Seller Name" :
+                                "Contact Name"
+                                }}
+                                <span class="text-red-500">*</span></label>
                             <input v-model="form.seller_name"
                                 class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
                                 placeholder="Full name" />
@@ -321,8 +341,9 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Seller Phone <span
-                                    class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ !isJobAd ? "Seller Phone" : "Contact Phone" }}
+                                <span class="text-red-500">*</span></label>
                             <input v-model="form.seller_phone"
                                 class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
                                 placeholder="+92 XXX XXXXXXX" />
@@ -337,9 +358,12 @@
             <!-- Images Section -->
             <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <h3 class="font-medium text-gray-900">Images <span class="text-red-500">*</span></h3>
+                    <h3 class="font-medium text-gray-900">
+                        Images <span class="text-red-500">*</span>
+                    </h3>
                     <p class="text-xs text-gray-500 mt-1">
-                        Upload up to 10 images (JPEG, PNG, JPG, GIF) – images are compressed automatically
+                        Upload up to 10 images (JPEG, PNG, JPG, GIF) – images are compressed
+                        automatically
                     </p>
                 </div>
 
@@ -363,11 +387,13 @@
                                 </path>
                             </svg>
                             <span class="text-sm text-gray-600">
-                                {{ isCompressing ? 'Compressing images...' : 'Click to upload images' }}
+                                {{ isCompressing ? "Compressing images..." : "Click to upload images" }}
                             </span>
                             <span v-if="!isCompressing" class="text-xs text-gray-400 mt-1">or drag and drop</span>
                         </button>
-                        <p v-if="compressionError" class="text-red-500 text-xs mt-2">{{ compressionError }}</p>
+                        <p v-if="compressionError" class="text-red-500 text-xs mt-2">
+                            {{ compressionError }}
+                        </p>
                     </div>
 
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -421,7 +447,9 @@
             <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                     <h3 class="font-medium text-gray-900">Search Keywords</h3>
-                    <p class="text-xs text-gray-500 mt-1">Add keywords to help people find your ad (max 20)</p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Add keywords to help people find your ad (max 20)
+                    </p>
                 </div>
 
                 <div class="p-6">
@@ -460,8 +488,10 @@
             <div class="flex justify-end pt-4">
                 <button type="submit" :disabled="form.processing || isCompressing"
                     class="px-8 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium">
-                    <span v-if="form.processing">{{ editMode ? 'Updating...' : 'Posting...' }}</span>
-                    <span v-else>{{ editMode ? 'Update Ad' : 'Post Ad' }}</span>
+                    <span v-if="form.processing">{{
+                        editMode ? "Updating..." : "Posting..."
+                        }}</span>
+                    <span v-else>{{ editMode ? "Update Ad" : "Post Ad" }}</span>
                 </button>
             </div>
         </form>
@@ -480,12 +510,12 @@
     </div>
 </template>
 
-<script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import imageCompression from 'browser-image-compression'
-import { useForm, router } from '@inertiajs/vue3'
-import axios from 'axios'
-import cities from '@/data/cities.json'
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
+import imageCompression from "browser-image-compression";
+import { useForm, router } from "@inertiajs/vue3";
+import axios from "axios";
+import cities from "@/data/cities.json";
 
 const props = defineProps({
     selectedCategory: Object,
@@ -493,185 +523,202 @@ const props = defineProps({
     user: Object,
     features: {
         type: Array,
-        default: () => []
+        default: () => [],
     },
     editMode: { type: Boolean, default: false },
-    adData: { type: Object, default: null }
-})
+    adData: { type: Object, default: null },
+});
 
-console.log('AdDetailsForm props:', props.adData)
+console.log("AdDetailsForm props:", props.adData);
 
-const STORAGE_KEY = 'ad_form_draft'
+const STORAGE_KEY = "ad_form_draft";
 
 // Dynamic attributes and models
-const categoryAttributes = ref([])
-const selectedAttributeValues = ref({})
-const brandModels = ref([])
-const localSelectedBrand = ref(null)
-const localSelectedModel = ref(null)
-const isLoadingModels = ref(false)
+const categoryAttributes = ref([]);
+const selectedAttributeValues = ref({});
+const brandModels = ref([]);
+const localSelectedBrand = ref(null);
+const localSelectedModel = ref(null);
+const isLoadingModels = ref(false);
 
-const regions = ref([])
-const isLoadingRegions = ref(false)
+const regions = ref([]);
+const isLoadingRegions = ref(false);
 
 // Show/hide specifications panel – initially collapsed
-const showAttributes = ref(false)
+const showAttributes = ref(false);
 
 // Region options formatted for SearchableSelectInput
 const regionOptions = computed(() => {
-    return regions.value.map(region => ({
+    return regions.value.map((region) => ({
         name: region.name,
-    }))
-})
+    }));
+});
 
 // Fetch regions when city changes
 const fetchRegions = async (cityName) => {
     if (!cityName) {
-        regions.value = []
-        return
+        regions.value = [];
+        return;
     }
 
-    isLoadingRegions.value = true
+    isLoadingRegions.value = true;
     try {
-        const response = await axios.get(`/regions/${encodeURIComponent(cityName)}`)
+        const response = await axios.get(`/regions/${encodeURIComponent(cityName)}`);
         if (response.data.regions) {
-            regions.value = response.data.regions
+            regions.value = response.data.regions;
         } else {
-            regions.value = []
+            regions.value = [];
         }
     } catch (error) {
-        console.error('Failed to fetch regions:', error)
-        regions.value = []
+        console.error("Failed to fetch regions:", error);
+        regions.value = [];
     } finally {
-        isLoadingRegions.value = false
+        isLoadingRegions.value = false;
     }
-}
+};
 
 // Image compression state
-const isCompressing = ref(false)
-const compressionError = ref('')
+const isCompressing = ref(false);
+const compressionError = ref("");
 
 const cityOptions = computed(() => {
     const citiesList = cities
-        .filter(city => city.country === 'PK')
-        .map(city => ({
+        .filter((city) => city.country === "PK")
+        .map((city) => ({
             id: city.name,
-            name: city.name
+            name: city.name,
         }))
-        .sort((a, b) => a.name.localeCompare(b.name))
-    return Object.freeze(citiesList)
-})
+        .sort((a, b) => a.name.localeCompare(b.name));
+    return Object.freeze(citiesList);
+});
 
 // Fetch attributes for category
 const fetchAttributes = async (categoryId) => {
     try {
-        const response = await axios.get(`/categories/${categoryId}/attributes`)
+        const response = await axios.get(`/categories/${categoryId}/attributes`);
         if (response.data.success) {
-            categoryAttributes.value = response.data.attributes
+            categoryAttributes.value = response.data.attributes;
         } else {
-            categoryAttributes.value = response.data.attributes || []
+            categoryAttributes.value = response.data.attributes || [];
         }
 
         // Populate existing attribute values if editing
-        if (props.editMode && props.adData?.attributes && props.adData.attributes.length > 0) {
+        if (
+            props.editMode &&
+            props.adData?.attributes &&
+            props.adData.attributes.length > 0
+        ) {
             props.adData.attributes.forEach((attr) => {
-                const attributeId = attr.category_attribute_id || attr.attribute?.id
+                const attributeId = attr.category_attribute_id || attr.attribute?.id;
                 if (attributeId && attr.value) {
-                    selectedAttributeValues.value[attributeId] = attr.value
+                    selectedAttributeValues.value[attributeId] = attr.value;
                 }
-            })
+            });
         }
     } catch (error) {
-        console.error('Failed to load attributes:', error)
-        categoryAttributes.value = []
+        console.error("Failed to load attributes:", error);
+        categoryAttributes.value = [];
     }
-}
+};
 
 // Fetch models for brand
 const fetchModels = async (brandId) => {
-    isLoadingModels.value = true
+    isLoadingModels.value = true;
     try {
-        const response = await axios.get(`/brands/${brandId}/models`)
+        const response = await axios.get(`/brands/${brandId}/models`);
         if (response.data.success) {
-            brandModels.value = response.data.models
+            brandModels.value = response.data.models;
         } else {
-            brandModels.value = response.data.models || []
+            brandModels.value = response.data.models || [];
         }
 
         // Auto-select model if editing
         if (props.editMode && props.adData) {
-            const modelId = props.adData.brand_model_id || props.adData.model_id
+            const modelId = props.adData.brand_model_id || props.adData.model_id;
             if (modelId && brandModels.value.length > 0) {
-                const modelExists = brandModels.value.some(model => model.id == modelId)
+                const modelExists = brandModels.value.some((model) => model.id == modelId);
                 if (modelExists) {
-                    const model = brandModels.value.find(m => m.id == modelId)
-                    localSelectedModel.value = model
+                    const model = brandModels.value.find((m) => m.id == modelId);
+                    localSelectedModel.value = model;
                 }
             }
         }
     } catch (error) {
-        console.error('Failed to load models:', error)
-        brandModels.value = []
+        console.error("Failed to load models:", error);
+        brandModels.value = [];
     } finally {
-        isLoadingModels.value = false
+        isLoadingModels.value = false;
     }
-}
+};
 
 const handleBrandChange = () => {
     if (localSelectedBrand.value) {
-        fetchModels(localSelectedBrand.value.id)
-        localSelectedModel.value = null
+        fetchModels(localSelectedBrand.value.id);
+        localSelectedModel.value = null;
     } else {
-        brandModels.value = []
-        localSelectedModel.value = null
+        brandModels.value = [];
+        localSelectedModel.value = null;
     }
-}
+};
 
 const handleModelChange = () => {
-    form.model_id = localSelectedModel.value?.id || null
-}
+    form.model_id = localSelectedModel.value?.id || null;
+};
 
-const availableBrands = computed(() => props.selectedCategory?.brands || [])
+const availableBrands = computed(() => props.selectedCategory?.brands || []);
 
 // --- NEW: computed discounted price ---
 const discountedPrice = computed(() => {
-    const price = parseFloat(form.price)
-    const discount = parseFloat(form.discount)
+    const price = parseFloat(form.price);
+    const discount = parseFloat(form.discount);
     if (isNaN(price) || isNaN(discount) || discount < 0 || discount > 100) {
-        return null
+        return null;
     }
-    const discounted = price * (1 - discount / 100)
-    return discounted.toFixed(2) // formatted as currency string
-})
+    const discounted = price * (1 - discount / 100);
+    return discounted.toFixed(2); // formatted as currency string
+});
 
 // Initialize form
 const initializeForm = () => {
-    const savedDraft = localStorage.getItem(STORAGE_KEY)
-    let formData = {}
+    const savedDraft = localStorage.getItem(STORAGE_KEY);
+    let formData = {};
 
     if (savedDraft && !props.editMode) {
         try {
-            formData = JSON.parse(savedDraft)
+            formData = JSON.parse(savedDraft);
         } catch (e) {
-            console.error('Failed to parse saved draft', e)
+            console.error("Failed to parse saved draft", e);
         }
     }
 
-    const modelId = props.editMode && props.adData
-        ? (props.adData.brand_model_id || props.adData.model_id || null)
-        : (formData.model_id || null)
+    const modelId =
+        props.editMode && props.adData
+            ? props.adData.brand_model_id || props.adData.model_id || null
+            : formData.model_id || null;
 
     return {
-        category_id: props.editMode && props.adData ? props.adData.category_id : (formData.category_id || props.selectedCategory?.id || null),
-        brand_id: props.editMode && props.adData ? props.adData.brand_id : (formData.brand_id || null),
+        category_id:
+            props.editMode && props.adData
+                ? props.adData.category_id
+                : formData.category_id || props.selectedCategory?.id || null,
+        brand_id:
+            props.editMode && props.adData ? props.adData.brand_id : formData.brand_id || null,
         model_id: modelId,
-        ad_title: props.editMode && props.adData ? props.adData.ad_title : (formData.ad_title || ''),
-        description: props.editMode && props.adData ? props.adData.description : (formData.description || ''),
-        price: props.editMode && props.adData ? props.adData.price : (formData.price || null),
+        ad_title:
+            props.editMode && props.adData ? props.adData.ad_title : formData.ad_title || "",
+        description:
+            props.editMode && props.adData
+                ? props.adData.description
+                : formData.description || "",
+        price: props.editMode && props.adData ? props.adData.price : formData.price || null,
         discount: (() => {
             if (props.editMode && props.adData) {
                 // If editing and discount exists, calculate percentage from discounted price
-                if (props.adData.discount && props.adData.price && props.adData.discount !== props.adData.price) {
+                if (
+                    props.adData.discount &&
+                    props.adData.price &&
+                    props.adData.discount !== props.adData.price
+                ) {
                     const originalPrice = parseFloat(props.adData.price);
                     const discountedPrice = parseFloat(props.adData.discount);
                     if (!isNaN(originalPrice) && !isNaN(discountedPrice) && originalPrice > 0) {
@@ -683,195 +730,222 @@ const initializeForm = () => {
             }
             return formData.discount || null;
         })(),
-        location: props.editMode && props.adData ? props.adData.location : (formData.location || ''),
-        city: props.editMode && props.adData ? props.adData.city : (formData.city || ''),
-        seller_name: props.editMode && props.adData ? props.adData.seller_name : (formData.seller_name || ''),
-        seller_phone: props.editMode && props.adData ? props.adData.seller_phone : (formData.seller_phone || ''),
-        search_keywords: props.editMode && props.adData ? [...props.adData.search_keywords] : (formData.search_keywords || []),
+        location:
+            props.editMode && props.adData ? props.adData.location : formData.location || "",
+        city: props.editMode && props.adData ? props.adData.city : formData.city || "",
+        seller_name:
+            props.editMode && props.adData
+                ? props.adData.seller_name
+                : formData.seller_name || "",
+        seller_phone:
+            props.editMode && props.adData
+                ? props.adData.seller_phone
+                : formData.seller_phone || "",
+        search_keywords:
+            props.editMode && props.adData
+                ? [...props.adData.search_keywords]
+                : formData.search_keywords || [],
         images: [],
         features: [],
         remove_images: [],
-        attributes: {}
-    }
-}
+        attributes: {},
+    };
+};
 
-const form = useForm(initializeForm())
+const form = useForm(initializeForm());
 
 // Watch for city changes
-watch(() => form.city, (newCity, oldCity) => {
-    if (newCity !== oldCity) {
-        // Clear previously selected region when city changes
-        form.region = null
-        if (newCity) {
-            fetchRegions(newCity)
-        } else {
-            regions.value = []
+watch(
+    () => form.city,
+    (newCity, oldCity) => {
+        if (newCity !== oldCity) {
+            // Clear previously selected region when city changes
+            form.region = null;
+            if (newCity) {
+                fetchRegions(newCity);
+            } else {
+                regions.value = [];
+            }
         }
     }
-})
+);
 
 // Initialize features
 if (props.editMode && props.adData?.features) {
-    form.features = props.adData.features.map(f => ({
+    form.features = props.adData.features.map((f) => ({
         feature_id: f.id,
         feature_value_id: f.pivot?.feature_value_id || null,
-        custom_value: f.pivot?.custom_value || null
-    }))
+        custom_value: f.pivot?.custom_value || null,
+    }));
 }
 
 // Set initial brand from adData if editing
 const setInitialBrandAndModel = () => {
     if (props.editMode && props.adData && props.selectedCategory?.brands) {
-        const brand = props.selectedCategory.brands.find(b => b.id === props.adData.brand_id)
+        const brand = props.selectedCategory.brands.find(
+            (b) => b.id === props.adData.brand_id
+        );
         if (brand) {
-            localSelectedBrand.value = brand
+            localSelectedBrand.value = brand;
             setTimeout(() => {
                 if (localSelectedBrand.value) {
-                    fetchModels(localSelectedBrand.value.id)
+                    fetchModels(localSelectedBrand.value.id);
                 }
-            }, 100)
+            }, 100);
         }
     }
-}
+};
 
 // Watch for category changes to load attributes
-watch(() => props.selectedCategory, async (newCategory) => {
-    if (newCategory && newCategory.id) {
-        await fetchAttributes(newCategory.id)
-    }
-}, { immediate: true })
+watch(
+    () => props.selectedCategory,
+    async (newCategory) => {
+        if (newCategory && newCategory.id) {
+            await fetchAttributes(newCategory.id);
+        }
+    },
+    { immediate: true }
+);
 
 // Update form model_id when localSelectedModel changes
 watch(localSelectedModel, (newModel) => {
-    form.model_id = newModel?.id || null
-})
+    form.model_id = newModel?.id || null;
+});
 
-const newKeyword = ref('')
-const imagePreviews = ref([])
-const existingImages = ref(props.editMode && props.adData?.images ? [...props.adData.images] : [])
-const fileInput = ref(null)
+const newKeyword = ref("");
+const imagePreviews = ref([]);
+const existingImages = ref(
+    props.editMode && props.adData?.images ? [...props.adData.images] : []
+);
+const fileInput = ref(null);
 
 const totalImages = computed(() => {
-    return (existingImages.value?.length || 0) + form.images.length
-})
+    return (existingImages.value?.length || 0) + form.images.length;
+});
 
 const addKeyword = () => {
-    const value = newKeyword.value.trim()
-    if (value && !form.search_keywords.includes(value) && form.search_keywords.length < 20) {
-        form.search_keywords.push(value)
-        newKeyword.value = ''
+    const value = newKeyword.value.trim();
+    if (
+        value &&
+        !form.search_keywords.includes(value) &&
+        form.search_keywords.length < 20
+    ) {
+        form.search_keywords.push(value);
+        newKeyword.value = "";
     }
-}
+};
 
 const removeKeyword = (index) => {
-    form.search_keywords.splice(index, 1)
-}
+    form.search_keywords.splice(index, 1);
+};
 
 // Image upload with compression
 const handleImageUpload = async (event) => {
-    const files = Array.from(event.target.files)
-    const totalAfterUpload = totalImages.value + files.length
+    const files = Array.from(event.target.files);
+    const totalAfterUpload = totalImages.value + files.length;
 
     if (totalAfterUpload > 10) {
-        alert('Maximum 10 images allowed')
-        event.target.value = ''
-        return
+        alert("Maximum 10 images allowed");
+        event.target.value = "";
+        return;
     }
 
-    isCompressing.value = true
-    compressionError.value = ''
+    isCompressing.value = true;
+    compressionError.value = "";
 
     const compressionOptions = {
         maxSizeMB: 1,
         maxWidthOrHeight: 1920,
-        useWebWorker: true
-    }
+        useWebWorker: true,
+    };
 
     for (const file of files) {
-        if (!file.type.startsWith('image/')) continue
+        if (!file.type.startsWith("image/")) continue;
 
         try {
-            const compressedFile = await imageCompression(file, compressionOptions)
-            form.images.push(compressedFile)
+            const compressedFile = await imageCompression(file, compressionOptions);
+            form.images.push(compressedFile);
 
             // Generate preview from original file (or compressed, but original is fine for preview)
-            const reader = new FileReader()
-            reader.onload = e => imagePreviews.value.push(e.target.result)
-            reader.readAsDataURL(file)
+            const reader = new FileReader();
+            reader.onload = (e) => imagePreviews.value.push(e.target.result);
+            reader.readAsDataURL(file);
         } catch (error) {
-            console.error('Compression failed for', file.name, error)
-            compressionError.value = `Failed to compress ${file.name}. It will be uploaded as-is.`
+            console.error("Compression failed for", file.name, error);
+            compressionError.value = `Failed to compress ${file.name}. It will be uploaded as-is.`;
             // Fallback: add original file
-            form.images.push(file)
-            const reader = new FileReader()
-            reader.onload = e => imagePreviews.value.push(e.target.result)
-            reader.readAsDataURL(file)
+            form.images.push(file);
+            const reader = new FileReader();
+            reader.onload = (e) => imagePreviews.value.push(e.target.result);
+            reader.readAsDataURL(file);
         }
     }
 
-    isCompressing.value = false
-    event.target.value = ''
-}
+    isCompressing.value = false;
+    event.target.value = "";
+};
 
 const removeImage = (index) => {
-    form.images.splice(index, 1)
-    imagePreviews.value.splice(index, 1)
-}
+    form.images.splice(index, 1);
+    imagePreviews.value.splice(index, 1);
+};
 
 const removeExistingImage = (imageId) => {
     if (!form.remove_images.includes(imageId)) {
-        form.remove_images.push(imageId)
+        form.remove_images.push(imageId);
     }
-    const index = existingImages.value.findIndex(img => img.id === imageId)
+    const index = existingImages.value.findIndex((img) => img.id === imageId);
     if (index !== -1) {
-        existingImages.value.splice(index, 1)
+        existingImages.value.splice(index, 1);
     }
-}
+};
 
 const clearDraftData = () => {
-    localStorage.removeItem(STORAGE_KEY)
-}
+    localStorage.removeItem(STORAGE_KEY);
+};
 
 const resetFormState = () => {
-    form.ad_title = ''
-    form.description = ''
-    form.price = null
-    form.discount = null // NEW: reset discount
-    form.location = ''
-    form.city = ''
-    form.seller_name = ''
-    form.seller_phone = ''
-    form.search_keywords = []
-    form.features = []
-    form.images = []
-    form.remove_images = []
-    imagePreviews.value = []
-    localSelectedBrand.value = null
-    localSelectedModel.value = null
-    selectedAttributeValues.value = {}
-    showAttributes.value = false
-}
+    form.ad_title = "";
+    form.description = "";
+    form.price = null;
+    form.discount = null; // NEW: reset discount
+    form.location = "";
+    form.city = "";
+    form.seller_name = "";
+    form.seller_phone = "";
+    form.search_keywords = [];
+    form.features = [];
+    form.images = [];
+    form.remove_images = [];
+    imagePreviews.value = [];
+    localSelectedBrand.value = null;
+    localSelectedModel.value = null;
+    selectedAttributeValues.value = {};
+    showAttributes.value = false;
+};
 
 const handleBack = () => {
     if (!props.editMode) {
-        const hasData = localStorage.getItem(STORAGE_KEY)
+        const hasData = localStorage.getItem(STORAGE_KEY);
         if (hasData) {
-            const confirmClear = confirm('You have unsaved changes. Do you want to discard them?')
+            const confirmClear = confirm(
+                "You have unsaved changes. Do you want to discard them?"
+            );
             if (confirmClear) {
-                clearDraftData()
+                clearDraftData();
             } else {
-                emit('back')
-                return
+                emit("back");
+                return;
             }
         }
     }
-    emit('back')
-}
+    emit("back");
+};
 
 const handleSubmit = () => {
     if (!props.selectedCategory) {
-        alert('No category selected!')
-        return
+        alert("No category selected!");
+        return;
     }
 
     const submitData = {
@@ -888,161 +962,197 @@ const handleSubmit = () => {
         seller_name: form.seller_name,
         seller_phone: form.seller_phone,
         search_keywords: form.search_keywords,
-        features: form.features.filter(f => f.feature_id),
+        features: form.features.filter((f) => f.feature_id),
         attributes: selectedAttributeValues.value,
-        remove_images: form.remove_images
-    }
+        remove_images: form.remove_images,
+    };
 
     if (props.editMode) {
-        const formData = new FormData()
+        const formData = new FormData();
 
-        Object.keys(submitData).forEach(key => {
-            if (key === 'features') {
+        Object.keys(submitData).forEach((key) => {
+            if (key === "features") {
                 if (submitData[key] && submitData[key].length > 0) {
                     submitData[key].forEach((feature, index) => {
-                        formData.append(`features[${index}][feature_id]`, feature.feature_id)
-                        formData.append(`features[${index}][feature_value_id]`, feature.feature_value_id || '')
-                        formData.append(`features[${index}][custom_value]`, feature.custom_value || '')
-                    })
+                        formData.append(`features[${index}][feature_id]`, feature.feature_id);
+                        formData.append(
+                            `features[${index}][feature_value_id]`,
+                            feature.feature_value_id || ""
+                        );
+                        formData.append(
+                            `features[${index}][custom_value]`,
+                            feature.custom_value || ""
+                        );
+                    });
                 }
-            } else if (key === 'attributes') {
+            } else if (key === "attributes") {
                 if (submitData[key] && Object.keys(submitData[key]).length > 0) {
                     Object.entries(submitData[key]).forEach(([attrId, value]) => {
-                        if (value !== null && value !== '' && value !== false) {
-                            formData.append(`attributes[${attrId}]`, value)
+                        if (value !== null && value !== "" && value !== false) {
+                            formData.append(`attributes[${attrId}]`, value);
                         }
-                    })
+                    });
                 }
-            } else if (key === 'search_keywords') {
+            } else if (key === "search_keywords") {
                 if (submitData[key] && submitData[key].length > 0) {
                     submitData[key].forEach((keyword, index) => {
-                        formData.append(`search_keywords[${index}]`, keyword)
-                    })
+                        formData.append(`search_keywords[${index}]`, keyword);
+                    });
                 }
-            } else if (key === 'remove_images') {
+            } else if (key === "remove_images") {
                 if (submitData[key] && submitData[key].length > 0) {
                     submitData[key].forEach((imageId, index) => {
-                        formData.append(`remove_images[${index}]`, imageId)
-                    })
+                        formData.append(`remove_images[${index}]`, imageId);
+                    });
                 }
             } else if (submitData[key] !== null && submitData[key] !== undefined) {
-                formData.append(key, submitData[key])
+                formData.append(key, submitData[key]);
             }
-        })
+        });
 
         form.images.forEach((image, index) => {
-            formData.append(`images[${index}]`, image)
-        })
+            formData.append(`images[${index}]`, image);
+        });
 
-        formData.append('_method', 'PUT')
+        formData.append("_method", "PUT");
 
-        router.post(route('ads.update', props.adData.id), formData, {
+        router.post(route("ads.update", props.adData.id), formData, {
             forceFormData: true,
             preserveScroll: true,
-            headers: { 'Content-Type': 'multipart/form-data' },
+            headers: { "Content-Type": "multipart/form-data" },
             onSuccess: () => {
-                clearDraftData()
+                clearDraftData();
             },
             onError: (errors) => {
-                console.error('Update errors:', errors)
-                if (errors && typeof errors === 'object') {
-                    Object.assign(form.errors, errors)
+                console.error("Update errors:", errors);
+                if (errors && typeof errors === "object") {
+                    Object.assign(form.errors, errors);
                 }
-                alert('Error updating ad. Please check the form for errors.')
-            }
-        })
+                alert("Error updating ad. Please check the form for errors.");
+            },
+        });
     } else {
-        const formData = new FormData()
+        const formData = new FormData();
 
-        Object.keys(submitData).forEach(key => {
-            if (key === 'features') {
+        Object.keys(submitData).forEach((key) => {
+            if (key === "features") {
                 if (submitData[key] && submitData[key].length > 0) {
                     submitData[key].forEach((feature, index) => {
-                        formData.append(`features[${index}][feature_id]`, feature.feature_id)
-                        formData.append(`features[${index}][feature_value_id]`, feature.feature_value_id || '')
-                        formData.append(`features[${index}][custom_value]`, feature.custom_value || '')
-                    })
+                        formData.append(`features[${index}][feature_id]`, feature.feature_id);
+                        formData.append(
+                            `features[${index}][feature_value_id]`,
+                            feature.feature_value_id || ""
+                        );
+                        formData.append(
+                            `features[${index}][custom_value]`,
+                            feature.custom_value || ""
+                        );
+                    });
                 }
-            } else if (key === 'attributes') {
+            } else if (key === "attributes") {
                 if (submitData[key] && Object.keys(submitData[key]).length > 0) {
                     Object.entries(submitData[key]).forEach(([attrId, value]) => {
-                        if (value !== null && value !== '' && value !== false) {
-                            formData.append(`attributes[${attrId}]`, value)
+                        if (value !== null && value !== "" && value !== false) {
+                            formData.append(`attributes[${attrId}]`, value);
                         }
-                    })
+                    });
                 }
-            } else if (key === 'search_keywords') {
+            } else if (key === "search_keywords") {
                 if (submitData[key] && submitData[key].length > 0) {
                     submitData[key].forEach((keyword, index) => {
-                        formData.append(`search_keywords[${index}]`, keyword)
-                    })
+                        formData.append(`search_keywords[${index}]`, keyword);
+                    });
                 }
             } else if (submitData[key] !== null && submitData[key] !== undefined) {
-                formData.append(key, submitData[key])
+                formData.append(key, submitData[key]);
             }
-        })
+        });
 
         form.images.forEach((image, index) => {
-            formData.append(`images[${index}]`, image)
-        })
+            formData.append(`images[${index}]`, image);
+        });
 
-        router.post(route('ads.store'), formData, {
+        router.post(route("ads.store"), formData, {
             forceFormData: true,
             preserveScroll: true,
-            headers: { 'Content-Type': 'multipart/form-data' },
+            headers: { "Content-Type": "multipart/form-data" },
             onSuccess: () => {
-                clearDraftData()
-                resetFormState()
+                clearDraftData();
+                resetFormState();
             },
             onError: (errors) => {
-                console.error('Create errors:', errors)
-                if (errors && typeof errors === 'object') {
-                    Object.assign(form.errors, errors)
+                console.error("Create errors:", errors);
+                if (errors && typeof errors === "object") {
+                    Object.assign(form.errors, errors);
                 }
-                alert('Error creating ad. Please check the form for errors.')
-            }
-        })
+                alert("Error creating ad. Please check the form for errors.");
+            },
+        });
     }
-}
+};
 
 const handleBeforeUnload = (e) => {
     if (!props.editMode && !form.processing && localStorage.getItem(STORAGE_KEY)) {
-        e.preventDefault()
-        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?'
-        return e.returnValue
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+        return e.returnValue;
     }
-}
+};
 
 onMounted(() => {
-    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener("beforeunload", handleBeforeUnload);
     if (props.selectedCategory?.id) {
-        fetchAttributes(props.selectedCategory.id)
+        fetchAttributes(props.selectedCategory.id);
     }
     if (props.editMode && props.adData?.city) {
-        fetchRegions(props.adData.city)
+        fetchRegions(props.adData.city);
         // Optionally set the region if it exists
         if (props.adData.region) {
-            form.region = props.adData.region
+            form.region = props.adData.region;
         }
     }
-    setInitialBrandAndModel()
-})
+    setInitialBrandAndModel();
+});
 
 onUnmounted(() => {
-    window.removeEventListener('beforeunload', handleBeforeUnload)
-})
+    window.removeEventListener("beforeunload", handleBeforeUnload);
+});
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(["back"]);
+
+// All IDs that belong to the Jobs family
+const jobCategoryIds = computed(() => {
+    const ids = new Set<number>();
+    const topCats = usePage().props.topCategories as any[];
+    const jobsCat = topCats?.find((cat: any) => cat.slug === "jobs");
+    if (jobsCat) {
+        ids.add(jobsCat.id);
+        const collect = (children: any[]) => {
+            children?.forEach((child: any) => {
+                ids.add(child.id);
+                if (child.children_recursive?.length) collect(child.children_recursive);
+            });
+        };
+        collect(jobsCat.children_recursive || []);
+    }
+    return ids;
+});
+
+const isJobAd = computed(() => {
+    return props.selectedCategory
+        ? jobCategoryIds.value.has(props.selectedCategory.id)
+        : false;
+});
 </script>
 
 <style scoped>
-input[type='number']::-webkit-inner-spin-button,
-input[type='number']::-webkit-outer-spin-button {
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-input[type='number'] {
+input[type="number"] {
     -moz-appearance: textfield;
 }
 

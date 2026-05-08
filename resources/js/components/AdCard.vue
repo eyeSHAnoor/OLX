@@ -139,7 +139,7 @@
                             {{ timeAgo(ad.created_at) }}
                         </span>
                     </div>
-                    <div class="flex items-center text-gray-500">
+                    <div v-if="isOwner" class="flex items-center text-gray-500">
                         <span :class="size === 'small' ? 'text-[9px]' : 'text-[10px] sm:text-xs'">
                             {{ ad.views_count || 0 }} views
                         </span>
@@ -176,7 +176,11 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     size: "normal",
 });
-
+const page = usePage();
+const currentUser = page.props.auth?.user;
+const isOwner = computed(() => {
+    return currentUser?.id === props.ad.user_id;
+});
 const isFavorited = ref(!!props.ad.is_favorited);
 const isFavoriteLoading = ref(false);
 

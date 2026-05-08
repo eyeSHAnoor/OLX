@@ -46,8 +46,9 @@
                                 </svg>
                             </button>
                         </div>
-                        <p v-if="form.errors.cover_image" class="mt-1 text-xs text-red-600">{{ form.errors.cover_image
-                            }}</p>
+                        <p v-if="form.errors.cover_image" class="mt-1 text-xs text-red-600">
+                            {{ form.errors.cover_image }}
+                        </p>
                     </div>
 
                     <!-- Profile Image Section -->
@@ -59,7 +60,9 @@
                                     :src="form.profile_image_preview || userProfile.profile_image"
                                     class="w-full h-full object-cover" />
                                 <div v-else class="w-full h-full bg-brand-blue flex items-center justify-center">
-                                    <span class="text-4xl font-semibold text-white uppercase">{{ userInitial }}</span>
+                                    <span class="text-4xl font-semibold text-white uppercase">{{
+                                        userInitial
+                                        }}</span>
                                 </div>
                             </div>
 
@@ -87,12 +90,11 @@
                         </div>
                     </div>
 
-                    <!-- Name (Read-only) -->
+                    <!-- Name -->
                     <div class="mb-4">
                         <label class="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
-                        <input type="text" :value="user.name" disabled
-                            class="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-600 cursor-not-allowed" />
-                        <p class="mt-1 text-xs text-gray-500">Name cannot be changed</p>
+                        <input v-model="form.name" type="text"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm" />
                     </div>
 
                     <!-- Email (Read-only) -->
@@ -109,7 +111,9 @@
                         <input v-model="form.phone" type="tel"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm"
                             :class="{ 'border-red-500': form.errors.phone }" placeholder="+92 300 1234567" />
-                        <p v-if="form.errors.phone" class="mt-1 text-xs text-red-600">{{ form.errors.phone }}</p>
+                        <p v-if="form.errors.phone" class="mt-1 text-xs text-red-600">
+                            {{ form.errors.phone }}
+                        </p>
                         <p class="mt-1 text-xs text-gray-500">Enter your contact number (optional)</p>
                     </div>
 
@@ -124,7 +128,7 @@
                                 :class="{
                                     'border-green-500 ring-1 ring-green-500': usernameAvailable === true,
                                     'border-red-500 ring-1 ring-red-500': usernameAvailable === false,
-                                    'border-gray-300': usernameAvailable === null
+                                    'border-gray-300': usernameAvailable === null,
                                 }" placeholder="username" />
 
                             <!-- Availability indicators -->
@@ -154,11 +158,15 @@
                         <p v-if="usernameAvailable === false" class="mt-1 text-xs text-red-600">
                             Username is already taken
                         </p>
-                        <p v-else-if="usernameAvailable === true && form.username && form.username !== originalUsername"
-                            class="mt-1 text-xs text-green-600">
+                        <p v-else-if="
+                            usernameAvailable === true &&
+                            form.username &&
+                            form.username !== originalUsername
+                        " class="mt-1 text-xs text-green-600">
                             Username is available!
                         </p>
-                        <p v-else-if="form.errors.username" class="mt-1 text-xs text-red-600">{{ form.errors.username }}
+                        <p v-else-if="form.errors.username" class="mt-1 text-xs text-red-600">
+                            {{ form.errors.username }}
                         </p>
 
                         <!-- Username rules -->
@@ -174,8 +182,12 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm resize-none"
                             :class="{ 'border-red-500': form.errors.bio }"
                             placeholder="Tell us about yourself..."></textarea>
-                        <p v-if="form.errors.bio" class="mt-1 text-xs text-red-600">{{ form.errors.bio }}</p>
-                        <p class="mt-1 text-xs text-gray-500">{{ form.bio?.length || 0 }}/500 characters</p>
+                        <p v-if="form.errors.bio" class="mt-1 text-xs text-red-600">
+                            {{ form.errors.bio }}
+                        </p>
+                        <p class="mt-1 text-xs text-gray-500">
+                            {{ form.bio?.length || 0 }}/500 characters
+                        </p>
                     </div>
 
                     <!-- Location -->
@@ -184,7 +196,9 @@
                         <input v-model="form.location" type="text"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm"
                             :class="{ 'border-red-500': form.errors.location }" placeholder="City, Country" />
-                        <p v-if="form.errors.location" class="mt-1 text-xs text-red-600">{{ form.errors.location }}</p>
+                        <p v-if="form.errors.location" class="mt-1 text-xs text-red-600">
+                            {{ form.errors.location }}
+                        </p>
                     </div>
 
                     <!-- Website -->
@@ -193,7 +207,9 @@
                         <input v-model="form.website" type="url"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm"
                             :class="{ 'border-red-500': form.errors.website }" placeholder="https://example.com" />
-                        <p v-if="form.errors.website" class="mt-1 text-xs text-red-600">{{ form.errors.website }}</p>
+                        <p v-if="form.errors.website" class="mt-1 text-xs text-red-600">
+                            {{ form.errors.website }}
+                        </p>
                     </div>
 
                     <!-- Privacy Settings -->
@@ -230,7 +246,7 @@
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                 </path>
                             </svg>
-                            {{ form.processing ? 'Saving...' : 'Save Changes' }}
+                            {{ form.processing ? "Saving..." : "Save Changes" }}
                         </button>
                     </div>
                 </form>
@@ -240,8 +256,9 @@
             <div class="mt-6 bg-white rounded-lg shadow-sm overflow-hidden border border-red-200">
                 <div class="p-4 md:p-6">
                     <h2 class="text-base font-semibold text-red-600 mb-2">Danger Zone</h2>
-                    <p class="text-xs text-gray-600 mb-4">Once you delete your account, there is no going back. Please
-                        be certain.</p>
+                    <p class="text-xs text-gray-600 mb-4">
+                        Once you delete your account, there is no going back. Please be certain.
+                    </p>
                     <button @click="destroy"
                         class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors">
                         Delete Account
@@ -253,54 +270,55 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { router, Link, useForm, usePage } from '@inertiajs/vue3'
-import OlxLayout from '@/layouts/OlxLayout.vue'
-import { useAlertDialog } from '@/composables/useAlertDialog';
-import axios from 'axios'
+import { ref, computed, onMounted, watch } from "vue";
+import { router, Link, useForm, usePage } from "@inertiajs/vue3";
+import OlxLayout from "@/layouts/OlxLayout.vue";
+import { useAlertDialog } from "@/composables/useAlertDialog";
+import axios from "axios";
 
-const page = usePage()
+const page = usePage();
 
 interface Props {
     user: {
-        id: number
-        name: string
-        email: string
-        phone: string | null
-    }
+        id: number;
+        name: string;
+        email: string;
+        phone: string | null;
+    };
     userProfile: {
-        username: string | null
-        profile_image: string | null
-        cover_image: string | null
-        bio: string | null
-        location: string | null
-        website: string | null
-        is_public: boolean
-    }
+        username: string | null;
+        profile_image: string | null;
+        cover_image: string | null;
+        bio: string | null;
+        location: string | null;
+        website: string | null;
+        is_public: boolean;
+    };
 }
 
-const props = defineProps<Props>()
-useForceTheme('light');
+const props = defineProps<Props>();
+useForceTheme("light");
 
 // Store original username for comparison
-const originalUsername = ref(props.userProfile.username || '')
+const originalUsername = ref(props.userProfile.username || "");
 
 // Username availability state
-const usernameChecking = ref(false)
-const usernameAvailable = ref<boolean | null>(null)
+const usernameChecking = ref(false);
+const usernameAvailable = ref<boolean | null>(null);
 
 // Get user initial for avatar fallback
 const userInitial = computed(() => {
-    return props.user.name?.charAt(0) || 'U'
-})
+    return props.user.name?.charAt(0) || "U";
+});
 
 // Form state with phone number
 const form = useForm({
-    username: props.userProfile.username || '',
-    phone: props.user.phone || '',
-    bio: props.userProfile.bio || '',
-    location: props.userProfile.location || '',
-    website: props.userProfile.website || '',
+    name: props.user.name || "",
+    username: props.userProfile.username || "",
+    phone: props.user.phone || "",
+    bio: props.userProfile.bio || "",
+    location: props.userProfile.location || "",
+    website: props.userProfile.website || "",
     is_public: props.userProfile.is_public ?? true,
     profile_image: null as File | null,
     cover_image: null as File | null,
@@ -308,142 +326,145 @@ const form = useForm({
     cover_image_preview: null as string | null,
     remove_profile_image: false,
     remove_cover_image: false,
-})
+});
 
 // Check if form is valid to submit
 const isFormValid = computed(() => {
     // If username is changed, it must be available
     if (form.username !== originalUsername.value) {
-        return usernameAvailable.value === true
+        return usernameAvailable.value === true;
     }
-    return true
-})
+    return true;
+});
 
 // Validate username format
 const validateUsername = () => {
     if (form.username && !/^[a-zA-Z0-9_]+$/.test(form.username)) {
-        form.errors.username = 'Username can only contain letters, numbers, and underscores'
+        form.errors.username = "Username can only contain letters, numbers, and underscores";
     } else {
-        form.errors.username = ''
+        form.errors.username = "";
     }
-}
+};
 
 // Check username availability
 const checkUsernameAvailability = async () => {
     // Clear previous errors
-    form.errors.username = ''
+    form.errors.username = "";
 
     // Don't check if username is empty or same as original
     if (!form.username || form.username === originalUsername.value) {
-        usernameAvailable.value = null
-        return
+        usernameAvailable.value = null;
+        return;
     }
 
     // Validate format first
     if (!/^[a-zA-Z0-9_]+$/.test(form.username)) {
-        usernameAvailable.value = null
-        return
+        usernameAvailable.value = null;
+        return;
     }
 
-    usernameChecking.value = true
+    usernameChecking.value = true;
 
     try {
-        const response = await axios.get(route('user.check-username'), {
-            params: { username: form.username }
-        })
-        usernameAvailable.value = response.data.available
+        const response = await axios.get(route("user.check-username"), {
+            params: { username: form.username },
+        });
+        usernameAvailable.value = response.data.available;
     } catch (error) {
-        console.error('Error checking username:', error)
-        usernameAvailable.value = null
+        console.error("Error checking username:", error);
+        usernameAvailable.value = null;
     } finally {
-        usernameChecking.value = false
+        usernameChecking.value = false;
     }
-}
+};
 
 // Debounce username check
-let usernameCheckTimeout: NodeJS.Timeout
-watch(() => form.username, (newVal) => {
-    clearTimeout(usernameCheckTimeout)
-    if (newVal && newVal !== originalUsername.value) {
-        usernameCheckTimeout = setTimeout(() => {
-            checkUsernameAvailability()
-        }, 500)
-    } else {
-        usernameAvailable.value = null
+let usernameCheckTimeout: NodeJS.Timeout;
+watch(
+    () => form.username,
+    (newVal) => {
+        clearTimeout(usernameCheckTimeout);
+        if (newVal && newVal !== originalUsername.value) {
+            usernameCheckTimeout = setTimeout(() => {
+                checkUsernameAvailability();
+            }, 500);
+        } else {
+            usernameAvailable.value = null;
+        }
     }
-})
+);
 
 // Handle profile image upload
 const handleProfileUpload = (event: Event) => {
-    const input = event.target as HTMLInputElement
+    const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-        const file = input.files[0]
-        form.profile_image = file
-        form.profile_image_preview = URL.createObjectURL(file)
-        form.remove_profile_image = false
+        const file = input.files[0];
+        form.profile_image = file;
+        form.profile_image_preview = URL.createObjectURL(file);
+        form.remove_profile_image = false;
     }
-}
+};
 
 // Handle cover image upload
 const handleCoverUpload = (event: Event) => {
-    const input = event.target as HTMLInputElement
+    const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-        const file = input.files[0]
-        form.cover_image = file
-        form.cover_image_preview = URL.createObjectURL(file)
-        form.remove_cover_image = false
+        const file = input.files[0];
+        form.cover_image = file;
+        form.cover_image_preview = URL.createObjectURL(file);
+        form.remove_cover_image = false;
     }
-}
+};
 
 // Remove profile image
 const removeProfileImage = () => {
-    form.profile_image = null
-    form.profile_image_preview = null
-    form.remove_profile_image = true
-}
+    form.profile_image = null;
+    form.profile_image_preview = null;
+    form.remove_profile_image = true;
+};
 
 // Remove cover image
 const removeCover = () => {
-    form.cover_image = null
-    form.cover_image_preview = null
-    form.remove_cover_image = true
-}
+    form.cover_image = null;
+    form.cover_image_preview = null;
+    form.remove_cover_image = true;
+};
 
 // Submit form
 const submitForm = () => {
     // Validate username before submit
     if (form.username && !/^[a-zA-Z0-9_]+$/.test(form.username)) {
-        form.errors.username = 'Username can only contain letters, numbers, and underscores'
-        return
+        form.errors.username = "Username can only contain letters, numbers, and underscores";
+        return;
     }
 
     // Check if username is taken (if changed)
     if (form.username !== originalUsername.value && usernameAvailable.value === false) {
-        return
+        return;
     }
 
-    form.post(route('user.profile.update'), {
+    form.post(route("user.profile.update"), {
         preserveScroll: true,
         onSuccess: () => {
             // Clean up preview URLs
             if (form.profile_image_preview) {
-                URL.revokeObjectURL(form.profile_image_preview)
+                URL.revokeObjectURL(form.profile_image_preview);
             }
             if (form.cover_image_preview) {
-                URL.revokeObjectURL(form.cover_image_preview)
+                URL.revokeObjectURL(form.cover_image_preview);
             }
-        }
-    })
-}
+        },
+    });
+};
 
 const alert = useAlertDialog();
 const destroy = async () => {
     //console.log('button pressed', props.user);
 
-    form.delete(route('users.destroy', props.user.id), {
+    form.delete(route("users.destroy", props.user.id), {
         preserveScroll: true,
         onSuccess: () => {
-            router.visit(route('ads.index'));
+            router.visit(route("ads.index"));
         },
     });
 };
@@ -452,11 +473,11 @@ const destroy = async () => {
 onMounted(() => {
     return () => {
         if (form.profile_image_preview) {
-            URL.revokeObjectURL(form.profile_image_preview)
+            URL.revokeObjectURL(form.profile_image_preview);
         }
         if (form.cover_image_preview) {
-            URL.revokeObjectURL(form.cover_image_preview)
+            URL.revokeObjectURL(form.cover_image_preview);
         }
-    }
-})
+    };
+});
 </script>
