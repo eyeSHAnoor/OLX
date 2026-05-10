@@ -56,6 +56,9 @@ class UserProfileController extends Controller
                     'phone' => $validated['phone']
                 ]);
             }
+        $user->update([
+            'name' => $validated['name'] ?? $user->name,
+        ]);
 
         $profile = UserProfile::updateOrCreate(
             ['user_id' => $user->id],
