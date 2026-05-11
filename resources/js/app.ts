@@ -99,7 +99,7 @@ createInertiaApp({
                         scope: '/',
                     });
 
-                    console.log('✅ Service Worker registered:', registration.scope);
+                    console.log('Service Worker registered:', registration.scope);
 
                     // 🔥 FORCE it to take control immediately
                     if (navigator.serviceWorker.controller === null) {

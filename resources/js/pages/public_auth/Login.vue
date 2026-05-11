@@ -1,10 +1,9 @@
 <template>
     <div
         class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center p-3 sm:p-4">
-
         <!-- Logo -->
         <div class="mb-6 md:mb-8">
-            <img src="/images/logo.png" alt="OLX Clone Logo" class="h-10 md:h-14 w-auto mx-auto" />
+            <img src="/images/logo.png" alt="AMO Mercatus Logo" class="h-10 md:h-14 w-auto mx-auto" />
             <h1 class="mt-2 text-xl md:text-2xl font-semibold text-center text-gray-800">
                 Welcome Back
             </h1>
@@ -16,7 +15,6 @@
         <!-- Login Card -->
         <div class="w-full max-w-md">
             <div class="bg-white rounded-xl shadow-md p-5 md:p-6">
-
                 <!-- Social Login Buttons -->
                 <div class="space-y-2 mb-5">
                     <button @click="socialLogin('google')"
@@ -111,7 +109,7 @@
                     <button type="submit" :disabled="processing"
                         class="w-full bg-brand-blue text-white font-medium py-2.5 px-3 rounded-lg hover:bg-brand-blue/90 focus:outline-none focus:ring-1 focus:ring-brand-blue focus:ring-offset-1 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-xs">
                         <div class="flex items-center justify-center">
-                            {{ processing ? 'Signing in...' : 'Sign in to your account' }}
+                            {{ processing ? "Signing in..." : "Sign in to your account" }}
                         </div>
                     </button>
                 </form>
@@ -140,75 +138,75 @@
                 <a href="#" class="hover:text-gray-700 transition-colors">About</a>
             </div>
             <p class="mt-2 text-[10px] text-gray-500">
-                © {{ new Date().getFullYear() }} OLX Clone. All rights reserved.
+                © {{ new Date().getFullYear() }} AMO Mercatus. All rights reserved.
             </p>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { router, Link } from '@inertiajs/vue3'
+import { ref, reactive } from "vue";
+import { router, Link } from "@inertiajs/vue3";
 
 interface LoginForm {
-    email: string
-    password: string
-    remember: boolean
+    email: string;
+    password: string;
+    remember: boolean;
 }
 
 const form = reactive<LoginForm>({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
     remember: false,
-})
+});
 
 const errors = reactive({
-    email: '',
-    password: '',
-})
+    email: "",
+    password: "",
+});
 
-const processing = ref(false)
-const showPassword = ref(false)
-useForceTheme('light');
+const processing = ref(false);
+const showPassword = ref(false);
+useForceTheme("light");
 const handleLogin = () => {
-    processing.value = true
-    errors.email = ''
-    errors.password = ''
+    processing.value = true;
+    errors.email = "";
+    errors.password = "";
 
     // Basic validation
-    if (!form.email.includes('@')) {
-        errors.email = 'Please enter a valid email address'
-        processing.value = false
-        return
+    if (!form.email.includes("@")) {
+        errors.email = "Please enter a valid email address";
+        processing.value = false;
+        return;
     }
 
     if (form.password.length < 6) {
-        errors.password = 'Password must be at least 6 characters'
-        processing.value = false
-        return
+        errors.password = "Password must be at least 6 characters";
+        processing.value = false;
+        return;
     }
 
     // Simulate API call
     setTimeout(() => {
-        router.post('/login', form, {
+        router.post("/login", form, {
             onSuccess: () => {
                 //console.log('Login successful')
             },
             onError: (err) => {
-                if (err.email) errors.email = err.email
-                if (err.password) errors.password = err.password
+                if (err.email) errors.email = err.email;
+                if (err.password) errors.password = err.password;
             },
             onFinish: () => {
-                processing.value = false
-            }
-        })
-    }, 1500)
-}
+                processing.value = false;
+            },
+        });
+    }, 1500);
+};
 
 const socialLogin = (provider: string) => {
     //console.log(`Logging in with ${provider}`)
-    window.location.href = `/auth/${provider}`
-}
+    window.location.href = `/auth/${provider}`;
+};
 </script>
 
 <style scoped>

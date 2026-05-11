@@ -1,18 +1,21 @@
 <template>
-
     <div class="pt-8 pb-6 bg-gray-900 text-white">
         <div class="container min-w-5xl mx-auto px-4">
-
-
             <!-- Main Footer Content -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
-                    <!-- AMO MERCATUS section (replaces OLX) -->
+                    <!-- AMO MERCATUS section  -->
                     <h3 class="font-bold text-lg mb-4">AMO MERCATUS</h3>
                     <ul class="space-y-2">
-                        <li><a href="/page/contact" class="text-gray-300 hover:text-white">Help</a></li>
-                        <li><a href="/policy/terms" class="text-gray-300 hover:text-white">Terms of use</a></li>
-                        <li><a href="/policy/privacy" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                        <li>
+                            <a href="/page/contact" class="text-gray-300 hover:text-white">Help</a>
+                        </li>
+                        <li>
+                            <a href="/policy/terms" class="text-gray-300 hover:text-white">Terms of use</a>
+                        </li>
+                        <li>
+                            <a href="/policy/privacy" class="text-gray-300 hover:text-white">Privacy Policy</a>
+                        </li>
                     </ul>
                 </div>
                 <div>
@@ -55,9 +58,7 @@
             <!-- App Store Links & Social Media -->
             <div class="mt-8 pt-8 border-t border-gray-700">
                 <div class="flex flex-col md:flex-row justify-between items-center">
-                    <div class="mb-4 md:mb-0">
-
-                    </div>
+                    <div class="mb-4 md:mb-0"></div>
 
                     <!-- Social Media -->
                     <div class="flex space-x-4">
@@ -92,35 +93,39 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Link } from '@inertiajs/vue3'
-import { usePage, router } from '@inertiajs/vue3'
+import { computed } from "vue";
+import { Link } from "@inertiajs/vue3";
+import { usePage, router } from "@inertiajs/vue3";
 
 // Get shared categories from Inertia (same as in your top bar)
-const page = usePage()
-const topCategories = (page.props.topCategories as any[]) || []
+const page = usePage();
+const topCategories = (page.props.topCategories as any[]) || [];
 
 // Prepare up to 3 parent categories with their direct children
 const categoryColumns = computed(() => {
     // Take first 3 top‑level categories (you can adjust the number)
-    const parents = topCategories.slice(0, 2)
+    const parents = topCategories.slice(0, 2);
 
-    return parents.map(parent => ({
+    return parents.map((parent) => ({
         category: parent,
         // Use direct children (or fallback to children_recursive if needed)
-        children: (parent.children || parent.children_recursive || []).slice(0, 5)
-    }))
-})
+        children: (parent.children || parent.children_recursive || []).slice(0, 5),
+    }));
+});
 
 // Navigate to category page using the same route as your top bar
 const navigateToCategory = (category: any) => {
     if (category?.slug) {
-        router.get(route('category.show', { slug: category.slug }), {}, {
-            preserveScroll: true,
-            preserveState: false,
-        })
+        router.get(
+            route("category.show", { slug: category.slug }),
+            {},
+            {
+                preserveScroll: true,
+                preserveState: false,
+            }
+        );
     } else {
-        router.get(route('home'))
+        router.get(route("home"));
     }
-}
+};
 </script>

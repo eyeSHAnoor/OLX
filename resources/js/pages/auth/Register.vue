@@ -1,15 +1,14 @@
 <template>
     <div
         class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center p-3 sm:p-4">
-
         <!-- Logo -->
         <div class="mb-6 md:mb-8">
-            <img src="/images/logo.png" alt="OLX Clone Logo" class="h-10 md:h-14 w-auto mx-auto" />
+            <img src="/images/logo.png" alt="AMO Mercatus" class="h-10 md:h-14 w-auto mx-auto" />
             <h1 class="mt-2 text-xl md:text-2xl font-semibold text-center text-gray-800">
                 Create Your Account
             </h1>
             <p class="text-gray-600 text-center mt-1 text-xs md:text-sm">
-                Join millions of users buying and selling on OLX Clone
+                Join millions of users buying and selling on AMO Mercatus
             </p>
         </div>
 
@@ -17,8 +16,12 @@
         <div class="w-full max-w-md">
             <!-- Registration Form -->
             <div class="bg-white rounded-xl shadow-md p-5 md:p-6">
-                <h2 class="text-base font-semibold text-gray-800 mb-1">Complete Your Registration</h2>
-                <p class="text-gray-600 text-xs mb-4">Enter your details to create your free account</p>
+                <h2 class="text-base font-semibold text-gray-800 mb-1">
+                    Complete Your Registration
+                </h2>
+                <p class="text-gray-600 text-xs mb-4">
+                    Enter your details to create your free account
+                </p>
 
                 <!-- Social Registration Buttons -->
                 <div class="space-y-2 mb-5">
@@ -97,9 +100,7 @@
 
                     <!-- Password -->
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">
-                            Password
-                        </label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1"> Password </label>
                         <div class="relative">
                             <Input id="password" :type="showPassword ? 'text' : 'password'" required :tabindex="4"
                                 autocomplete="new-password" v-model="form.password"
@@ -110,19 +111,21 @@
                             <div class="flex items-center space-x-1 text-[8px] text-gray-500">
                                 <div :class="[
                                     'h-0.5 flex-1 rounded-full',
-                                    form.password.length >= 8 ? 'bg-green-500' : 'bg-gray-200'
+                                    form.password.length >= 8 ? 'bg-green-500' : 'bg-gray-200',
                                 ]"></div>
                                 <div :class="[
                                     'h-0.5 flex-1 rounded-full',
-                                    /[A-Z]/.test(form.password) && /[a-z]/.test(form.password) ? 'bg-green-500' : 'bg-gray-200'
+                                    /[A-Z]/.test(form.password) && /[a-z]/.test(form.password)
+                                        ? 'bg-green-500'
+                                        : 'bg-gray-200',
                                 ]"></div>
                                 <div :class="[
                                     'h-0.5 flex-1 rounded-full',
-                                    /\d/.test(form.password) ? 'bg-green-500' : 'bg-gray-200'
+                                    /\d/.test(form.password) ? 'bg-green-500' : 'bg-gray-200',
                                 ]"></div>
                                 <div :class="[
                                     'h-0.5 flex-1 rounded-full',
-                                    /[!@#$%^&*]/.test(form.password) ? 'bg-green-500' : 'bg-gray-200'
+                                    /[!@#$%^&*]/.test(form.password) ? 'bg-green-500' : 'bg-gray-200',
                                 ]"></div>
                             </div>
                             <p class="mt-0.5 text-sm text-gray-500">
@@ -169,7 +172,7 @@
                         class="w-full bg-brand-blue text-white font-medium py-2.5 px-3 rounded-lg hover:bg-brand-blue/90 focus:outline-none focus:ring-1 focus:ring-brand-blue focus:ring-offset-1 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-xs">
                         <div class="flex items-center justify-center">
                             <LoaderCircle v-if="form.processing" class="animate-spin h-3.5 w-3.5 mr-1.5" />
-                            {{ form.processing ? 'Processing...' : 'Register' }}
+                            {{ form.processing ? "Processing..." : "Register" }}
                         </div>
                     </Button>
                 </form>
@@ -187,8 +190,6 @@
             </div>
         </div>
 
-
-
         <!-- Footer Links -->
         <div class="mt-6 md:mt-8 text-center">
             <div class="flex flex-wrap justify-center gap-3 text-[10px] text-gray-500">
@@ -204,40 +205,40 @@
     </div>
 </template>
 <script setup lang="ts">
-import InputError from '@/components/InputError.vue';
-import TextLink from '@/components/TextLink.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useForm } from '@inertiajs/vue3';
-import { LoaderCircle } from 'lucide-vue-next';
-import { ref } from 'vue';
+import InputError from "@/components/InputError.vue";
+import TextLink from "@/components/TextLink.vue";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useForm } from "@inertiajs/vue3";
+import { LoaderCircle } from "lucide-vue-next";
+import { ref } from "vue";
 
 const form = useForm({
-    name: '',
-    email: '',
-    password: '',
-    phone: '',
-    password_confirmation: '',
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    password_confirmation: "",
     terms: false,
 });
-useForceTheme('light');
+useForceTheme("light");
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 
 const submit = () => {
     if (!form.terms) {
-        alert('You must agree to the Terms of Service and Privacy Policy.');
+        alert("You must agree to the Terms of Service and Privacy Policy.");
         return;
     }
 
-    form.post(route('register'), {
+    form.post(route("register"), {
         preserveScroll: true,
         onError: (errors) => {
-            console.error('Registration failed:', errors);
+            console.error("Registration failed:", errors);
         },
         onFinish: () => {
-            form.reset('password', 'password_confirmation');
-        }
+            form.reset("password", "password_confirmation");
+        },
     });
 };
 

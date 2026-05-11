@@ -12,6 +12,8 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Models\Subscription;
 use Illuminate\Support\Facades\Route;
+use App\Notifications\NewManualSubscriptionNotification;
+use Illuminate\Support\Facades\Notification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -57,7 +59,7 @@ class SubscriptionController extends Controller
             'private'
         );
 
-        Subscription::create([
+        $subscription = Subscription::create([
             'user_id' => $user->id,
             'plan_id' => $plan->id,
             'payment_status' => 'pending',
@@ -66,6 +68,12 @@ class SubscriptionController extends Controller
             'amount_paid' => $plan->price,
             'receipt_image' => $receipt,
         ]);
+
+        $superAdmins = User::role('super_admin')->get(); // or role('super-admin')->get() if using Spatie
+
+        if ($superAdmins->isNotEmpty()) {
+            Notification::send($superAdmins, new NewManualSubscriptionNotification($user, $subscription));
+        }
 
         return redirect()->back()->with('success', 'Payment submitted. Waiting for admin approval.');
     }

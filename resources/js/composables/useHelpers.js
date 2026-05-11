@@ -1,12 +1,11 @@
-import { add, addDays, addMonths, addWeeks, format, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 // import { useForm } from '@inertiajs/vue3';
 // import { computed } from 'vue';
 
 export default function useHelpers() {
     function titleCase(text) {
-
-        if (!text) return ;
+        if (!text) return;
         // Convert underscores and dashes to spaces
         text = text.replace(/[_-]/g, ' ');
 
@@ -26,12 +25,12 @@ export default function useHelpers() {
         if (!str) return;
 
         return str
-            .toLowerCase()                   // Convert to lowercase
-            .replace(/[()]/g, '')            // Remove parentheses
-            .replace(/[^\w\s-]/g, '')        // Remove all non-word chars (except dash and space)
-            .trim()                          // Trim whitespace from both ends
-            .replace(/\s+/g, '-')            // Replace spaces with -
-            .replace(/-+/g, '-');            // Replace multiple - with single -
+            .toLowerCase() // Convert to lowercase
+            .replace(/[()]/g, '') // Remove parentheses
+            .replace(/[^\w\s-]/g, '') // Remove all non-word chars (except dash and space)
+            .trim() // Trim whitespace from both ends
+            .replace(/\s+/g, '-') // Replace spaces with -
+            .replace(/-+/g, '-'); // Replace multiple - with single -
     }
 
     function formatDate(date, withTime = true, formatString = '') {
@@ -62,7 +61,7 @@ export default function useHelpers() {
 
         const options = {
             style: 'decimal',
-            useGrouping: true // This adds the comma separators
+            useGrouping: true, // This adds the comma separators
         };
 
         if (showDecimals) {
@@ -82,7 +81,7 @@ export default function useHelpers() {
         if (words.length === 0) return '';
 
         const lastWord = words.pop(); // Remove and store the last word
-        const initials = words.map(word => word[0].toUpperCase()).join(' ');
+        const initials = words.map((word) => word[0].toUpperCase()).join(' ');
 
         return initials ? `${initials} ${lastWord}` : lastWord;
     }
@@ -150,11 +149,28 @@ export default function useHelpers() {
         return number;
     }
 
+    function formatPrice(number, showDecimals = true) {
+        // Coerce input to a number (handles strings, null, undefined)
+        const num = Number(number);
+
+        // If the result is not a valid finite number, return the placeholder
+        if (isNaN(num) || !isFinite(num)) {
+            return showDecimals ? '0.00' : '0';
+        }
+
+        const options = {
+            minimumFractionDigits: showDecimals ? 2 : 0,
+            maximumFractionDigits: showDecimals ? 2 : 0,
+        };
+
+        return new Intl.NumberFormat('en-IN', options).format(num);
+    }
 
     return {
         titleCase,
         slugCase,
         formatDate,
+        formatPrice,
         formatNumber,
         getImage,
         getInitialsWithLastFull,

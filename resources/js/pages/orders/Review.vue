@@ -1,10 +1,9 @@
 <template>
     <div
         class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center p-3 sm:p-4">
-
         <!-- Logo -->
         <div class="mb-6 md:mb-8">
-            <img src="/images/logo.png" alt="OLX Clone Logo" class="h-10 md:h-14 w-auto mx-auto" />
+            <img src="/images/logo.png" alt="AMO Mercatus" class="h-10 md:h-14 w-auto mx-auto" />
             <h1 class="mt-2 text-xl md:text-2xl font-semibold text-center text-gray-800">
                 Order Management
             </h1>
@@ -16,13 +15,12 @@
         <!-- Order Card -->
         <div class="w-full max-w-md">
             <div class="bg-white rounded-xl shadow-md p-5 md:p-6">
-
                 <!-- Order Status Badge -->
                 <div class="mb-5 flex justify-center">
                     <span :class="{
                         'bg-yellow-100 text-yellow-800': order.status === 'pending',
                         'bg-green-100 text-green-800': order.status === 'completed',
-                        'bg-red-100 text-red-800': order.status === 'cancelled'
+                        'bg-red-100 text-red-800': order.status === 'cancelled',
                     }" class="inline-flex px-4 py-2 rounded-full text-sm font-semibold">
                         {{ order.status.toUpperCase() }}
                     </span>
@@ -38,10 +36,8 @@
                     </div>
 
                     <div class="border-b border-gray-100 pb-3">
-                        <label class="block text-xs font-medium text-gray-500 mb-1">
-                            Product
-                        </label>
-                        <p class="text-gray-800 font-medium">{{ order.ad?.ad_title || 'N/A' }}</p>
+                        <label class="block text-xs font-medium text-gray-500 mb-1"> Product </label>
+                        <p class="text-gray-800 font-medium">{{ order.ad?.ad_title || "N/A" }}</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 border-b border-gray-100 pb-3">
@@ -52,9 +48,7 @@
                             <p class="text-gray-800">{{ order.qty }}</p>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">
-                                Price
-                            </label>
+                            <label class="block text-xs font-medium text-gray-500 mb-1"> Price </label>
                             <p class="text-gray-800">Rs. {{ formatPrice(order.price) }}</p>
                         </div>
                     </div>
@@ -82,7 +76,10 @@
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                 </path>
                             </svg>
-                            <span>{{ processing && actionType === 'complete' ? 'Processing...' : 'Complete Order'
+                            <span>{{
+                                processing && actionType === "complete"
+                                    ? "Processing..."
+                                : "Complete Order"
                                 }}</span>
                         </div>
                     </button>
@@ -98,7 +95,8 @@
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                 </path>
                             </svg>
-                            <span>{{ processing && actionType === 'cancel' ? 'Processing...' : 'Cancel Order'
+                            <span>{{
+                                processing && actionType === "cancel" ? "Processing..." : "Cancel Order"
                                 }}</span>
                         </div>
                     </button>
@@ -107,14 +105,12 @@
                 <!-- Already Processed Message -->
                 <div v-else class="text-center p-4 bg-gray-50 rounded-lg">
                     <p class="text-gray-600 text-sm">
-                        This order has been <span
-                            :class="order.status === 'completed' ? 'text-green-600' : 'text-red-600'">
+                        This order has been
+                        <span :class="order.status === 'completed' ? 'text-green-600' : 'text-red-600'">
                             {{ order.status }}
                         </span>
                     </p>
-                    <p class="text-xs text-gray-500 mt-1">
-                        No further actions available
-                    </p>
+                    <p class="text-xs text-gray-500 mt-1">No further actions available</p>
                 </div>
 
                 <!-- Flash Messages -->
@@ -134,8 +130,8 @@
             <!-- Help Text -->
             <div class="mt-6 text-center">
                 <p class="text-xs text-gray-500">
-                    Need help? <a href="/page/contact" class="text-brand-teal hover:text-brand-teal/80">Contact
-                        support</a>
+                    Need help?
+                    <a href="/page/contact" class="text-brand-teal hover:text-brand-teal/80">Contact support</a>
                 </p>
             </div>
         </div>
@@ -156,47 +152,55 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { ref } from "vue";
+import { router } from "@inertiajs/vue3";
 
 const props = defineProps({
-    order: Object
-})
+    order: Object,
+});
 
-const processing = ref(false)
-const actionType = ref('')
+const processing = ref(false);
+const actionType = ref("");
 
 const formatPrice = (price) => {
-    return Number(price).toLocaleString('en-PK')
-}
+    return Number(price).toLocaleString("en-PK");
+};
 
 const completeOrder = () => {
-    if (confirm('Are you sure you want to complete this order?')) {
-        processing.value = true
-        actionType.value = 'complete'
+    if (confirm("Are you sure you want to complete this order?")) {
+        processing.value = true;
+        actionType.value = "complete";
 
-        router.post(`/orders/${props.order.id}/complete`, {}, {
-            onFinish: () => {
-                processing.value = false
-                actionType.value = ''
+        router.post(
+            `/orders/${props.order.id}/complete`,
+            {},
+            {
+                onFinish: () => {
+                    processing.value = false;
+                    actionType.value = "";
+                },
             }
-        })
+        );
     }
-}
+};
 
 const cancelOrder = () => {
-    if (confirm('Are you sure you want to cancel this order?')) {
-        processing.value = true
-        actionType.value = 'cancel'
+    if (confirm("Are you sure you want to cancel this order?")) {
+        processing.value = true;
+        actionType.value = "cancel";
 
-        router.post(`/orders/${props.order.id}/cancel`, {}, {
-            onFinish: () => {
-                processing.value = false
-                actionType.value = ''
+        router.post(
+            `/orders/${props.order.id}/cancel`,
+            {},
+            {
+                onFinish: () => {
+                    processing.value = false;
+                    actionType.value = "";
+                },
             }
-        })
+        );
     }
-}
+};
 </script>
 
 <style scoped>

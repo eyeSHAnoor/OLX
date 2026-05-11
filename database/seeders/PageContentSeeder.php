@@ -46,7 +46,7 @@ class PageContentSeeder extends Seeder
         // 2. CONTACT PAGE
         // -------------------------------
         $contactContent = [
-            'email'     => 'amomercatus@gmail.com, javeriaamomercatus@gmail.com', // comma-separated for mailto
+            'email'     => 'amomercatus@gmail.com, manageramomercatus@gmail.com', // comma-separated for mailto
             'phone'     => null,
             'address'   => null,
             'twitter'   => null,
@@ -79,7 +79,7 @@ class PageContentSeeder extends Seeder
                 [
                     'name'         => 'Javeria',
                     'designation'  => 'Manager',
-                    'email'        => 'javeriaamomercatus@gmail.com',
+                    'email'        => 'manageramomercatus@gmail.com',
                     'photo_url'    => null,
                     'photo_preview'=> null,
                 ],
