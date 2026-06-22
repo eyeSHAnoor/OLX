@@ -101,7 +101,9 @@
                                     {{ ad.ad_title }}
                                 </h1>
 
+                                <!-- Inside the flex container with Order and Save buttons -->
                                 <div class="flex items-center gap-2 sm:gap-3">
+                                    <!-- Order Button (existing) -->
                                     <button @click="!hasOrdered && ad?.user?.id !== userId && handleShowModal()"
                                         :disabled="hasOrdered || ad?.user?.id === userId"
                                         class="group relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-200 shadow-md"
@@ -111,12 +113,9 @@
                                             ">
                                         <Icon icon="lucide:shopping-cart" class="size-4 sm:size-5" />
                                         <span class="text-xs sm:text-sm font-medium hidden sm:inline">Order</span>
-                                        <!-- Tooltip for mobile -->
-                                        <span
-                                            class="sm:hidden absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                            Order Now
-                                        </span>
                                     </button>
+
+                                    <!-- Save Button (existing) -->
                                     <button @click="toggleFavorite"
                                         class="group relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white border-2 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
                                         :class="[
@@ -140,12 +139,59 @@
                                         ]">
                                             {{ isFavorited ? "Saved" : "Save" }}
                                         </span>
-                                        <!-- Tooltip for mobile -->
-                                        <span
-                                            class="sm:hidden absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                            {{ isFavorited ? "Remove from favorites" : "Add to favorites" }}
-                                        </span>
                                     </button>
+
+                                    <!-- NEW: Share Button -->
+                                    <div class="relative" @click.stop>
+                                        <button @click="toggleShareDropdown"
+                                            class="group relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white border-2 border-gray-200 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md hover:border-blue-200 hover:bg-blue-50">
+                                            <Icon icon="lucide:share-2"
+                                                class="size-4 sm:size-5 text-gray-600 group-hover:text-blue-600" />
+                                            <span
+                                                class="text-xs sm:text-sm font-medium hidden sm:inline text-gray-600 group-hover:text-blue-600">
+                                                Share
+                                            </span>
+                                        </button>
+
+                                        <!-- Share Dropdown -->
+                                        <div v-if="showShareDropdown"
+                                            class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-50 animate-in slide-in-from-top-2">
+                                            <!-- Copy Link -->
+                                            <button @click="copyAdLink"
+                                                class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors">
+                                                <Icon icon="lucide:copy" class="size-4 text-gray-500" />
+                                                <span>Copy link</span>
+                                            </button>
+
+                                            <!-- WhatsApp -->
+                                            <button @click="shareToWhatsApp"
+                                                class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors">
+                                                <Icon icon="ic:baseline-whatsapp" class="size-4 text-green-600" />
+                                                <span>WhatsApp</span>
+                                            </button>
+
+                                            <!-- Facebook -->
+                                            <button @click="shareToFacebook"
+                                                class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors">
+                                                <Icon icon="ic:baseline-facebook" class="size-4 text-blue-600" />
+                                                <span>Facebook</span>
+                                            </button>
+
+                                            <!-- Twitter / X -->
+                                            <button @click="shareToTwitter"
+                                                class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors">
+                                                <Icon icon="ic:baseline-twitter" class="size-4 text-blue-400" />
+                                                <span>Twitter / X</span>
+                                            </button>
+
+                                            <!-- Instagram (copies link + opens app if installed) -->
+                                            <button @click="shareToInstagram"
+                                                class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors">
+                                                <Icon icon="ic:baseline-instagram" class="size-4 text-pink-600" />
+                                                <span>Instagram</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -265,7 +311,16 @@
                                     <Icon icon="lucide:user" class="size-6 sm:size-7 text-primary" />
                                 </div>
                                 <div>
-                                    <p class="font-medium text-sm sm:text-md">{{ ad?.user?.name }}</p>
+                                    <div class="flex gap-2 items-center justify-between">
+                                        <p class="font-medium text-sm sm:text-md">{{ ad?.user?.name }}</p>
+                                        <div v-if="$hasPlanPermission('pro_batch', ad?.user)" class="mb-4">
+                                            <img src="/images/pro.png" alt="Pro" class="h-7 w-auto" />
+                                        </div>
+                                        <!-- Premium Batch -->
+                                        <div v-if="$hasPlanPermission('premium_batch', ad?.user)" class="mb-4">
+                                            <img src="/images/premium.png" alt="Premium" class="h-7 w-auto" />
+                                        </div>
+                                    </div>
                                     <p class="text-xs text-gray-500">
                                         Member since {{ formatMemberSince(ad.user?.created_at) }}
                                     </p>
@@ -486,6 +541,8 @@
                     </div>
                 </div>
 
+                <CommentSection :comments="ad.comments" :ad-id="ad.id" />
+
                 <!-- Similar Ads Section -->
                 <div v-if="similarAds?.length" class="mt-8 sm:mt-10 lg:mt-12">
                     <h2 class="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-5">
@@ -581,6 +638,7 @@ import { ref, computed, onMounted } from "vue";
 import { Icon } from "@iconify/vue";
 import { Link } from "@inertiajs/vue3";
 import OrderModal from "./_partials/OrderModal.vue";
+import CommentSection from "./_partials/CommentSection.vue";
 
 // Theme
 const useForceTheme = (theme: string) => {
@@ -1134,6 +1192,92 @@ const jobCategoryIds = computed(() => {
 const isJobAd = computed(() => {
     return ad.value ? jobCategoryIds.value.has(ad.value.category_id) : false;
 });
+
+// ========== SHARE FEATURE ==========
+const showShareDropdown = ref(false);
+
+const toggleShareDropdown = () => {
+    // If Web Share API is available, use it directly
+    if (navigator.share) {
+        navigator
+            .share({
+                title: ad.value?.ad_title || "Check this ad",
+                text: `Check out this ad: ${ad.value?.ad_title}`,
+                url: window.location.href,
+            })
+            .catch(() => { });
+        return;
+    }
+    // Fallback to custom dropdown
+    showShareDropdown.value = !showShareDropdown.value;
+};
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    if (showShareDropdown.value && !target.closest(".relative")) {
+        showShareDropdown.value = false;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener("click", handleClickOutside);
+});
+
+// Share actions
+const copyAdLink = async () => {
+    try {
+        await navigator.clipboard.writeText(window.location.href);
+        showToastMessage("Link copied to clipboard!");
+        showShareDropdown.value = false;
+    } catch {
+        // Fallback
+        const textarea = document.createElement("textarea");
+        textarea.value = window.location.href;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        showToastMessage("Link copied!");
+        showShareDropdown.value = false;
+    }
+};
+
+const shareToWhatsApp = () => {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(`Check out this ad: ${ad.value?.ad_title}`);
+    window.open(`https://wa.me/?text=${text}%20${url}`, "_blank");
+    showShareDropdown.value = false;
+};
+
+const shareToFacebook = () => {
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank");
+    showShareDropdown.value = false;
+};
+
+const shareToTwitter = () => {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(`Check out this ad: ${ad.value?.ad_title}`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, "_blank");
+    showShareDropdown.value = false;
+};
+
+const shareToInstagram = () => {
+    // Instagram doesn't support direct sharing via URL, so copy the link and suggest opening the app
+    copyAdLink();
+    // Optionally try to open the Instagram app (works on mobile)
+    window.location.href = "instagram://app";
+    // Fallback to web if app not installed
+    setTimeout(() => {
+        window.open("https://www.instagram.com", "_blank");
+    }, 500);
+    showShareDropdown.value = false;
+};
 </script>
 
 <style scoped>

@@ -232,4 +232,25 @@ class User extends Authenticatable
     {
         return $this->hasMany(Ad::class, 'user_id'); 
     }
+
+    /**
+     * Check if the user has a specific plan permission (from their active subscription).
+     *
+     * @param string $permission
+     * @return bool
+     */
+    public function hasPlanPermission(string $permission): bool
+    {
+        // Load the active subscription with its plan permissions if not already loaded
+        if (!$this->relationLoaded('activeSubscription')) {
+            $this->load('activeSubscription.plan.permissions');
+        }
+
+        $subscription = $this->activeSubscription;
+        if (!$subscription || !$subscription->plan) {
+            return false;
+        }
+
+        return $subscription->plan->permissions->contains('name', $permission);
+    }
 }   

@@ -2,105 +2,118 @@
     <div class="w-full bg-white border-t">
         <div class="max-w-full md:max-w-9/11 mx-auto px-4 md:px-3 py-4">
             <!-- Desktop layout -->
-            <div class="hidden md:flex md:flex-row md:items-stretch md:gap-3">
-                <!-- Location Trigger (opens dropdown) -->
-                <div ref="dropdownContainer" class="relative w-full md:w-72">
-                    <div @click="toggleDropdown"
-                        class="flex items-center justify-between border border-gray-300 rounded-md px-2 py-3 bg-white hover:border-blue-400 transition-colors cursor-pointer">
-                        <div class="flex items-center">
-                            <Icon icon="mdi:map-marker-outline" class="text-sm text-blue-600 mr-2" />
-                            <span class="text-sm">{{ locationDisplay }}</span>
+            <div class="hidden md:flex md:flex-col md:gap-2">
+                <!-- Row 1: Location + Search -->
+                <div class="flex md:flex-row md:items-stretch md:gap-3">
+                    <!-- Location Trigger (opens dropdown) -->
+                    <div ref="dropdownContainer" class="relative w-full md:w-72">
+                        <div @click="toggleDropdown"
+                            class="flex items-center justify-between border border-gray-300 rounded-md px-2 py-3 bg-white hover:border-blue-400 transition-colors cursor-pointer">
+                            <div class="flex items-center">
+                                <Icon icon="mdi:map-marker-outline" class="text-sm text-blue-600 mr-2" />
+                                <span class="text-sm">{{ locationDisplay }}</span>
+                            </div>
+                            <Icon icon="mdi:chevron-down" class="text-gray-500 text-sm" />
                         </div>
-                        <Icon icon="mdi:chevron-down" class="text-gray-500 text-sm" />
+
+                        <!-- Dropdown -->
+                        <div v-if="dropdownOpen"
+                            class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-20">
+                            <!-- City selection view -->
+                            <template v-if="!showRegionsInDropdown">
+                                <div class="p-2 border-b">
+                                    <input v-model="citySearchQuery" type="text" placeholder="Search city..."
+                                        class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-400"
+                                        autofocus />
+                                </div>
+                                <div class="max-h-60 overflow-y-auto">
+                                    <!-- Use current location button -->
+                                    <div @click="useCurrentLocation"
+                                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm text-blue-600 border-b border-gray-100 flex items-center">
+                                        <Icon icon="mdi:crosshairs-gps" class="mr-2" />
+                                        Use current location
+                                    </div>
+                                    <div @click="selectCity('Pakistan')"
+                                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm" :class="{
+                                            'bg-blue-50': selectedCity === 'Pakistan' && !selectedRegion,
+                                        }">
+                                        Pakistan
+                                    </div>
+                                    <div v-for="city in filteredCities" :key="city" @click="selectCity(city)"
+                                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                                        :class="{ 'bg-blue-50': selectedCity === city && !selectedRegion }">
+                                        {{ city }}
+                                    </div>
+                                    <div v-if="filteredCities.length === 0"
+                                        class="px-3 py-2 text-gray-500 text-sm text-center">
+                                        No cities found
+                                    </div>
+                                </div>
+                            </template>
+                            <!-- Region selection view -->
+                            <template v-else>
+                                <div class="p-2 border-b flex items-center">
+                                    <button @click="backToCitiesInDropdown"
+                                        class="mr-2 text-gray-600 hover:text-gray-800">
+                                        <Icon icon="mdi:arrow-left" class="text-lg" />
+                                    </button>
+                                    <span class="text-sm font-medium">{{ selectedCity }}</span>
+                                </div>
+                                <div class="max-h-60 overflow-y-auto">
+                                    <div @click="selectRegion(null)"
+                                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                                        :class="{ 'bg-blue-50': !selectedRegion }">
+                                        All areas
+                                    </div>
+                                    <div v-for="region in regions" :key="region.id" @click="selectRegion(region.name)"
+                                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                                        :class="{ 'bg-blue-50': selectedRegion === region.name }">
+                                        {{ region.name }}
+                                    </div>
+                                    <div v-if="regions.length === 0 && !loadingRegions"
+                                        class="px-3 py-2 text-gray-500 text-sm text-center">
+                                        No regions found
+                                    </div>
+                                    <div v-if="loadingRegions" class="px-3 py-2 text-gray-500 text-sm text-center">
+                                        Loading regions...
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
 
-                    <!-- Dropdown -->
-                    <div v-if="dropdownOpen"
-                        class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-20">
-                        <!-- City selection view -->
-                        <template v-if="!showRegionsInDropdown">
-                            <div class="p-2 border-b">
-                                <input v-model="citySearchQuery" type="text" placeholder="Search city..."
-                                    class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-400"
-                                    autofocus />
-                            </div>
-                            <div class="max-h-60 overflow-y-auto">
-                                <!-- Use current location button -->
-                                <div @click="useCurrentLocation"
-                                    class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm text-blue-600 border-b border-gray-100 flex items-center">
-                                    <Icon icon="mdi:crosshairs-gps" class="mr-2" />
-                                    Use current location
-                                </div>
-                                <div @click="selectCity('Pakistan')"
-                                    class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm" :class="{
-                                        'bg-blue-50': selectedCity === 'Pakistan' && !selectedRegion,
-                                    }">
-                                    Pakistan
-                                </div>
-                                <div v-for="city in filteredCities" :key="city" @click="selectCity(city)"
-                                    class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
-                                    :class="{ 'bg-blue-50': selectedCity === city && !selectedRegion }">
-                                    {{ city }}
-                                </div>
-                                <div v-if="filteredCities.length === 0"
-                                    class="px-3 py-2 text-gray-500 text-sm text-center">
-                                    No cities found
-                                </div>
-                            </div>
-                        </template>
-                        <!-- Region selection view -->
-                        <template v-else>
-                            <div class="p-2 border-b flex items-center">
-                                <button @click="backToCitiesInDropdown" class="mr-2 text-gray-600 hover:text-gray-800">
-                                    <Icon icon="mdi:arrow-left" class="text-lg" />
-                                </button>
-                                <span class="text-sm font-medium">{{ selectedCity }}</span>
-                            </div>
-                            <div class="max-h-60 overflow-y-auto">
-                                <div @click="selectRegion(null)"
-                                    class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
-                                    :class="{ 'bg-blue-50': !selectedRegion }">
-                                    All areas
-                                </div>
-                                <div v-for="region in regions" :key="region.id" @click="selectRegion(region.name)"
-                                    class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
-                                    :class="{ 'bg-blue-50': selectedRegion === region.name }">
-                                    {{ region.name }}
-                                </div>
-                                <div v-if="regions.length === 0 && !loadingRegions"
-                                    class="px-3 py-2 text-gray-500 text-sm text-center">
-                                    No regions found
-                                </div>
-                                <div v-if="loadingRegions" class="px-3 py-2 text-gray-500 text-sm text-center">
-                                    Loading regions...
-                                </div>
-                            </div>
-                        </template>
+                    <!-- DESKTOP Search Input with suggestions -->
+                    <div class="flex flex-1 relative">
+                        <input v-model="searchTerm" @keyup.enter="performSearch" @input="checkResetFilters"
+                            @focus="onSearchFocus" @blur="onSearchBlur"
+                            class="border border-r-0 px-3 py-3 text-sm rounded-l-md w-full focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+                            placeholder="Search for item, brand, category..." />
+
+                        <!-- SUGGESTIONS DROPDOWN -->
+                        <ul v-if="showSuggestions && suggestions.length > 0"
+                            class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-30 mt-1 max-h-60 overflow-y-auto">
+                            <li v-for="(suggestion, idx) in suggestions" :key="idx"
+                                @mousedown.prevent="selectSuggestion(suggestion)"
+                                class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex items-center">
+                                <Icon icon="mdi:magnify" class="text-gray-400 mr-2 text-sm" />
+                                {{ suggestion }}
+                            </li>
+                        </ul>
+
+                        <button @click="performSearch"
+                            class="bg-brand-blue -ml-4 px-4 text-white rounded-r-md flex items-center hover:bg-blue-700 transition-colors">
+                            <Icon icon="mdi:magnify" class="text-base" />
+                        </button>
                     </div>
                 </div>
 
-                <!-- DESKTOP Search Input with suggestions -->
-                <div class="flex flex-1 relative">
-                    <input v-model="searchTerm" @keyup.enter="performSearch" @input="checkResetFilters"
-                        @focus="onSearchFocus" @blur="onSearchBlur"
-                        class="border border-r-0 px-3 py-3 text-sm rounded-l-md w-full focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
-                        placeholder="Search for item, brand, category..." />
-
-                    <!-- SUGGESTIONS DROPDOWN -->
-                    <ul v-if="showSuggestions && suggestions.length > 0"
-                        class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-30 mt-1 max-h-60 overflow-y-auto">
-                        <li v-for="(suggestion, idx) in suggestions" :key="idx"
-                            @mousedown.prevent="selectSuggestion(suggestion)"
-                            class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex items-center">
-                            <Icon icon="mdi:magnify" class="text-gray-400 mr-2 text-sm" />
-                            {{ suggestion }}
-                        </li>
-                    </ul>
-
-                    <button @click="performSearch"
-                        class="bg-brand-blue -ml-4 px-4 text-white rounded-r-md flex items-center hover:bg-blue-700 transition-colors">
-                        <Icon icon="mdi:magnify" class="text-base" />
-                    </button>
+                <!-- Row 2: Filters (Wholesale checkbox – visible only when searching) -->
+                <div v-if="searchTerm.length > 0" class="flex items-center gap-4 pl-80 m1-16">
+                    <label class="flex items-center text-sm text-gray-700 cursor-pointer select-none">
+                        <input type="checkbox" v-model="wholesale" @change="performSearch"
+                            class="mr-1.5 rounded border-gray-300 text-brand-blue focus:ring-brand-blue" />
+                        Wholesale
+                    </label>
                 </div>
             </div>
 
@@ -137,6 +150,15 @@
                         <Icon icon="mdi:map-marker-outline" class="text-md" />
                         <span class="text-sm">{{ locationDisplay || "Select location" }}</span>
                     </button>
+                </div>
+
+                <!-- Mobile Wholesale checkbox – visible only when searching -->
+                <div v-if="searchTerm.length > 0" class="mt-2 flex items-center">
+                    <label class="flex items-center text-sm text-gray-700 cursor-pointer select-none">
+                        <input type="checkbox" v-model="wholesale" @change="performSearch"
+                            class="mr-1.5 rounded border-gray-300 text-brand-blue focus:ring-brand-blue" />
+                        Wholesale
+                    </label>
                 </div>
             </div>
         </div>
@@ -251,6 +273,8 @@ const selectedRegion = ref(page.props.selectedRegion || null);
 
 const searchTerm = ref(page.props.filters?.filter?.global || "");
 const selectedCategory = ref(page.props.filters?.filter?.category || "");
+// const wholesale = ref(page.props.filters?.filter?.wholesale == 1);
+const wholesale = ref(page.props.filters?.filter?.wholesale === "wholesale");
 
 // Desktop dropdown
 const dropdownOpen = ref(false);
@@ -366,15 +390,13 @@ const useCurrentLocation = async () => {
     dropdownOpen.value = false;
     const city = await detectUserCity();
     if (city) {
-        // If city has regions, show them; otherwise apply immediately
         await fetchRegions(city);
         if (regions.value.length > 0) {
-            // Update local city, prepare regions view
             selectedCity.value = city;
             selectedRegion.value = null;
             localStorage.removeItem("selectedRegion");
             showRegionsInDropdown.value = true;
-            dropdownOpen.value = true; // keep dropdown open for region pick
+            dropdownOpen.value = true;
         } else {
             applyLocation(city, null);
         }
@@ -406,11 +428,8 @@ const useCurrentLocationInModal = async () => {
 // ────────────────────────────────────────────────────────
 const toggleDropdown = () => {
     dropdownOpen.value = !dropdownOpen.value;
-
     if (dropdownOpen.value) {
         citySearchQuery.value = "";
-
-        // ALWAYS start from cities
         showRegionsInDropdown.value = false;
     }
 };
@@ -421,18 +440,13 @@ const selectCity = async (city: string) => {
         dropdownOpen.value = false;
         return;
     }
-
-    // Fetch regions and decide
     await fetchRegions(city);
     selectedCity.value = city;
     selectedRegion.value = null;
     localStorage.removeItem("selectedRegion");
-
     if (regions.value.length > 0) {
-        // Show region list inside the dropdown
         showRegionsInDropdown.value = true;
     } else {
-        // No regions – apply immediately
         applyLocation(city, null);
         dropdownOpen.value = false;
     }
@@ -449,7 +463,7 @@ const selectRegion = (regionName: string | null) => {
 };
 
 // ────────────────────────────────────────────────────────
-//  Mobile modal behaviour (preserves two‑step flow)
+//  Mobile modal behaviour
 // ────────────────────────────────────────────────────────
 const openModal = () => {
     modalOpen.value = true;
@@ -463,9 +477,6 @@ const closeModal = () => {
 const goBackToCitiesFromModal = () => {
     modalView.value = "cities";
     modalSearchQuery.value = "";
-
-    // Optional (recommended for clean UX)
-    // don't wipe selectedCity, just UI cleanup
 };
 
 const selectCityFromModal = async (city: string) => {
@@ -474,18 +485,14 @@ const selectCityFromModal = async (city: string) => {
         applyLocation("Pakistan", null);
         return;
     }
-
     await fetchRegions(city);
     selectedCity.value = city;
     selectedRegion.value = null;
     localStorage.removeItem("selectedRegion");
-
     if (regions.value.length > 0) {
-        // Stay in the same modal, switch to region view
         modalView.value = "regions";
         modalSearchQuery.value = "";
     } else {
-        // No regions – apply immediately
         closeModal();
         applyLocation(city, null);
     }
@@ -509,7 +516,7 @@ const handleClickOutside = (e: MouseEvent) => {
 onMounted(() => {
     document.addEventListener("click", handleClickOutside);
     if (selectedCity.value && selectedCity.value !== "Pakistan") {
-        fetchRegions(selectedCity.value); // pre‑load for dropdown
+        fetchRegions(selectedCity.value);
     }
 });
 
@@ -518,29 +525,50 @@ onBeforeUnmount(() => {
 });
 
 // ────────────────────────────────────────────────────────
-//  Search (unchanged, city/region not sent – cookies handle it)
+//  Search
 // ────────────────────────────────────────────────────────
 const performSearch = () => {
     showSuggestions.value = false;
+
+    // Build filter object conditionally
+    const filterData = {
+        global: searchTerm.value,
+        category: selectedCategory.value,
+    };
+
+    // Only add wholesale if checked
+    if (wholesale.value) {
+        filterData.wholesale = "wholesale";
+    }
+
     router.visit(route("all.items"), {
         method: "get",
         data: {
-            filter: {
-                global: searchTerm.value,
-                category: selectedCategory.value,
-            },
+            filter: filterData,
+            min_price: page.props.filters?.min_price ?? "",
+            max_price: page.props.filters?.max_price ?? "",
+            sort_by: page.props.filters?.sort_by ?? "newest",
         },
         preserveScroll: true,
         preserveState: true,
     });
 };
 
+watch(
+    () => page.props.filters?.filter?.wholesale,
+    (val) => {
+        wholesale.value = val === "wholesale";
+    }
+);
+
 const checkResetFilters = () => {
     if (!searchTerm.value) {
         selectedCategory.value = "";
+        // Don't reset wholesale – keep the checkbox state for when user types again.
+        // Optionally you may reset it, but we keep it.
         router.visit(route("home"), {
             method: "get",
-            data: { filter: { global: "", category: "" } },
+            data: { filter: { global: "", category: "", wholesale: 0 } },
             preserveScroll: true,
             preserveState: true,
         });

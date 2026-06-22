@@ -61,7 +61,7 @@ import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
 import PermissionsPlugin from './plugins/permissions';
-
+import planPermissionsPlugin from './plugins/planPermissions';
 import { configureEcho } from '@laravel/echo-vue';
 
 configureEcho({
@@ -82,6 +82,7 @@ createInertiaApp({
             .use(ZiggyVue)
             .use(createPinia())
             .use(PermissionsPlugin)
+            .use(planPermissionsPlugin)
             .use(i18nVue, {
                 resolve: async (lang: String) => {
                     const langs = import.meta.glob('../../lang/*.json');

@@ -25,6 +25,7 @@ class SearchController extends Controller
         $minPrice       = $request->input('min_price', null);
         $maxPrice       = $request->input('max_price', null);
         $sortBy         = $request->input('sort_by', 'newest');
+        $priceType = $request->input('filter.wholesale');
 
         $attributeFilters = collect($request->input('filter', []))
             ->filter(fn ($v, $k) => str_starts_with($k, 'attribute_'))
@@ -47,6 +48,8 @@ class SearchController extends Controller
         if ($selectedCity !== 'all') {
             $adQuery->whereRaw('LOWER(city) = ?', [$selectedCity]);
         }
+
+      
 
         if (!empty($categoryFilter) && $category = Category::find($categoryFilter)) {
             if ($category->children()->exists()) {
@@ -103,15 +106,26 @@ class SearchController extends Controller
             $relevanceSql = $this->buildRelevanceExpression($searchTerm, $words, $expandedWords);
 
             $adQuery->selectRaw("ads.*, ({$relevanceSql}) AS relevance_score")
+                    ->orderBy('is_featured', 'desc') 
                     ->orderByRaw('relevance_score DESC')
                     ->orderBy('created_at', 'desc');
 
         } else {
+             $adQuery->orderBy('is_featured', 'desc'); 
             match ($sortBy) {
                 'price_low'  => $adQuery->orderBy('price', 'asc'),
                 'price_high' => $adQuery->orderBy('price', 'desc'),
                 default      => $adQuery->orderBy('created_at', 'desc'),
             };
+        }
+
+        \Log::info('Price type: ' . ($priceType ?? 'null'));
+        \Log::info($adQuery->toSql(), $adQuery->getBindings());
+
+        if ($priceType === 'wholesale') {
+            $adQuery->where('price_type', 'wholesale');
+        } else {
+            $adQuery->where('price_type', 'retail');
         }
 
         $ads = $adQuery->paginate(24)->withQueryString();
@@ -158,6 +172,7 @@ class SearchController extends Controller
                     'category' => $categoryFilter,
                     'brand'    => $brandFilter,
                     'model'    => $modelFilter,
+                    'wholesale'=> $priceType,
                 ],
                 'min_price'        => $minPrice,
                 'max_price'        => $maxPrice,
@@ -169,24 +184,6 @@ class SearchController extends Controller
         ]);
     }
 
-    /**
-     * Build a single inline SQL arithmetic expression for relevance_score.
-     *
-     * MySQL CANNOT reference SELECT-list aliases within the same SELECT,
-     * so every sub-score is written as a self-contained CASE expression
-     * and they are all summed with +  inside one pair of parentheses.
-     *
-     * Scoring tiers:
-     *  10 – exact full phrase found in title
-     *   8 – exact full phrase found in search_keywords
-     *   6 – every individual word present in title  (multi-word queries)
-     *   5 – brand AND model both matched (first two words)
-     *   3 – per expanded word: title match
-     *   2 – per expanded word: brand match
-     *   2 – per expanded word: model match
-     *   1 – per expanded word: attribute value match
-     *   1 – per expanded word: description match
-     */
     private function buildRelevanceExpression(string $rawSearch, array $words, array $expandedWords): string
     {
         // Escape for safe inline SQL (no user input goes in unescaped)

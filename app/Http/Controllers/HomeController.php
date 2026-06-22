@@ -260,6 +260,8 @@ class HomeController extends Controller
                 $q->whereDate('created_at', '<=', $endDate)
             )
 
+            ->orderBy('is_featured', 'desc')
+
             ->when($sort, function ($q) use ($sort) {
                 if (str_starts_with($sort, '-')) {
                     $q->orderByDesc(substr($sort, 1));

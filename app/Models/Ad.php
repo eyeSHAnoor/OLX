@@ -16,6 +16,7 @@ class Ad extends Model
         'category_id',
         'brand_id',
         'brand_model_id',
+        'price_type',
         'ad_title',
         'description',
         'price',
@@ -187,5 +188,10 @@ class Ad extends Model
     public function views()
     {
         return $this->hasMany(AdView::class);
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class)->whereNull('parent_id');
     }
 }   

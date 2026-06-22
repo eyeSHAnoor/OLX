@@ -162,6 +162,24 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Price Type -->
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Price Type <span class="text-red-500">*</span>
+                        </label>
+
+                        <SelectInput v-model="form.price_type" class="w-full" placeholder="Select Price Type">
+                            <SelectContent>
+                                <SelectItem value="retail">Retail</SelectItem>
+                                <SelectItem value="wholesale">Wholesale</SelectItem>
+                            </SelectContent>
+                        </SelectInput>
+
+                        <p v-if="form.errors.price_type" class="text-red-500 text-xs mt-1.5">
+                            {{ form.errors.price_type }}
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -730,6 +748,10 @@ const initializeForm = () => {
             }
             return formData.discount || null;
         })(),
+        price_type:
+            props.editMode && props.adData
+                ? props.adData.price_type
+                : formData.price_type || "retail",
         location:
             props.editMode && props.adData ? props.adData.location : formData.location || "",
         city: props.editMode && props.adData ? props.adData.city : formData.city || "",
@@ -913,6 +935,7 @@ const resetFormState = () => {
     form.city = "";
     form.seller_name = "";
     form.seller_phone = "";
+    form.price_type = "retail";
     form.search_keywords = [];
     form.features = [];
     form.images = [];
@@ -955,6 +978,7 @@ const handleSubmit = () => {
         ad_title: form.ad_title,
         description: form.description,
         price: form.price,
+        price_type: form.price_type,
         discount: discountedPrice.value || form.price, // Send discounted price instead of percentage
         location: form.location,
         city: form.city,

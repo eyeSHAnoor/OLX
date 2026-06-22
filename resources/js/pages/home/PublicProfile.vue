@@ -1,6 +1,6 @@
 <template>
     <OlxLayout>
-        <div class=" max-w-full md:max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
+        <div class="max-w-full md:max-w-9/11 mx-auto px-3 sm:px-4 py-4 md:py-6">
             <div class="pb-2 sm:hidden visible">
                 <button @click="goBack"
                     class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
@@ -59,9 +59,10 @@
                                 <!-- Optional stars -->
                                 <div class="mt-2 flex items-center gap-1">
                                     <template v-for="i in 5" :key="i">
-                                        <svg class="w-4 h-4"
-                                            :class="i <= Math.round(averageRating) ? 'text-yellow-400' : 'text-gray-300'"
-                                            fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-4 h-4" :class="i <= Math.round(averageRating)
+                                                ? 'text-yellow-400'
+                                                : 'text-gray-300'
+                                            " fill="currentColor" viewBox="0 0 20 20">
                                             <path
                                                 d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.947a1 1 0 00.95.69h4.15c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 00-.364 1.118l1.286 3.947c.3.921-.755 1.688-1.54 1.118l-3.36-2.44a1 1 0 00-1.176 0l-3.36 2.44c-.784.57-1.838-.197-1.539-1.118l1.286-3.947a1 1 0 00-.364-1.118L2.035 9.374c-.783-.57-.38-1.81.588-1.81h4.15a1 1 0 00.95-.69l1.286-3.947z" />
                                         </svg>
@@ -107,7 +108,7 @@
                             <div v-else
                                 class="w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white shadow-sm bg-gray-100 flex items-center justify-center">
                                 <span class="text-3xl md:text-4xl font-medium text-gray-600 uppercase">
-                                    {{ profileUser.name?.charAt(0) || 'U' }}
+                                    {{ profileUser.name?.charAt(0) || "U" }}
                                 </span>
                             </div>
 
@@ -119,7 +120,22 @@
                         </div>
 
                         <div class="ml-4 mb-1">
-                            <h1 class="text-xl md:text-2xl font-semibold text-gray-900">{{ profileUser.name }}</h1>
+                            <!-- <h1 class="text-xl md:text-2xl font-semibold text-gray-900">
+                                {{ profileUser.name }}
+                            </h1> -->
+                            <div class="flex items-center gap-2">
+                                <h1 class="text-xl md:text-2xl font-semibold text-gray-900">
+                                    {{ profileUser.name }}
+                                </h1>
+                                <!-- Batch badges -->
+                                <div v-if="$hasPlanPermission('pro_batch', profileUser)" class="">
+                                    <img src="/images/pro.png" alt="Pro" class="h-7 w-auto" />
+                                </div>
+                                <!-- Premium Batch -->
+                                <div v-if="$hasPlanPermission('premium_batch', profileUser)" class="">
+                                    <img src="/images/premium.png" alt="Premium" class="h-7 w-auto" />
+                                </div>
+                            </div>
                             <p class="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -159,7 +175,7 @@
                             <div class="flex-1 min-w-0">
                                 <p class="text-[11px] text-gray-500 uppercase tracking-wide">Phone</p>
                                 <p class="text-sm text-gray-900 truncate">
-                                    {{ profileUser.phone || 'Not provided' }}
+                                    {{ profileUser.phone || "Not provided" }}
                                 </p>
                             </div>
                         </div>
@@ -178,7 +194,9 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-[11px] text-gray-500 uppercase tracking-wide">Location</p>
-                                <p class="text-sm text-gray-900 truncate">{{ profileUser.profile.location }}</p>
+                                <p class="text-sm text-gray-900 truncate">
+                                    {{ profileUser.profile.location }}
+                                </p>
                             </div>
                         </div>
 
@@ -213,15 +231,21 @@
                                 </svg>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-[11px] text-gray-500 uppercase tracking-wide">Profile Views</p>
-                                <p class="text-sm font-medium text-gray-900">{{ profileUser.total_views || 0 }}</p>
+                                <p class="text-[11px] text-gray-500 uppercase tracking-wide">
+                                    Profile Views
+                                </p>
+                                <p class="text-sm font-medium text-gray-900">
+                                    {{ profileUser.total_views || 0 }}
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Bio Section -->
                     <div v-if="profileUser.profile?.bio" class="mt-4 p-3 bg-gray-50 rounded-lg">
-                        <p class="text-sm text-gray-700 leading-relaxed">{{ profileUser.profile.bio }}</p>
+                        <p class="text-sm text-gray-700 leading-relaxed">
+                            {{ profileUser.profile.bio }}
+                        </p>
                     </div>
 
                     <!-- Privacy Status -->
@@ -237,15 +261,14 @@
                 </div>
             </div>
 
-
-
             <!-- User's Ads Section -->
             <div class="bg-white rounded-lg shadow-sm p-4 md:p-5">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                     <h2 class="text-lg md:text-xl font-semibold text-gray-900">
                         {{ profileUser.name }}'s Ads
                         <span class="text-xs font-normal text-gray-500 ml-2">({{ ads.total || profileUser.total_ads || 0
-                            }} total)</span>
+                            }}
+                            total)</span>
                     </h2>
 
                     <!-- Filters and Actions -->
@@ -283,17 +306,11 @@
                             <SelectInput v-model="sortBy" @update:modelValue="applyFilters" placeholder="Sort By"
                                 class="border border-gray-300 rounded px-3 py-1.5 focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-xs min-w-[140px]">
                                 <SelectContent>
-                                    <SelectItem value="newest">
-                                        Newest First
-                                    </SelectItem>
+                                    <SelectItem value="newest"> Newest First </SelectItem>
                                     <SelectItem value="oldest">Oldest First</SelectItem>
-                                    <SelectItem value="price_low">
-                                        Price: Low to High
-                                    </SelectItem>
+                                    <SelectItem value="price_low"> Price: Low to High </SelectItem>
 
-                                    <SelectItem value="price_high">
-                                        Price: High to Low
-                                    </SelectItem>
+                                    <SelectItem value="price_high"> Price: High to Low </SelectItem>
                                 </SelectContent>
                             </SelectInput>
                         </div>
@@ -348,7 +365,11 @@
                     </svg>
                     <h3 class="text-base font-semibold text-gray-900 mb-1">No ads found</h3>
                     <p class="text-xs text-gray-600">
-                        {{ isOwner ? "You haven't posted any ads yet." : "This user hasn't posted any ads yet." }}
+                        {{
+                            isOwner
+                                ? "You haven't posted any ads yet."
+                                : "This user hasn't posted any ads yet."
+                        }}
                     </p>
                     <Link v-if="isOwner" :href="route('user.ads.create')"
                         class="inline-block mt-3 bg-brand-blue hover:bg-brand-blue/90 text-white px-4 py-1.5 rounded transition-colors text-xs shadow-sm">
@@ -378,8 +399,9 @@
                     <div class="hidden sm:flex gap-1">
                         <Link v-for="link in ads.links.slice(1, -1)" :key="link.label" :href="link.url || '#'"
                             class="w-7 h-7 flex items-center justify-center rounded text-xs transition-colors" :class="link.active
-                                ? 'bg-brand-blue text-white'
-                                : 'border border-gray-300 hover:bg-gray-50'">
+                                    ? 'bg-brand-blue text-white'
+                                    : 'border border-gray-300 hover:bg-gray-50'
+                                ">
                             {{ link.label }}
                         </Link>
                     </div>
@@ -422,20 +444,25 @@
                     <div class="mb-4 p-3 bg-gray-50 rounded-lg">
                         <div class="flex items-center justify-between mb-2">
                             <h3 class="text-sm font-semibold text-gray-700">Seller Rating</h3>
-                            <span class="text-xs text-gray-500">{{ totalRatings }} {{ totalRatings === 1 ? 'rating' :
-                                'ratings' }}</span>
+                            <span class="text-xs text-gray-500">{{ totalRatings }} {{ totalRatings === 1 ? "rating" :
+                                "ratings"
+                                }}</span>
                         </div>
 
                         <!-- Average Rating -->
                         <div class="flex items-center gap-3 mb-3">
                             <div class="flex flex-col items-center">
-                                <span class="text-2xl font-bold text-gray-900">{{ averageRating.toFixed(1) }}</span>
+                                <span class="text-2xl font-bold text-gray-900">{{
+                                    averageRating.toFixed(1)
+                                    }}</span>
                                 <span class="text-[10px] text-gray-500">out of 5</span>
                             </div>
                             <div class="flex-1">
                                 <div class="flex gap-1 mb-1">
-                                    <Icon v-for="i in 5" :key="i" icon="lucide:star" class="size-4"
-                                        :class="i <= Math.round(averageRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'" />
+                                    <Icon v-for="i in 5" :key="i" icon="lucide:star" class="size-4" :class="i <= Math.round(averageRating)
+                                            ? 'text-yellow-400 fill-yellow-400'
+                                            : 'text-gray-300'
+                                        " />
                                 </div>
                                 <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
                                     <div class="h-full bg-yellow-400 rounded-full"
@@ -452,7 +479,9 @@
                                     <div class="h-full bg-yellow-400 rounded-full"
                                         :style="{ width: `${getRatingPercentage(star)}%` }"></div>
                                 </div>
-                                <span class="w-6 text-gray-500 text-right">{{ getRatingCount(star) }}</span>
+                                <span class="w-6 text-gray-500 text-right">{{
+                                    getRatingCount(star)
+                                    }}</span>
                             </div>
                         </div>
                     </div>
@@ -465,215 +494,225 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { router, Link, usePage } from '@inertiajs/vue3'
-import OlxLayout from '@/layouts/OlxLayout.vue'
-import AdCard from '@/components/AdCard.vue'
-import ShadcnAlertDialog from '@/components/ShadcnAlertDialog.vue'
-import { useShadcnAlert } from '@/composables/useShadcnAlert'
-import { Icon } from '@iconify/vue'
-import citiesList from '@/data/cities.json'
+import { ref, computed } from "vue";
+import { router, Link, usePage } from "@inertiajs/vue3";
+import OlxLayout from "@/layouts/OlxLayout.vue";
+import AdCard from "@/components/AdCard.vue";
+import ShadcnAlertDialog from "@/components/ShadcnAlertDialog.vue";
+import { useShadcnAlert } from "@/composables/useShadcnAlert";
+import { Icon } from "@iconify/vue";
+import citiesList from "@/data/cities.json";
 
-const page = usePage()
-const cities = ref<string[]>(['all', ...citiesList])
+const page = usePage();
+console.log(page.props);
+const cities = ref<string[]>(["all", ...citiesList]);
 //console.log(cities)
 
 interface Props {
     profileUser: {
-        id: number
-        name: string
-        email: string
-        phone: string | null
-        rank: number
-        created_at: string
-        avatar: string | null
-        total_ads?: number
-        total_views?: number
+        id: number;
+        name: string;
+        email: string;
+        phone: string | null;
+        rank: number;
+        created_at: string;
+        avatar: string | null;
+        total_ads?: number;
+        total_views?: number;
         orderStats?: {
-            total_orders: number
-            completed_orders: number
-            completed_amount: number
-            cancelled_orders: number
-            completion_rate: number
-            cancel_rate: number
-        }
+            total_orders: number;
+            completed_orders: number;
+            completed_amount: number;
+            cancelled_orders: number;
+            completion_rate: number;
+            cancel_rate: number;
+        };
         received_ratings?: Array<{
-            id: number
-            rating: number
-            review: string | null
-            created_at: string
-            ad_id: number
-            rater_id: number
-            rated_user_id: number
+            id: number;
+            rating: number;
+            review: string | null;
+            created_at: string;
+            ad_id: number;
+            rater_id: number;
+            rated_user_id: number;
             rater?: {
-                id: number
-                name: string
-            }
-        }>
+                id: number;
+                name: string;
+            };
+        }>;
         profile?: {
-            id: number
-            user_id: number
-            username: string | null
-            profile_image: string | null
-            cover_image: string | null
-            bio: string | null
-            location: string | null
-            website: string | null
-            is_public: number | boolean
-            created_at: string
-            updated_at: string
-        }
-    }
+            id: number;
+            user_id: number;
+            username: string | null;
+            profile_image: string | null;
+            cover_image: string | null;
+            bio: string | null;
+            location: string | null;
+            website: string | null;
+            is_public: number | boolean;
+            created_at: string;
+            updated_at: string;
+        };
+    };
     ads: {
-        data: any[]
+        data: any[];
         links: Array<{
-            url: string | null
-            label: string
-            active: boolean
-        }>
-        current_page: number
-        last_page: number
-        total: number
-        next_page_url: string | null
-        prev_page_url: string | null
-    }
+            url: string | null;
+            label: string;
+            active: boolean;
+        }>;
+        current_page: number;
+        last_page: number;
+        total: number;
+        next_page_url: string | null;
+        prev_page_url: string | null;
+    };
     filters: {
-        city: string
-        sort_by: string
-    }
-    userCities: string[]
-    selectedCity: string
+        city: string;
+        sort_by: string;
+    };
+    userCities: string[];
+    selectedCity: string;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 //console.log(page.props)
 
 // Helper function to format amount
 const formatAmount = (amount: number) => {
     if (amount >= 100000) {
-        return (amount / 100000).toFixed(1) + 'L'
+        return (amount / 100000).toFixed(1) + "L";
     } else if (amount >= 1000) {
-        return (amount / 1000).toFixed(1) + 'K'
+        return (amount / 1000).toFixed(1) + "K";
     }
-    return amount.toString()
-}
+    return amount.toString();
+};
 
 // Check if current user is the profile owner
 const isOwner = computed(() => {
-    return page.props.auth?.user?.id === props.profileUser.id
-})
+    return page.props.auth?.user?.id === props.profileUser.id;
+});
 
 // Filter states
-const cityFilter = ref(props.filters.city)
-const sortBy = ref(props.filters.sort_by)
+const cityFilter = ref(props.filters.city);
+const sortBy = ref(props.filters.sort_by);
 
-const alert = useShadcnAlert()
+const alert = useShadcnAlert();
 
 // Rating calculations
-const receivedRatings = computed(() => props.profileUser.received_ratings || [])
+const receivedRatings = computed(() => props.profileUser.received_ratings || []);
 
-const totalRatings = computed(() => receivedRatings.value.length)
+const totalRatings = computed(() => receivedRatings.value.length);
 
 const averageRating = computed(() => {
-    if (totalRatings.value === 0) return 0
-    const sum = receivedRatings.value.reduce((acc, curr) => acc + curr.rating, 0)
-    return sum / totalRatings.value
-})
+    if (totalRatings.value === 0) return 0;
+    const sum = receivedRatings.value.reduce((acc, curr) => acc + curr.rating, 0);
+    return sum / totalRatings.value;
+});
 
 const ratingDistribution = computed(() => {
-    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     receivedRatings.value.forEach((r) => {
-        distribution[r.rating as keyof typeof distribution]++
-    })
-    return distribution
-})
+        distribution[r.rating as keyof typeof distribution]++;
+    });
+    return distribution;
+});
 
 const getRatingPercentage = (star: number) => {
-    if (totalRatings.value === 0) return 0
-    return (ratingDistribution.value[star as keyof typeof ratingDistribution.value] / totalRatings.value) * 100
-}
+    if (totalRatings.value === 0) return 0;
+    return (
+        (ratingDistribution.value[star as keyof typeof ratingDistribution.value] /
+            totalRatings.value) *
+        100
+    );
+};
 
 const getRatingCount = (star: number) => {
-    return ratingDistribution.value[star as keyof typeof ratingDistribution.value] || 0
-}
+    return ratingDistribution.value[star as keyof typeof ratingDistribution.value] || 0;
+};
 
 const recentRatings = computed(() => {
     return [...receivedRatings.value]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 5)
-})
+        .slice(0, 5);
+});
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
-    if (!dateString) return 'Unknown'
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-}
+    if (!dateString) return "Unknown";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+};
 
 // Helper function for relative time
 const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (diffInSeconds < 60) return 'just now'
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`
+    if (diffInSeconds < 60) return "just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
 
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+};
 
 // Helper function to format website URL for display
 const formatWebsite = (url: string) => {
-    if (!url) return ''
-    return url.replace(/^https?:\/\//, '')
-}
+    if (!url) return "";
+    return url.replace(/^https?:\/\//, "");
+};
 
 // Apply filters
 const applyFilters = () => {
-    router.get(route('user.profile', { id: props.profileUser.id }), {
-        city: cityFilter.value,
-        sort_by: sortBy.value
-    }, {
-        preserveScroll: true,
-        preserveState: true
-    })
-}
+    router.get(
+        route("user.profile", { id: props.profileUser.id }),
+        {
+            city: cityFilter.value,
+            sort_by: sortBy.value,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+        }
+    );
+};
 
 // Edit ad
 const editAd = (adId: number) => {
-    router.get(route('user.ads.edit', { id: adId }))
-}
+    router.get(route("user.ads.edit", { id: adId }));
+};
 
 // Confirm delete using unified dialog
 const confirmDeleteAd = async (ad: any) => {
     const confirmed = await alert.show({
-        type: 'destructive',
-        title: 'Delete Ad',
-        description: `Are you sure you want to delete "${ad.ad_title || ad.title}"? This action cannot be undone.`,
-        confirmText: 'Yes, Delete',
-        cancelText: 'Cancel'
-    })
+        type: "destructive",
+        title: "Delete Ad",
+        description: `Are you sure you want to delete "${ad.ad_title || ad.title
+            }"? This action cannot be undone.`,
+        confirmText: "Yes, Delete",
+        cancelText: "Cancel",
+    });
 
-    if (!confirmed) return
+    if (!confirmed) return;
 
-    router.delete(route('ads.destroy', { id: ad.id }), {
+    router.delete(route("ads.destroy", { id: ad.id }), {
         preserveScroll: true,
         onSuccess: () => {
             // Optionally update local list after deletion
-            const index = props.ads.data.findIndex((item: any) => item.id === ad.id)
+            const index = props.ads.data.findIndex((item: any) => item.id === ad.id);
             if (index !== -1) {
-                props.ads.data.splice(index, 1)
+                props.ads.data.splice(index, 1);
             }
-        }
-    })
-}
+        },
+    });
+};
 const goBack = () => {
-    router.visit(route('account'), {
+    router.visit(route("account"), {
         preserveState: true,
-        preserveScroll: true
-    })
-}
+        preserveScroll: true,
+    });
+};
 </script>

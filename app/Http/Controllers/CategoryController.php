@@ -139,7 +139,8 @@ class CategoryController extends Controller
                     });
                 }
             })
-
+            
+            ->orderBy('is_featured', 'desc')
             ->when($sort === 'price_low', fn ($q) => $q->orderBy('price', 'asc'))
             ->when($sort === 'price_high', fn ($q) => $q->orderBy('price', 'desc'))
             ->when(!in_array($sort, ['price_low', 'price_high']), fn ($q) => $q->latest());

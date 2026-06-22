@@ -47,7 +47,12 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
-        $user = $request->user()?->load('preferences','profile');
+        $user = $request->user()?->load('preferences','profile', 'activeSubscription.plan.permissions');
+        $planPermissions = [];
+        if ($user) {
+            $active = $user->activeSubscription; // Already loaded with plan.permissions
+            $planPermissions = $active?->plan?->permissions->pluck('name')->toArray() ?? [];
+        }
 
         return [
             ...parent::share($request),
@@ -74,6 +79,7 @@ class HandleInertiaRequests extends Middleware
                     'subscription_status' => $user->subscriptionStatus(),
 
                     'image' => $user->profile?->image,
+                    'plan_permissions' => $planPermissions,
                 ] : null,
             ],
             'ziggy' => [

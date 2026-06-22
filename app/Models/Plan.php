@@ -25,6 +25,21 @@ class Plan extends Model
         'price' => 'decimal:2'
     ];
 
+     public function permissions()
+    {
+        return $this->belongsToMany(
+            SubscriptionPermission::class,
+            'plan_permission',
+            'plan_id',
+            'subscription_permission_id'
+        );
+    }
+
+    public function hasPermission($permissionName)
+    {
+        return $this->permissions->contains('name', $permissionName);
+    }
+
     public function subscriptions()
     {
         return $this->hasMany(Subscription::class);

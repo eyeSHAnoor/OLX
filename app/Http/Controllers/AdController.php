@@ -88,6 +88,7 @@ class AdController extends Controller
             'location' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'region' => 'nullable|string|max:255',
+            'price_type' => 'nullable',
             'seller_name' => 'required|string|max:255',
             'seller_phone' => 'required|string|max:20',
             'images' => 'required|array|max:10',
@@ -103,7 +104,10 @@ class AdController extends Controller
         ]);
 
         return DB::transaction(function () use ($request) {
+            $user = auth()->user();
 
+            // Check if user has 'featured_ads' permission
+            $isFeatured = $user->hasPlanPermission('featured_ads');
             // ----------------------
             // Create Ad
             // ----------------------
@@ -118,10 +122,12 @@ class AdController extends Controller
                 'price' => $request->price,
                 'location' => $request->location,
                 'city' => $request->city,
+                'price_type' => $request->price_type ?? 'retail',
                 'seller_name' => $request->seller_name,
                 'seller_phone' => $request->seller_phone,
                 'search_keywords' => $request->input('search_keywords', []),
                 'region' => $request->region,
+                'is_featured' => $isFeatured,
             ]);
             // dd($request->attributes);
             // ----------------------
@@ -310,6 +316,7 @@ class AdController extends Controller
             'ad_title' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
+            'price_type' => 'nullable',
             'discount' => 'nullable|numeric|min:0',
 
             'location' => 'required|string|max:255',
@@ -349,6 +356,7 @@ class AdController extends Controller
                 'description' => $request->description,
                 'price' => $request->price,
                 'discount' => $request->discount,
+                'price_type' => $request->price_type,
                 'location' => $request->location,
                 'city' => $request->city,
                 'region' => $request->region,
@@ -497,13 +505,26 @@ class AdController extends Controller
     {
         $ad->load([
             'user:id,name,email',
+            'user.activeSubscription.plan.permissions',
             'images',
             'category:id,name',
             'brand:id,name',
             'ratings.rater',
             'features' => function ($q) {
                 $q->withPivot(['feature_value_id', 'custom_value']);
-            }
+            },
+            'comments' => function ($q) {
+            $q->whereNull('parent_id')
+              ->with([
+                  'user',
+                  'replies' => function ($q) {
+                      $q->with('user')
+                        ->orderBy('created_at', 'asc');
+                  },
+                  'likes',
+              ])
+              ->orderBy('created_at', 'desc');
+        },
         ]);
 
             AdView::firstOrCreate([
@@ -534,6 +555,13 @@ class AdController extends Controller
         $seller = $ad->user;
         $seller->avg_rating = $seller->receivedRatings()->avg('rating');
         $seller->rating_count = $seller->receivedRatings()->count();
+        $user = $ad->user;
+        $planPermissions = [];
+        if ($user->activeSubscription && $user->activeSubscription->plan) {
+            $planPermissions = $user->activeSubscription->plan->permissions->pluck('name')->toArray();
+        }
+        // Then include in ad.user
+        $ad->user->plan_permissions = $planPermissions;
 
         // Check if the current authenticated user has favorited this ad
         $isFavorited = false;

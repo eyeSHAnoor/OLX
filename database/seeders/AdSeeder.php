@@ -209,7 +209,7 @@ class AdSeeder extends Seeder
                 $this->addAttributeValues($ad, $category);
 
                 // Add local dummy images (1-3 per ad)
-                $this->addLocalImages($ad);
+                // $this->addLocalImages($ad);
 
                 if ($i % 20 == 0) {
                     $this->command->info("Created {$i} ads...");

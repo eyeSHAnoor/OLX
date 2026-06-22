@@ -179,6 +179,10 @@ Route::middleware(['auth'])->group(function () {
     // Route::post('/orders/{order}/request-review', [App\Http\Controllers\OrderController::class, 'requestReview'])->name('orders.requestReview');
     Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])->name('push.subscribe');
     Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'destroy'])->name('push.unsubscribe');
+
+    Route::post('/comments', [App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
+    Route::post('/comments/{comment}/like', [App\Http\Controllers\CommentController::class, 'toggleLike'])->name('comments.like');
+
     
 });
 
@@ -234,9 +238,10 @@ Route::middleware([
             Route::post('/broadcast-message/{message}/send', [App\Http\Controllers\BroadcastController::class, 'broadcast'])
                 ->name('broadcast-message.send');
 
-            // // API endpoint (could be in api.php if used externally)
-            // Route::get('api/broadcast-messages/active', [App\Http\Controllers\BroadcastController::class, 'getActive'])
-            //     ->name('api.broadcast-messages.active');
+            Route::resource('subscription-permissions', App\Http\Controllers\SubscriptionPermissionController::class)->except(['create', 'edit']);
+
+            // Optional: get all for dropdowns
+            Route::get('subscription-permissions/all', [App\Http\Controllers\SubscriptionPermissionController::class, 'getAll'])->name('subscription-permissions.all');
 
             Route::resource('page-contents', App\Http\Controllers\PageContentController::class)->except(['show']);
             Route::patch('page-contents/{pageContent}/toggle-status', [App\Http\Controllers\PageContentController::class, 'toggleStatus'])->name('page-contents.toggle-status');
@@ -245,7 +250,6 @@ Route::middleware([
 
             // City resource routes (index, create, store, show, edit, update, destroy)
             Route::resource('cities', App\Http\Controllers\CityController::class);
-
             // Additional routes for managing regions under a city
             Route::prefix('cities/{city}')->group(function () {
                 Route::get('regions', [App\Http\Controllers\CityController::class, 'getRegions'])->name('cities.regions');
@@ -256,6 +260,7 @@ Route::middleware([
             Route::prefix('regions')->group(function () {
                 Route::put('{region}', [App\Http\Controllers\CityController::class, 'updateRegion'])->name('regions.update');
                 Route::delete('{region}', [App\Http\Controllers\CityController::class, 'destroyRegion'])->name('regions.destroy');
+
             });
                 }
     );

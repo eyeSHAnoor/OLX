@@ -12,7 +12,7 @@ class PublicProfileController extends Controller
 {
     public function show(Request $request, $id)
     {
-        $user = User::with(['profile', 'files', 'receivedRatings'])->findOrFail($id);
+        $user = User::with(['profile', 'files', 'receivedRatings',  'activeSubscription.plan.permissions'])->findOrFail($id);
 
         $viewer = auth()->user();
         $isOwner = $viewer && $viewer->id === $user->id;
@@ -59,6 +59,15 @@ class PublicProfileController extends Controller
             ->pluck('city')
             ->toArray();
 
+           $planPermissions = [];
+            if ($user->activeSubscription && $user->activeSubscription->plan) {
+                $planPermissions = $user->activeSubscription->plan
+                    ->permissions
+                    ->pluck('name')
+                    ->toArray();
+            }
+
+
         return Inertia::render('home/PublicProfile', [
             'profileUser' => [
                 'id' => $user->id,
@@ -69,7 +78,8 @@ class PublicProfileController extends Controller
                 'avatar' => optional($user->files->first())->file_url,
                 'profile' => $profile,
                 'ratings' => $user->receivedRatings,
-                'orderStats' => $user->orderStats()
+                'orderStats' => $user->orderStats(),
+                'plan_permissions' => $planPermissions, 
             ],
             'ads' => $ads,
             'filters' => [

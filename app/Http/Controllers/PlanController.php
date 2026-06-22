@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Plan;
+use App\Models\SubscriptionPermission;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -27,6 +28,7 @@ class PlanController extends Controller
         $globalSearch = getGlobalSearchFilter([...$columns]);
 
         $plans = QueryBuilder::for(Plan::class)
+            ->with('permissions') 
             ->defaultSort('-created_at')
             ->allowedSorts($columns)
             ->allowedFilters([
@@ -44,8 +46,11 @@ class PlanController extends Controller
             ->paginate(getPaginate())   
             ->withQueryString();
 
+        $permissions = SubscriptionPermission::orderBy('name')->get();
+
         return Inertia::render('plans/Index', [
             'plans' => $plans,
+            'permissions' => $permissions,
         ]);
     }
 
@@ -72,31 +77,32 @@ class PlanController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:plans,name',
-            'price' => 'required|numeric|min:0',
+            'name'          => 'required|string|max:255|unique:plans,name',
+            'price'         => 'required|numeric|min:0',
             'duration_days' => 'required|integer|min:1',
-            'duration_days' => 'required|integer|min:1',
-
-            'description' => 'nullable|string',
-            'features' => 'nullable|array',
-            'is_popular' => 'nullable|boolean',
-            'sort_order' => 'nullable|integer',
+            'description'   => 'nullable|string',
+            'features'      => 'nullable|array',
+            'is_popular'    => 'nullable|boolean',
+            'sort_order'    => 'nullable|integer',
+            'permission_ids'=> 'nullable|array',
+            'permission_ids.*' => 'exists:subscription_permissions,id',
         ]);
 
-        Plan::create([
-            'name' => $request->name,
-            'price' => $request->price,
-            'discount' => $request->discount ?? 0,
+        $plan = Plan::create([
+            'name'        => $request->name,
+            'price'       => $request->price,
+            'discount'    => $request->discount ?? 0,
             'duration_days' => $request->duration_days,
-
             'description' => $request->description,
-
-            // Vue usually sends array already
-            'features' => $request->features,
-
-            'is_popular' => $request->boolean('is_popular'),
-            'sort_order' => $request->sort_order ?? 0,
+            'features'    => $request->features,
+            'is_popular'  => $request->boolean('is_popular'),
+            'sort_order'  => $request->sort_order ?? 0,
         ]);
+
+        // Sync permissions if provided
+        if ($request->has('permission_ids')) {
+            $plan->permissions()->sync($request->permission_ids);
+        }
 
         return redirect()->back()->with('success', 'Plan created successfully.');
     }
@@ -108,29 +114,35 @@ class PlanController extends Controller
     public function update(Request $request, Plan $plan)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:plans,name,' . $plan->id,
-            'price' => 'required|numeric|min:0',
-            'discount' => 'nullable|numeric|min:0',
+            'name'          => 'required|string|max:255|unique:plans,name,' . $plan->id,
+            'price'         => 'required|numeric|min:0',
             'duration_days' => 'required|integer|min:1',
-
-            'description' => 'nullable|string',
-            'features' => 'nullable|array',
-            'is_popular' => 'nullable|boolean',
-            'sort_order' => 'nullable|integer',
+            'description'   => 'nullable|string',
+            'features'      => 'nullable|array',
+            'is_popular'    => 'nullable|boolean',
+            'sort_order'    => 'nullable|integer',
+            'permission_ids'=> 'nullable|array',
+            'permission_ids.*' => 'exists:subscription_permissions,id',
         ]);
 
         $plan->update([
-            'name' => $request->name,
-            'price' => $request->price,
-            'discount' => $request->discount ?? 0,
+            'name'        => $request->name,
+            'price'       => $request->price,
+            'discount'    => $request->discount ?? 0,
             'duration_days' => $request->duration_days,
-
             'description' => $request->description,
-            'features' => $request->features,
-
-            'is_popular' => $request->boolean('is_popular'),
-            'sort_order' => $request->sort_order ?? $plan->sort_order,
+            'features'    => $request->features,
+            'is_popular'  => $request->boolean('is_popular'),
+            'sort_order'  => $request->sort_order ?? $plan->sort_order,
         ]);
+
+        // Sync permissions
+        if ($request->has('permission_ids')) {
+            $plan->permissions()->sync($request->permission_ids);
+        } else {
+            // If no permissions are selected, detach all
+            $plan->permissions()->sync([]);
+        }
 
         return redirect()->back()->with('success', 'Plan updated successfully.');
     }

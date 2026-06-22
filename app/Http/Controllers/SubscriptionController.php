@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\Subscription;
 use Illuminate\Support\Facades\Route;
 use App\Notifications\NewManualSubscriptionNotification;
+use App\Notifications\ManualSubscriptionPendingNotification;
 use Illuminate\Support\Facades\Notification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -74,6 +75,7 @@ class SubscriptionController extends Controller
         if ($superAdmins->isNotEmpty()) {
             Notification::send($superAdmins, new NewManualSubscriptionNotification($user, $subscription));
         }
+        $user->notify(new ManualSubscriptionPendingNotification($subscription));
 
         return redirect()->back()->with('success', 'Payment submitted. Waiting for admin approval.');
     }

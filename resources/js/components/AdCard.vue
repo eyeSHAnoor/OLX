@@ -50,16 +50,6 @@
               d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </button>
-
-        <!-- Featured Badge -->
-        <div v-if="ad.is_featured" class="absolute bottom-2 left-2">
-          <span :class="[
-            'bg-brand-blue text-white rounded-full font-semibold shadow-sm',
-            size === 'small' ? 'px-1.5 py-0.5 text-[8px]' : 'px-2 py-1 text-[10px]',
-          ]">
-            Featured
-          </span>
-        </div>
       </div>
 
       <!-- Content -->
@@ -70,6 +60,36 @@
         ]">
           {{ ad.ad_title || "Untitled" }}
         </h3>
+
+        <!-- Badge Row (Featured + Wholesale) -->
+        <div v-if="ad.is_featured || isWholesale" class="flex flex-wrap items-center gap-1.5 mb-2">
+          <!-- Featured Badge -->
+          <span v-if="ad.is_featured" :class="[
+            'inline-flex items-center gap-1 bg-gradient-to-r from-brand-orange/70 to-brand-orange text-white font-bold rounded-full shadow-sm',
+            size === 'small'
+              ? 'px-1.5 py-0.5 text-[8px]'
+              : 'px-2 py-0.5 text-[10px] sm:text-xs',
+          ]">
+            <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20">
+              <path
+                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            Featured
+          </span>
+
+          <!-- Wholesale Badge -->
+          <span v-if="isWholesale" :class="[
+            'inline-flex items-center gap-1 bg-gradient-to-r from-brand-blue/70 to-brand-blue text-white font-bold rounded-full shadow-sm',
+            size === 'small'
+              ? 'px-1.5 py-0.5 text-[8px]'
+              : 'px-2 py-0.5 text-[10px] sm:text-xs',
+          ]">
+            <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20">
+              <path d="M4 4h12v2H4V4zm0 4h12v2H4V8zm0 4h8v2H4v-2zm10 0h2v2h-2v-2zm-6 4h8v2H8v-2z" />
+            </svg>
+            Wholesale
+          </span>
+        </div>
 
         <!-- Discount info (NEW – below title, inside text area) -->
         <div v-if="ad.discount && ad.discount > 0 && discountPercentage > 0"
@@ -182,6 +202,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   size: "normal",
 });
+const isWholesale = computed(() => props.ad.price_type === "wholesale");
 const page = usePage();
 const currentUser = page.props.auth?.user;
 const isOwner = computed(() => {

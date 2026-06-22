@@ -106,8 +106,8 @@ const navItems = computed(() => [
                 <SidebarMenuItem v-for="(item, index) in group.items" :key="index">
                     <SidebarMenuButton v-if="item.visible" :is-active="item.isActive" :tooltip="item.title"
                         :class="[item.isActive && '!bg-brand-blue font-semibold !text-white']" as-child>
-                        <Link :href="item.href" class="flex  items-center h-10 leading-none gap-2">
-                            <Icon :icon="item.icon" class="!size-6.5 text-brand-blue "
+                        <Link :href="item.href" class="flex items-center h-10 leading-none gap-2">
+                            <Icon :icon="item.icon" class="!size-6.5 text-brand-blue"
                                 :class="[item.isActive && 'text-white  font-bold']" />
                             <span class="text-sm leading-none text-gray-600" :class="[item.isActive && 'text-white']">{{
                                 item.title }}</span>

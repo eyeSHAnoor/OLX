@@ -3,7 +3,6 @@
         <div
             class="h-full group bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer">
             <div class="flex flex-col sm:flex-row h-full">
-
                 <!-- Image Container - Smaller fixed dimensions -->
                 <div
                     class="relative sm:w-36 lg:w-40 h-36 sm:h-auto bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden flex-shrink-0">
@@ -18,8 +17,16 @@
 
                     <!-- Featured Badge - Smaller -->
                     <div v-if="ad.is_featured" class="absolute top-2 left-2">
-                        <span
-                            class="bg-brand-blue text-white px-1.5 py-0.5 rounded-full text-[10px] font-medium shadow-sm">
+                        <span :class="[
+                            'inline-flex items-center gap-1 bg-gradient-to-r from-brand-blue to-brand-orange text-white font-bold rounded-full shadow-lg shadow-brand-orange/50 animate-pulse',
+                            size === 'small'
+                                ? 'px-2 py-0.5 text-[8px]'
+                                : 'px-2.5 py-1 text-[10px] sm:text-xs',
+                        ]">
+                            <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
                             Featured
                         </span>
                     </div>
@@ -28,7 +35,10 @@
                     <div class="absolute bottom-2 left-2 sm:hidden">
                         <span
                             class="bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full font-medium text-gray-900 text-[10px] shadow">
-                            Rs {{ formatPrice(ad.discount && ad.discount > 0 ? discountedPrice : ad.price) }}
+                            Rs
+                            {{
+                                formatPrice(ad.discount && ad.discount > 0 ? discountedPrice : ad.price)
+                            }}
                         </span>
                     </div>
                 </div>
@@ -62,7 +72,7 @@
 
                                     <h3
                                         class="font-medium text-gray-900 text-sm sm:text-base line-clamp-2 group-hover:text-brand-blue transition-colors leading-tight">
-                                        {{ ad.ad_title || 'Untitled' }}
+                                        {{ ad.ad_title || "Untitled" }}
                                     </h3>
 
                                     <!-- Desktop Price & Condition -->
@@ -129,7 +139,9 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                             d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
-                                    <span class="line-clamp-1">{{ ad.location || 'Location not specified' }}</span>
+                                    <span class="line-clamp-1">{{
+                                        ad.location || "Location not specified"
+                                        }}</span>
                                 </div>
                                 <div v-if="ad.category" class="flex items-center text-gray-600 text-[10px] sm:text-xs">
                                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5 text-gray-400" fill="none"
@@ -186,72 +198,72 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { ref, computed } from "vue";
+import { Link } from "@inertiajs/vue3";
 
 interface Brand {
-    name: string
+    name: string;
 }
 
 interface Ad {
-    id: number
-    ad_title: string
-    price: number
-    discount?: number  // discount percentage (e.g., 10 for 10%)
-    location: string
-    created_at: string
-    description?: string
-    condition?: string
-    is_featured?: boolean
-    views?: number
+    id: number;
+    ad_title: string;
+    price: number;
+    discount?: number; // discount percentage (e.g., 10 for 10%)
+    location: string;
+    created_at: string;
+    description?: string;
+    condition?: string;
+    is_featured?: boolean;
+    views?: number;
     category?: {
-        name: string
-    }
-    brand?: Brand
-    images?: Array<{ path: string }>
+        name: string;
+    };
+    brand?: Brand;
+    images?: Array<{ path: string }>;
 }
 
 interface Props {
-    ad: Ad
+    ad: Ad;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const isFavorited = ref(false)
+const isFavorited = ref(false);
 
 const discountedPrice = computed(() => {
-    const price = parseFloat(String(props.ad.price))
-    const discount = parseFloat(String(props.ad.discount ?? 0))
+    const price = parseFloat(String(props.ad.price));
+    const discount = parseFloat(String(props.ad.discount ?? 0));
     if (discount > 0 && discount <= 100) {
-        return Math.round(price * (1 - discount / 100))
+        return Math.round(price * (1 - discount / 100));
     }
-    return price
-})
+    return price;
+});
 
 const toggleFavorite = () => {
-    isFavorited.value = !isFavorited.value
-}
+    isFavorited.value = !isFavorited.value;
+};
 
 const timeAgo = (date: string) => {
-    const now = new Date()
-    const past = new Date(date)
-    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000)
+    const now = new Date();
+    const past = new Date(date);
+    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
 
-    if (diffInSeconds < 60) return 'Just now'
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`
+    if (diffInSeconds < 60) return "Just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
 
-    return past.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric'
-    })
-}
+    return past.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+    });
+};
 
 const formatPrice = (price: number) => {
-    if (!price) return '0'
-    return price.toLocaleString('en-US')
-}
+    if (!price) return "0";
+    return price.toLocaleString("en-US");
+};
 </script>
 
 <style scoped>
