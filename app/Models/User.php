@@ -33,7 +33,10 @@ class User extends Authenticatable
         'verification_code_expires_at',
         'terms_accepted',
         'terms_accepted_at',
-        'rank'
+        'rank',
+        'referral_code',
+        'referred_by',
+        'points_balance',
     ];
 
    protected $hidden = [
@@ -252,5 +255,36 @@ class User extends Authenticatable
         }
 
         return $subscription->plan->permissions->contains('name', $permission);
+    }
+
+    public function giftAssignments()
+    {
+        return $this->hasMany(GiftAssignment::class);
+    }
+
+    public function assignedGifts()
+    {
+        return $this->hasMany(GiftAssignment::class, 'assigned_by');
+    }
+
+     public function referralsMade()
+    {
+        return $this->hasMany(Referral::class, 'referrer_id');
+    }
+
+    public function referralReceived()
+    {
+        return $this->hasOne(Referral::class, 'referred_user_id');
+    }
+
+    public function referrer()
+    {
+        return $this->belongsTo(User::class, 'referred_by');
+    }
+
+    public function addPoints($points)
+    {
+        $this->points_balance += $points;
+        $this->save();
     }
 }   

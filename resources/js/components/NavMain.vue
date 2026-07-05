@@ -86,6 +86,13 @@ const navItems = computed(() => [
                 icon: 'material-symbols:docs-outline',
                 isActive: page.url === '/page-contents' || route().current('page-contents.*'),
             },
+            {
+                visible: true,
+                title: 'Campaigns',
+                href: '/gift-campaigns',
+                icon: 'material-symbols:celebration-outline',
+                isActive: page.url === '/gift-campaigns' || route().current('gift-campaigns.*'),
+            },
             // {
             //     visible: true,
             //     title: 'Cities',

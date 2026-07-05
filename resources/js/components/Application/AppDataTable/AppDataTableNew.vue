@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="TData, TValue">
-import { computed, ref, watch, h } from 'vue'
+import { computed, ref, watch, h, unref } from "vue";
 import type {
     ColumnDef,
     SortingState,
@@ -7,8 +7,8 @@ import type {
     VisibilityState,
     ExpandedState,
     PaginationState,
-} from '@tanstack/vue-table'
-import type { PaginationData } from '@/types'
+} from "@tanstack/vue-table";
+import type { PaginationData } from "@/types";
 
 import {
     FlexRender,
@@ -18,8 +18,8 @@ import {
     getSortedRowModel,
     getFilteredRowModel,
     getExpandedRowModel,
-} from '@tanstack/vue-table'
-import { valueUpdater } from '@/lib/utils'
+} from "@tanstack/vue-table";
+import { valueUpdater } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -27,41 +27,41 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table'
-import AppDataTableViewOptions from './AppDataTableViewOptions.vue'
-import SearchInput from '../SearchInput.vue'
-import AppDataTableColumnHeader from './AppDataTableColumnHeader.vue'
+} from "@/components/ui/table";
+import AppDataTableViewOptions from "./AppDataTableViewOptions.vue";
+import SearchInput from "../SearchInput.vue";
+import AppDataTableColumnHeader from "./AppDataTableColumnHeader.vue";
 // import { useI18n } from 'vue-i18n';
 // const { t } = useI18n();
 interface SimpleColumn {
-    accessorKey: string
-    header: string
-    sortable?: boolean
-    enableHiding?: boolean
-    mobileTitle?: string
+    accessorKey: string;
+    header: string;
+    sortable?: boolean;
+    enableHiding?: boolean;
+    mobileTitle?: string;
 }
 
 const props = defineProps<{
-    columns: SimpleColumn[]
-    data: TData[]
-    searchPlaceholder?: string
-    paginationData?: PaginationData | null
-    isFiltered?: boolean
-    hasMobileView?: boolean
-    selectable?: boolean
-}>()
+    columns: SimpleColumn[];
+    data: TData[];
+    searchPlaceholder?: string;
+    paginationData?: PaginationData | null;
+    isFiltered?: boolean;
+    hasMobileView?: boolean;
+    selectable?: boolean;
+}>();
 
-const emit = defineEmits(['onChangeRecordsPerPage', 'resetFilter'])
-const slots = defineSlots()
+const emit = defineEmits(["onChangeRecordsPerPage", "resetFilter"]);
+const slots = defineSlots();
 
-const sorting = ref<SortingState>([])
-const columnFilters = ref<ColumnFiltersState>([])
-const columnVisibility = ref<VisibilityState>({})
-const rowSelection = ref({})
-const expanded = ref<ExpandedState>({})
+const sorting = ref<SortingState>([]);
+const columnFilters = ref<ColumnFiltersState>([]);
+const columnVisibility = ref<VisibilityState>({});
+const rowSelection = ref({});
+const expanded = ref<ExpandedState>({});
 
-// ✅ Expose selected rows via v-model
-const selected = defineModel<TData[]>('selected', { default: [] })
+// Expose selected rows via v-model
+const selected = defineModel<TData[]>("selected", { default: [] });
 
 // Convert simple columns to TanStack table column definitions
 const tableColumns = computed<ColumnDef<TData, TValue>[]>(() => {
@@ -73,7 +73,7 @@ const tableColumns = computed<ColumnDef<TData, TValue>[]>(() => {
                 mobileTitle: col.mobileTitle || col.header,
                 header: col.header,
             },
-        }
+        };
 
         // Header renderer
         if (col.sortable) {
@@ -82,43 +82,47 @@ const tableColumns = computed<ColumnDef<TData, TValue>[]>(() => {
                     column,
                     // title: col.header,
                     title: unref(col.header),
-                })
+                });
         } else {
             // columnDef.header = col.header
-            columnDef.header = () => unref(col.header)
+            columnDef.header = () => unref(col.header);
         }
 
         // Cell renderer
-        const slotName = `${col.accessorKey}-cell`
+        const slotName = `${col.accessorKey}-cell`;
         if (slots[slotName]) {
             columnDef.cell = ({ row, getValue }) => {
-                return h('div', {}, slots[slotName]?.({ row, getValue, value: getValue() }))
-            }
+                const slotContent = slots[slotName]?.({ row, getValue, value: getValue() });
+                const children = Array.isArray(slotContent)
+                    ? slotContent.filter(Boolean)
+                    : slotContent;
+                return h("div", {}, children);
+            };
         } else {
             columnDef.cell = ({ getValue }) => {
-                const value = getValue()
-                return h('div', {}, value?.toString() || '')
-            }
+                const value = getValue();
+                return h("div", {}, value?.toString() || "");
+            };
         }
 
-        return columnDef
-    })
+        return columnDef;
+    });
 
     // If selectable, prepend a selection column
     if (props.selectable) {
         const selectionColumn: ColumnDef<TData, TValue> = {
-            id: 'select',
+            id: "select",
             header: ({ table }) =>
-                h('input', {
-                    type: 'checkbox',
+                h("input", {
+                    type: "checkbox",
                     checked: table.getIsAllPageRowsSelected(),
                     indeterminate: table.getIsSomePageRowsSelected(),
                     onChange: (e: Event) =>
                         table.toggleAllPageRowsSelected((e.target as HTMLInputElement).checked),
                 }),
             cell: ({ row }) =>
-                h('input', {
-                    type: 'checkbox',
+                h("input", {
+                    type: "checkbox",
                     checked: row.getIsSelected(),
                     indeterminate: row.getIsSomeSelected(),
                     onChange: (e: Event) =>
@@ -126,32 +130,32 @@ const tableColumns = computed<ColumnDef<TData, TValue>[]>(() => {
                 }),
             enableSorting: false,
             enableHiding: false,
-        }
-        return [selectionColumn, ...cols]
+        };
+        return [selectionColumn, ...cols];
     }
 
-    return cols
-})
+    return cols;
+});
 
-const search = defineModel<string | number>('search')
-const perPage = defineModel<string | number>('perPage')
+const search = defineModel<string | number>("search");
+const perPage = defineModel<string | number>("perPage");
 
 const pagination = ref<PaginationState>({
     pageIndex: 0,
     pageSize: Number(perPage.value) || 10,
-})
+});
 
 // keep pagination in sync if perPage changes
 watch(perPage, (newVal) => {
-    pagination.value.pageSize = Number(newVal) || 10
-})
+    pagination.value.pageSize = Number(newVal) || 10;
+});
 
 const table = useVueTable({
     get data() {
-        return props.data
+        return props.data;
     },
     get columns() {
-        return tableColumns.value
+        return tableColumns.value;
     },
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -163,37 +167,36 @@ const table = useVueTable({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: (updaterOrValue) =>
         valueUpdater(updaterOrValue, columnVisibility),
-    onRowSelectionChange: (updaterOrValue) =>
-        valueUpdater(updaterOrValue, rowSelection),
+    onRowSelectionChange: (updaterOrValue) => valueUpdater(updaterOrValue, rowSelection),
     onExpandedChange: (updaterOrValue) => valueUpdater(updaterOrValue, expanded),
     onPaginationChange: (updaterOrValue) => valueUpdater(updaterOrValue, pagination),
 
     state: {
         get pagination() {
-            return pagination.value
+            return pagination.value;
         },
         get sorting() {
-            return sorting.value
+            return sorting.value;
         },
         get columnFilters() {
-            return columnFilters.value
+            return columnFilters.value;
         },
         get columnVisibility() {
-            return columnVisibility.value
+            return columnVisibility.value;
         },
         get rowSelection() {
-            return rowSelection.value
+            return rowSelection.value;
         },
         get expanded() {
-            return expanded.value
+            return expanded.value;
         },
     },
-})
+});
 
 // Watch for changes in rowSelection and update v-model:selected
 watch(rowSelection, () => {
-    selected.value = table.getSelectedRowModel().rows.map((r) => r.original as TData)
-})
+    selected.value = table.getSelectedRowModel().rows.map((r) => r.original as TData);
+});
 </script>
 
 <template>

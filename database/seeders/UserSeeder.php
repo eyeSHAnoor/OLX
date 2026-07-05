@@ -30,5 +30,7 @@ class UserSeeder extends Seeder
             'email' => 'branch@test.com',
         ]);
 
+         User::factory(12)->create();
+
     }
 }
