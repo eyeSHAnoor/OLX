@@ -698,7 +698,7 @@ const props = defineProps({
     plans: Array,
 });
 
-console.log("Available subscription plans:", props.plans);
+// console.log("Available subscription plans:", props.plans);
 const getDiscountPercentage = (plan) => {
     if (!plan.price || !plan.discount) return 0;
 

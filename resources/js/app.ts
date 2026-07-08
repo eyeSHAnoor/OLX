@@ -100,11 +100,11 @@ createInertiaApp({
                         scope: '/',
                     });
 
-                    console.log('Service Worker registered:', registration.scope);
+                    // console.log('Service Worker registered:', registration.scope);
 
                     // 🔥 FORCE it to take control immediately
                     if (navigator.serviceWorker.controller === null) {
-                        console.log('⚠️ No controller yet, reloading...');
+                        // console.log('⚠️ No controller yet, reloading...');
                         window.location.reload();
                     }
                 } catch (err) {

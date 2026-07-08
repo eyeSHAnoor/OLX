@@ -403,7 +403,7 @@ if (!function_exists('sendNotification')) {
                     $response = sendWhatsAppMessage($to, $message);
 
                     if (!$response['success']) {
-                        \Log::error("WhatsApp failed for {$to}: " . $response['message']);
+                        // \Log::error("WhatsApp failed for {$to}: " . $response['message']);
                     }
                 }
             }
@@ -413,7 +413,7 @@ if (!function_exists('sendNotification')) {
                 'message' => 'Notification created and sent successfully.',
             ];
         } catch (\Exception $e) {
-            \Log::error('Notification sending failed: ' . $e->getMessage());
+            // \Log::error('Notification sending failed: ' . $e->getMessage());
             return [
                 'success' => false,
                 'message' => 'Notification sending failed: ' . $e->getMessage(),

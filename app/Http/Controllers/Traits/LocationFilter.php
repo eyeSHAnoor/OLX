@@ -7,7 +7,7 @@ trait LocationFilter
 {
     protected function applyLocation($query)
     {
-        Log::info('Applying location filter with session city: ' . session('city', 'Pakistan') . ' and region: ' . session('region'));
+        // Log::info('Applying location filter with session city: ' . session('city', 'Pakistan') . ' and region: ' . session('region'));
         $city = strtolower(session('city', 'Pakistan'));
         $region = session('region');
 

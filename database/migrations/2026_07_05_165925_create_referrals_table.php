@@ -12,7 +12,7 @@ return new class extends Migration
         Schema::create('referrals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('referrer_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('referred_user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('referred_user_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->string('status')->default('pending'); // pending, completed
             $table->integer('points_awarded')->default(0);
             $table->string('link_code')->nullable(); // tracks which link was used

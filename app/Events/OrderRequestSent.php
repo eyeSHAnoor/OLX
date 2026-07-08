@@ -42,7 +42,7 @@ class OrderRequestSent implements ShouldBroadcastNow
      */
     public function broadcastWith()
     {
-        Log::info('Broadcasting OrderRequestSent with data: ', $this->orderRequest);
+        // Log::info('Broadcasting OrderRequestSent with data: ', $this->orderRequest);
         return $this->orderRequest;
     }
 }

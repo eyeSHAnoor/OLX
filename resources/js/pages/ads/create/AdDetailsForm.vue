@@ -547,7 +547,7 @@ const props = defineProps({
     adData: { type: Object, default: null },
 });
 
-console.log("AdDetailsForm props:", props.adData);
+// console.log("AdDetailsForm props:", props.adData);
 
 const STORAGE_KEY = "ad_form_draft";
 

@@ -54,13 +54,13 @@ class NewMessageNotification extends Notification implements ShouldQueue
 
     public function toWebPush($notifiable, $notification)
     {
-        Log::info('Sending Web Push Notification', [
-            'chat_id' => $this->chat->id,
-            'message' => "{$this->message->sender->name} sends You a message",
-            'sender_id' => $this->message->sender_id,
-            'sender_name' => $this->message->sender->name ?? 'Unknown',
-            'url' => route('chat.show', $this->chat->id, false)
-        ]);
+        // Log::info('Sending Web Push Notification', [
+        //     'chat_id' => $this->chat->id,
+        //     'message' => "{$this->message->sender->name} sends You a message",
+        //     'sender_id' => $this->message->sender_id,
+        //     'sender_name' => $this->message->sender->name ?? 'Unknown',
+        //     'url' => route('chat.show', $this->chat->id, false)
+        // ]);
         return (new WebPushMessage)
             ->title('New Message')
             ->icon('/icon.png')

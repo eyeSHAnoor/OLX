@@ -53,7 +53,7 @@ trait Fileable
 
                 $this->files()->save($file);
             } catch (\Exception $e) {
-                \Log::error('File upload failed: ' . $e->getMessage());
+                // \Log::error('File upload failed: ' . $e->getMessage());
                 throw new \Exception('Failed to upload file');
             }
 

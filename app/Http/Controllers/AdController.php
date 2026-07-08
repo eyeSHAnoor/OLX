@@ -156,7 +156,7 @@ class AdController extends Controller
                     ]);
 
                     if (!in_array((int)$attributeId, $categoryAttributes)) {
-                        \Log::warning("Ad {$ad->id}: Attribute {$attributeId} does not belong to category {$request->category_id}");
+                        // \Log::warning("Ad {$ad->id}: Attribute {$attributeId} does not belong to category {$request->category_id}");
                     }
                 }
             }
@@ -393,7 +393,7 @@ class AdController extends Controller
                     ]);
 
                     if (!in_array((int)$attributeId, $categoryAttributes)) {
-                        \Log::warning("Ad {$ad->id}: Attribute {$attributeId} does not belong to category {$request->category_id}");
+                        // \Log::warning("Ad {$ad->id}: Attribute {$attributeId} does not belong to category {$request->category_id}");
                     }
                 }
             }

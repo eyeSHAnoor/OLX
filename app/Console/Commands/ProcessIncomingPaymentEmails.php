@@ -46,10 +46,10 @@ class ProcessIncomingPaymentEmails extends Command
 
         } catch (\Exception $e) {
             $this->error('❌ IMAP connection failed: ' . $e->getMessage());
-            Log::error('IMAP connection failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            // Log::error('IMAP connection failed', [
+            //     'error' => $e->getMessage(),
+            //     'trace' => $e->getTraceAsString()
+            // ]);
         }
     }
 
@@ -118,12 +118,12 @@ class ProcessIncomingPaymentEmails extends Command
 
         } catch (\Exception $e) {
             $this->error("💥 Error processing email: " . $e->getMessage());
-            Log::error('Error processing payment confirmation email', [
-                'subject' => $subject ?? 'unknown',
-                'from' => $from ?? 'unknown',
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            // Log::error('Error processing payment confirmation email', [
+            //     'subject' => $subject ?? 'unknown',
+            //     'from' => $from ?? 'unknown',
+            //     'error' => $e->getMessage(),
+            //     'trace' => $e->getTraceAsString()
+            // ]);
             return false;
         }
     }

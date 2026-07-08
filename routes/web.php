@@ -31,6 +31,7 @@ Route::get('/all-items', [\App\Http\Controllers\SearchController::class, 'allIte
 Route::get('/category/{slug?}', [CategoryController::class, 'show'])->name('category.show');
 Route::post('/category/filter', [CategoryController::class, 'filter'])->name('category.filter');
 Route::get('/user/{id}', [App\Http\Controllers\PublicProfileController::class, 'show'])->name('user.profile');
+Route::get('/register', [App\Http\Controllers\Auth\RegisteredUserController::class, 'create'])->name('register');
 
 // Ads Public Routes
 Route::get('/ads/{ad}', [AdController::class, 'show'])->name('ads.show');
@@ -58,7 +59,7 @@ Route::get('/aboutus', [App\Http\Controllers\AboutController::class, 'index'])->
 Route::get('/page/{pageKey}', [App\Http\Controllers\AboutController::class, 'show'])->name('public.page');
 Route::get('/page', [App\Http\Controllers\AboutController::class, 'nav']);
 Route::get('/regions/{cityName}', [App\Http\Controllers\RegionController::class, 'getByCityName']);
-Route::post('/contact/send', [App\Http\Controllers\AboutController::class, 'send'])->name('contact.send');
+Route::post('/contact/send', [App\Http\Controllers\AboutController::class, 'send'])->name('contact.send')->middleware('throttle:3,1');
 
 // Search
 Route::get('/search-suggestions', [App\Http\Controllers\SearchController::class, 'suggestions']);
@@ -357,14 +358,26 @@ Route::middleware(['auth', 'super_admin'])->group(function () {
     Route::resource('gifts', \App\Http\Controllers\GiftController::class)->except(['show']);
     Route::patch('gifts/{gift}/toggle-status', [\App\Http\Controllers\GiftController::class, 'toggleStatus'])
         ->name('gifts.toggle-status');
-
+    /*
+    |--------------------------------------------------------------------------
+    | User Referral Management Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/referrals', [\App\Http\Controllers\UserReferralController::class, 'index'])->name('referrals.index');
+    Route::get('/users/referral/create', [\App\Http\Controllers\UserReferralController::class, 'create'])->name('users.referral.create');
+    Route::post('/users/referral', [\App\Http\Controllers\UserReferralController::class, 'store'])->name('users.referral.store');
+    Route::get('/users/{user}/referral/edit', [\App\Http\Controllers\UserReferralController::class, 'edit'])->name('users.referral.edit');
+    Route::put('/users/{user}/referral', [\App\Http\Controllers\UserReferralController::class, 'update'])->name('users.referral.update');
+    Route::delete('/users/{user}/referral', [\App\Http\Controllers\UserReferralController::class, 'destroy'])->name('users.referral.destroy');
+    Route::post('/users/{user}/generate-referral-code', [\App\Http\Controllers\UserReferralController::class, 'generateCode'])->name('users.referral.generate-code');
+    Route::get('/users/{user}/referrals', [\App\Http\Controllers\UserReferralController::class, 'userReferrals'])->name('users.referrals.show');
+    
 });
-
+    
 /*
 |--------------------------------------------------------------------------
 | Settings & Auth Routes
 |--------------------------------------------------------------------------
 */
-
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

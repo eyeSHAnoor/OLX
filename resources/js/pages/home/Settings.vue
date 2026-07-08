@@ -13,7 +13,7 @@
                                 'px-6 py-4 text-sm font-medium transition-colors duration-200',
                                 activeTab === 'password'
                                     ? 'border-b-2 border-brand-teal text-brand-teal'
-                                    : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    : 'text-gray-500 hover:text-gray-700 hover:border-gray-300',
                             ]">
                                 Change Password
                             </button>
@@ -21,7 +21,7 @@
                                 'px-6 py-4 text-sm font-medium transition-colors duration-200',
                                 activeTab === 'notifications'
                                     ? 'border-b-2 border-brand-teal text-brand-teal'
-                                    : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    : 'text-gray-500 hover:text-gray-700 hover:border-gray-300',
                             ]">
                                 Notifications
                             </button>
@@ -106,10 +106,9 @@
                                         <div class="flex items-center gap-2">
                                             <div class="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                                                 <div class="h-full transition-all duration-300" :style="{
-                                                    width: (passwordStrength.score * 20) + '%',
-                                                    backgroundColor: passwordStrength.color
-                                                }">
-                                                </div>
+                                                    width: passwordStrength.score * 20 + '%',
+                                                    backgroundColor: passwordStrength.color,
+                                                }"></div>
                                             </div>
                                             <span class="text-xs" :style="{ color: passwordStrength.color }">
                                                 {{ passwordStrength.label }}
@@ -136,7 +135,10 @@
                                             :class="{
                                                 'border-red-500': passwordForm.errors.new_password_confirmation,
                                                 'border-green-500':
-                                                    passwordForm.new_password_confirmation && passwordForm.new_password === passwordForm.new_password_confirmation && passwordForm.new_password.length >= 8
+                                                    passwordForm.new_password_confirmation &&
+                                                    passwordForm.new_password ===
+                                                    passwordForm.new_password_confirmation &&
+                                                    passwordForm.new_password.length >= 8,
                                             }" />
                                         <button type="button" @click="showConfirmPassword = !showConfirmPassword"
                                             class="absolute right-3 top-2.5 text-gray-500 hover:text-brand-teal">
@@ -156,9 +158,12 @@
                                     </div>
                                     <div v-if="passwordForm.new_password_confirmation"
                                         class="mt-1 flex items-center gap-1">
-                                        <svg v-if="passwordForm.new_password === passwordForm.new_password_confirmation && passwordForm.new_password.length >= 8"
-                                            xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-teal"
-                                            viewBox="0 0 20 20" fill="currentColor">
+                                        <svg v-if="
+                                            passwordForm.new_password ===
+                                            passwordForm.new_password_confirmation &&
+                                            passwordForm.new_password.length >= 8
+                                        " xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-teal" viewBox="0 0 20 20"
+                                            fill="currentColor">
                                             <path fill-rule="evenodd"
                                                 d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                                 clip-rule="evenodd" />
@@ -170,12 +175,21 @@
                                                 clip-rule="evenodd" />
                                         </svg>
                                         <span class="text-xs" :class="{
-                                            'text-brand-teal': passwordForm.new_password === passwordForm.new_password_confirmation && passwordForm.new_password.length >= 8,
-                                            'text-red-500': passwordForm.new_password !== passwordForm.new_password_confirmation
+                                            'text-brand-teal':
+                                                passwordForm.new_password ===
+                                                passwordForm.new_password_confirmation &&
+                                                passwordForm.new_password.length >= 8,
+                                            'text-red-500':
+                                                passwordForm.new_password !==
+                                                passwordForm.new_password_confirmation,
                                         }">
-                                            {{ passwordForm.new_password === passwordForm.new_password_confirmation &&
-                                                passwordForm.new_password.length >= 8 ? 'Passwords match' :
-                                                'Passwords do not match' }}
+                                            {{
+                                                passwordForm.new_password ===
+                                                    passwordForm.new_password_confirmation &&
+                                                    passwordForm.new_password.length >= 8
+                                                    ? "Passwords match"
+                                            : "Passwords do not match"
+                                            }}
                                         </span>
                                     </div>
                                     <p v-if="passwordForm.errors.new_password_confirmation"
@@ -186,7 +200,9 @@
 
                                 <button type="submit" :disabled="passwordForm.processing"
                                     class="w-full bg-brand-teal text-white py-2 px-4 rounded-lg hover:bg-brand-teal/80 transition-colors duration-200 disabled:opacity-50">
-                                    {{ passwordForm.processing ? 'Changing Password...' : 'Change Password' }}
+                                    {{
+                                        passwordForm.processing ? "Changing Password..." : "Change Password"
+                                    }}
                                 </button>
                             </form>
                         </div>
@@ -199,8 +215,8 @@
                                         <Icon icon="mdi:bell" class="h-5 w-5 text-blue-400 mr-3" />
                                         <div>
                                             <p class="text-sm text-blue-700">
-                                                Enable browser notifications to receive real‑time updates about new
-                                                messages, offers, and alerts.
+                                                Enable browser notifications to receive real‑time updates about
+                                                new messages, offers, and alerts.
                                             </p>
                                         </div>
                                     </div>
@@ -219,18 +235,19 @@
                                         <button v-if="!isSubscribed" @click="subscribeToPush"
                                             :disabled="isSubscribing || !isPushSupported"
                                             class="px-4 py-2 rounded-lg text-white transition-colors" :class="{
-                                                'bg-brand-teal hover:bg-brand-teal/80': !isSubscribing && isPushSupported,
+                                                'bg-brand-teal hover:bg-brand-teal/80':
+                                                    !isSubscribing && isPushSupported,
                                                 'bg-gray-400 cursor-not-allowed': !isPushSupported,
-                                                'opacity-50': isSubscribing
+                                                'opacity-50': isSubscribing,
                                             }">
-                                            {{ isSubscribing ? 'Subscribing...' : 'Enable Notifications' }}
+                                            {{ isSubscribing ? "Subscribing..." : "Enable Notifications" }}
                                         </button>
 
                                         <!-- Unsubscribe button (shown when subscribed) -->
                                         <button v-if="isSubscribed" @click="unsubscribeFromPush"
                                             :disabled="isUnsubscribing"
                                             class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50">
-                                            {{ isUnsubscribing ? 'Unsubscribing...' : 'Unsubscribe' }}
+                                            {{ isUnsubscribing ? "Unsubscribing..." : "Unsubscribe" }}
                                         </button>
                                     </div>
                                 </div>
@@ -241,17 +258,17 @@
                                     <p class="text-sm text-yellow-700">{{ supportReason }}</p>
                                     <p v-if="supportReason.includes('Home Screen')"
                                         class="text-xs text-yellow-600 mt-1">
-                                        To enable notifications on iOS: open this page in Safari, tap the Share icon,
-                                        then “Add to Home Screen”.
+                                        To enable notifications on iOS: open this page in Safari, tap the
+                                        Share icon, then “Add to Home Screen”.
                                     </p>
                                     <p v-if="supportReason.includes('HTTPS')" class="text-xs text-yellow-600 mt-1">
-                                        You are currently on HTTP. Switch to the HTTPS version of the site to enable
-                                        notifications.
+                                        You are currently on HTTP. Switch to the HTTPS version of the site to
+                                        enable notifications.
                                     </p>
                                     <p v-else-if="supportReason.includes('does not support')"
                                         class="text-xs text-yellow-600 mt-1">
-                                        Please use Chrome, Firefox, or Edge on Android, or add this site to your Home
-                                        Screen on iOS 16.4+.
+                                        Please use Chrome, Firefox, or Edge on Android, or add this site to
+                                        your Home Screen on iOS 16.4+.
                                     </p>
                                 </div>
                             </div>
@@ -272,192 +289,197 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useForm, Head } from '@inertiajs/vue3'
-import OlxLayout from '@/layouts/OlxLayout.vue'
-import { Icon } from '@iconify/vue'
-import axios from 'axios'
-import { useForceTheme } from '@/composables/useForceTheme'
+import { ref, computed, onMounted } from "vue";
+import { useForm, Head } from "@inertiajs/vue3";
+import OlxLayout from "@/layouts/OlxLayout.vue";
+import { Icon } from "@iconify/vue";
+import axios from "axios";
+import { useForceTheme } from "@/composables/useForceTheme";
 
-useForceTheme('light')
+useForceTheme("light");
 
 // Active tab state
-const activeTab = ref('password')
+const activeTab = ref("password");
 
 // ==================== PASSWORD TAB ====================
 const passwordForm = useForm({
-    current_password: '',
-    new_password: '',
-    new_password_confirmation: ''
-})
+    current_password: "",
+    new_password: "",
+    new_password_confirmation: "",
+});
 
-const showCurrentPassword = ref(false)
-const showNewPassword = ref(false)
-const showConfirmPassword = ref(false)
+const showCurrentPassword = ref(false);
+const showNewPassword = ref(false);
+const showConfirmPassword = ref(false);
 
 const submitPassword = () => {
-    passwordForm.post(route('password.change'), {
+    passwordForm.post(route("password.change"), {
         preserveScroll: true,
         onSuccess: () => {
-            passwordForm.reset('current_password', 'new_password', 'new_password_confirmation')
-        }
-    })
-}
+            passwordForm.reset("current_password", "new_password", "new_password_confirmation");
+        },
+    });
+};
 
 const passwordStrength = computed(() => {
-    const password = passwordForm.new_password
-    if (!password) return { score: 0, label: 'Enter password', color: '#666' }
+    const password = passwordForm.new_password;
+    if (!password) return { score: 0, label: "Enter password", color: "#666" };
 
-    let score = 0
-    if (password.length >= 8) score++
-    if (password.match(/[a-z]/)) score++
-    if (password.match(/[A-Z]/)) score++
-    if (password.match(/[0-9]/)) score++
-    if (password.match(/[^a-zA-Z0-9]/)) score++
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (password.match(/[a-z]/)) score++;
+    if (password.match(/[A-Z]/)) score++;
+    if (password.match(/[0-9]/)) score++;
+    if (password.match(/[^a-zA-Z0-9]/)) score++;
 
-    const strengths = ['Weak', 'Fair', 'Good', 'Strong', 'Very Strong']
-    const colors = ['#dc3545', '#ffc107', '#4A90E2', '#2C6B5E', '#2C6B5E']
+    const strengths = ["Weak", "Fair", "Good", "Strong", "Very Strong"];
+    const colors = ["#dc3545", "#ffc107", "#4A90E2", "#2C6B5E", "#2C6B5E"];
 
     return {
         score: score,
-        label: strengths[score - 1] || 'Weak',
-        color: colors[score - 1] || '#dc3545'
-    }
-})
+        label: strengths[score - 1] || "Weak",
+        color: colors[score - 1] || "#dc3545",
+    };
+});
 
 // ==================== NOTIFICATIONS TAB ====================
-const isPushSupported = ref(false)
-const isSubscribed = ref(false)
-const isSubscribing = ref(false)
-const isUnsubscribing = ref(false)
-const notificationStatus = ref('Checking browser compatibility...')
-const supportReason = ref('') // contextual reason for lack of support
+const isPushSupported = ref(false);
+const isSubscribed = ref(false);
+const isSubscribing = ref(false);
+const isUnsubscribing = ref(false);
+const notificationStatus = ref("Checking browser compatibility...");
+const supportReason = ref(""); // contextual reason for lack of support
 
 const checkPushSupport = () => {
     // 1. Secure context (HTTPS required)
     if (window.isSecureContext === false) {
-        isPushSupported.value = false
-        supportReason.value = 'Push notifications require a secure connection (HTTPS). You are viewing this page over HTTP.'
-        notificationStatus.value = 'Please access this site via HTTPS.'
-        return false
+        isPushSupported.value = false;
+        supportReason.value =
+            "Push notifications require a secure connection (HTTPS). You are viewing this page over HTTP.";
+        notificationStatus.value = "Please access this site via HTTPS.";
+        return false;
     }
 
     // 2. Check API availability
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        isPushSupported.value = false
-        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        isPushSupported.value = false;
+        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
         if (isIOS) {
-            supportReason.value = 'On iOS, push notifications require iOS 16.4 or later, and the website must be added to the Home Screen.'
+            supportReason.value =
+                "On iOS, push notifications require iOS 16.4 or later, and the website must be added to the Home Screen.";
         } else {
-            supportReason.value = 'Your browser does not support the Push API. Please use Chrome, Firefox, or Edge.'
+            supportReason.value =
+                "Your browser does not support the Push API. Please use Chrome, Firefox, or Edge.";
         }
-        notificationStatus.value = 'Push notifications not supported.'
-        return false
+        notificationStatus.value = "Push notifications not supported.";
+        return false;
     }
 
     // 3. All good – API exists and context secure
-    isPushSupported.value = true
-    supportReason.value = ''
-    notificationStatus.value = 'Click the button to enable notifications'
-    return true
-}
+    isPushSupported.value = true;
+    supportReason.value = "";
+    notificationStatus.value = "Click the button to enable notifications";
+    return true;
+};
 
 const checkExistingSubscription = async () => {
-    if (!isPushSupported.value) return false
+    if (!isPushSupported.value) return false;
 
     try {
-        const registration = await navigator.serviceWorker.getRegistration()
-        const subscription = await registration.pushManager.getSubscription()
+        const registration = await navigator.serviceWorker.getRegistration();
+        const subscription = await registration.pushManager.getSubscription();
         if (subscription) {
-            isSubscribed.value = true
-            notificationStatus.value = 'You are already subscribed to push notifications'
-            return true
+            isSubscribed.value = true;
+            notificationStatus.value = "You are already subscribed to push notifications";
+            return true;
         }
-        isSubscribed.value = false
-        notificationStatus.value = 'Not subscribed – click to enable'
-        return false
+        isSubscribed.value = false;
+        notificationStatus.value = "Not subscribed – click to enable";
+        return false;
     } catch (error) {
-        console.error('Error checking subscription:', error)
-        notificationStatus.value = 'Could not check subscription status'
-        return false
+        console.error("Error checking subscription:", error);
+        notificationStatus.value = "Could not check subscription status";
+        return false;
     }
-}
+};
 
-const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY
+const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-    const rawData = window.atob(base64)
-    return new Uint8Array([...rawData].map((c) => c.charCodeAt(0)))
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    return new Uint8Array([...rawData].map((c) => c.charCodeAt(0)));
 }
 
 const subscribeToPush = async () => {
     if (!isPushSupported.value) {
-        alert('Push notifications are not supported in your browser.')
-        return
+        alert("Push notifications are not supported in your browser.");
+        return;
     }
 
     try {
-        isSubscribing.value = true
+        isSubscribing.value = true;
 
-        const permission = await Notification.requestPermission()
-        if (permission !== 'granted') {
-            alert('Notification permission denied. You can enable it in your browser settings.')
-            notificationStatus.value = 'Permission denied'
-            return
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") {
+            alert(
+                "Notification permission denied. You can enable it in your browser settings."
+            );
+            notificationStatus.value = "Permission denied";
+            return;
         }
 
-        const registration = await navigator.serviceWorker.getRegistration()
-        let subscription = await registration.pushManager.getSubscription()
+        const registration = await navigator.serviceWorker.getRegistration();
+        let subscription = await registration.pushManager.getSubscription();
 
         if (subscription) {
-            console.log('Old subscription found → removing...')
-            await subscription.unsubscribe()
+            // console.log('Old subscription found → removing...')
+            await subscription.unsubscribe();
         }
 
         subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(vapidKey),
-        })
+        });
 
-        await axios.post('/push/subscribe', subscription)
+        await axios.post("/push/subscribe", subscription);
 
-        isSubscribed.value = true
-        notificationStatus.value = 'Successfully subscribed to push notifications'
-        alert('You will now receive notifications!')
+        isSubscribed.value = true;
+        notificationStatus.value = "Successfully subscribed to push notifications";
+        alert("You will now receive notifications!");
     } catch (error) {
-        console.error('Push subscription error:', error)
-        notificationStatus.value = 'Subscription failed – try again'
-        alert('Failed to enable notifications. Please check console for details.')
+        console.error("Push subscription error:", error);
+        notificationStatus.value = "Subscription failed – try again";
+        alert("Failed to enable notifications. Please check console for details.");
     } finally {
-        isSubscribing.value = false
+        isSubscribing.value = false;
     }
-}
+};
 
 const unsubscribeFromPush = async () => {
     try {
-        isUnsubscribing.value = true
+        isUnsubscribing.value = true;
 
-        const registration = await navigator.serviceWorker.getRegistration()
-        const subscription = await registration.pushManager.getSubscription()
+        const registration = await navigator.serviceWorker.getRegistration();
+        const subscription = await registration.pushManager.getSubscription();
 
         if (subscription) {
-            await axios.post('/push/unsubscribe', {
+            await axios.post("/push/unsubscribe", {
                 endpoint: subscription.endpoint,
-            })
-            await subscription.unsubscribe()
+            });
+            await subscription.unsubscribe();
         }
 
-        isSubscribed.value = false
-        notificationStatus.value = 'You have been unsubscribed from push notifications'
+        isSubscribed.value = false;
+        notificationStatus.value = "You have been unsubscribed from push notifications";
     } catch (error) {
-        console.error('Unsubscribe error:', error)
-        notificationStatus.value = 'Failed to unsubscribe – please try again'
+        console.error("Unsubscribe error:", error);
+        notificationStatus.value = "Failed to unsubscribe – please try again";
     } finally {
-        isUnsubscribing.value = false
+        isUnsubscribing.value = false;
     }
-}
+};
 
 // Initialize service worker on mount
 onMounted(async () => {
@@ -471,9 +493,9 @@ onMounted(async () => {
     // }
 
     if (checkPushSupport()) {
-        await checkExistingSubscription()
+        await checkExistingSubscription();
     }
-})
+});
 </script>
 
 <style scoped>

@@ -153,12 +153,12 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {   
-           \Log::info('Destroy method called', [
-        'auth_id' => auth()->id(),
-        'user_id' => $user->id,
-        'is_authenticated' => auth()->check(),
-        'can_delete' => auth()->user()?->can('delete', $user)
-    ]);
+        // \Log::info('Destroy method called', [
+        //     'auth_id' => auth()->id(),
+        //     'user_id' => $user->id,
+        //     'is_authenticated' => auth()->check(),
+        //     'can_delete' => auth()->user()?->can('delete', $user)
+        // ]);
         DB::transaction(function () use ($user) {
 
             // Delete profile

@@ -647,7 +647,7 @@ const useForceTheme = (theme: string) => {
 useForceTheme("light");
 
 const page = usePage();
-console.log(page.props);
+// console.log(page.props);
 const ad = computed(() => page.props.ad);
 const similarAds = computed(() => page.props.similarAds || []);
 const hasOrdered = computed(() => page.props.hasOrdered || false);

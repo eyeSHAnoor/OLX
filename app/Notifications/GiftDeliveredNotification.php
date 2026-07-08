@@ -69,10 +69,10 @@ class GiftDeliveredNotification extends Notification implements ShouldQueue
 
     public function toWebPush($notifiable, $notification)
     {
-        Log::info('Sending Gift Delivered Web Push Notification', [
-            'user_id' => $notifiable->id,
-            'gift_name' => $this->gift->name,
-        ]);
+        // Log::info('Sending Gift Delivered Web Push Notification', [
+        //     'user_id' => $notifiable->id,
+        //     'gift_name' => $this->gift->name,
+        // ]);
 
         return (new WebPushMessage)
             ->title('🚚 Gift Delivered!')

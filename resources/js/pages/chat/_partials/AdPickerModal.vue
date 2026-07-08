@@ -38,7 +38,9 @@
                     <div v-else-if="filteredAds.length === 0" class="text-center py-10">
                         <Icon icon="lucide:shopping-bag" class="size-10 text-gray-300 mx-auto mb-3" />
                         <p class="text-sm text-gray-500">
-                            {{ search ? 'No products match your search' : 'You don’t have any active ads' }}
+                            {{
+                                search ? "No products match your search" : "You don’t have any active ads"
+                            }}
                         </p>
                         <Link v-if="!search" :href="route('ads.create')"
                             class="inline-flex items-center gap-1 mt-3 text-sm text-brand-teal hover:underline">
@@ -77,97 +79,100 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
-import axios from 'axios'
-import { Icon } from '@iconify/vue'
-import { Link } from '@inertiajs/vue3'
+import { ref, watch, computed } from "vue";
+import axios from "axios";
+import { Icon } from "@iconify/vue";
+import { Link } from "@inertiajs/vue3";
 
 const props = defineProps({
     modelValue: Boolean,
-    conversationId: Number
-})
+    conversationId: Number,
+});
 
-const emit = defineEmits(['update:modelValue', 'select'])
+const emit = defineEmits(["update:modelValue", "select"]);
 
-const show = ref(false)
-const ads = ref([])
-const loading = ref(false)
-const search = ref('')
+const show = ref(false);
+const ads = ref([]);
+const loading = ref(false);
+const search = ref("");
 
 const filteredAds = computed(() => {
-    if (!search.value) return ads.value
-    const term = search.value.toLowerCase()
-    return ads.value.filter(ad => ad.title.toLowerCase().includes(term))
-})
+    if (!search.value) return ads.value;
+    const term = search.value.toLowerCase();
+    return ads.value.filter((ad) => ad.title.toLowerCase().includes(term));
+});
 
-watch(() => props.modelValue, async (val) => {
-    show.value = val
-    if (val && !ads.value.length) {
-        await loadAds()
+watch(
+    () => props.modelValue,
+    async (val) => {
+        show.value = val;
+        if (val && !ads.value.length) {
+            await loadAds();
+        }
+        if (!val) {
+            // reset search when closed
+            search.value = "";
+        }
     }
-    if (!val) {
-        // reset search when closed
-        search.value = ''
-    }
-})
+);
 
 watch(show, (val) => {
-    emit('update:modelValue', val)
-})
+    emit("update:modelValue", val);
+});
 
 const loadAds = async () => {
-    loading.value = true
+    loading.value = true;
     try {
-        const res = await axios.get('/chat/my-ads')
-        console.log('Loaded ads:', res.data)
-        ads.value = res.data.map(ad => ({
+        const res = await axios.get("/chat/my-ads");
+        // console.log('Loaded ads:', res.data)
+        ads.value = res.data.map((ad) => ({
             id: ad.id,
             title: ad.ad_title || ad.title,
             price: ad.price,
-            thumbnail: '/storage/' + (
-                ad.images?.find(img => img.is_primary)?.path ||
-                ad.images?.[0]?.path ||
-                ad.thumbnail ||
-                'placeholder.jpg'
-            )
-        }))
+            thumbnail:
+                "/storage/" +
+                (ad.images?.find((img) => img.is_primary)?.path ||
+                    ad.images?.[0]?.path ||
+                    ad.thumbnail ||
+                    "placeholder.jpg"),
+        }));
     } catch (err) {
-        console.error('Failed to load ads', err)
+        console.error("Failed to load ads", err);
     } finally {
-        loading.value = false
+        loading.value = false;
     }
-}
+};
 
 const selectAd = async (ad) => {
     if (!props.conversationId) {
-        console.error('conversationId is required!')
-        return
+        console.error("conversationId is required!");
+        return;
     }
 
     try {
-        await axios.post('/chat/send-product', {
+        await axios.post("/chat/send-product", {
             conversation_id: props.conversationId,
             body: `Requested product: ${ad.title} (Qty: 1)`,
             is_order_request: true,
             order_data: {
                 ad_id: ad.id,
                 qty: 1,
-                delivery_option: 'pickup',
-                contact_number: '',
-                delivery_address: '',
-                notes: ''
-            }
-        })
-        close()
+                delivery_option: "pickup",
+                contact_number: "",
+                delivery_address: "",
+                notes: "",
+            },
+        });
+        close();
     } catch (err) {
-        console.error('Failed to send product message', err)
-        alert('Failed to send product request.')
+        console.error("Failed to send product message", err);
+        alert("Failed to send product request.");
     }
-}
+};
 
 const close = () => {
-    show.value = false
-}
+    show.value = false;
+};
 </script>
 
 <style scoped>

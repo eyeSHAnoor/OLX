@@ -93,13 +93,13 @@ const navItems = computed(() => [
                 icon: 'material-symbols:celebration-outline',
                 isActive: page.url === '/gift-campaigns' || route().current('gift-campaigns.*'),
             },
-            // {
-            //     visible: true,
-            //     title: 'Cities',
-            //     href: '/cities',
-            //     icon: 'material-symbols:location-city-outline',
-            //     isActive: page.url === '/cities' || route().current('cities.*'),
-            // },
+            {
+                visible: true,
+                title: 'Referrals',
+                href: '/referrals',
+                icon: 'material-symbols:group-outline',
+                isActive: page.url === '/referrals' || route().current('referrals.*'),
+            },
         ],
     },
 ]);

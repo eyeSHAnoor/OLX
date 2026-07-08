@@ -210,7 +210,7 @@ const executeSmartAssign = async () => {
           preserveScroll: true,
           preserveState: true,
           onSuccess: () => {
-            console.log(`Assigned ${plan.gift_name} to ${plan.user_count} users`);
+            // console.log(`Assigned ${plan.gift_name} to ${plan.user_count} users`);
           },
         }
       );
@@ -331,6 +331,7 @@ const formatDate = (date: string) => {
 
 <template>
   <AppContainer>
+
     <Head :title="`Eligible Users - ${period?.name}`" />
 
     <PageHeading>
@@ -338,22 +339,12 @@ const formatDate = (date: string) => {
       <template #subtitle> Users with 4+ months of continuous subscription </template>
       <template #links>
         <div class="flex items-center gap-2">
-          <Button
-            @click="generateSmartAssignPlan"
-            variant="outline"
-            size="sm"
-            :disabled="isShuffling || availableUsers.length === 0"
-            class="relative"
-          >
+          <Button @click="generateSmartAssignPlan" variant="outline" size="sm"
+            :disabled="isShuffling || availableUsers.length === 0" class="relative">
             <Sparkles class="size-4 mr-2" />
             Smart Auto-Assign
           </Button>
-          <Button
-            as-child
-            size="sm"
-            variant="outline"
-            @click="router.visit(route('gift-campaigns.index'))"
-          >
+          <Button as-child size="sm" variant="outline" @click="router.visit(route('gift-campaigns.index'))">
             <Icon icon="lucide:arrow-left" class="size-4" /> Back to Campaigns
           </Button>
         </div>
@@ -369,9 +360,7 @@ const formatDate = (date: string) => {
               <p class="text-sm text-muted-foreground">Total Eligible</p>
               <p class="text-2xl font-bold">{{ totalEligible }}</p>
             </div>
-            <div
-              class="size-12 rounded-full bg-blue-100 flex items-center justify-center"
-            >
+            <div class="size-12 rounded-full bg-blue-100 flex items-center justify-center">
               <Users class="size-6 text-blue-600" />
             </div>
           </div>
@@ -384,9 +373,7 @@ const formatDate = (date: string) => {
               <p class="text-sm text-muted-foreground">Already Assigned</p>
               <p class="text-2xl font-bold text-green-600">{{ assignedCount }}</p>
             </div>
-            <div
-              class="size-12 rounded-full bg-green-100 flex items-center justify-center"
-            >
+            <div class="size-12 rounded-full bg-green-100 flex items-center justify-center">
               <CheckCircle class="size-6 text-green-600" />
             </div>
           </div>
@@ -401,9 +388,7 @@ const formatDate = (date: string) => {
                 {{ totalEligible - assignedCount }}
               </p>
             </div>
-            <div
-              class="size-12 rounded-full bg-orange-100 flex items-center justify-center"
-            >
+            <div class="size-12 rounded-full bg-orange-100 flex items-center justify-center">
               <Clock class="size-6 text-orange-600" />
             </div>
           </div>
@@ -418,9 +403,7 @@ const formatDate = (date: string) => {
                 {{ campaignGifts?.length || 0 }}
               </p>
             </div>
-            <div
-              class="size-12 rounded-full bg-purple-100 flex items-center justify-center"
-            >
+            <div class="size-12 rounded-full bg-purple-100 flex items-center justify-center">
               <Gift class="size-6 text-purple-600" />
             </div>
           </div>
@@ -429,10 +412,7 @@ const formatDate = (date: string) => {
     </div>
 
     <!-- Shuffle Loading Overlay -->
-    <div
-      v-if="showShuffleAnimation"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-    >
+    <div v-if="showShuffleAnimation" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div class="text-center">
         <div class="relative inline-block mb-4">
           <Shuffle class="size-16 text-white animate-bounce" />
@@ -442,18 +422,9 @@ const formatDate = (date: string) => {
           Randomly assigning gifts to eligible users
         </p>
         <div class="mt-4 flex justify-center gap-1">
-          <span
-            class="size-3 bg-white rounded-full animate-bounce"
-            style="animation-delay: 0s"
-          ></span>
-          <span
-            class="size-3 bg-white rounded-full animate-bounce"
-            style="animation-delay: 0.2s"
-          ></span>
-          <span
-            class="size-3 bg-white rounded-full animate-bounce"
-            style="animation-delay: 0.4s"
-          ></span>
+          <span class="size-3 bg-white rounded-full animate-bounce" style="animation-delay: 0s"></span>
+          <span class="size-3 bg-white rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+          <span class="size-3 bg-white rounded-full animate-bounce" style="animation-delay: 0.4s"></span>
         </div>
       </div>
     </div>
@@ -471,21 +442,13 @@ const formatDate = (date: string) => {
                 </CardDescription>
               </div>
               <div class="flex items-center gap-2">
-                <Button
-                  @click="generateSmartAssignPlan"
-                  variant="outline"
-                  size="sm"
-                  :disabled="isShuffling || availableUsers.length === 0"
-                >
+                <Button @click="generateSmartAssignPlan" variant="outline" size="sm"
+                  :disabled="isShuffling || availableUsers.length === 0">
                   <Sparkles class="size-4 mr-2" />
                   Smart Auto-Assign
                 </Button>
-                <Button
-                  @click="showBulkAssignModal = true"
-                  variant="outline"
-                  size="sm"
-                  :disabled="availableUsers.length === 0"
-                >
+                <Button @click="showBulkAssignModal = true" variant="outline" size="sm"
+                  :disabled="availableUsers.length === 0">
                   <Gift class="size-4 mr-2" />
                   Bulk Assign All
                 </Button>
@@ -496,27 +459,17 @@ const formatDate = (date: string) => {
             <!-- Search -->
             <div class="mb-4">
               <div class="relative">
-                <Search
-                  class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
-                />
-                <input
-                  v-model="searchQuery"
-                  type="text"
-                  placeholder="Search users by name, email or phone..."
-                  class="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+                <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <input v-model="searchQuery" type="text" placeholder="Search users by name, email or phone..."
+                  class="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" />
               </div>
             </div>
 
             <!-- Select All -->
             <div class="flex items-center gap-2 mb-4 p-2 bg-muted/50 rounded">
-              <input
-                type="checkbox"
-                v-model="selectAll"
-                @change="toggleSelectAll"
+              <input type="checkbox" v-model="selectAll" @change="toggleSelectAll"
                 class="rounded border-gray-300 text-primary focus:ring-primary"
-                :disabled="availableUsers.length === 0"
-              />
+                :disabled="availableUsers.length === 0" />
               <span class="text-sm font-medium">
                 Select All ({{ selectedUserIds.length }} selected)
               </span>
@@ -537,35 +490,20 @@ const formatDate = (date: string) => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr
-                    v-for="user in filteredUsers"
-                    :key="user.id"
-                    :class="{
-                      'bg-green-50': assignedUserIds.includes(user.id),
-                      'hover:bg-muted/50': !assignedUserIds.includes(user.id),
-                    }"
-                    class="border-b text-sm"
-                  >
+                  <tr v-for="user in filteredUsers" :key="user.id" :class="{
+                    'bg-green-50': assignedUserIds.includes(user.id),
+                    'hover:bg-muted/50': !assignedUserIds.includes(user.id),
+                  }" class="border-b text-sm">
                     <td class="p-2">
-                      <input
-                        type="checkbox"
-                        :checked="selectedUserIds.includes(user.id)"
-                        @change="toggleUser(user.id)"
+                      <input type="checkbox" :checked="selectedUserIds.includes(user.id)" @change="toggleUser(user.id)"
                         :disabled="assignedUserIds.includes(user.id)"
-                        class="rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50"
-                      />
+                        class="rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50" />
                     </td>
                     <td class="p-2">
                       <div class="flex items-center gap-2">
-                        <div
-                          class="size-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden"
-                        >
-                          <img
-                            v-if="user.profile?.avatar"
-                            :src="`/storage/${user.profile.avatar}`"
-                            :alt="user.name"
-                            class="w-full h-full object-cover"
-                          />
+                        <div class="size-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                          <img v-if="user.profile?.avatar" :src="`/storage/${user.profile.avatar}`" :alt="user.name"
+                            class="w-full h-full object-cover" />
                           <span v-else class="text-xs font-medium text-primary">
                             {{ user.name.charAt(0).toUpperCase() }}
                           </span>
@@ -585,8 +523,7 @@ const formatDate = (date: string) => {
                     </td>
                     <td class="p-2">
                       <span
-                        class="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
-                      >
+                        class="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                         {{ user.current_plan }}
                       </span>
                     </td>
@@ -602,17 +539,13 @@ const formatDate = (date: string) => {
                       </span>
                     </td>
                     <td class="p-2">
-                      <span
-                        v-if="assignedUserIds.includes(user.id)"
-                        class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
-                      >
+                      <span v-if="assignedUserIds.includes(user.id)"
+                        class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                         <CheckCircle class="size-3 mr-1" />
                         Assigned
                       </span>
-                      <span
-                        v-else
-                        class="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full"
-                      >
+                      <span v-else
+                        class="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
                         <Clock class="size-3 mr-1" />
                         Pending
                       </span>
@@ -642,16 +575,10 @@ const formatDate = (date: string) => {
             <!-- Gift Selection -->
             <div>
               <label class="text-sm font-medium block mb-2">Select Gift *</label>
-              <select
-                v-model="selectedGiftId"
-                class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              >
+              <select v-model="selectedGiftId"
+                class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
                 <option :value="null">Choose a gift</option>
-                <option
-                  v-for="gift in campaignGifts"
-                  :key="gift.gift_id"
-                  :value="gift.gift_id"
-                >
+                <option v-for="gift in campaignGifts" :key="gift.gift_id" :value="gift.gift_id">
                   {{ gift.name }} ({{ gift.remaining }} remaining)
                 </option>
               </select>
@@ -661,12 +588,8 @@ const formatDate = (date: string) => {
             <div v-if="selectedGift" class="p-3 bg-muted/50 rounded-lg">
               <div class="flex items-center gap-3">
                 <div class="size-12 rounded-lg overflow-hidden bg-muted">
-                  <img
-                    v-if="selectedGift.image"
-                    :src="`/storage/${selectedGift.image}`"
-                    :alt="selectedGift.name"
-                    class="w-full h-full object-cover"
-                  />
+                  <img v-if="selectedGift.image" :src="`/storage/${selectedGift.image}`" :alt="selectedGift.name"
+                    class="w-full h-full object-cover" />
                   <div v-else class="w-full h-full flex items-center justify-center">
                     <Gift class="size-6 text-muted-foreground" />
                   </div>
@@ -684,12 +607,9 @@ const formatDate = (date: string) => {
             <!-- Notes -->
             <div>
               <label class="text-sm font-medium block mb-2">Notes (optional)</label>
-              <textarea
-                v-model="assignForm.notes"
-                rows="2"
+              <textarea v-model="assignForm.notes" rows="2"
                 class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Any notes for this assignment..."
-              ></textarea>
+                placeholder="Any notes for this assignment..."></textarea>
             </div>
 
             <!-- Summary -->
@@ -705,14 +625,9 @@ const formatDate = (date: string) => {
             </div>
 
             <!-- Assign Button -->
-            <AppButton
-              label="Assign Gifts"
-              icon="lucide:gift"
-              :processing="assignForm.processing"
-              @click="assignGifts"
+            <AppButton label="Assign Gifts" icon="lucide:gift" :processing="assignForm.processing" @click="assignGifts"
               :disabled="selectedUserIds.length === 0 || !selectedGiftId"
-              class="bg-brand-orange hover:bg-brand-orange/80 w-full justify-center"
-            />
+              class="bg-brand-orange hover:bg-brand-orange/80 w-full justify-center" />
           </CardContent>
         </Card>
 
@@ -723,19 +638,11 @@ const formatDate = (date: string) => {
           </CardHeader>
           <CardContent>
             <div class="space-y-3">
-              <div
-                v-for="gift in campaignGifts"
-                :key="gift.gift_id"
-                class="p-3 border rounded-lg"
-              >
+              <div v-for="gift in campaignGifts" :key="gift.gift_id" class="p-3 border rounded-lg">
                 <div class="flex items-center gap-3">
                   <div class="size-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                    <img
-                      v-if="gift.image"
-                      :src="`/storage/${gift.image}`"
-                      :alt="gift.name"
-                      class="w-full h-full object-cover"
-                    />
+                    <img v-if="gift.image" :src="`/storage/${gift.image}`" :alt="gift.name"
+                      class="w-full h-full object-cover" />
                     <div v-else class="w-full h-full flex items-center justify-center">
                       <Gift class="size-5 text-muted-foreground" />
                     </div>
@@ -743,17 +650,14 @@ const formatDate = (date: string) => {
                   <div class="flex-1 min-w-0">
                     <p class="font-medium text-sm truncate">{{ gift.name }}</p>
                     <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                      <div
-                        class="bg-primary h-1.5 rounded-full"
-                        :style="{
-                          width:
-                            gift.allocated > 0
-                              ? ((gift.allocated - gift.remaining) / gift.allocated) *
-                                  100 +
-                                '%'
-                              : '0%',
-                        }"
-                      ></div>
+                      <div class="bg-primary h-1.5 rounded-full" :style="{
+                        width:
+                          gift.allocated > 0
+                            ? ((gift.allocated - gift.remaining) / gift.allocated) *
+                            100 +
+                            '%'
+                            : '0%',
+                      }"></div>
                     </div>
                     <p class="text-xs text-muted-foreground mt-1">
                       {{ gift.remaining }} / {{ gift.allocated }} remaining
@@ -775,11 +679,8 @@ const formatDate = (date: string) => {
           </CardHeader>
           <CardContent>
             <div class="space-y-2 max-h-60 overflow-y-auto">
-              <div
-                v-for="user in assignedUsersList"
-                :key="user.id"
-                class="flex items-center gap-2 p-2 bg-green-50 rounded"
-              >
+              <div v-for="user in assignedUsersList" :key="user.id"
+                class="flex items-center gap-2 p-2 bg-green-50 rounded">
                 <CheckCircle class="size-3 text-green-600 flex-shrink-0" />
                 <span class="text-sm truncate">{{ user.name }}</span>
               </div>
@@ -790,17 +691,9 @@ const formatDate = (date: string) => {
     </div>
 
     <!-- Smart Auto-Assign Modal -->
-    <div
-      v-if="showSmartAssignModal"
-      class="fixed inset-0 z-50 flex items-center justify-center"
-    >
-      <div
-        class="absolute inset-0 bg-black/50"
-        @click="showSmartAssignModal = false"
-      ></div>
-      <div
-        class="relative bg-background rounded-lg shadow-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto"
-      >
+    <div v-if="showSmartAssignModal" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/50" @click="showSmartAssignModal = false"></div>
+      <div class="relative bg-background rounded-lg shadow-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h2 class="text-lg font-semibold flex items-center gap-2">
@@ -811,10 +704,7 @@ const formatDate = (date: string) => {
               Randomly shuffled and distributed based on gift quantities
             </p>
           </div>
-          <button
-            @click="showSmartAssignModal = false"
-            class="text-muted-foreground hover:text-foreground"
-          >
+          <button @click="showSmartAssignModal = false" class="text-muted-foreground hover:text-foreground">
             <X class="size-5" />
           </button>
         </div>
@@ -825,7 +715,7 @@ const formatDate = (date: string) => {
             <div>
               <p class="text-sm text-muted-foreground">Total Users to Assign</p>
               <p class="text-2xl font-bold text-purple-600">
-                {{ smartAssignPlans.reduce((sum, p) => sum + p.user_count, 0) }}
+                {{smartAssignPlans.reduce((sum, p) => sum + p.user_count, 0)}}
               </p>
             </div>
             <div>
@@ -839,30 +729,22 @@ const formatDate = (date: string) => {
 
         <!-- Per-Gift Breakdown -->
         <div class="space-y-4">
-          <div
-            v-for="(plan, index) in smartAssignPlans"
-            :key="plan.gift_id"
-            class="border rounded-lg p-4"
-          >
+          <div v-for="(plan, index) in smartAssignPlans" :key="plan.gift_id" class="border rounded-lg p-4">
             <div class="flex items-center justify-between mb-3">
               <h3 class="font-semibold flex items-center gap-2">
                 <Gift class="size-4 text-primary" />
                 {{ plan.gift_name }}
               </h3>
               <span
-                class="inline-flex items-center px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full"
-              >
+                class="inline-flex items-center px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full">
                 {{ plan.user_count }} users
               </span>
             </div>
 
             <!-- Users list for this gift -->
             <div class="space-y-1 max-h-40 overflow-y-auto">
-              <div
-                v-for="user in plan.users"
-                :key="user.id"
-                class="flex items-center gap-2 p-2 bg-muted/30 rounded text-sm"
-              >
+              <div v-for="user in plan.users" :key="user.id"
+                class="flex items-center gap-2 p-2 bg-muted/30 rounded text-sm">
                 <Shuffle class="size-3 text-purple-500 flex-shrink-0" />
                 <span class="truncate">{{ user.name }}</span>
                 <span class="text-xs text-muted-foreground ml-auto">
@@ -875,30 +757,16 @@ const formatDate = (date: string) => {
 
         <!-- Actions -->
         <div class="flex justify-end gap-3 mt-6">
-          <AppButton
-            label="Cancel"
-            variant="outline"
-            @click="showSmartAssignModal = false"
-          />
-          <AppButton
-            label="Execute Smart Assign"
-            icon="lucide:sparkles"
-            @click="executeSmartAssign"
-            class="bg-purple-600 hover:bg-purple-700"
-          />
+          <AppButton label="Cancel" variant="outline" @click="showSmartAssignModal = false" />
+          <AppButton label="Execute Smart Assign" icon="lucide:sparkles" @click="executeSmartAssign"
+            class="bg-purple-600 hover:bg-purple-700" />
         </div>
       </div>
     </div>
 
     <!-- Bulk Assign Modal -->
-    <div
-      v-if="showBulkAssignModal"
-      class="fixed inset-0 z-50 flex items-center justify-center"
-    >
-      <div
-        class="absolute inset-0 bg-black/50"
-        @click="showBulkAssignModal = false"
-      ></div>
+    <div v-if="showBulkAssignModal" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/50" @click="showBulkAssignModal = false"></div>
       <div class="relative bg-background rounded-lg shadow-lg p-6 w-full max-w-md mx-4">
         <h2 class="text-lg font-semibold mb-4">Bulk Assign Gifts</h2>
         <p class="text-sm text-muted-foreground mb-4">
@@ -909,16 +777,10 @@ const formatDate = (date: string) => {
         <div class="space-y-4">
           <div>
             <label class="text-sm font-medium block mb-2">Select Gift *</label>
-            <select
-              v-model="bulkAssignForm.gift_id"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            >
+            <select v-model="bulkAssignForm.gift_id"
+              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
               <option :value="null">Choose a gift</option>
-              <option
-                v-for="gift in campaignGifts"
-                :key="gift.gift_id"
-                :value="gift.gift_id"
-              >
+              <option v-for="gift in campaignGifts" :key="gift.gift_id" :value="gift.gift_id">
                 {{ gift.name }} ({{ gift.remaining }} remaining)
               </option>
             </select>
@@ -926,30 +788,18 @@ const formatDate = (date: string) => {
 
           <div>
             <label class="text-sm font-medium block mb-2">Notes (optional)</label>
-            <textarea
-              v-model="bulkAssignForm.notes"
-              rows="2"
+            <textarea v-model="bulkAssignForm.notes" rows="2"
               class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Any notes for this assignment..."
-            ></textarea>
+              placeholder="Any notes for this assignment..."></textarea>
           </div>
         </div>
 
         <div class="flex justify-end gap-3 mt-6">
-          <AppButton
-            label="Cancel"
-            variant="outline"
-            @click="showBulkAssignModal = false"
-            :disabled="bulkAssignForm.processing"
-          />
-          <AppButton
-            label="Assign All"
-            icon="lucide:gift"
-            :processing="bulkAssignForm.processing"
-            @click="bulkAssign"
+          <AppButton label="Cancel" variant="outline" @click="showBulkAssignModal = false"
+            :disabled="bulkAssignForm.processing" />
+          <AppButton label="Assign All" icon="lucide:gift" :processing="bulkAssignForm.processing" @click="bulkAssign"
             :disabled="!bulkAssignForm.gift_id || availableUsers.length === 0"
-            class="bg-brand-orange hover:bg-brand-orange/80"
-          />
+            class="bg-brand-orange hover:bg-brand-orange/80" />
         </div>
       </div>
     </div>

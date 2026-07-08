@@ -67,11 +67,11 @@ class JazzCashService
         }
         $data['pp_SecureHash'] = $this->calculateSecureHash($data);
 
-        Log::info('JazzCash Payment Request Prepared', [
-            'subscription_id' => $subscriptionId,
-            'amount' => $plan->price,
-            'txn_ref' => $ppTxnRefNo
-        ]);
+        // Log::info('JazzCash Payment Request Prepared', [
+        //     'subscription_id' => $subscriptionId,
+        //     'amount' => $plan->price,
+        //     'txn_ref' => $ppTxnRefNo
+        // ]);
 
         return $data;
     }

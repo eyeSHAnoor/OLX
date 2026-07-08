@@ -109,7 +109,7 @@ class JazzCashController extends Controller
      */
     public function ipn(Request $request)
     {
-        Log::info('JazzCash IPN received', $request->all());
+        // Log::info('JazzCash IPN received', $request->all());
         
         // Similar verification as callback
         if ($this->jazzCashService->verifyPaymentResponse($request->all())) {

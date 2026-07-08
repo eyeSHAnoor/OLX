@@ -27,6 +27,9 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/auth/{provider}', [SocialAuthController::class, 'redirect']);
     Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback']);
+
+    Route::get('/auth/{provider}/register', [App\Http\Controllers\SocialAuthController::class, 'redirect']);
+    Route::get('/auth/{provider}/callback', [App\Http\Controllers\SocialAuthController::class, 'callback']);
     
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');

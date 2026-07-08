@@ -14,7 +14,7 @@ interface PageProps extends InertiaPageProps {
 }
 
 const page = usePage<PageProps>();
-console.log("Page Props:", page.props); // Debugging line to check the structure of page.props
+// console.log("Page Props:", page.props); // Debugging line to check the structure of page.props
 const periods = computed(() => page.props.periods);
 const gifts = computed(() => page.props.gifts);
 

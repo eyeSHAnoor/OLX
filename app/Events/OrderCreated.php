@@ -26,15 +26,15 @@ class OrderCreated implements ShouldBroadcastNow
 
     public function broadcastWith()
     {
-        Log::info('Broadcasting OrderCreated with data: ', ['order' => $this->order]);
-        return [
-            'id' => $this->order->id,
-            'ad_id' => $this->order->ad_id,
-            'buyer_id' => $this->order->buyer_id,
-            'seller_id' => $this->order->seller_id,
-            'qty' => $this->order->qty,
-            'price' => $this->order->price,
-            'status' => 'pending',
-        ];
+        // Log::info('Broadcasting OrderCreated with data: ', ['order' => $this->order]);
+        // return [
+        //     'id' => $this->order->id,
+        //     'ad_id' => $this->order->ad_id,
+        //     'buyer_id' => $this->order->buyer_id,
+        //     'seller_id' => $this->order->seller_id,
+        //     'qty' => $this->order->qty,
+        //     'price' => $this->order->price,
+        //     'status' => 'pending',
+        // ];
     }
 }

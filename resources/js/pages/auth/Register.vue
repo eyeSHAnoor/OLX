@@ -14,6 +14,25 @@
 
         <!-- Registration Card -->
         <div class="w-full max-w-md">
+            <!-- Referral Banner -->
+            <div v-if="referrer"
+                class="mb-4 p-4 bg-gradient-to-r from-brand-teal/10 to-brand-blue/10 border border-brand-teal/20 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-brand-teal rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-brand-teal">
+                            You've been referred by {{ referrer.name }}
+                        </p>
+                        <p class="text-xs text-gray-600 mt-0.5">Sign up and earn bonus points! 🎁</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Registration Form -->
             <div class="bg-white rounded-xl shadow-md p-5 md:p-6">
                 <h2 class="text-base font-semibold text-gray-800 mb-1">
@@ -204,14 +223,26 @@
         </div>
     </div>
 </template>
+
 <script setup lang="ts">
 import InputError from "@/components/InputError.vue";
 import TextLink from "@/components/TextLink.vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useForm } from "@inertiajs/vue3";
+import { useForm, usePage } from "@inertiajs/vue3";
 import { LoaderCircle } from "lucide-vue-next";
-import { ref } from "vue";
+import { ref, computed } from "vue";
+
+// Get props passed from the controller
+const page = usePage<{
+    referral_code?: string;
+    referrer?: {
+        name: string;
+    } | null;
+}>();
+
+const referrer = computed(() => page.props.referrer || null);
+const referralCode = computed(() => page.props.referral_code || null);
 
 const form = useForm({
     name: "",
@@ -221,6 +252,7 @@ const form = useForm({
     password_confirmation: "",
     terms: false,
 });
+
 useForceTheme("light");
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
@@ -231,7 +263,14 @@ const submit = () => {
         return;
     }
 
+    // Pass the referral code in the form data if it exists
+    const postData = {
+        ...form.data(),
+        referral_code: referralCode.value, // Include referral code
+    };
+
     form.post(route("register"), {
+        data: postData,
         preserveScroll: true,
         onError: (errors) => {
             console.error("Registration failed:", errors);
@@ -243,8 +282,15 @@ const submit = () => {
 };
 
 const socialRegister = (provider: string) => {
-    //console.log(`Registering with ${provider}`);
-    window.location.href = `/auth/${provider}/register`;
+    // Pass referral code to social auth
+    let url = `/auth/${provider}/register`;
+
+    // Add referral code to the URL if it exists
+    if (referralCode.value) {
+        url += `?ref=${referralCode.value}`;
+    }
+
+    window.location.href = url;
 };
 </script>
 

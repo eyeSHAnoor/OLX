@@ -1,8 +1,8 @@
 <script setup>
-import { Link, useForm } from '@inertiajs/vue3';
-import MobileBottomNav from '@/components/MobileBottomNav.vue';
-import { ref, computed } from 'vue';
-import { Icon } from '@iconify/vue';
+import { Link, useForm } from "@inertiajs/vue3";
+import MobileBottomNav from "@/components/MobileBottomNav.vue";
+import { ref, computed } from "vue";
+import { Icon } from "@iconify/vue";
 
 const isMenuOpen = ref(false);
 const isContactOpen = ref(false);
@@ -15,20 +15,56 @@ const closeMenu = () => {
     isMenuOpen.value = false;
 };
 
-// Contact form logic
+// ==========================================
+// UPDATED CONTACT FORM WITH SECURITY
+// ==========================================
 const form = useForm({
-    subject: '',
-    message: '',
+    name: "", // NEW: Name field
+    email: "", // NEW: Email field
+    subject: "",
+    message: "",
+    website: "", // Honeypot field
 });
 
+// Submit handler
 const submitContact = () => {
-    form.post('/contact/send', {
+    form.post("/contact/send", {
         preserveScroll: true,
         onSuccess: () => {
-            closeMenu();
+            // Reset form on success
             form.reset();
+
+            // Close modal after 3 seconds
+            setTimeout(() => {
+                isContactOpen.value = false;
+            }, 3000);
+        },
+        onError: () => {
+            // Keep form open on error
         },
     });
+};
+
+// Character counter for message
+const messageLength = computed(() => form.message.length);
+const isMessageValid = computed(
+    () => messageLength.value >= 20 && messageLength.value <= 5000
+);
+
+// Form validation
+const isFormValid = computed(() => {
+    return (
+        form.name.length >= 2 &&
+        form.email.length > 0 &&
+        form.subject.length >= 5 &&
+        form.message.length >= 20 &&
+        !form.processing
+    );
+});
+
+// Email validation helper
+const isValidEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 </script>
 
@@ -140,7 +176,7 @@ const submitContact = () => {
                     class="relative w-full md:max-w-md bg-white rounded-t-2xl md:rounded-2xl shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto">
                     <!-- Close button -->
                     <button @click="isContactOpen = false"
-                        class="absolute top-3 right-3 text-gray-100 hover:text-gray-200 z-10">
+                        class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 z-10">
                         <Icon icon="mdi:close" class="text-xl" />
                     </button>
 
@@ -159,40 +195,126 @@ const submitContact = () => {
                             Thank you! Your message has been sent.
                         </div>
 
+                        <!-- Error message from server -->
+                        <div v-if="$page.props.flash?.error" class="mb-4 p-4 bg-red-50 text-red-700 rounded-xl text-sm">
+                            <Icon icon="mdi:alert-circle-outline" class="inline mr-1" />
+                            {{ $page.props.flash.error }}
+                        </div>
+
                         <form @submit.prevent="submitContact" class="space-y-4">
+                            <!-- ========================================== -->
+                            <!-- NAME FIELD                              -->
+                            <!-- ========================================== -->
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Your Name <span class="text-red-500">*</span>
+                                </label>
+                                <input id="name" v-model="form.name" type="text" required minlength="2" maxlength="100"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#bbdedd] focus:ring focus:ring-[#bbdedd]/20 outline-none"
+                                    placeholder="John Doe" :disabled="form.processing" />
+                                <p v-if="form.errors.name" class="mt-1 text-xs text-red-600">
+                                    {{ form.errors.name }}
+                                </p>
+                            </div>
+
+                            <!-- ========================================== -->
+                            <!-- EMAIL FIELD                             -->
+                            <!-- ========================================== -->
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Your Email <span class="text-red-500">*</span>
+                                </label>
+                                <input id="email" v-model="form.email" type="email" required maxlength="255"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#bbdedd] focus:ring focus:ring-[#bbdedd]/20 outline-none"
+                                    placeholder="you@example.com" :disabled="form.processing" />
+                                <p v-if="form.errors.email" class="mt-1 text-xs text-red-600">
+                                    {{ form.errors.email }}
+                                </p>
+                            </div>
+
+                            <!-- ========================================== -->
+                            <!-- SUBJECT FIELD                            -->
+                            <!-- ========================================== -->
                             <div>
                                 <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Subject
+                                    Subject <span class="text-red-500">*</span>
                                 </label>
-                                <input id="subject" v-model="form.subject" type="text"
+                                <input id="subject" v-model="form.subject" type="text" required minlength="5"
+                                    maxlength="255"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#bbdedd] focus:ring focus:ring-[#bbdedd]/20 outline-none"
                                     placeholder="What's this about?" :disabled="form.processing" />
-                                <p v-if="form.errors.subject" class="mt-1 text-xs text-red-600">{{ form.errors.subject
-                                    }}</p>
+                                <p v-if="form.errors.subject" class="mt-1 text-xs text-red-600">
+                                    {{ form.errors.subject }}
+                                </p>
                             </div>
 
+                            <!-- ========================================== -->
+                            <!-- MESSAGE FIELD                            -->
+                            <!-- ========================================== -->
                             <div>
                                 <label for="message" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Message
+                                    Message <span class="text-red-500">*</span>
                                 </label>
-                                <textarea id="message" v-model="form.message" rows="4"
+                                <textarea id="message" v-model="form.message" rows="4" required minlength="20"
+                                    maxlength="5000"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#bbdedd] focus:ring focus:ring-[#bbdedd]/20 outline-none resize-none"
-                                    placeholder="How can we help you?" :disabled="form.processing"></textarea>
-                                <p v-if="form.errors.message" class="mt-1 text-xs text-red-600">{{ form.errors.message
-                                    }}</p>
+                                    placeholder="How can we help you? (Minimum 20 characters)"
+                                    :disabled="form.processing"></textarea>
+                                <div class="flex justify-between mt-1">
+                                    <p v-if="form.errors.message" class="text-xs text-red-600">
+                                        {{ form.errors.message }}
+                                    </p>
+                                    <span class="text-xs text-gray-500 ml-auto">
+                                        {{ messageLength }} / 5000 characters
+                                        <span v-if="!isMessageValid && messageLength > 0" class="text-red-500">
+                                            (minimum 20)
+                                        </span>
+                                    </span>
+                                </div>
                             </div>
 
+                            <!-- ========================================== -->
+                            <!-- HONEYPOT - Hidden field for bots          -->
+                            <!-- ========================================== -->
+                            <input v-model="form.website" type="text" name="website" autocomplete="off" tabindex="-1"
+                                style="display: none; position: absolute; left: -9999px" />
+
+                            <!-- ========================================== -->
+                            <!-- SUBMIT BUTTON                            -->
+                            <!-- ========================================== -->
                             <button type="submit"
                                 class="w-full py-3 bg-brand-teal text-white font-medium rounded-xl hover:bg-[#a5d4d0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                :disabled="form.processing">
+                                :disabled="!isFormValid">
                                 <span v-if="form.processing">
                                     <Icon icon="mdi:loading" class="animate-spin text-lg" />
                                 </span>
                                 <span v-else>
                                     <Icon icon="mdi:send" class="text-lg" />
                                 </span>
-                                {{ form.processing ? 'Sending...' : 'Send Message' }}
+                                {{ form.processing ? "Sending..." : "Send Message" }}
                             </button>
+
+                            <!-- ========================================== -->
+                            <!-- FORM STATUS INDICATOR                    -->
+                            <!-- ========================================== -->
+                            <div class="text-xs text-gray-500 text-center mt-2">
+                                <span v-if="isFormValid" class="text-green-600">✅ Ready to send</span>
+                                <span v-else>
+                                    ⏳ Please fill all fields correctly
+                                    <span v-if="form.message.length > 0 && form.message.length < 20"
+                                        class="text-red-500 block">
+                                        Message needs at least 20 characters ({{ form.message.length }}/20)
+                                    </span>
+                                    <span v-if="form.name.length > 0 && form.name.length < 2"
+                                        class="text-red-500 block">
+                                        Name needs at least 2 characters
+                                    </span>
+                                    <span v-if="form.email.length > 0 && !isValidEmail(form.email)"
+                                        class="text-red-500 block">
+                                        Please enter a valid email address
+                                    </span>
+                                </span>
+                            </div>
                         </form>
                     </div>
                 </div>

@@ -4,7 +4,7 @@ const SW_VERSION = '1.0.1';
 //  INSTALL (activate immediately)
 // ===============================
 self.addEventListener('install', (event) => {
-    console.log(' Service Worker installing...');
+    // console.log(' Service Worker installing...');
     self.skipWaiting();
 });
 
@@ -12,7 +12,7 @@ self.addEventListener('install', (event) => {
 //  ACTIVATE (take control)
 // ===============================
 self.addEventListener('activate', (event) => {
-    console.log(' Service Worker activated');
+    // console.log(' Service Worker activated');
     event.waitUntil(self.clients.claim());
 });
 
@@ -20,7 +20,7 @@ self.addEventListener('activate', (event) => {
 //  PUSH EVENT
 // ===============================
 self.addEventListener('push', function (event) {
-    console.log('📩 Push received');
+    // console.log('📩 Push received');
 
     let data = {};
 
@@ -28,7 +28,7 @@ self.addEventListener('push', function (event) {
     if (event.data) {
         try {
             data = event.data.json();
-            console.log('📦 Parsed JSON:', data);
+            // console.log('📦 Parsed JSON:', data);
         } catch (e) {
             console.warn('⚠️ JSON parse failed, using text');
             data = {
@@ -63,7 +63,7 @@ self.addEventListener('push', function (event) {
 //  NOTIFICATION CLICK
 // ===============================
 self.addEventListener('notificationclick', function (event) {
-    console.log('🔔 Notification clicked');
+    // console.log('🔔 Notification clicked');
 
     event.notification.close();
 
@@ -85,5 +85,5 @@ self.addEventListener('notificationclick', function (event) {
 //  OPTIONAL: HANDLE CLOSE EVENT
 // ===============================
 self.addEventListener('notificationclose', function () {
-    console.log('❌ Notification dismissed');
+    // console.log('❌ Notification dismissed');
 });

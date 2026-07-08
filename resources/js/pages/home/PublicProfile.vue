@@ -504,7 +504,7 @@ import { Icon } from "@iconify/vue";
 import citiesList from "@/data/cities.json";
 
 const page = usePage();
-console.log(page.props);
+// console.log(page.props);
 const cities = ref<string[]>(["all", ...citiesList]);
 //console.log(cities)
 

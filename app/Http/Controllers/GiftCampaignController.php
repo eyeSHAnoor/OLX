@@ -604,7 +604,7 @@ class GiftCampaignController extends Controller
      */
     private function sendGiftWonMessage($user, $gift, $period, $assignment)
     {
-        Log::info("Sending gift won message to user {$user->id} for gift {$gift->id} in period {$period->id}");
+        // Log::info("Sending gift won message to user {$user->id} for gift {$gift->id} in period {$period->id}");
         // Find or create a conversation with the admin/system user
         $adminUser = User::where('email', 'admin@test.com')->first() ?? User::first();
         
@@ -620,7 +620,7 @@ class GiftCampaignController extends Controller
             ]
         );
 
-        Log::info("Conversation ID for user {$user->id}: {$conversation->id}");
+        // // Log::info("Conversation ID for user {$user->id}: {$conversation->id}");
 
         // Update last message timestamp
         $conversation->update(['last_message_at' => now()]);
@@ -628,7 +628,7 @@ class GiftCampaignController extends Controller
         // Craft message using 7 C's of Communication
         $messageBody = $this->craftGiftWonMessage($user, $gift, $period, $assignment);
 
-        Log::info("Crafted gift won message for user {$user->id}: {$messageBody}");
+        // Log::info("Crafted gift won message for user {$user->id}: {$messageBody}");
 
         // Create the message
         $message = Message::create([

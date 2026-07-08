@@ -174,7 +174,7 @@ class SubscriptionController extends Controller
             $user->phone || '03123456789'
         );
 
-        Log::info($paymentData);
+        // Log::info($paymentData);
         
         // Store payment data
         $subscription->update([

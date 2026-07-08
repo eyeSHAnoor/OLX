@@ -1,16 +1,29 @@
 <?php
 
-// app/Models/Referral.php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
 class Referral extends Model
 {
     protected $fillable = [
-        'referrer_id', 'referred_user_id', 'status', 
-        'points_awarded', 'link_code', 'visited_at'
+        'referrer_id', 
+        'referred_user_id', 
+        'status', 
+        'points_awarded', 
+        'link_code', 
+        'visited_at'
     ];
 
     protected $casts = [
         'visited_at' => 'datetime',
+        'points_awarded' => 'integer',
     ];
+
+    // Status constants
+    const STATUS_VISITED = 'visited';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_CANCELLED = 'cancelled';
 
     public function referrer()
     {
@@ -20,5 +33,17 @@ class Referral extends Model
     public function referredUser()
     {
         return $this->belongsTo(User::class, 'referred_user_id');
+    }
+    
+    // Scope for completed referrals
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', self::STATUS_COMPLETED);
+    }
+    
+    // Scope for visited referrals (not yet registered)
+    public function scopeVisited($query)
+    {
+        return $query->where('status', self::STATUS_VISITED);
     }
 }

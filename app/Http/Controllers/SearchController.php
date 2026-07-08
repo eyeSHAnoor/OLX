@@ -119,8 +119,8 @@ class SearchController extends Controller
             };
         }
 
-        \Log::info('Price type: ' . ($priceType ?? 'null'));
-        \Log::info($adQuery->toSql(), $adQuery->getBindings());
+        // \Log::info('Price type: ' . ($priceType ?? 'null'));
+        // \Log::info($adQuery->toSql(), $adQuery->getBindings());
 
         if ($priceType === 'wholesale') {
             $adQuery->where('price_type', 'wholesale');

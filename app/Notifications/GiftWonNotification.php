@@ -31,11 +31,11 @@ class GiftWonNotification extends Notification implements ShouldQueue
      */
     public function toArray($notifiable)
     {
-        Log::info('Sending Gift Won Database Notification', [
-            'user_id' => $notifiable->id,
-            'gift_name' => $this->gift->name,
-            'assignment_id' => $this->giftAssignment->id,
-        ]);
+        // Log::info('Sending Gift Won Database Notification', [
+        //     'user_id' => $notifiable->id,
+        //     'gift_name' => $this->gift->name,
+        //     'assignment_id' => $this->giftAssignment->id,
+        // ]);
         return [
             'title' => '🎁 Congratulations! You\'ve Won a Gift!',
             'gift_id' => $this->gift->id,
@@ -111,11 +111,11 @@ class GiftWonNotification extends Notification implements ShouldQueue
      */
     public function toWebPush($notifiable, $notification)
     {
-        Log::info('Sending Gift Won Web Push Notification', [
-            'user_id' => $notifiable->id,
-            'gift_name' => $this->gift->name,
-            'assignment_id' => $this->giftAssignment->id,
-        ]);
+        // Log::info('Sending Gift Won Web Push Notification', [
+        //     'user_id' => $notifiable->id,
+        //     'gift_name' => $this->gift->name,
+        //     'assignment_id' => $this->giftAssignment->id,
+        // ]);
 
         return (new WebPushMessage)
             ->title('🎁 You\'ve Won a Gift!')
