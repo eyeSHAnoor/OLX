@@ -13,6 +13,10 @@ return new class extends Migration
             $table->string('referral_code')->unique()->nullable();
             $table->foreignId('referred_by')->nullable()->constrained('users')->nullOnDelete();
             $table->integer('points_balance')->default(0);
+             $table->foreignId('code_assigned_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
         });
     }
 
@@ -20,6 +24,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['referred_by']);
+            // $table->dropForeign(['code_assigned_by']);
             $table->dropColumn(['referral_code', 'referred_by', 'points_balance']);
         });
     }

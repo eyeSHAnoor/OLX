@@ -51,9 +51,9 @@ const columns = [
     },
     {
         accessorKey: "points_balance",
-        header: "Points Balance",
+        header: "Points per user",
         sortable: true,
-        mobileTitle: "Balance",
+        mobileTitle: "points",
     },
     {
         accessorKey: "total_points_earned",
@@ -251,7 +251,6 @@ function handleCreateReferral() {
                                 'bg-green-100 text-green-700': row.original.total_referrals_count > 0,
                                 'bg-gray-100 text-gray-500': row.original.total_referrals_count === 0,
                             }">
-                            <Icon name="lucide:user-plus" class="size-3" />
                             {{ row.original.total_referrals_count }}
                         </span>
                     </template>

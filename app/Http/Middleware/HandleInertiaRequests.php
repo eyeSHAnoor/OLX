@@ -67,7 +67,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $user->profile?->username ?? $user->name,
                     'terms_accepted' => $user->terms_accepted,
                     'email' => $user->email,
-
+                    'referral_code' => $user->referral_code,
                     'roles' => method_exists($user, 'getRoleNames')
                         ? $user->getRoleNames()
                         : [],
@@ -78,7 +78,7 @@ class HandleInertiaRequests extends Middleware
 
                     'subscription_status' => $user->subscriptionStatus(),
 
-                    'image' => $user->profile?->image,
+                    'profile_image' => $user->profile?->profile_image,
                     'plan_permissions' => $planPermissions,
                 ] : null,
             ],

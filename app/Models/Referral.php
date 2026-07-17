@@ -12,7 +12,8 @@ class Referral extends Model
         'status', 
         'points_awarded', 
         'link_code', 
-        'visited_at'
+        'visited_at',
+        'level',
     ];
 
     protected $casts = [

@@ -37,6 +37,7 @@ class User extends Authenticatable
         'referral_code',
         'referred_by',
         'points_balance',
+        'code_assigned_by'
     ];
 
    protected $hidden = [
@@ -44,7 +45,13 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $appends = ['profile_image'];
 
+    public function getProfileImageAttribute()
+    {
+        return $this->profile?->profile_image;
+    }
+    
     protected function casts(): array
     {
         return [
@@ -286,5 +293,25 @@ class User extends Authenticatable
     {
         $this->points_balance += $points;
         $this->save();
+    }
+
+    public function rootReferrer(): ?User
+    {
+        $ancestor = $this;
+        while ($ancestor->referred_by) {
+            $ancestor = $ancestor->referrer; // via belongsTo
+        }
+        return $ancestor->referral_code ? $ancestor : null; // must have a code
+    }
+
+    public function codeAssigner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'code_assigned_by');
+    }
+
+    // Users to whom THIS user assigned a code
+    public function codeAssignees(): HasMany
+    {
+        return $this->hasMany(User::class, 'code_assigned_by');
     }
 }   

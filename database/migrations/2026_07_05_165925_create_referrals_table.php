@@ -17,6 +17,8 @@ return new class extends Migration
             $table->integer('points_awarded')->default(0);
             $table->string('link_code')->nullable(); // tracks which link was used
             $table->timestamp('visited_at')->nullable(); // tracks visit
+            $table->unsignedTinyInteger('level')
+                  ->default(1);
             $table->timestamps();
         });
     }

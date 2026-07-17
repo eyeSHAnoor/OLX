@@ -193,47 +193,61 @@ class SocialAuthController extends Controller
         session()->forget('referral_code');
     }
 
+  
     /**
-     * Process referral when a new user registers through a referral link.
-     * Awards points to both the referrer and the new user.
+     * Multi‑level referral rewards based on the CODE‑ASSIGNMENT chain.
+     * For every ancestor in the code_assigned_by chain who has a referral code,
+     * we create a Referral record with their current points_balance as points_awarded.
+     * No points are moved – only snapshots recorded.
      */
-    private function processReferral(User $referrer, User $newUser, string $referralCode): void
+    private function processReferral(User $immediateReferrer, User $newUser, string $referralCode): void
     {
-        // Default referral points
-        $referrerPoints = 100;
-        $newUserPoints = 50;
-        
-        // Update the visit record or create a completed referral
-        $referral = Referral::where('link_code', $referralCode)
+        // 1. Immediate referrer (sign‑up link) – update the visited record
+        $visitedReferral = Referral::where('link_code', $referralCode)
             ->where('status', 'visited')
             ->whereNull('referred_user_id')
             ->latest()
             ->first();
-        
-        if ($referral) {
-            // Update the existing visit record
-            $referral->update([
+
+        if ($visitedReferral) {
+            $visitedReferral->update([
                 'referred_user_id' => $newUser->id,
                 'status' => 'completed',
-                'points_awarded' => $referrerPoints,
+                'points_awarded' => $immediateReferrer->points_balance,
+                'level' => 1,
             ]);
         } else {
-            // Create new referral record
             Referral::create([
-                'referrer_id' => $referrer->id,
+                'referrer_id' => $immediateReferrer->id,
                 'referred_user_id' => $newUser->id,
                 'status' => 'completed',
-                'points_awarded' => $referrerPoints,
+                'points_awarded' => $immediateReferrer->points_balance,
                 'link_code' => $referralCode,
                 'visited_at' => now(),
+                'level' => 1,
             ]);
         }
-        
-        // Award points to referrer
-        $referrer->increment('points_balance', $referrerPoints);
-        
-        // Award welcome points to new user
-        $newUser->increment('points_balance', $newUserPoints);
+
+        // 2. Now walk UP the code‑assignment chain (starting from the immediate referrer's codeAssigner)
+        $level = 2;
+        $current = $immediateReferrer->codeAssigner;   // ← uses code_assigned_by
+
+        while ($current) {
+            if ($current->referral_code) {
+                Referral::create([
+                    'referrer_id' => $current->id,
+                    'referred_user_id' => $newUser->id,
+                    'status' => 'completed',
+                    'points_awarded' => $current->points_balance,
+                    'link_code' => $referralCode,
+                    'visited_at' => now(),
+                    'level' => $level,
+                ]);
+            }
+
+            $current = $current->codeAssigner;   // continue up the code‑assignment tree
+            $level++;
+        }
     }
 
     /**

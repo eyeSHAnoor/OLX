@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
+use Illuminate\Support\Facades\Auth;
+
 
 class UserReferralController extends Controller
 {
@@ -28,6 +30,7 @@ class UserReferralController extends Controller
 
         // Get users who have referral codes or have referred others
         $referrers = QueryBuilder::for(User::class)
+            ->where('code_assigned_by', auth()->id())
             ->where(function ($query) {
                 $query->whereNotNull('referral_code')
                     ->orWhereHas('referralsMade');
@@ -85,18 +88,20 @@ class UserReferralController extends Controller
      */
     public function store(Request $request)
     {
+        $currentUser = auth()->user();
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'referral_code' => 'required|string|max:255|unique:users,referral_code',
             'points_to_award' => 'required|integer|min:0|max:10000',
         ]);
 
-        DB::transaction(function () use ($validated) {
+        DB::transaction(function () use ($validated, $currentUser) {
             $user = User::findOrFail($validated['user_id']);
 
             // Assign referral code
             $user->update([
                 'referral_code' => $validated['referral_code'],
+                'code_assigned_by' => $currentUser->id,
             ]);
 
             // Add initial points to user's balance
@@ -142,7 +147,7 @@ class UserReferralController extends Controller
 
             // Adjust points if provided
             if (isset($validated['points_to_adjust']) && $validated['points_to_adjust'] != 0) {
-                $user->increment('points_balance', $validated['points_to_adjust']);
+                $user->update(['points_balance' => $validated['points_to_adjust']]);
             }
         });
 
@@ -190,96 +195,336 @@ class UserReferralController extends Controller
     }
 
     /**
-     * Process referral when someone uses a referral link
-     * This should be called from your registration/login controller
+     * Display the complete referral tree for a user
+     * Shows all direct and indirect referrals in hierarchical structure
      */
-    public function processReferralLink($referralCode, User $newUser)
+    public function referralTree(Request $request, $userId = null)
     {
-        // Find the referrer by their referral code
-        $referrer = User::where('referral_code', $referralCode)->first();
+        // If no user ID provided, use the authenticated user
+        if (!$userId) {
+            $userId = auth()->id();
+        }
         
-        if (!$referrer) {
-            return false;
-        }
-
-        // Check if user already has a referrer
-        if ($newUser->referred_by) {
-            return false;
-        }
-
-        // Don't allow self-referral
-        if ($referrer->id === $newUser->id) {
-            return false;
-        }
-
-        DB::transaction(function () use ($referrer, $newUser) {
-            // Set who referred this user
-            $newUser->update(['referred_by' => $referrer->id]);
-
-            // Create referral record
-            Referral::create([
-                'referrer_id' => $referrer->id,
-                'referred_user_id' => $newUser->id,
-                'status' => 'completed',
-                'points_awarded' => 100, // Or whatever your default referral points are
-                'link_code' => $referrer->referral_code,
-                'visited_at' => now(),
-            ]);
-
-            // Award points - referrer gets full points, new user gets half
-            $referrer->increment('points_balance', 100);
-            $newUser->increment('points_balance', 50); // Half for the referred user
-        });
-
-        return true;
-    }
-
-    /**
-     * Show all referrals made by a specific user
-     */
-    public function userReferrals(User $user)
-    {
-        $referrals = Referral::where('referrer_id', $user->id)
-            ->with(['referredUser:id,name,email,points_balance,created_at'])
-            ->where('status','completed')
-            ->orderBy('created_at', 'desc')
-            ->paginate(getPaginate())
-            ->withQueryString();
-
-        // Get stats for this user
-        $stats = [
-            'total_referrals' => Referral::where('referrer_id', $user->id)->where('status', 'completed')->count(),
-            'total_visited' => Referral::where('referrer_id', $user->id)->where('status', 'visited')->count(),
-            'total_points_earned' => Referral::where('referrer_id', $user->id)
-                ->where('status', 'completed')
-                ->sum('points_awarded'),
-            'conversion_rate' => $this->calculateConversionRate($user->id),
-        ];
-
-        return Inertia::render('referral/UserReferrals', [
-            'referrer' => $user->only(['id', 'name', 'email', 'referral_code', 'points_balance']),
-            'referrals' => $referrals,
+        $user = User::findOrFail($userId);
+        
+        // Build the complete referral tree
+        $tree = $this->buildReferralTree($user->id);
+        
+        // Get comprehensive statistics
+        $stats = $this->getReferralStats($user->id);
+        
+        // Check if user is viewing their own tree
+        $isOwnTree = auth()->id() == $userId;
+        
+        return Inertia::render('referral/Client/ReferralTree', [
+            'referrer' => $user->only([
+                'id',
+                'name',
+                'email',
+                'referral_code',
+                'points_balance',
+            ]),
+            'tree' => $tree,
             'stats' => $stats,
+            'isOwnTree' => $isOwnTree,
         ]);
     }
 
     /**
-     * Calculate conversion rate (visited vs completed)
+     * Build the referral tree recursively
+     */
+    private function buildReferralTree($userId, $level = 0, $maxLevel = 10)
+    {
+        if ($level >= $maxLevel) {
+            return [
+                'user' => $this->formatUserData(User::find($userId)),
+                'assignees' => [],
+                'total_downline' => 0,
+                'has_more' => true,
+                'level' => $level,
+            ];
+        }
+
+        $user = User::find($userId);
+        if (!$user) {
+            return null;
+        }
+
+        // Get direct referrals (users who used this user's referral code)
+        $directReferrals = User::where('referred_by', $userId)->get();
+        
+        // Get code assignees (users who received code from this user)
+        $codeAssignees = User::where('code_assigned_by', $userId)->get();
+        
+        // Merge and unique
+        $allChildren = $directReferrals->merge($codeAssignees)->unique('id');
+        
+        $children = [];
+        foreach ($allChildren as $child) {
+            $childTree = $this->buildReferralTree($child->id, $level + 1, $maxLevel);
+            if ($childTree) {
+                $children[] = $childTree;
+            }
+        }
+
+        return [
+            'user' => $this->formatUserData($user),
+            'assignees' => $children,
+            'total_downline' => $this->countAllDescendants($userId),
+            'has_more' => false,
+            'level' => $level,
+        ];
+    }
+
+    /**
+     * Format user data for tree display
+     */
+    private function formatUserData(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'points_balance' => $user->points_balance,
+            'referral_code' => $user->referral_code,
+            'created_at' => $user->created_at,
+            'referred_by' => $user->referred_by,
+            'code_assigned_by' => $user->code_assigned_by,
+            'status' => $user->status,
+            'profile_image'=> $user->profile?->profile_image
+        ];
+    }
+
+    /**
+     * Get comprehensive referral statistics for a user
+     */
+    private function getReferralStats($userId): array
+    {
+        // Direct referrals count (users who used this user's code)
+        $directReferrals = User::where('referred_by', $userId)->count();
+        
+        // Code assignees count (users who received code from this user)
+        $codeAssignees = User::where('code_assigned_by', $userId)->count();
+        
+        // Total downline (all descendants)
+        $totalDownline = $this->countAllDescendants($userId);
+        
+        // Referral stats from Referral model
+        $referralStats = Referral::where('referrer_id', $userId)
+            ->select(
+                DB::raw('COUNT(*) as total_referrals'),
+                DB::raw('SUM(points_awarded) as total_points_earned'),
+                DB::raw('COUNT(CASE WHEN status = "completed" THEN 1 END) as completed_count'),
+                DB::raw('COUNT(CASE WHEN status = "visited" THEN 1 END) as visited_count'),
+                DB::raw('COUNT(CASE WHEN status = "cancelled" THEN 1 END) as cancelled_count')
+            )
+            ->first();
+        
+        $totalReferrals = $referralStats->total_referrals ?? 0;
+        $completedCount = $referralStats->completed_count ?? 0;
+        $visitedCount = $referralStats->visited_count ?? 0;
+        $totalVisited = $visitedCount + $completedCount;
+        
+        $conversionRate = $totalVisited > 0 
+            ? round(($completedCount / $totalVisited) * 100, 2) 
+            : 0;
+        
+        // Get points awarded by this user
+        $pointsAwarded = Referral::where('referrer_id', $userId)
+            ->where('status', 'completed')
+            ->sum('points_awarded') ?? 0;
+        
+        return [
+            'direct_referrals' => $directReferrals,
+            'code_assignees' => $codeAssignees,
+            'total_downline' => $totalDownline,
+            'total_referrals' => $totalReferrals,
+            'completed_referrals' => $completedCount,
+            'visited_referrals' => $visitedCount,
+            'cancelled_referrals' => $referralStats->cancelled_count ?? 0,
+            'total_points_earned' => $pointsAwarded,
+            'conversion_rate' => $conversionRate,
+            'total_visited' => $totalVisited,
+        ];
+    }
+
+    /**
+     * Count all descendants (direct and indirect)
+     */
+    private function countAllDescendants($userId): int
+    {
+        $count = 0;
+        
+        // Get direct referrals
+        $directReferrals = User::where('referred_by', $userId)->pluck('id');
+        
+        // Get code assignees
+        $codeAssignees = User::where('code_assigned_by', $userId)->pluck('id');
+        
+        // Merge and unique
+        $allChildren = $directReferrals->merge($codeAssignees)->unique();
+        
+        foreach ($allChildren as $childId) {
+            $count++;
+            $count += $this->countAllDescendants($childId);
+        }
+        
+        return $count;
+    }
+
+    public function userReferrals(User $user)
+    {
+        // Build the complete code assignment tree
+        $tree = $this->buildCodeAssignmentTree($user);
+
+        // Get all referrals (users who used this user's referral code)
+        $allReferrals = User::where('referred_by', $user->id)
+            ->with(['referrer'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        // Get stats for this user
+        $stats = [
+            'total_referrals' => Referral::where('referrer_id', $user->id)
+                ->where('status', 'completed')
+                ->count(),
+
+            'total_visited' => Referral::where('referrer_id', $user->id)
+                ->where('status', 'visited')
+                ->count(),
+
+            'total_points_earned' => Referral::where('referrer_id', $user->id)
+                ->where('status', 'completed')
+                ->sum('points_awarded'),
+
+            'conversion_rate' => $this->calculateConversionRate($user->id),
+
+            'total_assignees' => $this->countAllAssignees($user->id),
+
+            'total_tree_assignees' => $this->countAllTreeAssignees($user->id),
+        ];
+
+        // Choose the view based on the authenticated user's role
+        $view = Auth::user()->hasRole('super_admin')
+            ? 'referral/UserReferrals'
+            : 'referral/Client/UserReferrals';
+
+        return Inertia::render($view, [
+            'referrer' => $user->only([
+                'id',
+                'name',
+                'email',
+                'referral_code',
+                'points_balance',
+                'profile_image'
+            ]),
+            'tree' => $tree,
+            'stats' => $stats,
+            'allReferrals' => $allReferrals, // Add this for the referrals list
+        ]);
+    }
+
+    /**
+     * Recursively build the code assignment tree
+     */
+    private function buildCodeAssignmentTree(User $user, $depth = 0, $maxDepth = 20)
+    {
+        if ($depth >= $maxDepth) {
+            return [
+                'user' => $this->formatUserData($user),
+                'assignees' => [],
+                'has_more' => true,
+            ];
+        }
+
+        // Get all users who received codes from this user
+        $assignees = User::where('code_assigned_by', $user->id)
+            ->with(['referralsMade.referredUser'])
+            ->get();
+
+        // Build tree for each assignee
+        $assigneeTree = $assignees->map(function ($assignee) use ($depth, $maxDepth) {
+            // Get referral stats for this assignee
+            $referralStats = $this->getUserReferralStats($assignee->id);
+            
+            // Recursively get their assignees
+            $children = $this->buildCodeAssignmentTree($assignee, $depth + 1, $maxDepth);
+            
+            return [
+                'user' => $this->formatUserData($assignee),
+                'referral_stats' => $referralStats,
+                'assignees' => $children['assignees'] ?? [],
+                'has_more' => $children['has_more'] ?? false,
+                'total_downline' => $this->countAllTreeAssignees($assignee->id),
+            ];
+        });
+
+        return [
+            'user' => $this->formatUserData($user),
+            'assignees' => $assigneeTree->toArray(),
+            'has_more' => false,
+        ];
+    }
+
+    /**
+     * Get referral statistics for a user
+     */
+    private function getUserReferralStats(int $userId): array
+    {
+        return [
+            'total_referrals' => Referral::where('referrer_id', $userId)
+                ->where('status', 'completed')
+                ->count(),
+            'total_points_earned' => Referral::where('referrer_id', $userId)
+                ->where('status', 'completed')
+                ->sum('points_awarded'),
+            'total_assignees' => User::where('code_assigned_by', $userId)->count(),
+        ];
+    }
+
+    /**
+     * Count all direct assignees (users who got code from this user)
+     */
+    private function countAllAssignees(int $userId): int
+    {
+        return User::where('code_assigned_by', $userId)->count();
+    }
+
+    /**
+     * Recursively count all assignees in the tree
+     */
+    private function countAllTreeAssignees(int $userId): int
+    {
+        $count = 0;
+        $assignees = User::where('code_assigned_by', $userId)->pluck('id');
+        
+        foreach ($assignees as $assigneeId) {
+            $count++; // Count this assignee
+            $count += $this->countAllTreeAssignees($assigneeId); // Count their assignees
+        }
+        
+        return $count;
+    }
+
+    /**
+     * Calculate conversion rate
      */
     private function calculateConversionRate($userId): float
     {
         $totalVisited = Referral::where('referrer_id', $userId)
-            ->whereIn('status', ['visited', 'completed'])
+            ->where('status', 'visited')
             ->count();
-        
-        if ($totalVisited === 0) {
-            return 0;
-        }
         
         $totalCompleted = Referral::where('referrer_id', $userId)
             ->where('status', 'completed')
             ->count();
         
-        return round(($totalCompleted / $totalVisited) * 100, 1);
+        $total = $totalVisited + $totalCompleted;
+        
+        if ($total === 0) {
+            return 0;
+        }
+        
+        return round(($totalCompleted / $total) * 100, 1);
     }
 }

@@ -244,7 +244,7 @@ const banners = computed(() => page.props.banners || []);
 const isSearching = computed(() => page.props.isSearching || false);
 const recentAds = computed(() => page.props.recentAds || []);
 
-// console.log(page.props);
+console.log(page.props);
 
 const displayCategories = computed(() => categories.value.slice(0, 20));
 

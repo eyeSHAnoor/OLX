@@ -275,55 +275,6 @@ onMounted(() => {
               }}
             </p>
           </div>
-
-          <!-- Points Summary -->
-          <div v-if="selectedUserInfo || user" class="p-4 rounded-lg bg-purple-50 border border-purple-200">
-            <div class="flex items-center gap-2 mb-3">
-              <Icon name="lucide:gift" class="size-5 text-purple-600" />
-              <span class="font-semibold text-purple-800">Points Summary</span>
-            </div>
-            <div class="space-y-2 text-sm">
-              <!-- Current Balance -->
-              <div class="flex justify-between items-center">
-                <span class="text-purple-600">Current Balance:</span>
-                <span class="font-semibold text-purple-800">
-                  {{ currentBalance.toLocaleString() }} pts
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Info Alert -->
-          <div class="p-4 rounded-lg border border-blue-200 bg-blue-50">
-            <div class="flex gap-3">
-              <Icon name="lucide:info" class="size-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div class="text-sm text-blue-700">
-                <p class="font-medium mb-1">How points work:</p>
-                <ul class="list-disc list-inside space-y-1 text-blue-600">
-                  <li v-if="!isEditing">
-                    <strong>Initial Points:</strong> These are one-time points given to
-                    the user when you assign their referral code
-                  </li>
-                  <li v-if="isEditing">
-                    <strong>Points Adjustment:</strong> Use positive values to add points,
-                    negative to deduct
-                  </li>
-                  <li>
-                    <strong>Referral Bonuses:</strong> When someone registers using their
-                    referral link:
-                    <ul class="list-circle list-inside ml-4 mt-1 space-y-0.5">
-                      <li>Referrer gets +100 points</li>
-                      <li>New user gets +50 welcome points</li>
-                    </ul>
-                  </li>
-                  <li>
-                    These referral bonuses are automatic and separate from the initial
-                    points you assign here
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

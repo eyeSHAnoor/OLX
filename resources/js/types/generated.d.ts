@@ -4,6 +4,7 @@ id: number;
 user_id: number;
 category_id: number;
 brand_id: number | null;
+model_id: number | null;
 ad_title: string;
 description: string | null;
 price: number | null;
@@ -12,9 +13,12 @@ location: string | null;
 seller_name: string | null;
 seller_phone: string | null;
 images: Array<any> | null;
+attributes: Array<any> | null;
 brand: App.Data.BrandData | null;
 category: any | null;
+model: App.Data.BrandModelData | null;
 search_keywords: Array<any> | null;
+features: Array<any> | null;
 };
 export type AdImageData = {
 id: number;
@@ -23,6 +27,11 @@ image_path: string;
 export type BrandData = {
 id: number;
 name: string;
+};
+export type BrandModelData = {
+id: number;
+name: string;
+brand_id: number;
 };
 export type CountryData = {
 country: string | null;

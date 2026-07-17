@@ -5,7 +5,7 @@
             <Head title="My Account" />
 
             <!-- Account Sections -->
-            <div class=" space-y-6">
+            <div class="space-y-6">
                 <!-- Main Navigation Cards -->
                 <div class="grid grid-cols-2 gap-3">
                     <Link href="/motors"
@@ -27,7 +27,7 @@
 
                 <!-- Account Settings Section -->
                 <div class="overflow-hidden">
-                    <div class=" border-b border-gray-100">
+                    <div class="border-b border-gray-100">
                         <h2 class="font-semibold text-gray-800">Account Settings</h2>
                     </div>
 
@@ -96,16 +96,33 @@
                             </div>
                             <Icon icon="mdi:chevron-right" class="text-gray-400 text-lg" />
                         </Link>
+                        <!-- My Referrals (only show if user has referral_code) -->
+                        <Link v-if="user?.referral_code" href="/downline-referrals"
+                            class="flex items-center gap-3 py-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
+                            <div
+                                class="w-10 h-10 rounded-full bg-gradient-to-r from-brand-blue to-brand-teal flex items-center justify-center">
+                                <Icon icon="mdi:account-multiple-outline" class="text-xl text-white" />
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <p class="font-medium text-gray-800">My Referrals</p>
+                                    <span
+                                        class="px-2 py-0.5 bg-gradient-to-r from-brand-blue to-brand-teal text-white text-[10px] rounded-full">Prominent</span>
+                                </div>
+                                <p class="text-xs text-gray-500">Track your referrals</p>
+                            </div>
+                            <Icon icon="mdi:chevron-right" class="text-gray-400 text-lg" />
+                        </Link>
                     </div>
                 </div>
 
                 <!-- Subscription & Settings Section -->
                 <div class="overflow-hidden">
-                    <div class=" border-b border-gray-100">
+                    <div class="border-b border-gray-100">
                         <h2 class="font-semibold text-gray-800">More</h2>
                     </div>
 
-                    <div class="divide-y ">
+                    <div class="divide-y">
                         <!-- Subscription with Premium Badge -->
                         <Link :href="route('subscriptions.index')"
                             class="flex items-center gap-3 py-4 hover:bg-gray-50/80 active:bg-gray-100 transition-colors">
@@ -178,22 +195,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Link, router, usePage } from '@inertiajs/vue3'
-import { Icon } from '@iconify/vue'
-import OlxLayout from '@/layouts/OlxLayout.vue'
+import { computed } from "vue";
+import { Link, router, usePage } from "@inertiajs/vue3";
+import { Icon } from "@iconify/vue";
+import OlxLayout from "@/layouts/OlxLayout.vue";
 
-const page = usePage()
-const user = computed(() => page.props.auth?.user)
+const page = usePage();
+const user = computed(() => page.props.auth?.user);
 
 // Sample stats - replace with actual data from your backend
 const stats = computed(() => ({
     ads: user.value ? 12 : 0,
     favourites: user.value ? 24 : 0,
-    orders: user.value ? 6 : 0
-}))
+    orders: user.value ? 6 : 0,
+}));
 
-useForceTheme('light')
+useForceTheme("light");
 </script>
 
 <style scoped>

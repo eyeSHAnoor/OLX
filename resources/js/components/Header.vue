@@ -84,7 +84,7 @@
                             <div @click="showDropdown = !showDropdown"
                                 class="w-6 h-6 rounded-full cursor-pointer border border-white shadow-sm hover:shadow transition-shadow overflow-hidden">
                                 <!-- Profile Image -->
-                                <img v-if="user?.profile?.profile_image" :src="`/storage/${user.profile.profile_image}`"
+                                <img v-if="user?.profile_image" :src="`/storage/${user.profile_image}`"
                                     class="w-full h-full object-cover" />
 
                                 <!-- Fallback Avatar -->
@@ -143,6 +143,13 @@
                                             class="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-700 hover:text-blue-600 transition-colors">
                                             <Icon icon="mdi:bullhorn-outline" class="text-sm text-gray-500" />
                                             <span>My Ads</span>
+                                        </Link>
+                                        <Link v-if="user?.referral_code" href="/downline-referrals"
+                                            class="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-700 hover:text-blue-600 transition-colors">
+                                            <Icon icon="mdi:account-multiple-outline" class="text-sm text-gray-500" />
+                                            <span>My Referrals</span>
+                                            <span
+                                                class="ml-auto bg-blue-100 text-blue-600 text-[8px] px-1.5 py-0.5 rounded-full">Prominent</span>
                                         </Link>
                                         <div class="border-t border-gray-100 my-1"></div>
                                         <Link :href="route('subscriptions.index')"

@@ -39,6 +39,13 @@ const navItems = computed(() => [
             },
             {
                 visible: true,
+                title: 'Scheduled Notification',
+                href: '/scheduled-notifications',
+                icon: 'material-symbols:campaign',
+                isActive: page.url === '/scheduled-notifications' || route().current('scheduled-notifications.*'),
+            },
+            {
+                visible: true,
                 title: 'Plans',
                 href: '/plans',
                 icon: 'material-symbols:inventory-2-outline',
