@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class SocialAuthController extends Controller
 {
@@ -30,15 +31,22 @@ class SocialAuthController extends Controller
                 // Store in session for backup
                 session(['referral_code' => $referralCode]);
                 
-                // Track the visit
-                Referral::create([
-                    'referrer_id' => $referrer->id,
-                    'referred_user_id' => null,
-                    'status' => 'visited',
-                    'points_awarded' => 0,
-                    'link_code' => $referralCode,
-                    'visited_at' => now(),
-                ]);
+                // Track the visit - ONLY create if not exists
+                $existingVisit = Referral::where('link_code', $referralCode)
+                    ->where('status', 'visited')
+                    ->whereNull('referred_user_id')
+                    ->exists();
+                
+                if (!$existingVisit) {
+                    Referral::create([
+                        'referrer_id' => $referrer->id,
+                        'referred_user_id' => null,
+                        'status' => 'visited',
+                        'points_awarded' => 0,
+                        'link_code' => $referralCode,
+                        'visited_at' => now(),
+                    ]);
+                }
                 
                 // Use Socialite's state parameter to pass the referral code
                 return Socialite::driver($provider)
@@ -75,10 +83,8 @@ class SocialAuthController extends Controller
             if ($user) {
                 // User exists - handle referral if not already referred
                 if (!$user->referred_by && $referrer) {
-                    DB::transaction(function () use ($user, $referrer, $referralCode) {
-                        $user->update(['referred_by' => $referrer->id]);
-                        $this->processReferral($referrer, $user, $referralCode);
-                    });
+                    $user->update(['referred_by' => $referrer->id]);
+                    $this->trackReferral($referrer, $user, $referralCode);
                 }
 
                 // Check if email is verified
@@ -103,22 +109,23 @@ class SocialAuthController extends Controller
                         ->with('info', 'Please verify your email to continue. A new code has been sent.');
                 }
             } else {
+                // Generate a unique referral code for the new user
+                $newReferralCode = $this->generateUniqueReferralCode();
+                
                 // New user - create with referral info
                 $user = User::create([
                     'name' => $socialUser->getName(),
                     'email' => $socialUser->getEmail(),
                     'password' => Hash::make(uniqid()), // Random password
                     'email_verified_at' => null, // Not verified yet
-                    'referral_code' => null, // Admin assigns this later
+                    'referral_code' => $newReferralCode, // Assign unique referral code
                     'referred_by' => $referrer?->id, // Set who referred them
                     'points_balance' => 0, // Start with 0, points added after referral processing
                 ]);
 
                 // Process referral if user came through referral link
                 if ($referrer) {
-                    DB::transaction(function () use ($referrer, $user, $referralCode) {
-                        $this->processReferral($referrer, $user, $referralCode);
-                    });
+                    $this->trackReferral($referrer, $user, $referralCode);
                 }
 
                 // Generate and send verification code
@@ -193,16 +200,14 @@ class SocialAuthController extends Controller
         session()->forget('referral_code');
     }
 
-  
     /**
-     * Multi‑level referral rewards based on the CODE‑ASSIGNMENT chain.
-     * For every ancestor in the code_assigned_by chain who has a referral code,
-     * we create a Referral record with their current points_balance as points_awarded.
-     * No points are moved – only snapshots recorded.
+     * Track referral when a new user registers through a referral link.
+     * No points awarded here - points will be awarded on subscription completion.
+     * Only ONE referral record per referrer per referred user.
      */
-    private function processReferral(User $immediateReferrer, User $newUser, string $referralCode): void
+    private function trackReferral(User $immediateReferrer, User $newUser, string $referralCode): void
     {
-        // 1. Immediate referrer (sign‑up link) – update the visited record
+        // 1. Find and update the visited record for the immediate referrer
         $visitedReferral = Referral::where('link_code', $referralCode)
             ->where('status', 'visited')
             ->whereNull('referred_user_id')
@@ -212,42 +217,82 @@ class SocialAuthController extends Controller
         if ($visitedReferral) {
             $visitedReferral->update([
                 'referred_user_id' => $newUser->id,
-                'status' => 'completed',
-                'points_awarded' => $immediateReferrer->points_balance,
+                'status' => 'registered',
+                'points_awarded' => 0,
                 'level' => 1,
             ]);
         } else {
             Referral::create([
                 'referrer_id' => $immediateReferrer->id,
                 'referred_user_id' => $newUser->id,
-                'status' => 'completed',
-                'points_awarded' => $immediateReferrer->points_balance,
+                'status' => 'registered',
+                'points_awarded' => 0,
                 'link_code' => $referralCode,
                 'visited_at' => now(),
                 'level' => 1,
             ]);
         }
 
-        // 2. Now walk UP the code‑assignment chain (starting from the immediate referrer's codeAssigner)
+        // 2. Walk UP the code‑assignment chain with safety limits
         $level = 2;
-        $current = $immediateReferrer->codeAssigner;   // ← uses code_assigned_by
+        $current = $immediateReferrer->codeAssigner;
+        $visitedIds = [$immediateReferrer->id]; // Track visited IDs to prevent circular loop
+        $maxLevel = 50; // Safety limit
 
-        while ($current) {
+        while ($current && $level <= $maxLevel) {
+            // Prevent infinite loop from circular references
+            if (in_array($current->id, $visitedIds)) {
+                \Log::warning("Circular reference detected in referral chain! User ID: {$current->id}");
+                break;
+            }
+            
+            $visitedIds[] = $current->id;
+
             if ($current->referral_code) {
-                Referral::create([
-                    'referrer_id' => $current->id,
-                    'referred_user_id' => $newUser->id,
-                    'status' => 'completed',
-                    'points_awarded' => $current->points_balance,
-                    'link_code' => $referralCode,
-                    'visited_at' => now(),
-                    'level' => $level,
-                ]);
+                // Check if a referral record already exists
+                $existingUplineReferral = Referral::where('referrer_id', $current->id)
+                    ->where('referred_user_id', $newUser->id)
+                    ->where('link_code', $referralCode)
+                    ->where('level', $level)
+                    ->first();
+
+                if (!$existingUplineReferral) {
+                    Referral::create([
+                        'referrer_id' => $current->id,
+                        'referred_user_id' => $newUser->id,
+                        'status' => 'registered',
+                        'points_awarded' => 0,
+                        'link_code' => $referralCode,
+                        'visited_at' => now(),
+                        'level' => $level,
+                    ]);
+                }
             }
 
-            $current = $current->codeAssigner;   // continue up the code‑assignment tree
+            $current = $current->codeAssigner;
             $level++;
         }
+        
+        if ($level > $maxLevel) {
+            \Log::error("Referral chain exceeded max level! Stopped at level {$level}");
+        }
+    }
+
+    /**
+     * Generate a unique referral code for new users
+     */
+    private function generateUniqueReferralCode(): string
+    {
+        $prefix = 'REF';
+        $length = 8;
+        
+        do {
+            $randomString = Str::upper(Str::random($length));
+            $code = $prefix . $randomString;
+            $exists = User::where('referral_code', $code)->exists();
+        } while ($exists);
+        
+        return $code;
     }
 
     /**

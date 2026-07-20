@@ -17,10 +17,16 @@ class ExpireSubscriptions extends Command
 
     public function handle()
     {
+        $this->info('Current time: ' . now());
         // Fetch all active subscriptions that have ended
         $expiredSubscriptions = Subscription::where('status', 'active')
             ->where('ends_at', '<', now())
-            ->get();
+            ->get()
+            ->each(function ($subscription) {
+                $this->info(
+                    "ID: {$subscription->id}, ends_at: {$subscription->ends_at}, status: {$subscription->status}"
+                );
+            });
 
         if ($expiredSubscriptions->isEmpty()) {
             $this->info('No expired subscriptions found.');

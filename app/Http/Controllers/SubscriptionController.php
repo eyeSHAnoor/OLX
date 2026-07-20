@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Route;
 use App\Notifications\NewManualSubscriptionNotification;
 use App\Notifications\ManualSubscriptionPendingNotification;
 use Illuminate\Support\Facades\Notification;
+use App\Notifications\SubscriptionCompletedNotification;
+use App\Notifications\SubscriptionRejectedNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -108,6 +110,8 @@ class SubscriptionController extends Controller
             // PROCESS REFERRAL AND AWARD POINTS
             // =============================================
             $this->processReferralAndAwardPoints($user);
+
+            $user->notify(new SubscriptionCompletedNotification($pendingSubscription));
         });
 
         return redirect()->back()->with('success', 'User subscription has been completed and activated.');
@@ -135,6 +139,12 @@ class SubscriptionController extends Controller
                 $user->status = 'inactive';
                 $user->save();
             }
+
+            // =============================================
+            // SEND NOTIFICATIONS
+            // =============================================
+            // 1. Send notification to the user
+            $user->notify(new SubscriptionRejectedNotification($pendingSubscription));
         });
 
         return redirect()->back()->with('success', 'User subscription has been rejected.');
