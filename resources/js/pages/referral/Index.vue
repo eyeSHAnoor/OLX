@@ -275,11 +275,11 @@ function getReferralScoreValue(
           icon="radix-icons:plus-circled"
           @click="handleCreateReferral"
         />
-        <AppButton
+        <!-- <AppButton
           label="Assign Referral Code to all users"
           icon="radix-icons:plus-circled"
           @click="handleAssignReferral"
-        />
+        /> -->
       </template>
     </PageHeading>
 
