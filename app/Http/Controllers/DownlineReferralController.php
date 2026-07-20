@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserReferralScore;
 use App\Models\Referral;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,7 @@ class DownlineReferralController extends Controller
     {
         $currentUser = auth()->user();
 
-        // Tab 1: Code Assignments - Users who got code from current user
+        // Tab 1: Code Assignments
         $codeAssignments = User::where('code_assigned_by', $currentUser->id)
             ->withCount(['referralsMade as referrals_count' => function ($q) {
                 $q->where('status', 'completed');
@@ -37,7 +38,7 @@ class DownlineReferralController extends Controller
             ->paginate(20, ['*'], 'assignments_page')
             ->withQueryString();
 
-        // Tab 2: Direct Referrals - Users who were referred by current user
+        // Tab 2: Direct Referrals
         $directReferrals = User::where('referred_by', $currentUser->id)
             ->withCount(['referralsMade as referrals_count' => function ($q) {
                 $q->where('status', 'completed');
@@ -45,6 +46,16 @@ class DownlineReferralController extends Controller
             ->select('id', 'name', 'email', 'referral_code', 'points_balance', 'referred_by', 'created_at')
             ->orderBy('created_at', 'desc')
             ->paginate(20, ['*'], 'referrals_page')
+            ->withQueryString();
+
+        // Get user's referral score
+        $userScore = UserReferralScore::where('user_id', $currentUser->id)->first();
+
+        // ✅ Get withdrawal history with proof images
+        $withdrawalHistory = UserReferralScore::where('user_id', $currentUser->id)
+            // ->whereNotNull('requested_amount') // Only show withdrawals
+            ->orderBy('created_at', 'desc')
+            ->paginate(20, ['*'], 'history_page')
             ->withQueryString();
 
         // Get all downline IDs for stats
@@ -60,15 +71,26 @@ class DownlineReferralController extends Controller
             'total_referrals_by_downline' => Referral::whereIn('referrer_id', $downlineIds)
                 ->where('status', 'completed')
                 ->count(),
+            'total_earned' => $userScore?->total_earned ?? 0,
+            'total_withdrawn' => $userScore?->total_withdrawn ?? 0,
+            'available_points' => $userScore?->available ?? 0,
+            'pending_points' => $userScore?->pending ?? 0,
+            'has_pending_withdrawal' => $userScore?->hasPendingWithdrawal() ?? false,
+            'withdrawal_status' => $userScore?->status ?? 'active',
         ];
+
+        $canAssignCodes = $currentUser->can_assign_code;
 
         return Inertia::render('referral/Client/Index', [
             'codeAssignments' => $codeAssignments,
             'directReferrals' => $directReferrals,
             'stats' => $stats,
-            'currentUserPoints' => $currentUser->points_balance,
+            'currentUserPoints' => $userScore?->available ?? 0,
+            'canAssignCodes' => $canAssignCodes,
+            'userScore' => $userScore,
+            'withdrawalHistory' => $withdrawalHistory, // ✅ Pass to frontend
         ]);
-    }   
+    }
 
     public function create(Request $request)
     {
@@ -106,7 +128,7 @@ class DownlineReferralController extends Controller
             'user_id' => 
                 'required',
                 'exists:users,id',
-            'referral_code' => 'required|string|max:255|unique:users,referral_code',
+            'referral_code' => 'required|string|max:255',
             'points' => 'required|integer|min:1',
         ]);
 
@@ -155,14 +177,20 @@ class DownlineReferralController extends Controller
         $request->validate(['email' => 'required|email']);
 
         $user = User::where('email', $request->email)
-            ->whereNull('referral_code')
-            ->select('id', 'name', 'email', 'points_balance')
+            ->select('id', 'name', 'email', 'points_balance', 'referral_code')
             ->first();
 
         if ($user) {
             return response()->json([
                 'found' => true,
-                'user' => $user,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'points_balance' => $user->points_balance,
+                    'referral_code' => $user->referral_code, // This will auto-fill in the form
+                    'has_code' => !is_null($user->referral_code) // Add this flag
+                ]
             ]);
         }
 
@@ -174,9 +202,6 @@ class DownlineReferralController extends Controller
 
     public function update(Request $request, User $user)
     {
-        if ($user->referred_by !== auth()->id()) {
-            abort(403);
-        }
 
         $validated = $request->validate([
             'referral_code' => ['nullable', 'string', 'max:255', Rule::unique('users', 'referral_code')->ignore($user->id)],

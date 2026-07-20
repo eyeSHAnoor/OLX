@@ -11,6 +11,7 @@ use App\Services\JazzCashService;
 use App\Models\Plan;
 use App\Models\User;
 use App\Models\Subscription;
+use App\Models\Referral;
 use Illuminate\Support\Facades\Route;
 use App\Notifications\NewManualSubscriptionNotification;
 use App\Notifications\ManualSubscriptionPendingNotification;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\UserReferralScore;
 
 class SubscriptionController extends Controller
 {
@@ -38,8 +40,7 @@ class SubscriptionController extends Controller
         $user = auth()->user();
 
         // Check if user already has an active subscription
-        $activeSubscription = $user->subscription; // your User model has `subscription()`
-        // dd($activeSubscription);
+        $activeSubscription = $user->subscription;
         if ($activeSubscription && $activeSubscription->isActive()) {
             return redirect()->back()->with('error', 'You already have an active subscription.');
         }
@@ -70,7 +71,7 @@ class SubscriptionController extends Controller
             'receipt_image' => $receipt,
         ]);
 
-        $superAdmins = User::role('super_admin')->get(); // or role('super-admin')->get() if using Spatie
+        $superAdmins = User::role('super_admin')->get();
 
         if ($superAdmins->isNotEmpty()) {
             Notification::send($superAdmins, new NewManualSubscriptionNotification($user, $subscription));
@@ -102,6 +103,11 @@ class SubscriptionController extends Controller
             // Update user subscription status
             $user->status = 'active';
             $user->save();
+
+            // =============================================
+            // PROCESS REFERRAL AND AWARD POINTS
+            // =============================================
+            $this->processReferralAndAwardPoints($user);
         });
 
         return redirect()->back()->with('success', 'User subscription has been completed and activated.');
@@ -173,8 +179,6 @@ class SubscriptionController extends Controller
             $subscription->id,
             $user->phone || '03123456789'
         );
-
-        // Log::info($paymentData);
         
         // Store payment data
         $subscription->update([
@@ -183,15 +187,144 @@ class SubscriptionController extends Controller
             ])
         ]);
 
-        
         // Return view with auto-submitting form
         return Inertia::render('payment/JazzCashRedirect', [
             'paymentData' => $paymentData,
             'endpoint' => config('jazzcash.endpoints.' . config('jazzcash.environment'))
         ]);
-        // return view('payment.redirect', [
-        // 'endpoint' => config('jazzcash.endpoints.' . config('jazzcash.environment')),
-        // 'data' => $paymentData
-        // ]);
     }
+
+    /**
+     * Process referral and award points when a user completes subscription
+     * points_balance is NOT incremented - it's a fixed value assigned by admin
+     */
+    private function processReferralAndAwardPoints(User $newUser)
+    {
+        // Only first subscription triggers referral
+        $previousSubscriptions = Subscription::where('user_id', $newUser->id)
+            ->where('payment_status', 'completed')
+            ->where('id', '!=', $newUser->subscription->id ?? 0)
+            ->count();
+
+        if ($previousSubscriptions > 0) {
+            return;
+        }
+
+        // Find who referred this user
+        $referral = Referral::where('referred_user_id', $newUser->id)
+            ->where('status', 'registered')
+            ->first();
+        
+        if (!$referral || !$referral->referrer) {
+            return;
+        }
+
+        // Process chain starting from immediate referrer
+        $this->processReferralChain($referral->referrer, $newUser, $referral->link_code);
+    }
+
+    private function processReferralChain(User $immediateReferrer, User $newUser, string $referralCode)
+    {
+        $level = 1;
+        $current = $immediateReferrer;
+        $previousAwardedPoints = 0;
+        $visitedIds = [$immediateReferrer->id];
+        $maxLevel = 50;
+
+        while ($current && $level <= $maxLevel) {
+            // 🛑 Check if current user is super admin - SKIP them and BREAK the chain
+            if ($current->hasRole('super_admin')) {
+                Log::info("Level {$level}: User {$current->id} is super admin. Skipping and breaking chain.");
+                break; // Stop the chain completely when reaching super admin
+            }
+
+            if ($level === 1) {
+                // Direct referrer gets their full points_balance
+                $pointsToAward = $current->points_balance ?: 20;
+            } else {
+                // Upline gets: their points_balance - what the person BELOW actually got
+                $pointsToAward = ($current->points_balance ?: 20) - $previousAwardedPoints;
+                
+                if ($pointsToAward < 0) {
+                    $pointsToAward = 0;
+                }
+            }
+
+            // Store what was ACTUALLY AWARDED at this level for the next iteration
+            $previousAwardedPoints = $pointsToAward;
+
+            // Update or create referral record
+            Referral::updateOrCreate(
+                [
+                    'referrer_id' => $current->id,
+                    'referred_user_id' => $newUser->id,
+                    'level' => $level,
+                ],
+                [
+                    'status' => 'completed',
+                    'points_awarded' => $pointsToAward,
+                    'link_code' => $referralCode,
+                    'visited_at' => now(),
+                ]
+            );
+
+            if ($pointsToAward > 0) {
+                $score = UserReferralScore::firstOrCreate(
+                    ['user_id' => $current->id],
+                    [
+                        'total_earned' => 0,
+                        'total_withdrawn' => 0,
+                        'available' => 0,
+                        'pending' => 0,
+                        'status' => 'active',
+                    ]
+                );
+                $score->addEarnedPoints($pointsToAward);
+            }
+
+            Log::info("Level {$level}: User {$current->id} awarded {$pointsToAward} points (balance: {$current->points_balance}, previous awarded: {$previousAwardedPoints})");
+
+            // Move up to code assigner
+            $nextCurrent = $current->codeAssigner;
+            
+            // Prevent infinite loop
+            if ($nextCurrent && in_array($nextCurrent->id, $visitedIds)) {
+                Log::warning("Circular reference detected! User {$nextCurrent->id} already processed. Breaking chain.");
+                break;
+            }
+            
+            if ($nextCurrent) {
+                $visitedIds[] = $nextCurrent->id;
+            }
+            
+            $current = $nextCurrent;
+            $level++;
+        }
+    }
+
+    /**
+     * Get the referral code used by the user during registration
+     */
+    private function getReferralCodeForUser(User $user): ?string
+    {
+        // Check if user has a referral record
+        $referral = Referral::where('referred_user_id', $user->id)
+            ->where('status', 'registered')
+            ->first();
+        
+        if ($referral) {
+            return $referral->link_code;
+        }
+        
+        // If no referral record, check if user was referred by someone
+        if ($user->referred_by) {
+            $referrer = User::find($user->referred_by);
+            if ($referrer && $referrer->referral_code) {
+                return $referrer->referral_code;
+            }
+        }
+        
+        return null;
+    }
+  
 }

@@ -32,7 +32,9 @@ class DatabaseSeeder extends Seeder
         $this->call(CitySeeder::class);
         $this->call(RegionsSeeder::class);
         $this->call(SubscriptionPermissionSeeder::class);
-        // $this->call(GiftCampaignTestSeeder::class);
+        $this->call(GiftCampaignTestSeeder::class);
+        $this->call(ContinuousSubscriptionSeeder::class);
+
 
 
       

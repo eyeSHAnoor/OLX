@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Brand;
 use App\Models\Ad;
+use App\Models\GiftAssignment;
+use App\Models\GiftPeriod;
 use App\Models\Banner;
 use App\Models\AdView;
 use Inertia\Inertia;
@@ -195,6 +197,34 @@ class HomeController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+          /*
+        |--------------------------------------------------------------------------
+        | STEP: Check if current user is a gift candidate
+        |--------------------------------------------------------------------------
+        */
+        $isGiftCandidate = false;
+        $activeGiftPeriod = null;
+        $userGiftAssignment = null;
+
+        if (Auth::check()) {
+            // Find active gift period
+            $activeGiftPeriod = GiftPeriod::where('is_active', true)
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->first();
+
+            if ($activeGiftPeriod) {
+                // Check if user has a candidate assignment in this period
+                $userGiftAssignment = GiftAssignment::where('user_id', Auth::id())
+                    ->where('gift_period_id', $activeGiftPeriod->id)
+                    ->where('status', 'candidate')
+                    ->with(['gift', 'giftPeriod'])
+                    ->first();
+
+                $isGiftCandidate = $userGiftAssignment !== null;
+            }
+        }
+
         return Inertia::render('home/Index', [
             'categories' => $categories,
             'banners' => $banners,
@@ -211,6 +241,14 @@ class HomeController extends Controller
                 'end_date' => $endDate,
             ],
             'isSearching' => $isSearching,
+            'isGiftCandidate' => $isGiftCandidate,
+            'userGiftAssignment' => $userGiftAssignment ? [
+                'id' => $userGiftAssignment->id,
+                'gift_name' => $userGiftAssignment->gift->name,
+                'gift_image' => $userGiftAssignment->gift->image,
+                'period_name' => $userGiftAssignment->giftPeriod->name,
+                'status' => $userGiftAssignment->status,
+            ] : null,
         ]);
     }
 

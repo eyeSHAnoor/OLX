@@ -36,15 +36,22 @@ class RegisteredUserController extends Controller
                 // Store referral code in session
                 session(['referral_code' => $referralCode]);
                 
-                // Track the visit
-                Referral::create([
-                    'referrer_id' => $referrer->id,
-                    'referred_user_id' => null, // Will be updated when user registers
-                    'status' => 'visited',
-                    'points_awarded' => 0, // No points yet, just tracking visit
-                    'link_code' => $referralCode,
-                    'visited_at' => now(),
-                ]);
+                // Track the visit - ONLY create if not exists
+                $existingVisit = Referral::where('link_code', $referralCode)
+                    ->where('status', 'visited')
+                    ->whereNull('referred_user_id')
+                    ->exists();
+                
+                if (!$existingVisit) {
+                    Referral::create([
+                        'referrer_id' => $referrer->id,
+                        'referred_user_id' => null,
+                        'status' => 'visited',
+                        'points_awarded' => 0,
+                        'link_code' => $referralCode,
+                        'visited_at' => now(),
+                    ]);
+                }
                 
                 return Inertia::render('auth/Register', [
                     'referral_code' => $referralCode,
@@ -85,26 +92,28 @@ class RegisteredUserController extends Controller
             $referrer = User::where('referral_code', $referralCode)->first();
         }
 
-        // Create user
-        // Note: We don't auto-generate a referral code here
-        // Only Super Admin assigns referral codes and points
+        // Generate a unique referral code for the new user
+        $newReferralCode = $this->generateUniqueReferralCode();
+
+        // Create user with auto-generated referral code
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'email_verified_at' => null, // Not verified yet
-            'referral_code' => null, // No referral code by default - Admin assigns it
-            'referred_by' => $referrer?->id, // Set who referred this user
-            'points_balance' => 0, // Start with 0 points - Admin assigns initial points
+            'email_verified_at' => null,
+            'referral_code' => $newReferralCode,
+            'referred_by' => $referrer?->id,
+            'points_balance' => 0,
+            // 'code_assigned_by' => $referrer?->id ?? null,
         ]);
 
         // Process referral if user was referred
         if ($referrer) {
-            $this->processReferral($referrer, $user, $referralCode);
+            $this->trackReferral($referrer, $user, $referralCode);
         }
 
-        // Generate and save verification code (expires in 2 minutes)
+        // Generate and save verification code
         $code = $user->generateVerificationCode();
         
         // Send verification email
@@ -122,12 +131,13 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Process referral when a new user registers through a referral link.
-     * This awards points to both the referrer and the new user.
+     * Track referral when a new user registers through a referral link.
+     * No points awarded here - points will be awarded on subscription completion.
+     * Only ONE referral record per referrer per referred user.
      */
-     private function processReferral(User $immediateReferrer, User $newUser, string $referralCode): void
+    private function trackReferral(User $immediateReferrer, User $newUser, string $referralCode): void
     {
-        // 1. Immediate referrer (sign‑up link) – update the visited record
+        // 1. Find and update the visited record for the immediate referrer
         $visitedReferral = Referral::where('link_code', $referralCode)
             ->where('status', 'visited')
             ->whereNull('referred_user_id')
@@ -137,54 +147,101 @@ class RegisteredUserController extends Controller
         if ($visitedReferral) {
             $visitedReferral->update([
                 'referred_user_id' => $newUser->id,
-                'status' => 'completed',
-                'points_awarded' => $immediateReferrer->points_balance,
+                'status' => 'registered',
+                'points_awarded' => 0,
                 'level' => 1,
             ]);
         } else {
             Referral::create([
                 'referrer_id' => $immediateReferrer->id,
                 'referred_user_id' => $newUser->id,
-                'status' => 'completed',
-                'points_awarded' => $immediateReferrer->points_balance,
+                'status' => 'registered',
+                'points_awarded' => 0,
                 'link_code' => $referralCode,
                 'visited_at' => now(),
                 'level' => 1,
             ]);
         }
 
-        // 2. Now walk UP the code‑assignment chain (starting from the immediate referrer's codeAssigner)
+        // 2. Walk UP the code‑assignment chain with safety limits
         $level = 2;
-        $current = $immediateReferrer->codeAssigner;   // ← uses code_assigned_by
+        $current = $immediateReferrer->codeAssigner;
+        $visitedIds = [$immediateReferrer->id]; // Track visited IDs to prevent circular loop
+        $maxLevel = 50; // Safety limit
 
-        while ($current) {
+        while ($current && $level <= $maxLevel) {
+            // Prevent infinite loop from circular references
+            if (in_array($current->id, $visitedIds)) {
+                \Log::warning("Circular reference detected in referral chain! User ID: {$current->id}");
+                break;
+            }
+            
+            $visitedIds[] = $current->id;
+
             if ($current->referral_code) {
-                Referral::create([
-                    'referrer_id' => $current->id,
-                    'referred_user_id' => $newUser->id,
-                    'status' => 'completed',
-                    'points_awarded' => $current->points_balance,
-                    'link_code' => $referralCode,
-                    'visited_at' => now(),
-                    'level' => $level,
-                ]);
+                // Check if a referral record already exists
+                $existingUplineReferral = Referral::where('referrer_id', $current->id)
+                    ->where('referred_user_id', $newUser->id)
+                    ->where('link_code', $referralCode)
+                    ->where('level', $level)
+                    ->first();
+
+                if (!$existingUplineReferral) {
+                    Referral::create([
+                        'referrer_id' => $current->id,
+                        'referred_user_id' => $newUser->id,
+                        'status' => 'registered',
+                        'points_awarded' => 0,
+                        'link_code' => $referralCode,
+                        'visited_at' => now(),
+                        'level' => $level,
+                    ]);
+                }
             }
 
-            $current = $current->codeAssigner;   // continue up the code‑assignment tree
+            $current = $current->codeAssigner;
             $level++;
+        }
+        
+        if ($level > $maxLevel) {
+            \Log::error("Referral chain exceeded max level! Stopped at level {$level}");
         }
     }
 
     /**
-     * Generate unique referral code.
-     * Only used if you want to auto-generate codes (currently not used).
+     * Generate a unique referral code for new users
      */
-    private function generateUniqueCode($name): string
+    private function generateUniqueReferralCode(): string
     {
+        $prefix = 'REF';
+        $length = 8;
+        
         do {
-            $code = Str::upper(Str::substr($name, 0, 3) . Str::random(5));
-        } while (User::where('referral_code', $code)->exists());
+            $randomString = Str::upper(Str::random($length));
+            $code = $prefix . $randomString;
+            $exists = User::where('referral_code', $code)->exists();
+        } while ($exists);
+        
+        return $code;
+    }
 
+    /**
+     * Alternative: Generate referral code with user name and random numbers
+     */
+    private function generateReferralCodeFromName(string $name): string
+    {
+        $namePart = Str::upper(Str::substr($name, 0, 3));
+        $randomPart = Str::upper(Str::random(5));
+        $code = $namePart . $randomPart;
+        
+        $counter = 1;
+        $originalCode = $code;
+        
+        while (User::where('referral_code', $code)->exists()) {
+            $code = $originalCode . $counter;
+            $counter++;
+        }
+        
         return $code;
     }
 }

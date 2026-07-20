@@ -37,7 +37,8 @@ class User extends Authenticatable
         'referral_code',
         'referred_by',
         'points_balance',
-        'code_assigned_by'
+        'code_assigned_by',
+        'can_assign_code'
     ];
 
    protected $hidden = [
@@ -59,6 +60,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'suspended_until' => 'datetime',
             'verification_code_expires_at' => 'datetime',
+            'can_assign_code' => 'boolean', 
         ];
     }
 
@@ -313,5 +315,45 @@ class User extends Authenticatable
     public function codeAssignees(): HasMany
     {
         return $this->hasMany(User::class, 'code_assigned_by');
+    }
+
+    public function referralScore()
+    {
+        return $this->hasOne(UserReferralScore::class);
+    }
+
+
+    /**
+     * Get total points earned from all referrals
+     */
+    public function getTotalEarnedPointsAttribute(): int
+    {
+        return $this->referralsMade()
+            ->where('status', 'completed')
+            ->sum('points_awarded');
+    }
+
+    /**
+     * Get net points after deducting points given to assignees
+     * Formula: Total earned - Sum of points earned by direct assignees
+     */
+    public function getNetPointsAttribute(): int
+    {
+        $totalEarned = $this->total_earned_points;
+        
+        // Get IDs of users who were assigned codes by this user
+        $assigneeIds = $this->codeAssignees()->pluck('id');
+        
+        // Sum all points earned by those assignees
+        $assigneeEarnings = Referral::whereIn('referrer_id', $assigneeIds)
+            ->where('status', 'completed')
+            ->sum('points_awarded');
+        
+        return $totalEarned - $assigneeEarnings;
+    }
+
+    public function canAssignCode(): bool
+    {
+        return $this->can_assign_code;
     }
 }   

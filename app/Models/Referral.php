@@ -23,6 +23,7 @@ class Referral extends Model
 
     // Status constants
     const STATUS_VISITED = 'visited';
+    const STATUS_REGISTERED = 'registered'; // Added this
     const STATUS_COMPLETED = 'completed';
     const STATUS_CANCELLED = 'cancelled';
 
@@ -46,5 +47,11 @@ class Referral extends Model
     public function scopeVisited($query)
     {
         return $query->where('status', self::STATUS_VISITED);
+    }
+    
+    // Scope for registered referrals
+    public function scopeRegistered($query)
+    {
+        return $query->where('status', self::STATUS_REGISTERED);
     }
 }

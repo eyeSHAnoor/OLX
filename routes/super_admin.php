@@ -16,6 +16,7 @@ use App\Http\Controllers\PageContentController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\GiftController;
 use App\Http\Controllers\UserReferralController;
+use App\Http\Controllers\WithdrawalController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'super_admin'])->group(function () {
@@ -140,6 +141,14 @@ Route::middleware(['auth', 'super_admin'])->group(function () {
     Route::delete('/users/{user}/referral', [UserReferralController::class, 'destroy'])->name('users.referral.destroy');
     Route::post('/users/{user}/generate-referral-code', [UserReferralController::class, 'generateCode'])->name('users.referral.generate-code');
 
-     Route::resource('scheduled-notifications', App\Http\Controllers\ScheduledNotificationController::class)
+    Route::post('/assign-referral-codes', [UserReferralController::class, 'assignReferralCodes'])->name("user.assign.referral");
+
+     Route::get('/admin/withdrawals', [WithdrawalController::class, 'adminIndex'])->name('admin.withdrawals.index');
+    Route::get('/admin/withdrawals/{withdrawal}', [WithdrawalController::class, 'show'])->name('admin.withdrawals.show');
+    Route::post('/admin/withdrawals/{withdrawal}/approve', [WithdrawalController::class, 'approve'])->name('admin.withdrawals.approve');
+    Route::post('/admin/withdrawals/{withdrawal}/complete', [WithdrawalController::class, 'complete'])->name('admin.withdrawals.complete');
+    Route::post('/admin/withdrawals/{withdrawal}/reject', [WithdrawalController::class, 'reject'])->name('admin.withdrawals.reject');
+
+    Route::resource('scheduled-notifications', App\Http\Controllers\ScheduledNotificationController::class)
         ->except(['show']);
 });

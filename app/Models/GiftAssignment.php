@@ -42,4 +42,9 @@ class GiftAssignment extends Model
     {
         return $this->belongsTo(User::class, 'assigned_by');
     }
+
+    public function giftPeriod()
+    {
+        return $this->belongsTo(GiftPeriod::class, 'gift_period_id');
+    }
 }

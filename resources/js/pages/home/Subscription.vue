@@ -152,21 +152,24 @@
                                         </div>
 
                                         <div class="text-right flex flex-col items-end space-y-1">
-                                            <!-- Discount badge -->
-                                            <div v-if="plan.discount > 0"
+                                            <!-- Discount badge - only show if discount > 0 -->
+                                            <div v-if="plan.discount > 0 && plan.discount < plan.price"
                                                 class="inline-flex items-center text-[10px] bg-red-500 text-white px-2 py-0.5 rounded font-semibold">
                                                 -{{ getDiscountPercentage(plan) }}%
                                             </div>
 
-                                            <!-- Old price -->
-                                            <p v-if="plan.discount > 0" class="text-xs text-gray-400 line-through">
+                                            <!-- Old price - only show if discount > 0 -->
+                                            <p v-if="plan.discount > 0 && plan.discount < plan.price"
+                                                class="text-xs text-gray-400 line-through">
                                                 Rs {{ plan.price }}
                                             </p>
 
                                             <!-- Final price -->
                                             <p class="text-sm font-bold text-gray-900">
-                                                Rs {{ plan.discount }}
-                                            </p>
+                                                Rs
+                                                {{
+                                                    plan.discount > 0 && plan.discount < plan.price ? plan.discount :
+                                                        plan.price }} </p>
                                         </div>
                                     </div>
 
@@ -214,14 +217,18 @@
                                             {{ plan.name }}
                                         </h3>
                                         <div class="flex items-baseline gap-2 mb-3">
-                                            <span class="text-xl font-light line-through text-gray-900">{{
-                                                formatPrice(plan.price)
-                                                }}</span>
-                                            <span class="text-xl font-bold text-gray-900">{{
-                                                formatPrice(plan.discount)
-                                                }}</span>
-                                            <span class="text-xs text-gray-500 ml-1">/{{ plan.duration_days }}
-                                                days</span>
+                                            <!-- Only show original price with strikethrough if discount > 0 -->
+                                            <span v-if="plan.discount > 0 && plan.discount < plan.price"
+                                                class="text-xl font-light line-through text-gray-900">
+                                                {{ formatPrice(plan.price) }}
+                                            </span>
+                                            <span class="text-xl font-bold text-gray-900">
+                                                {{
+                                                    formatPrice(
+                                                        plan.discount > 0 && plan.discount < plan.price ? plan.discount :
+                                                            plan.price) }} </span>
+                                                    <span class="text-xs text-gray-500 ml-1">/{{ plan.duration_days }}
+                                                        days</span>
                                         </div>
 
                                         <div class="border-t border-gray-100 pt-3 mt-2">

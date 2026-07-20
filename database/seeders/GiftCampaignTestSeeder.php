@@ -601,7 +601,7 @@ class GiftCampaignTestSeeder extends Seeder
                 $user->profile()->firstOrCreate(
                     ['user_id' => $user->id],
                     [
-                        'city' => fake()->city(),
+                        // 'city' => fake()->city(),
                     ]
                 );
             }

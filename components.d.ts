@@ -146,6 +146,7 @@ declare module 'vue' {
     FileUploader: typeof import('./resources/js/components/FileUploader.vue')['default']
     FlashMessage: typeof import('./resources/js/components/Application/FlashMessage.vue')['default']
     Footer: typeof import('./resources/js/components/Footer.vue')['default']
+    GiftFloatingIcon: typeof import('./resources/js/components/GiftFloatingIcon.vue')['default']
     GlobalOrderPopup: typeof import('./resources/js/components/GlobalOrderPopup.vue')['default']
     Head: typeof import('@inertiajs/vue3')['Head']
     Header: typeof import('./resources/js/components/Header.vue')['default']

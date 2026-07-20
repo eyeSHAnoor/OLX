@@ -114,11 +114,11 @@
                                         </div>
                                         <!-- Batch badges -->
                                         <div v-if="$hasPlanPermission('pro_batch')" class="">
-                                            <img src="/images/pro.png" alt="Pro" class="h-7 w-auto" />
+                                            <img src="/images/pro.png" alt="Pro" class="h-12 w-auto" />
                                         </div>
                                         <!-- Premium Batch -->
                                         <div v-if="$hasPlanPermission('premium_batch')" class="">
-                                            <img src="/images/premium.png" alt="Premium" class="h-7 w-auto" />
+                                            <img src="/images/premium.png" alt="Premium" class="h-12 w-auto" />
                                         </div>
                                     </div>
 

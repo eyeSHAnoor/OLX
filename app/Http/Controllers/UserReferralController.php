@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Referral;
 use App\Data\ReferralData;
+use App\Models\UserReferralScore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 
 class UserReferralController extends Controller
@@ -23,6 +25,7 @@ class UserReferralController extends Controller
             'email',
             'referral_code',
             'points_balance',
+            'can_assign_code',
             'created_at',
         ];
 
@@ -30,7 +33,6 @@ class UserReferralController extends Controller
 
         // Get users who have referral codes or have referred others
         $referrers = QueryBuilder::for(User::class)
-            ->where('code_assigned_by', auth()->id())
             ->where(function ($query) {
                 $query->whereNotNull('referral_code')
                     ->orWhereHas('referralsMade');
@@ -42,6 +44,7 @@ class UserReferralController extends Controller
                 $query->where('status', 'completed');
             }], 'points_awarded')
             ->with('referrer')
+            ->with(['referralScore']) // Load referral score
             ->defaultSort('-total_points_earned')
             ->allowedSorts([
                 ...$columns,
@@ -51,12 +54,38 @@ class UserReferralController extends Controller
             ->allowedFilters([
                 $globalSearch,
                 AllowedFilter::exact('referral_code'),
+                AllowedFilter::exact('can_assign_code'),
             ])
             ->paginate(getPaginate())
             ->withQueryString();
 
+        // Get withdrawal requests with user data
+        $withdrawalRequests = UserReferralScore::whereIn('status', ['pending', 'approved', 'completed', 'rejected'])
+            // ->whereNotNull('requested_amount')
+            ->with('user')
+            ->orderByRaw("FIELD(status, 'pending', 'approved', 'completed', 'rejected')")
+            ->orderBy('created_at', 'desc')
+            ->paginate(20, ['*'], 'withdrawals_page')
+            ->withQueryString();
+
+        // Get summary stats
+        $stats = [
+            'total_users_with_codes' => User::whereNotNull('referral_code')->count(),
+            'total_referrals' => Referral::where('status', 'completed')->count(),
+            'total_points_earned' => Referral::where('status', 'completed')->sum('points_awarded'),
+            'total_points_balance' => User::sum('points_balance'),
+            'total_withdrawn' => UserReferralScore::sum('total_withdrawn'),
+            'total_pending_points' => UserReferralScore::where('status', 'pending')->sum('pending'),
+            'pending_withdrawals' => UserReferralScore::where('status', 'pending')->count(),
+            'approved_withdrawals' => UserReferralScore::where('status', 'approved')->count(),
+            'completed_withdrawals' => UserReferralScore::where('status', 'completed')->count(),
+            'rejected_withdrawals' => UserReferralScore::where('status', 'rejected')->count(),
+        ];
+
         return Inertia::render('referral/Index', [
             'referrers' => ReferralData::collect($referrers),
+            'withdrawalRequests' => $withdrawalRequests,
+            'stats' => $stats,
         ]);
     }
 
@@ -86,28 +115,38 @@ class UserReferralController extends Controller
      * Super Admin: Assign referral code and initial points to a user
      * This does NOT set referred_by - it just gives the user a referral code and points
      */
+
+
     public function store(Request $request)
     {
         $currentUser = auth()->user();
+        
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
-            'referral_code' => 'required|string|max:255|unique:users,referral_code',
+            'referral_code' => 'required|string|max:255',
             'points_to_award' => 'required|integer|min:0|max:10000',
+            'can_assign_code' => 'boolean',  // Add validation
         ]);
 
         DB::transaction(function () use ($validated, $currentUser) {
             $user = User::findOrFail($validated['user_id']);
 
+            // Check if referral code is already taken
+            $existingCode = User::where('referral_code', $validated['referral_code'])
+                ->where('id', '!=', $user->id)
+                ->exists();
+                
+            if ($existingCode) {
+                throw new \Exception('This referral code is already in use.');
+            }
+
             // Assign referral code
             $user->update([
                 'referral_code' => $validated['referral_code'],
                 'code_assigned_by' => $currentUser->id,
+                'points_balance' => $validated['points_to_award'],
+                'can_assign_code' => $validated['can_assign_code'] ?? false,  // Save permission
             ]);
-
-            // Add initial points to user's balance
-            if ($validated['points_to_award'] > 0) {
-                $user->increment('points_balance', $validated['points_to_award']);
-            }
         });
 
         return redirect()->route('referrals.index')
@@ -134,9 +173,11 @@ class UserReferralController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        // dd($request->all());
         $validated = $request->validate([
             'referral_code' => 'nullable|string|max:255|unique:users,referral_code,' . $user->id,
             'points_to_adjust' => 'nullable|integer|min:-10000|max:10000', // Can be positive (add) or negative (deduct)
+            'can_assign_code' => 'boolean', 
         ]);
 
         DB::transaction(function () use ($validated, $user) {
@@ -148,6 +189,10 @@ class UserReferralController extends Controller
             // Adjust points if provided
             if (isset($validated['points_to_adjust']) && $validated['points_to_adjust'] != 0) {
                 $user->update(['points_balance' => $validated['points_to_adjust']]);
+            }
+
+            if (isset($validated['can_assign_code'])) {
+                 $user->update(['can_assign_code' => $validated['can_assign_code']]);
             }
         });
 
@@ -526,5 +571,27 @@ class UserReferralController extends Controller
         }
         
         return round(($totalCompleted / $total) * 100, 1);
+    }
+
+    public function assignReferralCodes(Request $request)
+    {
+        $users = User::whereNull('referral_code')->get();
+        $count = 0;
+
+        foreach ($users as $user) {
+            do {
+                $code = 'REF' . Str::upper(Str::random(8));
+            } while (User::where('referral_code', $code)->exists());
+
+            $user->update([
+                'referral_code' => $code,
+                'points_balance' => $user->points_balance + 100,
+                'code_assigned_by' =>auth()->user()->id,
+            ]);
+            
+            $count++;
+        }
+
+        return redirect()->back()->with('A referral code is assigned to all users');
     }
 }

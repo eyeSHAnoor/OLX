@@ -17,6 +17,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\UserReportController;
 use App\Http\Controllers\UserReferralController;
+use App\Http\Controllers\WithdrawalController;
+use App\Http\Controllers\GiftDetailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
@@ -137,5 +139,17 @@ Route::middleware(['auth'])->group(function () {
     });
     Route::get('/users/{user}/referrals', [UserReferralController::class, 'userReferrals'])->name('users.referrals.show');
     Route::get('/referral-tree/{user?}', [UserReferralController::class, 'referralTree'])->name('referral.tree');
+
+    Route::get('/withdrawals', [WithdrawalController::class, 'index'])->name('withdrawals.index');
+    Route::post('/withdrawals', [WithdrawalController::class, 'store'])->name('withdrawals.store');
+    Route::post('/withdrawals/{withdrawal}/confirm', [WithdrawalController::class, 'confirm'])->name('withdrawals.confirm');
+    Route::get('/withdrawals/status', [WithdrawalController::class, 'status'])->name('withdrawals.status');
+
+    Route::prefix('gift')->group(function () {
+    Route::get('/active-campaign', [GiftDetailController::class, 'getActiveCampaign']);
+    Route::get('/candidates', [GiftDetailController::class, 'getCandidates']);
+    Route::get('/delivered-users', [GiftDetailController::class, 'getDeliveredUsers']);
+    Route::get('/statistics', [GiftDetailController::class, 'getStatistics']);
+});
 
 });

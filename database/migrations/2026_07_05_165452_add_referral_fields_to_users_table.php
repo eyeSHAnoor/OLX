@@ -17,6 +17,10 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete();
+
+            $table->boolean('can_assign_code')->default(false);
+
+            //  $table->integer('accumulated_points')->default(0);
         });
     }
 
@@ -25,7 +29,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['referred_by']);
             // $table->dropForeign(['code_assigned_by']);
-            $table->dropColumn(['referral_code', 'referred_by', 'points_balance']);
+            $table->dropColumn(['referral_code', 'referred_by', 'points_balance',  'can_assign_code']);
         });
     }
 };
