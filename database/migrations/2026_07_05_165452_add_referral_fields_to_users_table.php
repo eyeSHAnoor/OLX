@@ -13,12 +13,12 @@ return new class extends Migration
             $table->string('referral_code')->unique()->nullable();
             $table->foreignId('referred_by')->nullable()->constrained('users')->nullOnDelete();
             $table->integer('points_balance')->default(0);
-             $table->foreignId('code_assigned_by')
-                ->nullable()
-                ->constrained('users')
-                ->nullOnDelete();
+            //  $table->foreignId('code_assigned_by')
+            //     ->nullable()
+            //     ->constrained('users')
+            //     ->nullOnDelete();
 
-            $table->boolean('can_assign_code')->default(false);
+            // $table->boolean('can_assign_code')->default(false);
 
             //  $table->integer('accumulated_points')->default(0);
         });
