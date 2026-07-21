@@ -145,11 +145,4 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/withdrawals/{withdrawal}/confirm', [WithdrawalController::class, 'confirm'])->name('withdrawals.confirm');
     Route::get('/withdrawals/status', [WithdrawalController::class, 'status'])->name('withdrawals.status');
 
-    Route::prefix('gift')->group(function () {
-    Route::get('/active-campaign', [GiftDetailController::class, 'getActiveCampaign']);
-    Route::get('/candidates', [GiftDetailController::class, 'getCandidates']);
-    Route::get('/delivered-users', [GiftDetailController::class, 'getDeliveredUsers']);
-    Route::get('/statistics', [GiftDetailController::class, 'getStatistics']);
-});
-
 });

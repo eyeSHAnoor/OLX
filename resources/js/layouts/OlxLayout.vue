@@ -15,8 +15,8 @@
     <footer class="hidden md:block bg-gray-900 text-white">
       <Footer />
     </footer>
-
     <GiftFloatingIcon />
+
     <!-- Mobile Bottom Navigation - Sticky Footer -->
     <MobileBottomNav />
     <div v-if="userId">

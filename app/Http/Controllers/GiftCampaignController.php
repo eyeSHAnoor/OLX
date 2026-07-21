@@ -314,21 +314,19 @@ class GiftCampaignController extends Controller
      */
     private function getEligibleUsers()
     {
-        $fourMonthsAgo = now()->subMonths(4);
-        
-        // Get users who have had continuous subscription for at least 4 months
-        $users = User::whereHas('subscription', function ($query) use ($fourMonthsAgo) {
-            $query->where('payment_status', 'completed')
-                ->where('starts_at', '<=', $fourMonthsAgo)
-                ->where(function ($q) {
-                    $q->where('status', 'active')
-                      ->orWhere('ends_at', '>=', now());
-                });
+        // Get users who have had at least 4 total subscriptions (including expired ones)
+        $users = User::whereHas('subscription', function ($query) {
+            $query->whereIn('payment_status', ['completed', 'expired']);
         })
         ->with(['activeSubscription.plan', 'profile'])
         ->get()
         ->filter(function ($user) {
-            return $this->hasContinuousSubscription($user, 4);
+            // Count total subscriptions (completed or expired)
+            $totalSubscriptions = $user->subscription()
+                ->whereIn('payment_status', ['completed', 'expired'])
+                ->count();
+            
+            return $totalSubscriptions >= 4;
         })
         ->map(function ($user) {
             return [
@@ -343,7 +341,14 @@ class GiftCampaignController extends Controller
                 'current_plan' => $user->activeSubscription?->plan?->name ?? 'N/A',
                 'subscription_started' => $user->activeSubscription?->starts_at?->format('Y-m-d') ?? 'N/A',
                 'subscription_ends' => $user->activeSubscription?->ends_at?->format('Y-m-d') ?? 'N/A',
-                'total_subscription_months' => $this->calculateContinuousMonths($user),
+                'total_subscriptions' => $user->subscription()
+                    ->whereIn('payment_status', ['completed', 'expired'])
+                    ->count(),
+                'subscription_history' => $user->subscription()
+                    ->whereIn('payment_status', ['completed', 'expired'])
+                    ->orderBy('created_at', 'desc')
+                    ->get(['plan_id', 'starts_at', 'ends_at', 'status', 'payment_status'])
+                    ->toArray(),
             ];
         })
         ->values();

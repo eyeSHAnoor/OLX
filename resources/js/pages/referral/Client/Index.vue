@@ -124,18 +124,35 @@ onMounted(() => {
   ]);
 });
 
+const copyMessage = ref<string | null>(null);
+const copyMessageTimeout = ref<number | null>(null);
+
 // Copy my referral link
 const copyMyReferralLink = async () => {
   try {
     const link = `${window.location.origin}/register?ref=${page.props.auth.user.referral_code}`;
     await navigator.clipboard.writeText(link);
-    useToast().success("Referral link copied to clipboard!");
+
+    // Show success message
+    copyMessage.value = "Link copied!";
+
+    // Clear any existing timeout
+    if (copyMessageTimeout.value) {
+      clearTimeout(copyMessageTimeout.value);
+    }
+
+    // Auto-hide message after 3 seconds
+    copyMessageTimeout.value = window.setTimeout(() => {
+      copyMessage.value = null;
+    }, 3000);
   } catch (err) {
     console.error(err);
-    useToast().error("Failed to copy link");
+    copyMessage.value = "Failed to copy link";
+    setTimeout(() => {
+      copyMessage.value = null;
+    }, 3000);
   }
 };
-
 // Navigate to assign code/points
 function handleAssignCode() {
   router.visit(route("downline-referrals.create"));
@@ -256,6 +273,7 @@ const getTabCount = (tab: string) => {
 
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
     <Head title="My Referral Team" />
 
     <!-- Header Section -->
@@ -269,70 +287,46 @@ const getTabCount = (tab: string) => {
 
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row gap-3 mb-6 flex-wrap">
-      <button
-        @click="copyMyReferralLink"
-        class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-      >
+      <button @click="copyMyReferralLink"
+        class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors relative">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-          />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
         </svg>
-        Copy My Referral Link
+        <span>{{ copyMessage ? copyMessage : "Copy My Referral Link" }}</span>
       </button>
 
       <!-- Withdraw Button -->
-      <button
-        @click="openWithdrawModal"
+      <button @click="openWithdrawModal"
         class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-blue hover:bg-brand-blue/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-        :disabled="stats.has_pending_withdrawal || currentUserPoints < 100"
-      >
+        :disabled="stats.has_pending_withdrawal || currentUserPoints < 100">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-          />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
         Withdraw Points
         <span v-if="stats.has_pending_withdrawal" class="ml-2 text-xs">(Pending)</span>
       </button>
 
       <!-- Only show Assign Code & Points button if user can assign codes -->
-      <button
-        v-if="canAssignCodes"
-        @click="handleAssignCode"
-        class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-teal hover:bg-brand-teal/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-      >
+      <button v-if="canAssignCodes" @click="handleAssignCode"
+        class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-teal hover:bg-brand-teal/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-          />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
         Assign Code & Points
       </button>
     </div>
 
     <!-- Stats Cards -->
-    <div
-      :class="[
-        'grid gap-4 mb-6',
-        canAssignCodes
-          ? 'grid-cols-2 lg:grid-cols-4'
-          : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-      ]"
-    >
+    <div :class="[
+      'grid gap-4 mb-6',
+      canAssignCodes
+        ? 'grid-cols-2 lg:grid-cols-4'
+        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+    ]">
       <!-- Withdrawn Points Card -->
-      <div
-        class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
-      >
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -346,27 +340,16 @@ const getTabCount = (tab: string) => {
             </p>
           </div>
           <div class="p-2 bg-red-50 rounded-lg">
-            <svg
-              class="w-5 h-5 text-red-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-              />
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
         </div>
       </div>
 
       <!-- Direct Referrals Card -->
-      <div
-        class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
-      >
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -377,27 +360,16 @@ const getTabCount = (tab: string) => {
             </p>
           </div>
           <div class="p-2 bg-green-50 rounded-lg">
-            <svg
-              class="w-5 h-5 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              />
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
         </div>
       </div>
 
       <!-- Total Earned Card -->
-      <div
-        class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
-      >
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -408,27 +380,16 @@ const getTabCount = (tab: string) => {
             </p>
           </div>
           <div class="p-2 bg-purple-50 rounded-lg">
-            <svg
-              class="w-5 h-5 text-purple-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
         </div>
       </div>
 
       <!-- Points Available Card -->
-      <div
-        class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
-      >
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -442,18 +403,9 @@ const getTabCount = (tab: string) => {
             </p>
           </div>
           <div class="p-2 bg-orange-50 rounded-lg">
-            <svg
-              class="w-5 h-5 text-orange-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
+            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
           </div>
         </div>
@@ -464,24 +416,16 @@ const getTabCount = (tab: string) => {
     <div class="border-b border-gray-200 mb-6">
       <nav class="-mb-px flex space-x-8" aria-label="Tabs">
         <!-- Code Assignments Tab (only if user can assign codes) -->
-        <button
-          v-if="canAssignCodes"
-          @click="activeTab = 'assignments'"
-          :class="[
-            'py-2 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
-            activeTab === 'assignments'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-          ]"
-        >
+        <button v-if="canAssignCodes" @click="activeTab = 'assignments'" :class="[
+          'py-2 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+          activeTab === 'assignments'
+            ? 'border-blue-500 text-blue-600'
+            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+        ]">
           <span class="flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-              />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
             </svg>
             Code Assignments
             <span class="ml-1 py-0.5 px-2 rounded-full text-xs bg-gray-100 text-gray-600">
@@ -491,23 +435,16 @@ const getTabCount = (tab: string) => {
         </button>
 
         <!-- Direct Referrals Tab -->
-        <button
-          @click="activeTab = 'referrals'"
-          :class="[
-            'py-2 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
-            activeTab === 'referrals'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-          ]"
-        >
+        <button @click="activeTab = 'referrals'" :class="[
+          'py-2 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+          activeTab === 'referrals'
+            ? 'border-blue-500 text-blue-600'
+            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+        ]">
           <span class="flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             Direct Referrals
             <span class="ml-1 py-0.5 px-2 rounded-full text-xs bg-gray-100 text-gray-600">
@@ -517,23 +454,16 @@ const getTabCount = (tab: string) => {
         </button>
 
         <!-- Withdrawal History Tab -->
-        <button
-          @click="activeTab = 'withdrawals'"
-          :class="[
-            'py-2 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
-            activeTab === 'withdrawals'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-          ]"
-        >
+        <button @click="activeTab = 'withdrawals'" :class="[
+          'py-2 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+          activeTab === 'withdrawals'
+            ? 'border-blue-500 text-blue-600'
+            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+        ]">
           <span class="flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-              />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             Withdrawal History
             <span class="ml-1 py-0.5 px-2 rounded-full text-xs bg-gray-100 text-gray-600">
@@ -545,23 +475,12 @@ const getTabCount = (tab: string) => {
     </div>
 
     <!-- Code Assignments Tab Content -->
-    <div
-      v-if="canAssignCodes && activeTab === 'assignments'"
-      class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden py-4"
-    >
+    <div v-if="canAssignCodes && activeTab === 'assignments'"
+      class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden py-4">
       <div v-if="codeAssignments.data.length === 0" class="text-center py-12">
-        <svg
-          class="w-16 h-16 mx-auto text-gray-300"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-          />
+        <svg class="w-16 h-16 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
         </svg>
         <p class="mt-4 text-lg font-medium text-gray-900">No code assignments yet</p>
         <p class="mt-1 text-sm text-gray-500">
@@ -569,14 +488,9 @@ const getTabCount = (tab: string) => {
         </p>
       </div>
 
-      <AppDataTableNew
-        v-else
-        :columns="assignmentsColumns"
-        :data="codeAssignments?.data"
-        search-placeholder="Search by name, email or code..."
-        :pagination-data="codeAssignments"
-        class="[&_thead]:bg-gray-50 [&_th]:text-left [&_th]:text-xs [&_th]:font-medium [&_th]:text-gray-500 [&_th]:uppercase [&_th]:tracking-wider [&_td]:py-3 [&_td]:px-3 [&_tr]:border-b [&_tr]:border-gray-200"
-      >
+      <AppDataTableNew v-else :columns="assignmentsColumns" :data="codeAssignments?.data"
+        search-placeholder="Search by name, email or code..." :pagination-data="codeAssignments"
+        class="[&_thead]:bg-gray-50 [&_th]:text-left [&_th]:text-xs [&_th]:font-medium [&_th]:text-gray-500 [&_th]:uppercase [&_th]:tracking-wider [&_td]:py-3 [&_td]:px-3 [&_tr]:border-b [&_tr]:border-gray-200">
         <template #name-cell="{ row }">
           <div class="flex flex-col">
             <span class="font-medium text-gray-900">{{ row.original.name }}</span>
@@ -585,96 +499,62 @@ const getTabCount = (tab: string) => {
         </template>
 
         <template #referral_code-cell="{ row }">
-          <code
-            v-if="row.original.referral_code"
-            class="text-xs bg-gray-100 px-2 py-1 rounded font-mono text-gray-700"
-          >
+          <code v-if="row.original.referral_code" class="text-xs bg-gray-100 px-2 py-1 rounded font-mono text-gray-700">
             {{ row.original.referral_code }}
           </code>
           <span v-else class="text-xs text-gray-400 italic">No code</span>
         </template>
 
         <template #referrals_count-cell="{ row }">
-          <span
-            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-            :class="{
-              'bg-green-100 text-green-800': row.original.referrals_count > 0,
-              'bg-gray-100 text-gray-500': row.original.referrals_count === 0,
-            }"
-          >
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" :class="{
+            'bg-green-100 text-green-800': row.original.referrals_count > 0,
+            'bg-gray-100 text-gray-500': row.original.referrals_count === 0,
+          }">
             {{ row.original.referrals_count }}
           </span>
         </template>
 
         <template #points_balance-cell="{ row }">
-          <span
-            class="font-medium"
-            :class="{
-              'text-blue-600': row.original.points_balance > 0,
-              'text-gray-500': row.original.points_balance === 0,
-            }"
-          >
+          <span class="font-medium" :class="{
+            'text-blue-600': row.original.points_balance > 0,
+            'text-gray-500': row.original.points_balance === 0,
+          }">
             {{ row.original.points_balance.toLocaleString() }} Pkr
           </span>
         </template>
 
         <template #actions-cell="{ row }">
           <div class="flex items-center justify-end gap-2">
-            <button
-              @click="copyUserReferralLink(row.original)"
+            <button @click="copyUserReferralLink(row.original)"
               class="p-1.5 text-gray-400 hover:text-green-600 rounded hover:bg-green-50 transition-colors"
-              title="Copy User's Referral Link"
-            >
+              title="Copy User's Referral Link">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
               </svg>
             </button>
-            <button
-              @click="handleViewReferral(row.original)"
+            <button @click="handleViewReferral(row.original)"
               class="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-              title="View Tree"
-            >
+              title="View Tree">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
             </button>
-            <button
-              @click="handleEdit(row.original)"
+            <button @click="handleEdit(row.original)"
               class="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-              title="Edit Code & Points"
-            >
+              title="Edit Code & Points">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
               </svg>
             </button>
-            <button
-              v-if="row.original.referral_code"
-              @click="handleRevokeCode(row.original)"
+            <button v-if="row.original.referral_code" @click="handleRevokeCode(row.original)"
               class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
-              title="Revoke Code"
-            >
+              title="Revoke Code">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
           </div>
@@ -683,23 +563,12 @@ const getTabCount = (tab: string) => {
     </div>
 
     <!-- Direct Referrals Tab Content -->
-    <div
-      v-if="activeTab === 'referrals'"
-      class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden py-4"
-    >
+    <div v-if="activeTab === 'referrals'"
+      class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden py-4">
       <div v-if="directReferrals.data.length === 0" class="text-center py-12">
-        <svg
-          class="w-16 h-16 mx-auto text-gray-300"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-          />
+        <svg class="w-16 h-16 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
         <p class="mt-4 text-lg font-medium text-gray-900">No direct referrals yet</p>
         <p class="mt-1 text-sm text-gray-500">
@@ -707,14 +576,9 @@ const getTabCount = (tab: string) => {
         </p>
       </div>
 
-      <AppDataTableNew
-        v-else
-        :columns="referralsColumns"
-        :data="directReferrals?.data"
-        search-placeholder="Search by name, email or code..."
-        :pagination-data="directReferrals"
-        class="[&_thead]:bg-gray-50 [&_th]:text-left [&_th]:text-xs [&_th]:font-medium [&_th]:text-gray-500 [&_th]:uppercase [&_th]:tracking-wider [&_td]:py-3 [&_td]:px-3 [&_tr]:border-b [&_tr]:border-gray-200"
-      >
+      <AppDataTableNew v-else :columns="referralsColumns" :data="directReferrals?.data"
+        search-placeholder="Search by name, email or code..." :pagination-data="directReferrals"
+        class="[&_thead]:bg-gray-50 [&_th]:text-left [&_th]:text-xs [&_th]:font-medium [&_th]:text-gray-500 [&_th]:uppercase [&_th]:tracking-wider [&_td]:py-3 [&_td]:px-3 [&_tr]:border-b [&_tr]:border-gray-200">
         <template #name-cell="{ row }">
           <div class="flex flex-col">
             <span class="font-medium text-gray-900">{{ row.original.name }}</span>
@@ -723,53 +587,38 @@ const getTabCount = (tab: string) => {
         </template>
 
         <template #referral_code-cell="{ row }">
-          <code
-            v-if="row.original.referral_code"
-            class="text-xs bg-gray-100 px-2 py-1 rounded font-mono text-gray-700"
-          >
+          <code v-if="row.original.referral_code" class="text-xs bg-gray-100 px-2 py-1 rounded font-mono text-gray-700">
             {{ row.original.referral_code }}
           </code>
           <span v-else class="text-xs text-gray-400 italic">No code</span>
         </template>
 
         <template #referrals_count-cell="{ row }">
-          <span
-            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-            :class="{
-              'bg-green-100 text-green-800': row.original.referrals_count > 0,
-              'bg-gray-100 text-gray-500': row.original.referrals_count === 0,
-            }"
-          >
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" :class="{
+            'bg-green-100 text-green-800': row.original.referrals_count > 0,
+            'bg-gray-100 text-gray-500': row.original.referrals_count === 0,
+          }">
             {{ row.original.referrals_count }}
           </span>
         </template>
 
         <template #points_balance-cell="{ row }">
-          <span
-            class="font-medium"
-            :class="{
-              'text-blue-600': row.original.points_balance > 0,
-              'text-gray-500': row.original.points_balance === 0,
-            }"
-          >
+          <span class="font-medium" :class="{
+            'text-blue-600': row.original.points_balance > 0,
+            'text-gray-500': row.original.points_balance === 0,
+          }">
             {{ row.original.points_balance.toLocaleString() }} Pkr
           </span>
         </template>
 
         <template #actions-cell="{ row }">
           <div class="flex items-center justify-end gap-2">
-            <button
-              @click="handleViewReferralList(row.original)"
+            <button @click="handleViewReferralList(row.original)"
               class="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
-              title="View Tree"
-            >
+              title="View Tree">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
             </button>
           </div>
@@ -778,23 +627,12 @@ const getTabCount = (tab: string) => {
     </div>
 
     <!-- Withdrawal History Tab Content -->
-    <div
-      v-if="activeTab === 'withdrawals'"
-      class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden py-4"
-    >
+    <div v-if="activeTab === 'withdrawals'"
+      class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden py-4">
       <div v-if="!withdrawalHistory?.data?.length" class="text-center py-12">
-        <svg
-          class="w-16 h-16 mx-auto text-gray-300"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-          />
+        <svg class="w-16 h-16 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
         <p class="mt-4 text-lg font-medium text-gray-900">No withdrawal history</p>
         <p class="mt-1 text-sm text-gray-500">
@@ -802,28 +640,21 @@ const getTabCount = (tab: string) => {
         </p>
       </div>
 
-      <AppDataTableNew
-        v-else
-        :columns="withdrawalColumns"
-        :data="withdrawalHistory.data"
+      <AppDataTableNew v-else :columns="withdrawalColumns" :data="withdrawalHistory.data"
         :pagination-data="withdrawalHistory"
-        class="[&_thead]:bg-gray-50 [&_th]:text-left [&_th]:text-xs [&_th]:font-medium [&_th]:text-gray-500 [&_th]:uppercase [&_th]:tracking-wider [&_td]:py-3 [&_td]:px-3 [&_tr]:border-b [&_tr]:border-gray-200"
-      >
+        class="[&_thead]:bg-gray-50 [&_th]:text-left [&_th]:text-xs [&_th]:font-medium [&_th]:text-gray-500 [&_th]:uppercase [&_th]:tracking-wider [&_td]:py-3 [&_td]:px-3 [&_tr]:border-b [&_tr]:border-gray-200">
         <template #requested_amount-cell="{ row }">
           <span class="font-medium text-gray-900">
             {{ row.original.total_withdrawn?.toLocaleString() || 0 }}
             Pkr
           </span>
-          <span class="font-normal text-gray-900" v-if="row.original.requested_amount"
-            >{{ row.original.requested_amount?.toLocaleString() }} pending</span
-          >
+          <span class="font-normal text-gray-900" v-if="row.original.requested_amount">{{
+            row.original.requested_amount?.toLocaleString() }} pending</span>
         </template>
 
         <template #status-cell="{ row }">
-          <span
-            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-            :class="getStatusColor(row.original.status)"
-          >
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+            :class="getStatusColor(row.original.status)">
             {{ getStatusLabel(row.original.status) }}
           </span>
         </template>
@@ -833,19 +664,12 @@ const getTabCount = (tab: string) => {
             <span class="text-sm text-gray-600">
               {{ row.original.proof_images?.length || 0 }} images
             </span>
-            <button
-              v-if="row.original.proof_images?.length"
-              @click="openGalleryModal(row.original)"
+            <button v-if="row.original.proof_images?.length" @click="openGalleryModal(row.original)"
               class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
-              title="View Images"
-            >
+              title="View Images">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               View
             </button>
@@ -860,10 +684,8 @@ const getTabCount = (tab: string) => {
         </template>
 
         <template #transaction_id-cell="{ row }">
-          <code
-            v-if="row.original.transaction_id"
-            class="text-xs bg-gray-100 px-2 py-1 rounded font-mono text-gray-600"
-          >
+          <code v-if="row.original.transaction_id"
+            class="text-xs bg-gray-100 px-2 py-1 rounded font-mono text-gray-600">
             {{ row.original.transaction_id }}
           </code>
           <span v-else class="text-sm text-gray-400">—</span>
@@ -872,19 +694,10 @@ const getTabCount = (tab: string) => {
     </div>
 
     <!-- Withdraw Modal -->
-    <WithdrawModal
-      :show="showWithdrawModal"
-      :available-points="currentUserPoints"
-      :min-withdrawal="100"
-      @close="showWithdrawModal = false"
-      @success="handleWithdrawalSuccess"
-    />
+    <WithdrawModal :show="showWithdrawModal" :available-points="currentUserPoints" :min-withdrawal="100"
+      @close="showWithdrawModal = false" @success="handleWithdrawalSuccess" />
 
     <!-- Image Gallery Modal -->
-    <ImageGalleryModal
-      :show="showGalleryModal"
-      :withdrawal="selectedWithdrawal"
-      @close="showGalleryModal = false"
-    />
+    <ImageGalleryModal :show="showGalleryModal" :withdrawal="selectedWithdrawal" @close="showGalleryModal = false" />
   </div>
 </template>

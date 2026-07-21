@@ -56,6 +56,13 @@ Route::post('/set-city', function (Request $request) {
         ->withCookies([$cityCookie, $regionCookie]);
 })->name('set.city');
 
+Route::prefix('gift')->group(function () {
+    Route::get('/active-campaign', [GiftDetailController::class, 'getActiveCampaign']);
+    Route::get('/candidates', [GiftDetailController::class, 'getCandidates']);
+    Route::get('/delivered-users', [GiftDetailController::class, 'getDeliveredUsers']);
+    Route::get('/statistics', [GiftDetailController::class, 'getStatistics']);
+});
+
 // Static Pages
 Route::get('/policy/{type}', [PolicyController::class, 'show'])->name('policy.show');
 Route::get('/aboutus', [AboutController::class, 'index'])->name('aboutus');
