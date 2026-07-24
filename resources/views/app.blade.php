@@ -18,6 +18,19 @@
                 }
             })();
         </script>
+          <script>
+            (function() {
+                const appearance = '{{ $appearance ?? "system" }}';
+
+                if (appearance === 'system') {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+                    if (prefersDark) {
+                        document.documentElement.classList.add('dark');
+                    }
+                }
+            })();
+        </script>
 
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
         <style>
@@ -36,6 +49,15 @@
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ env('VITE_GA_MEASUREMENT_ID') }}"></script>
+
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', '{{ env('VITE_GA_MEASUREMENT_ID') }}');
+        </script>
 
         @routes
         @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])

@@ -9,6 +9,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PolicyController;
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\RegionController;
+use App\Http\Controllers\GiftDetailController;
 use App\Models\City;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
