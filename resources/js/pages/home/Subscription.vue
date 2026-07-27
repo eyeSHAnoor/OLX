@@ -22,10 +22,10 @@
                 <div v-if="!canSubscribe && paymentStep === 'select'" class="max-w-md mx-auto">
                     <!-- Header -->
                     <div class="rounded-t-3xl p-6 text-white text-center" :class="hasActiveSubscription
-                            ? 'bg-gradient-to-r from-brand-teal/70 to-brand-teal/90'
-                            : hasPendingSubscription
-                                ? 'bg-gradient-to-r from-brand-blue/70 to-brand-blue/90'
-                                : 'bg-gradient-to-r from-gray-500 to-gray-600'
+                        ? 'bg-gradient-to-r from-brand-teal/70 to-brand-teal/90'
+                        : hasPendingSubscription
+                            ? 'bg-gradient-to-r from-brand-blue/70 to-brand-blue/90'
+                            : 'bg-gradient-to-r from-gray-500 to-gray-600'
                         ">
                         <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-white/20 flex items-center justify-center">
                             <Icon v-if="hasActiveSubscription" icon="mdi:check-circle" class="text-2xl" />
@@ -137,9 +137,10 @@
                             <div class="space-y-4">
                                 <div v-for="plan in plans" :key="plan.id" @click="choosePlan(plan)"
                                     class="rounded-2xl p-4 transition-all cursor-pointer border" :class="plan.is_popular
-                                            ? 'border-brand-orange bg-orange-50 shadow-md'
-                                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                                        ? 'border-brand-orange bg-orange-50 shadow-md'
+                                        : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                                         ">
+                                    <!-- Top Row -->
                                     <!-- Top Row -->
                                     <div class="flex justify-between items-center mb-2">
                                         <div>
@@ -216,19 +217,36 @@
                                         <h3 class="text-base font-medium text-gray-900 mb-1">
                                             {{ plan.name }}
                                         </h3>
-                                        <div class="flex items-baseline gap-2 mb-3">
-                                            <!-- Only show original price with strikethrough if discount > 0 -->
-                                            <span v-if="plan.discount > 0 && plan.discount < plan.price"
-                                                class="text-xl font-light line-through text-gray-900">
-                                                {{ formatPrice(plan.price) }}
-                                            </span>
-                                            <span class="text-xl font-bold text-gray-900">
-                                                {{
-                                                    formatPrice(
-                                                        plan.discount > 0 && plan.discount < plan.price ? plan.discount :
-                                                            plan.price) }} </span>
-                                                    <span class="text-xs text-gray-500 ml-1">/{{ plan.duration_days }}
-                                                        days</span>
+                                        <!-- Price Section -->
+                                        <div class="mb-3">
+                                            <!-- Discount Badge -->
+                                            <div v-if="plan.discount > 0 && plan.discount < plan.price"
+                                                class="inline-flex items-center gap-1 bg-red-50 text-red-600 text-[10px] font-semibold px-2 py-0.5 rounded mb-1">
+                                                <span>🔥 Save {{ getDiscountPercentage(plan) }}%</span>
+                                            </div>
+
+                                            <!-- Original Price -->
+                                            <div v-if="plan.discount > 0 && plan.discount < plan.price"
+                                                class="flex items-baseline gap-2">
+                                                <span class="text-[10px] text-gray-500">Original:</span>
+                                                <span class="text-sm font-light line-through text-gray-400">
+                                                    {{ formatPrice(plan.price) }}
+                                                </span>
+                                            </div>
+
+                                            <!-- Final Price -->
+                                            <div class="flex items-baseline gap-2 mt-1">
+                                                <span v-if="plan.discount > 0 && plan.discount < plan.price"
+                                                    class="text-[10px] text-green-600 font-medium">Now:</span>
+                                                <span class="text-xl font-bold text-gray-900">
+                                                    {{
+                                                        formatPrice(
+                                                            plan.discount > 0 && plan.discount < plan.price ? plan.discount :
+                                                                plan.price) }} </span>
+                                                        <span class="text-xs text-gray-500 ml-1">/{{ plan.duration_days
+                                                            }}
+                                                            days</span>
+                                            </div>
                                         </div>
 
                                         <div class="border-t border-gray-100 pt-3 mt-2">
@@ -251,8 +269,8 @@
                                         <button @click="choosePlan(plan)"
                                             class="w-full py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 active:scale-[0.98]"
                                             :class="index === popularPlanIndex
-                                                    ? 'bg-brand-blue text-white hover:bg-brand-blue/80'
-                                                    : 'border border-gray-300 text-gray-700 hover:border-teal-500 hover:text-teal-600'
+                                                ? 'bg-brand-blue text-white hover:bg-brand-blue/80'
+                                                : 'border border-gray-300 text-gray-700 hover:border-teal-500 hover:text-teal-600'
                                                 ">
                                             Select {{ plan.name }}
                                         </button>
@@ -288,7 +306,14 @@
                                     <h2 class="text-lg font-semibold">{{ selectedPlan.name }}</h2>
                                     <p class="text-xs opacity-80">{{ selectedPlan.duration_days }} days</p>
                                 </div>
-                                <p class="text-lg font-bold">Rs {{ selectedPlan.price }}</p>
+                                <div class="text-right">
+                                    <!-- Show discounted price if available -->
+                                    <div v-if="selectedPlan.discount > 0 && selectedPlan.discount < selectedPlan.price">
+                                        <p class="text-xs line-through opacity-60">Rs {{ selectedPlan.price }}</p>
+                                        <p class="text-lg font-bold">Rs {{ selectedPlan.discount }}</p>
+                                    </div>
+                                    <p v-else class="text-lg font-bold">Rs {{ selectedPlan.price }}</p>
+                                </div>
                             </div>
                         </div>
 
@@ -312,13 +337,13 @@
                                             'opacity-40 cursor-not-allowed': !method.enabled,
                                         }">
                                         <Icon :icon="method.icon" class="text-lg mb-1" :class="form.payment_method === method.id
-                                                ? 'text-indigo-600'
-                                                : 'text-gray-500'
+                                            ? 'text-indigo-600'
+                                            : 'text-gray-500'
                                             " />
 
                                         <p class="text-[10px]" :class="form.payment_method === method.id
-                                                ? 'text-indigo-600 font-medium'
-                                                : 'text-gray-500'
+                                            ? 'text-indigo-600 font-medium'
+                                            : 'text-gray-500'
                                             ">
                                             {{ method.name }}
                                         </p>
@@ -415,8 +440,8 @@
                             <!-- Submit -->
                             <button @click="submit" :disabled="form.processing || !form.receipt || !form.terms_accepted"
                                 class="w-full py-3 rounded-full text-white font-semibold transition-all" :class="form.processing
-                                        ? 'bg-gray-400'
-                                        : 'bg-gradient-to-r from-brand-blue/80 to-brand-blue/100 hover:opacity-90'
+                                    ? 'bg-gray-400'
+                                    : 'bg-gradient-to-r from-brand-blue/80 to-brand-blue/100 hover:opacity-90'
                                     ">
                                 <span v-if="form.processing" class="flex items-center justify-center gap-2">
                                     <Icon icon="mdi:loading" class="animate-spin" />
@@ -456,6 +481,7 @@
                         </div>
 
                         <!-- Order Summary Card -->
+                        <!-- Order Summary Card -->
                         <div class="p-5 bg-brand-blue/10 border-b border-gray-100">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -469,7 +495,16 @@
                                 </div>
                                 <div class="text-right">
                                     <p class="text-xs text-gray-500 mb-0.5">Total</p>
-                                    <p class="text-xl font-light text-blue-700">
+                                    <!-- Show discounted price if available -->
+                                    <div v-if="selectedPlan.discount > 0 && selectedPlan.discount < selectedPlan.price">
+                                        <p class="text-sm line-through text-gray-400">
+                                            {{ formatPrice(selectedPlan.price) }}
+                                        </p>
+                                        <p class="text-xl font-bold text-blue-700">
+                                            {{ formatPrice(selectedPlan.discount) }}
+                                        </p>
+                                    </div>
+                                    <p v-else class="text-xl font-bold text-blue-700">
                                         {{ formatPrice(selectedPlan.price) }}
                                     </p>
                                 </div>
@@ -496,12 +531,12 @@
                                             'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200': !method.enabled,
                                         }">
                                         <Icon :icon="method.icon" class="text-base mb-1" :class="form.payment_method === method.id && method.enabled
-                                                ? 'text-blue-600'
-                                                : 'text-gray-500'
+                                            ? 'text-blue-600'
+                                            : 'text-gray-500'
                                             " />
                                         <span class="text-[10px]" :class="form.payment_method === method.id && method.enabled
-                                                ? 'text-blue-700 font-medium'
-                                                : 'text-gray-500'
+                                            ? 'text-blue-700 font-medium'
+                                            : 'text-gray-500'
                                             ">
                                             {{ method.name }}
                                         </span>
@@ -558,8 +593,8 @@
                                     <label for="receipt-upload"
                                         class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200"
                                         :class="isDragging
-                                                ? 'border-blue-500 bg-blue-50/50'
-                                                : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                                            ? 'border-blue-500 bg-blue-50/50'
+                                            : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
                                             ">
                                         <Icon icon="mdi:cloud-upload" class="text-2xl mb-1"
                                             :class="isDragging ? 'text-blue-600' : 'text-gray-400'" />

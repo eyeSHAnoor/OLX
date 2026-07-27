@@ -69,7 +69,7 @@ class SubscriptionController extends Controller
             'payment_status' => 'pending',
             'payment_gateway' => 'manual',
             'payment_method' => $request->payment_method,
-            'amount_paid' => $plan->price,
+            'amount_paid' => ($plan->discount > 0 && $plan->discount < $plan->price) ? $plan->discount : $plan->price,
             'receipt_image' => $receipt,
         ]);
 
@@ -175,7 +175,7 @@ class SubscriptionController extends Controller
             'plan_id' => $plan->id,
             'payment_status' => 'pending',
             'payment_gateway' => 'jazzcash',
-            'amount_paid' => $plan->price,
+            'amount_paid' => ($plan->discount > 0 && $plan->discount < $plan->price) ? $plan->discount : $plan->price,
             'payment_data' => [
                 'initiated_at' => now()
             ]

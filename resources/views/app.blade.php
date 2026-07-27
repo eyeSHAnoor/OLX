@@ -58,7 +58,7 @@
 
             gtag('config', '{{ env('VITE_GA_MEASUREMENT_ID') }}');
         </script>
-
+        <!-- GA ID: {{ env('VITE_GA_MEASUREMENT_ID') }} -->
         @routes
         @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         @inertiaHead
