@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\VerificationCodeController;
 use App\Http\Controllers\SocialAuthController;
+use App\Http\Controllers\FacebookController; 
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
@@ -30,6 +31,9 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/auth/{provider}/register', [App\Http\Controllers\SocialAuthController::class, 'redirect']);
     Route::get('/auth/{provider}/callback', [App\Http\Controllers\SocialAuthController::class, 'callback']);
+
+     Route::get('/auth/facebook', [FacebookController::class, 'redirectToFacebook'])->name('facebook.login');
+    Route::get('/auth/facebook/callback', [FacebookController::class, 'handleFacebookCallback'])->name('facebook.callback');
     
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');

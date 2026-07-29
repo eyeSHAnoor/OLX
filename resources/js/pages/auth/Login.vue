@@ -33,7 +33,7 @@
                     </button>
 
                     <button @click="socialLogin('facebook')"
-                        class="w-full flex items-center justify-center gap-2 bg-brand-blue text-white font-medium py-2.5 px-3 rounded-lg hover:bg-brand-blue/90 transition-all duration-200 active:scale-[0.98] text-xs">
+                        class="w-full flex items-center justify-center gap-2 bg-[#1877F2] text-white font-medium py-2.5 px-3 rounded-lg hover:bg-[#1877F2]/90 transition-all duration-200 active:scale-[0.98] text-xs">
                         <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
                             <path
                                 d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -143,8 +143,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { router, Link } from "@inertiajs/vue3";
+
+// Define props if you're passing referral code from parent
+const props = defineProps({
+    referralCode: {
+        type: String,
+        default: null
+    }
+});
 
 useForceTheme("light");
 
@@ -203,10 +211,64 @@ const handleLogin = () => {
     }, 1500);
 };
 
+/**
+ * Handle social login with referral code support
+ * This will redirect to the social provider with the referral code as a parameter
+ */
 const socialLogin = (provider: string) => {
-    //console.log(`Logging in with ${provider}`)
-    window.location.href = `/auth/${provider}`;
+    // Check if we have a referral code from URL or props
+    const urlParams = new URLSearchParams(window.location.search);
+    let referralCode = urlParams.get('ref') || props.referralCode || null;
+
+    // If no referral code, check if we have one stored in sessionStorage from a previous page
+    if (!referralCode) {
+        referralCode = sessionStorage.getItem('referral_code') || null;
+    }
+
+    // Build the redirect URL with referral code if available
+    let redirectUrl = `/auth/${provider}`;
+
+    if (referralCode) {
+        // Store in sessionStorage for backup
+        sessionStorage.setItem('referral_code', referralCode);
+        redirectUrl += `?ref=${encodeURIComponent(referralCode)}`;
+    }
+
+    // Log for debugging
+    console.log(`Redirecting to ${provider} with referral code:`, referralCode);
+
+    // Redirect to the provider's OAuth endpoint
+    window.location.href = redirectUrl;
 };
+
+// Check for referral code in URL on component mount
+onMounted(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const referralCode = urlParams.get('ref');
+
+    if (referralCode) {
+        // Store it in session for persistence across pages
+        sessionStorage.setItem('referral_code', referralCode);
+        console.log('Referral code detected on login page:', referralCode);
+    }
+});
+
+/**
+ * Helper function to clear referral code (call when user successfully logs in)
+ * This can be called from the parent component after successful authentication
+ */
+const clearReferralCode = () => {
+    sessionStorage.removeItem('referral_code');
+    // Also remove from URL if needed
+    const url = new URL(window.location.href);
+    url.searchParams.delete('ref');
+    window.history.replaceState({}, '', url.toString());
+};
+
+// Expose the clear function if needed by parent
+defineExpose({
+    clearReferralCode
+});
 </script>
 
 <style scoped>
