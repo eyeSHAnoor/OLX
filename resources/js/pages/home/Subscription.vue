@@ -244,7 +244,7 @@
                                                             plan.discount > 0 && plan.discount < plan.price ? plan.discount :
                                                                 plan.price) }} </span>
                                                         <span class="text-xs text-gray-500 ml-1">/{{ plan.duration_days
-                                                        }}
+                                                            }}
                                                             days</span>
                                             </div>
                                         </div>
@@ -740,7 +740,7 @@ const props = defineProps({
     plans: Array,
 });
 
-console.log(props.plan)
+console.log(props.plans)
 // console.log("Available subscription plans:", props.plans);
 const getDiscountPercentage = (plan) => {
     if (!plan.price || !plan.discount) return 0;
