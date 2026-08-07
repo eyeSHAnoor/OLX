@@ -21,8 +21,8 @@ class Plan extends Model
     protected $casts = [
         'features' => 'array',
         'is_popular' => 'boolean',
-        'discount' => 'decimal:2',
-        'price' => 'decimal:2'
+        'discount' => 'float',
+        'price' => 'float', 
     ];
 
      public function permissions()
