@@ -119,7 +119,7 @@ class GiftWonNotification extends Notification implements ShouldQueue
 
         return (new WebPushMessage)
             ->title('🎁 You\'ve Won a Gift!')
-            ->icon($this->gift->image ? '/storage/' . $this->gift->image : '/icon.png')
+            ->icon($this->gift->image ? '/storage/' . $this->gift->image : '/images/notif-logo.png')
             ->body("Congratulations! You've received {$this->gift->name} for your loyalty!")
             ->data([
                 'gift_id' => $this->gift->id,

@@ -48,7 +48,7 @@ class ScheduledNotification extends Notification implements ShouldQueue
     {
         return (new WebPushMessage)
             ->title($this->title)
-            ->icon('/icon.png')
+            ->icon('/images/notif-logo.png')
             ->body($this->message)
             ->data([
                 'url' => $this->url,

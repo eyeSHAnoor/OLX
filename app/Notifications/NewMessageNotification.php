@@ -63,7 +63,7 @@ class NewMessageNotification extends Notification implements ShouldQueue
         // ]);
         return (new WebPushMessage)
             ->title('New Message')
-            ->icon('/icon.png')
+            ->icon('/images/notif-logo.png')
             ->body("{$this->message->sender->name} sent you a message")
             ->data([
                 'chat_id' => $this->chat->id,

@@ -30,12 +30,12 @@ defineProps<Props>();
                 Account Settings
             </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem :as-child="true">
+        <!-- <DropdownMenuItem :as-child="true">
             <Link class="block w-full" :href="route('profile.edit')" prefetch as="button">
                 <Settings class="mr-2 h-4 w-4" />
                 Profile Settings
             </Link>
-        </DropdownMenuItem>
+        </DropdownMenuItem> -->
     </DropdownMenuGroup>
     <DropdownMenuSeparator />
     <DropdownMenuItem :as-child="true">

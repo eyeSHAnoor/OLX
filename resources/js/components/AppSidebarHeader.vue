@@ -42,10 +42,10 @@ const unreadCount = computed(() => notifications.value.received.length + notific
 
             <!-- Right side -->
             <div class="ml-auto flex items-center gap-3">
-                <LanguageSwitcher />
+                <!-- <LanguageSwitcher /> -->
 
                 <!--  Notification Dropdown -->
-                <UseNotificationDropdown :notifications="notifications" :auth="auth" />
+                <!-- <UseNotificationDropdown :notifications="notifications" :auth="auth" /> -->
 
                 <!-- User Dropdown -->
                 <DropdownMenu>

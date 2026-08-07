@@ -48,8 +48,8 @@ self.addEventListener('push', function (event) {
 
     const options = {
         body: data.body || '',
-        icon: data.icon || '/icon.png',
-        badge: '/icon.png', // small icon (recommended)
+        icon: self.location.origin + '/images/notif-logo.png',
+        badge: self.location.origin + '/images/notif-logo.png',// small icon (recommended)
         data: data.data || {},
         tag: 'chat-message-' + (data.data?.chat_id || ''),
         renotify: true,

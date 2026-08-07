@@ -76,7 +76,7 @@ class GiftDeliveredNotification extends Notification implements ShouldQueue
 
         return (new WebPushMessage)
             ->title('🚚 Gift Delivered!')
-            ->icon($this->gift->image ? '/storage/' . $this->gift->image : '/icon.png')
+            ->icon($this->gift->image ? '/storage/' . $this->gift->image : '/images/notif-logo.png')
             ->body("Your gift '{$this->gift->name}' has been delivered! Enjoy!")
             ->data([
                 'gift_id' => $this->gift->id,

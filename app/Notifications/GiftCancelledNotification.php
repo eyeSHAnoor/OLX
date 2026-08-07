@@ -87,7 +87,7 @@ class GiftCancelledNotification extends Notification implements ShouldQueue
 
         return (new WebPushMessage)
             ->title('⚠️ Gift Assignment Update')
-            ->icon('/icon.png')
+            ->icon('/images/notif-logo.png')
             ->body("Your gift '{$this->gift->name}' assignment has been cancelled.")
             ->data([
                 'gift_id' => $this->gift->id,

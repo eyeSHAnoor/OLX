@@ -54,7 +54,7 @@ class NewManualSubscriptionNotification extends Notification implements ShouldQu
     {
         return (new WebPushMessage)
             ->title('New Manual Subscription')
-            ->icon('/icon.png')
+            ->icon('/images/notif-logo.png')
             ->body("{$this->user->name} submitted a manual subscription payment.")
             ->data([
                 'subscription_id' => $this->subscription->id,

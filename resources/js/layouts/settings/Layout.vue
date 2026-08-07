@@ -14,26 +14,26 @@ const sidebarNavItems: NavItem[] = [
         title: 'Profile',
         href: route('profile.edit'),
     },
-    {
-        title: 'Role and Permission',
-        href: route('roles-permissions.index'),
-        isActive: route().current('roles-permissions.*'),
-        permission: 'view_roles', // only show if has permission
-    },
-    {
-        title: 'Team management',
-        href: route('user-roles.index'),
-        isActive: route().current('user-roles.*'),
-        permission: 'assign_roles',
-    },
-    {
-        title: 'Preferences',
-        href: route('preferences.edit'),
-    },
-    {
-        title: 'Notification Settings',
-        href: route('notification-settings.edit'),
-    },
+    // {
+    //     title: 'Role and Permission',
+    //     href: route('roles-permissions.index'),
+    //     isActive: route().current('roles-permissions.*'),
+    //     permission: 'view_roles', // only show if has permission
+    // },
+    // {
+    //     title: 'Team management',
+    //     href: route('user-roles.index'),
+    //     isActive: route().current('user-roles.*'),
+    //     permission: 'assign_roles',
+    // },
+    // {
+    //     title: 'Preferences',
+    //     href: route('preferences.edit'),
+    // },
+    // {
+    //     title: 'Notification Settings',
+    //     href: route('notification-settings.edit'),
+    // },
     {
         title: 'Password',
         href: '/settings/password',
