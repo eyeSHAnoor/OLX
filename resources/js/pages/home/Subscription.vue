@@ -154,20 +154,23 @@
 
                                         <div class="text-right flex flex-col items-end space-y-1">
                                             <!-- Discount badge - only show if discount > 0 -->
-                                            <div v-if="hasDiscount(plan)"
+                                            <div v-if="plan.discount > 0 && plan.discount < plan.price"
                                                 class="inline-flex items-center text-[10px] bg-red-500 text-white px-2 py-0.5 rounded font-semibold">
                                                 -{{ getDiscountPercentage(plan) }}%
                                             </div>
 
                                             <!-- Old price - only show if discount > 0 -->
-                                            <p v-if="hasDiscount(plan)" class="text-xs text-gray-400 line-through">
+                                            <p v-if="plan.discount > 0 && plan.discount < plan.price"
+                                                class="text-xs text-gray-400 line-through">
                                                 Rs {{ plan.price }}
                                             </p>
 
                                             <!-- Final price -->
                                             <p class="text-sm font-bold text-gray-900">
-                                                Rs {{ getDisplayPrice(plan) }}
-                                            </p>
+                                                Rs
+                                                {{
+                                                    plan.discount > 0 && plan.discount < plan.price ? plan.discount :
+                                                        plan.price }} </p>
                                         </div>
                                     </div>
 
@@ -217,13 +220,14 @@
                                         <!-- Price Section -->
                                         <div class="mb-3">
                                             <!-- Discount Badge -->
-                                            <div v-if="hasDiscount(plan)"
+                                            <div v-if="plan.discount > 0 && plan.discount < plan.price"
                                                 class="inline-flex items-center gap-1 bg-red-50 text-red-600 text-[10px] font-semibold px-2 py-0.5 rounded mb-1">
                                                 <span>🔥 Save {{ getDiscountPercentage(plan) }}%</span>
                                             </div>
 
                                             <!-- Original Price -->
-                                            <div v-if="hasDiscount(plan)" class="flex items-baseline gap-2">
+                                            <div v-if="plan.discount > 0 && plan.discount < plan.price"
+                                                class="flex items-baseline gap-2">
                                                 <span class="text-[10px] text-gray-500">Original:</span>
                                                 <span class="text-sm font-light line-through text-gray-400">
                                                     {{ formatPrice(plan.price) }}
@@ -232,13 +236,16 @@
 
                                             <!-- Final Price -->
                                             <div class="flex items-baseline gap-2 mt-1">
-                                                <span v-if="hasDiscount(plan)"
+                                                <span v-if="plan.discount > 0 && plan.discount < plan.price"
                                                     class="text-[10px] text-green-600 font-medium">Now:</span>
                                                 <span class="text-xl font-bold text-gray-900">
-                                                    {{ formatPrice(getDisplayPrice(plan)) }} </span>
-                                                <span class="text-xs text-gray-500 ml-1">/{{ plan.duration_days
-                                                    }}
-                                                    days</span>
+                                                    {{
+                                                        formatPrice(
+                                                            plan.discount > 0 && plan.discount < plan.price ? plan.discount :
+                                                                plan.price) }} </span>
+                                                        <span class="text-xs text-gray-500 ml-1">/{{ plan.duration_days
+                                                        }}
+                                                            days</span>
                                             </div>
                                         </div>
 
@@ -301,11 +308,11 @@
                                 </div>
                                 <div class="text-right">
                                     <!-- Show discounted price if available -->
-                                    <div v-if="hasDiscount(selectedPlan)">
+                                    <div v-if="selectedPlan.discount > 0 && selectedPlan.discount < selectedPlan.price">
                                         <p class="text-xs line-through opacity-60">Rs {{ selectedPlan.price }}</p>
-                                        <p class="text-lg font-bold">Rs {{ getDisplayPrice(selectedPlan) }}</p>
+                                        <p class="text-lg font-bold">Rs {{ selectedPlan.discount }}</p>
                                     </div>
-                                    <p v-else class="text-lg font-bold">Rs {{ getDisplayPrice(selectedPlan) }}</p>
+                                    <p v-else class="text-lg font-bold">Rs {{ selectedPlan.price }}</p>
                                 </div>
                             </div>
                         </div>
@@ -489,16 +496,16 @@
                                 <div class="text-right">
                                     <p class="text-xs text-gray-500 mb-0.5">Total</p>
                                     <!-- Show discounted price if available -->
-                                    <div v-if="hasDiscount(selectedPlan)">
+                                    <div v-if="selectedPlan.discount > 0 && selectedPlan.discount < selectedPlan.price">
                                         <p class="text-sm line-through text-gray-400">
                                             {{ formatPrice(selectedPlan.price) }}
                                         </p>
                                         <p class="text-xl font-bold text-blue-700">
-                                            {{ formatPrice(getDisplayPrice(selectedPlan)) }}
+                                            {{ formatPrice(selectedPlan.discount) }}
                                         </p>
                                     </div>
                                     <p v-else class="text-xl font-bold text-blue-700">
-                                        {{ formatPrice(getDisplayPrice(selectedPlan)) }}
+                                        {{ formatPrice(selectedPlan.price) }}
                                     </p>
                                 </div>
                             </div>
@@ -735,33 +742,11 @@ const props = defineProps({
 
 console.log(props.plans)
 // console.log("Available subscription plans:", props.plans);
-const getNumericValue = (value) => {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-};
-
-const hasDiscount = (plan) => {
-    const price = getNumericValue(plan?.price);
-    const discount = getNumericValue(plan?.discount);
-
-    return discount > 0 && discount < price;
-};
-
-const getDisplayPrice = (plan) => {
-    const price = getNumericValue(plan?.price);
-    const discount = getNumericValue(plan?.discount);
-
-    return hasDiscount(plan) ? discount : price;
-};
-
 const getDiscountPercentage = (plan) => {
-    const price = getNumericValue(plan?.price);
-    const discount = getNumericValue(plan?.discount);
+    if (!plan.price || !plan.discount) return 0;
 
-    if (!price || !discount || discount >= price) return 0;
-
-    const percent = ((price - discount) / price) * 100;
-    return Math.round(percent);
+    const discount = ((plan.price - plan.discount) / plan.price) * 100;
+    return Math.round(discount);
 };
 
 // Generic premium features (from the first screenshot)
