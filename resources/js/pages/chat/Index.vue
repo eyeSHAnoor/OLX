@@ -4,7 +4,7 @@ import { router, Link } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import { Icon } from '@iconify/vue'
 import { usePage } from '@inertiajs/vue3'
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 const { theme } = useTheme()
 

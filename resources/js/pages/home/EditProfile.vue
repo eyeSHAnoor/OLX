@@ -62,7 +62,7 @@
                                 <div v-else class="w-full h-full bg-brand-blue flex items-center justify-center">
                                     <span class="text-4xl font-semibold text-white uppercase">{{
                                         userInitial
-                                        }}</span>
+                                    }}</span>
                                 </div>
                             </div>
 
@@ -284,7 +284,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import { router, Link, useForm, usePage } from "@inertiajs/vue3";
 import OlxLayout from "@/layouts/OlxLayout.vue";
 import { useAlertDialog } from "@/composables/useAlertDialog";
-import { useTheme } from "@/Composables/useTheme";
+import { useTheme } from "@/composables/useTheme";
 import { useForceTheme } from "@/composables/useForceTheme";
 import axios from "axios";
 

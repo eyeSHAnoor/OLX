@@ -5,7 +5,7 @@ import { computed, onMounted, ref } from "vue";
 import Layout from "@/layouts/OlxLayout.vue";
 import { useBreadcrumb } from "@/composables/useBreadcrumb";
 import ReferralTreeNode from "../_partials/ReferralTreeNode.vue";
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 const { theme } = useTheme()
 defineOptions({ layout: Layout });

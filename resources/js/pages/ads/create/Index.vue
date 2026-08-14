@@ -126,7 +126,7 @@ import { usePage, Link } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import CategoryNavigation from './CategoryNavigation.vue'
 import AdDetailsForm from './AdDetailsForm.vue'
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 const { theme } = useTheme()
 useForceTheme('light');

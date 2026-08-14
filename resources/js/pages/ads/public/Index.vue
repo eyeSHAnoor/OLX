@@ -430,7 +430,7 @@ import debounce from "lodash/debounce";
 import { useShadcnAlert } from "@/composables/useShadcnAlert";
 import ShadcnAlertDialog from "@/components/ShadcnAlertDialog.vue";
 import TopCategoriesBar from "@/components/TopCategoriesBar.vue";
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 const { theme } = useTheme()
 

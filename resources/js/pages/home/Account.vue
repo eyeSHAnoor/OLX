@@ -199,7 +199,7 @@ import { computed } from "vue";
 import { Link, router, usePage } from "@inertiajs/vue3";
 import { Icon } from "@iconify/vue";
 import OlxLayout from "@/layouts/OlxLayout.vue";
-import { useTheme } from "@/Composables/useTheme";
+import { useTheme } from "@/composables/useTheme";
 import { useForceTheme } from "@/composables/useForceTheme";
 
 // Theme

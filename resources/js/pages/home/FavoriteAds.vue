@@ -234,7 +234,7 @@ import axios from 'axios'
 import debounce from 'lodash/debounce'
 import { Icon } from '@iconify/vue'
 import TopCategoriesBar from '@/components/TopCategoriesBar.vue'
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 // Theme
 const { theme } = useTheme()

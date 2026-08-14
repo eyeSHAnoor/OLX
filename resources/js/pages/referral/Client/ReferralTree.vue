@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { Head, router } from "@inertiajs/vue3";
 import Layout from "@/layouts/OlxLayout.vue";
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 const { theme } = useTheme()
 defineOptions({ layout: Layout });

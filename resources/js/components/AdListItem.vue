@@ -142,7 +142,7 @@
                                     </svg>
                                     <span class="line-clamp-1">{{
                                         ad.location || "Location not specified"
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <div v-if="ad.category" class="flex items-center text-[10px] sm:text-xs"
                                     :class="theme.textMuted">
@@ -204,7 +204,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { Link } from "@inertiajs/vue3";
-import { useTheme } from "@/Composables/useTheme";
+import { useTheme } from "@/composables/useTheme";
 
 // Theme
 const { theme } = useTheme();

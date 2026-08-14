@@ -8,7 +8,7 @@ import AdListItem from '@/components/AdListItem.vue'
 import debounce from 'lodash/debounce'
 import citiesList from '@/data/cities.json'
 import TopCategoriesBar from '@/components/TopCategoriesBar.vue'
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 // Shadcn/ui components for modal
 import { Button } from '@/components/ui/button'
 import {
@@ -619,7 +619,7 @@ const priceRanges = [
                                 <Link :href="route('home')" class="hover:text-brand-teal">Home</Link>
                                 <Icon icon="mdi:chevron-right" class="text-gray-400 text-sm" />
                                 <span v-if="category" class="font-medium text-xs" :class="theme.text">{{ category.name
-                                }}</span>
+                                    }}</span>
                                 <span v-else class="font-medium text-xs" :class="theme.text">All Categories</span>
                             </div>
                             <div class="mt-3">
@@ -692,7 +692,7 @@ const priceRanges = [
                                         class="w-3.5 h-3.5 rounded border-gray-300 text-brand-teal focus:ring-brand-teal">
                                     <span class="text-xs flex-1" :class="theme.text">{{ brand.name }}</span>
                                     <span class="text-[10px]" :class="theme.textMuted">{{ getBrandAdCount(brand.id)
-                                    }}</span>
+                                        }}</span>
                                 </label>
                             </div>
                         </div>

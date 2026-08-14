@@ -6,7 +6,7 @@ import axios from "axios";
 import Layout from "@/layouts/OlxLayout.vue";
 import { useBreadcrumb } from "@/composables/useBreadcrumb";
 import { debounce } from "lodash";
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 const { theme } = useTheme()
 

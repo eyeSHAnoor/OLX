@@ -115,7 +115,7 @@
                                 ]">
                                 {{ category.name }}
                                 <span class="text-[10px] ml-1" :class="theme.textMuted">({{ getCategoryAdCount(category)
-                                }})</span>
+                                    }})</span>
                             </div>
                         </div>
                     </div>
@@ -138,7 +138,7 @@
                             ]">
                                 <span>{{ brand.name }}</span>
                                 <span class="text-[10px]" :class="theme.textMuted">{{ getBrandAdCount(brand.id)
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
 
@@ -241,7 +241,7 @@
                         <div class="space-y-3">
                             <div v-for="attribute in attributes.filter(attr => attr.is_filterable)" :key="attribute.id">
                                 <label class="block text-xs font-medium mb-1.5" :class="theme.text">{{ attribute.name
-                                }}</label>
+                                    }}</label>
 
                                 <!-- Select Attributes -->
                                 <div v-if="attribute.type === 'select' && attribute.options?.length" class="space-y-1">
@@ -609,7 +609,7 @@ import AdCard from '@/components/AdCard.vue'
 import AdListItem from '@/components/AdListItem.vue'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import debounce from 'lodash/debounce'
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 // Theme
 const { theme } = useTheme()

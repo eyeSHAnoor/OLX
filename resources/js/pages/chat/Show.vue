@@ -7,7 +7,7 @@ import { usePage } from '@inertiajs/vue3'
 import { useAlertDialog } from '@/composables/useAlertDialog'
 import AdPickerModal from './_partials/AdPickerModal.vue'
 import axios from 'axios'
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 const { theme } = useTheme()
 const props = defineProps({
@@ -985,7 +985,7 @@ const sendAd = (ad) => {
                                                 <Icon icon="lucide:file-text" class="size-5" :class="theme.textMuted" />
                                                 <span class="text-sm truncate" :class="theme.text">{{
                                                     message.body.split('/').pop()
-                                                }}</span>
+                                                    }}</span>
                                                 <a :href="getFileUrl(message.id)" target="_blank"
                                                     class="underline text-xs" :class="theme.textAccent">Download</a>
                                             </div>

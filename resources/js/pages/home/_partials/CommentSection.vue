@@ -129,7 +129,7 @@ import { ref } from "vue";
 import { router, usePage } from "@inertiajs/vue3";
 import { Icon } from "@iconify/vue";
 import { Link } from "@inertiajs/vue3";
-import { useTheme } from "@/Composables/useTheme";
+import { useTheme } from "@/composables/useTheme";
 
 // Theme
 const { theme } = useTheme();

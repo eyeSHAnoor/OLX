@@ -197,7 +197,7 @@ import { ref, computed, onMounted } from 'vue'
 import { router, Link, usePage } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import { Icon } from '@iconify/vue'
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 interface Props {
     notifications: {

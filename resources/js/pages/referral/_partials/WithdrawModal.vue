@@ -12,7 +12,7 @@ import { watch, ref, computed } from "vue";
 import AppButton from "@/components/Application/AppButton.vue";
 import { Wallet, Banknote, Phone, AlertCircle } from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 const props = defineProps<{
   show?: boolean;

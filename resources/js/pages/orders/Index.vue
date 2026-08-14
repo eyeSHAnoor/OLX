@@ -4,7 +4,7 @@ import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import { Icon } from '@iconify/vue'
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 const props = defineProps({
     orders: Object,

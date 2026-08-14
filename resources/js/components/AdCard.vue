@@ -186,7 +186,7 @@
 import { ref, computed } from "vue";
 import { Link, router, usePage } from "@inertiajs/vue3";
 import useHelpers from "@/composables/useHelpers";
-import { useTheme } from "@/Composables/useTheme";
+import { useTheme } from "@/composables/useTheme";
 
 // --- Theme ---
 const { theme } = useTheme();

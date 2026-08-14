@@ -55,7 +55,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 import { Icon } from "@iconify/vue";
 import axios from "axios";
-import { useTheme } from "@/Composables/useTheme";
+import { useTheme } from "@/composables/useTheme";
 
 const { theme, activePlan } = useTheme();
 

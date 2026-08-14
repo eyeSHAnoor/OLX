@@ -299,7 +299,7 @@ import OlxLayout from "@/layouts/OlxLayout.vue";
 import { Icon } from "@iconify/vue";
 import axios from "axios";
 import { useForceTheme } from "@/composables/useForceTheme";
-import { useTheme } from "@/Composables/useTheme";
+import { useTheme } from "@/composables/useTheme";
 
 useForceTheme("light");
 

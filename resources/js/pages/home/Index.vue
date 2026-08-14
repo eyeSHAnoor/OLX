@@ -190,7 +190,7 @@ import CategoryAds from "@/components/CategoryAds.vue";
 import AdCard from "@/components/AdCard.vue";
 import { Icon } from "@iconify/vue";
 import { useForceTheme } from "@/composables/useForceTheme";
-import { useTheme } from "@/Composables/useTheme";
+import { useTheme } from "@/composables/useTheme";
 import Banner from "./_partials/Banner.vue";
 
 // --- Theme ---

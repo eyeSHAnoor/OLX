@@ -153,7 +153,7 @@
 <script setup>
 import { ref } from "vue";
 import { router } from "@inertiajs/vue3";
-import { useTheme } from '@/Composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 const props = defineProps({
     order: Object,
