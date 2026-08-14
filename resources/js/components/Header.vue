@@ -160,11 +160,19 @@
                 </div>
 
                 <!-- Mobile Crown -->
-                <div class="flex md:hidden items-center gap-4">
+                <div class="flex md:hidden items-center gap-2">
+                    <Link href="/notifications" class="flex flex-col items-center">
+                        <Icon icon="mdi:bell" class="text-2xl shrink-0 text-gray-400" />
+                        <span v-if="unreadCount > 0"
+                            class="absolute top-2 right-12 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full">
+                            {{ unreadCount }}
+                        </span>
+                    </Link>
                     <Link :href="route('subscriptions.index')"
                         :class="['flex items-center justify-between', theme.text, theme.hover]">
                         <Icon icon="mdi:crown" class="text-3xl shrink-0" :class="theme.icon" />
                     </Link>
+
                 </div>
             </div>
         </div>

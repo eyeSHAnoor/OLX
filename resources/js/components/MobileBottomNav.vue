@@ -38,21 +38,23 @@
             </div>
 
             <div class="flex justify-around items-center gap-0 w-2/5">
-                <!-- Notifications -->
+                <!-- My Ads -->
                 <div class="relative">
-                    <Link href="/notifications" class="flex flex-col items-center">
-                        <Icon :icon="isActive('notifications') ? 'mdi:bell' : 'mdi:bell-outline'" class="text-xl"
-                            :class="isActive('notifications') ? theme.textAccent : theme.textMuted" />
+                    <Link href="/user/my/ads" class="flex flex-col items-center">
+                        <div class="relative">
+                            <Icon :icon="isActive('myads') ? 'mdi:view-dashboard' : 'mdi:view-dashboard-outline'"
+                                class="text-xl" :class="isActive('myads') ? theme.textAccent : theme.textMuted" />
+                            <!-- Optional: Add a badge for ads count if needed -->
+                            <!-- <span v-if="adsCount > 0"
+                                class="absolute -top-1 -right-2 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full min-w-[18px] min-h-[18px] flex items-center justify-center">
+                                {{ adsCount > 99 ? '99+' : adsCount }}
+                            </span> -->
+                        </div>
                         <span class="text-[11px] mt-1"
-                            :class="isActive('notifications') ? [theme.textAccent, 'font-medium'] : theme.textMuted">
-                            Notifications
+                            :class="isActive('myads') ? [theme.textAccent, 'font-medium'] : theme.textMuted">
+                            My Ads
                         </span>
                     </Link>
-                    <!-- Badge -->
-                    <span v-if="unreadCount > 0"
-                        class="absolute -top-1 right-1 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full">
-                        {{ unreadCount }}
-                    </span>
                 </div>
 
                 <!-- Account -->
@@ -85,31 +87,37 @@ import { computed } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
 import { Icon } from "@iconify/vue";
 import { useTheme } from "@/composables/useTheme";
-const { theme } = useTheme();
 
+const { theme } = useTheme();
 const page = usePage();
+
 const user = computed(() => page.props.auth?.user);
 const notifications = computed(() => page.props.notifications || []);
 const unreadCount = computed(() => page.props.unreadCount || 0);
+
+// Optional: Get user's ads count
+const adsCount = computed(() => page.props.adsCount || 0);
+
 useForceTheme("light");
+
 // Compute account link based on user authentication
 const accountLink = computed(() => {
     return user.value ? route("account") : route("login");
 });
 
 // Helper function to determine active route
-const isActive = (page) => {
+const isActive = (pageName) => {
     if (typeof window === "undefined") return false;
 
     const currentPath = window.location.pathname;
 
-    switch (page) {
+    switch (pageName) {
         case "home":
             return currentPath === "/";
         case "chat":
             return currentPath.startsWith("/chat");
         case "myads":
-            return currentPath.startsWith("/my/ads");
+            return currentPath.startsWith("/user/my/ads") || currentPath.startsWith("/my/ads");
         case "account":
             return user.value ? currentPath.includes("/profile") : currentPath === "/login";
         default:

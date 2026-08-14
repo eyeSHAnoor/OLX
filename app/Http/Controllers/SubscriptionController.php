@@ -150,6 +150,36 @@ class SubscriptionController extends Controller
         return redirect()->back()->with('success', 'User subscription has been rejected.');
     }
 
+    public function cancel(int $userId)
+    {
+        $user = User::findOrFail($userId);
+
+        $completedSubscription = $user->subscription()->where('payment_status', 'completed')->first();
+
+        if (!$completedSubscription) {
+            return redirect()->back()->with('error', 'No completed subscription found for this user.');
+        }
+
+        DB::transaction(function () use ($completedSubscription, $user) {
+            // Mark subscription as cancelled
+            $completedSubscription->update([
+                'payment_status' => 'rejected',
+            ]);
+
+            // Update user's subscription status
+            $hasOtherSubscriptions = $user->subscription()->whereIn('payment_status', ['pending', 'completed'])->exists();
+            if (!$hasOtherSubscriptions) {
+                $user->status = 'inactive';
+                $user->save();
+            }
+
+            // Optional: Send notification to the user
+            // $user->notify(new SubscriptionCancelledNotification($completedSubscription));
+        });
+
+        return redirect()->back()->with('success', 'User subscription has been cancelled successfully.');
+    }
+
     public function initiateJazzCash(Request $request)
     {
         $user = auth()->user();

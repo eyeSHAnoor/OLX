@@ -21,6 +21,7 @@ const model = defineModel<boolean>();
 
 const page = usePage();
 const form = useForm({});
+const cancelForm = useForm({});
 
 // Get user's subscription
 const subscription = computed(() => user?.subscription);
@@ -60,7 +61,9 @@ const getStatusBadgeClass = (status: string) => {
         completed: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
         pending: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
         failed: 'bg-red-100 text-red-700 border border-red-200',
-        refunded: 'bg-purple-100 text-purple-700 border border-purple-200'
+        refunded: 'bg-purple-100 text-purple-700 border border-purple-200',
+        rejected: 'bg-red-100 text-red-700 border border-red-200',
+        cancelled: 'bg-gray-100 text-gray-700 border border-gray-200'
     };
     return classes[status] || 'bg-gray-100 text-gray-700 border border-gray-200';
 };
@@ -70,7 +73,9 @@ const getStatusIcon = (status: string) => {
         completed: 'mdi:check-circle',
         pending: 'mdi:clock-outline',
         failed: 'mdi:close-circle',
-        refunded: 'mdi:refresh'
+        refunded: 'mdi:refresh',
+        rejected: 'mdi:close-circle',
+        cancelled: 'mdi:cancel'
     };
     return icons[status] || 'mdi:help-circle';
 };
@@ -98,6 +103,23 @@ const rejectSubscription = () => {
     });
 };
 
+// New: Cancel completed subscription
+const cancelSubscription = () => {
+    if (!subscription.value?.id) return;
+
+    // Show confirmation dialog
+    if (!confirm('Are you sure you want to cancel this subscription? This action cannot be undone.')) {
+        return;
+    }
+
+    cancelForm.post(route('subscriptions.cancel', user?.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            model.value = false;
+        }
+    });
+};
+
 const viewReceipt = () => {
     if (subscription.value?.id) {
         window.open(
@@ -113,10 +135,17 @@ const downloadReceipt = () => {
     }
 };
 
+// Check if subscription can be cancelled (completed and not already cancelled/rejected)
+const canCancelSubscription = computed(() => {
+    return subscription.value?.payment_status === 'completed';
+});
+
 watch(model, (isOpen) => {
     if (isOpen) {
         form.reset();
         form.clearErrors();
+        cancelForm.reset();
+        cancelForm.clearErrors();
     }
 });
 </script>
@@ -303,7 +332,19 @@ watch(model, (isOpen) => {
                     </div>
                 </DialogFooter>
 
-                <!-- Close Button for Non-pending -->
+                <!-- Action Buttons for Completed Subscriptions -->
+                <DialogFooter v-else-if="subscription?.payment_status === 'completed'" class="flex items-center gap-2">
+                    <div class="flex items-center justify-between gap-2 w-full">
+                        <AppButton label="Cancel Subscription" icon="mdi:cancel" variant="danger" size="sm"
+                            :processing="cancelForm.processing" @click="cancelSubscription" />
+                        <div class="flex items-center gap-2">
+                            <AppButton size="sm" variant="outline" label="Close" @click="model = false"
+                                :disabled="cancelForm.processing" />
+                        </div>
+                    </div>
+                </DialogFooter>
+
+                <!-- Close Button for Other Statuses -->
                 <DialogFooter v-else>
                     <div class="flex items-center justify-end gap-2 w-full">
                         <AppButton size="sm" label="Close" @click="model = false" />

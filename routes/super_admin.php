@@ -54,6 +54,7 @@ Route::middleware(['auth', 'super_admin'])->group(function () {
         ->name('subscriptions.complete');
     Route::post('/subscriptions/{user}/reject', [SubscriptionController::class, 'reject'])
         ->name('subscriptions.reject');
+    Route::post('/subscriptions/cancel/{user}', [SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
 
     // Banners
     Route::resource('banners', BannerController::class)->except(['show']);
