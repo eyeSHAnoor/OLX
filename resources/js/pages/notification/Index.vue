@@ -1,33 +1,34 @@
 <template>
     <OlxLayout :hide-search-bar="true">
-        <div class="min-h-screen bg-gray-50">
+        <div class="min-h-screen" :class="theme.bg">
             <div class="max-w-full mx-auto px-4 py-6 md:py-8">
                 <!-- Header -->
                 <div class="mb-4 overflow-hidden">
-                    <div class=" md:px-5 px-2 py-4 border-b border-gray-100">
+                    <div class="md:px-5 px-2 py-4 border-b" :class="theme.border">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h1 class="text-2xl font-bold text-gray-900">Notifications</h1>
-                                <p class="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                                <h1 class="text-2xl font-bold" :class="theme.text">Notifications</h1>
+                                <p class="text-sm mt-1 flex items-center gap-2" :class="theme.textMuted">
                                     <span class="inline-block size-2 bg-blue-500 rounded-full"></span>
                                     {{ unreadCount }} unread {{ unreadCount === 1 ? 'notification' : 'notifications' }}
                                 </p>
                             </div>
 
                             <button v-if="unreadCount > 0" @click="markAllAsRead"
-                                class="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
+                                class="px-4 py-2 text-sm font-medium rounded-xl transition-colors"
+                                :class="[theme.textAccent, theme.hover]">
                                 Mark all as read
                             </button>
                         </div>
                     </div>
 
                     <!-- Tabs -->
-                    <div class="flex border-b border-gray-100 bg-white">
+                    <div class="flex border-b" :class="[theme.border, theme.card]">
                         <button @click="activeTab = 'all'" :class="[
                             'flex-1 px-4 py-3 text-sm font-medium transition-all relative',
                             activeTab === 'all'
-                                ? 'text-blue-600'
-                                : 'text-gray-500 hover:text-gray-700'
+                                ? theme.textAccent
+                                : `${theme.textMuted} hover:${theme.text}`
                         ]">
                             All
                             <div v-if="activeTab === 'all'"
@@ -36,8 +37,8 @@
                         <button @click="activeTab = 'unread'" :class="[
                             'flex-1 px-4 py-3 text-sm font-medium transition-all relative',
                             activeTab === 'unread'
-                                ? 'text-blue-600'
-                                : 'text-gray-500 hover:text-gray-700'
+                                ? theme.textAccent
+                                : `${theme.textMuted} hover:${theme.text}`
                         ]">
                             Unread
                             <span v-if="unreadCount > 0"
@@ -52,22 +53,24 @@
 
                 <!-- Orders Card -->
                 <Link :href="route('orders')" class="block mb-4">
-                    <div
-                        class="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl shadow-sm border border-orange-100 p-4 transition-all hover:shadow-md hover:scale-[1.01]">
+                    <div class="rounded-2xl shadow-sm border p-4 transition-all hover:shadow-md hover:scale-[1.01]"
+                        :class="[theme.card, theme.border]">
                         <div class="flex items-center gap-4">
-                            <div
-                                class="size-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor"
+                            <div class="size-12 rounded-full flex items-center justify-center flex-shrink-0"
+                                :class="theme.bgLight">
+                                <svg class="w-6 h-6" :class="theme.icon" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                 </svg>
                             </div>
                             <div class="flex-1">
-                                <h3 class="font-semibold text-gray-900">Manage Your Orders</h3>
-                                <p class="text-sm text-gray-600">View and track all your orders in one place</p>
+                                <h3 class="font-semibold" :class="theme.text">Manage Your Orders</h3>
+                                <p class="text-sm" :class="theme.textMuted">View and track all your orders in one place
+                                </p>
                             </div>
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5" :class="theme.textMuted" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 5l7 7-7 7" />
                             </svg>
@@ -79,17 +82,18 @@
                 <div v-if="filteredNotifications.length > 0" class="space-y-2">
                     <!-- Date Groups -->
                     <template v-for="(group, dateKey) in groupedNotifications" :key="dateKey">
-                        <div
-                            class="text-xs font-semibold text-gray-500 px-4 py-2 bg-gray-50 rounded-lg mt-4 first:mt-0">
+                        <div class="text-xs font-semibold px-4 py-2 rounded-lg mt-4 first:mt-0"
+                            :class="[theme.textMuted, theme.bgLight]">
                             {{ dateKey }}
                         </div>
 
                         <div v-for="notification in group" :key="notification.id"
                             @click="openNotification(notification)"
-                            class="group bg-white rounded-xl shadow-sm border transition-all hover:shadow-md cursor-pointer"
+                            class="group rounded-xl shadow-sm border transition-all hover:shadow-md cursor-pointer"
                             :class="[
-                                notification.read_at ? 'border-gray-100' : 'border-l-4 border-l-blue-500 border-gray-100',
-                                'hover:bg-gray-50/50'
+                                notification.read_at ? theme.border : 'border-l-4 border-l-blue-500 ' + theme.border,
+                                theme.card,
+                                theme.hover
                             ]">
                             <div class="md:p-4 py-4 px-2">
                                 <div class="flex gap-3">
@@ -106,22 +110,24 @@
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-start justify-between gap-2">
                                             <div class="flex-1">
-                                                <p class="text-sm font-medium text-gray-900">
+                                                <p class="text-sm font-medium" :class="theme.text">
                                                     {{ getNotificationTitle(notification.data) }}
                                                 </p>
-                                                <p class="text-sm text-gray-600 mt-1 leading-relaxed">
+                                                <p class="text-sm mt-1 leading-relaxed" :class="theme.textMuted">
                                                     {{ getNotificationMessage(notification.data) }}
                                                 </p>
 
                                                 <!-- Metadata -->
                                                 <div class="flex items-center gap-3 mt-2">
-                                                    <span class="text-xs text-gray-400 flex items-center gap-1">
+                                                    <span class="text-xs flex items-center gap-1"
+                                                        :class="theme.textMuted">
                                                         <Icon icon="lucide:clock" class="size-3" />
                                                         {{ formatDate(notification.created_at) }}
                                                     </span>
 
                                                     <span v-if="notification.data.metadata?.type"
-                                                        class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                                                        class="text-xs px-2 py-0.5 rounded-full"
+                                                        :class="[theme.bgLight, theme.textMuted]">
                                                         {{ notification.data.metadata.type }}
                                                     </span>
                                                 </div>
@@ -134,7 +140,8 @@
 
                                                 <button v-if="!notification.read_at"
                                                     @click.stop="markAsRead(notification.id)"
-                                                    class="opacity-0 group-hover:opacity-100 text-xs text-gray-400 hover:text-blue-600 transition-all">
+                                                    class="opacity-0 group-hover:opacity-100 text-xs transition-all"
+                                                    :class="[theme.textMuted, `hover:${theme.textAccent}`]">
                                                     Mark as read
                                                 </button>
                                             </div>
@@ -147,14 +154,16 @@
                 </div>
 
                 <!-- Empty State -->
-                <div v-else class="bg-white rounded-2xl shadow-sm border border-gray-100 py-12 px-4 text-center">
-                    <div class="size-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Icon icon="lucide:bell-off" class="size-10 text-gray-400" />
+                <div v-else class="rounded-2xl shadow-sm border py-12 px-4 text-center"
+                    :class="[theme.card, theme.border]">
+                    <div class="size-20 rounded-full flex items-center justify-center mx-auto mb-4"
+                        :class="theme.bgLight">
+                        <Icon icon="lucide:bell-off" class="size-10" :class="theme.textMuted" />
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-1">
+                    <h3 class="text-lg font-semibold mb-1" :class="theme.text">
                         {{ activeTab === 'unread' ? 'No unread notifications' : 'All caught up!' }}
                     </h3>
-                    <p class="text-sm text-gray-500 max-w-sm mx-auto">
+                    <p class="text-sm max-w-sm mx-auto" :class="theme.textMuted">
                         {{ activeTab === 'unread'
                             ? 'You have no unread notifications. Check back later for updates.'
                             : 'You have no notifications at the moment. We\'ll notify you when something happens.'
@@ -171,8 +180,8 @@
                                 notifications.current_page === page
                                     ? 'bg-blue-600 text-white shadow-sm'
                                     : page === '...'
-                                        ? 'bg-transparent text-gray-400 cursor-default'
-                                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                        ? 'bg-transparent cursor-default ' + theme.textMuted
+                                        : `${theme.card} ${theme.text} ${theme.hover} ${theme.border}`
                             ]">
                             {{ page }}
                         </button>
@@ -184,10 +193,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { router, Link } from '@inertiajs/vue3'
+import { ref, computed, onMounted } from 'vue'
+import { router, Link, usePage } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import { Icon } from '@iconify/vue'
+import { useTheme } from '@/Composables/useTheme'
 
 interface Props {
     notifications: {
@@ -200,6 +210,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { theme } = useTheme()
 const activeTab = ref<'all' | 'unread'>('all')
 
 // Filter notifications based on active tab
@@ -371,7 +382,7 @@ const pages = computed(() => {
     }
 
     range.unshift(1)
-    if (total !== 1 && total !== 1) {
+    if (total !== 1) {
         range.push(total)
     }
 
@@ -457,7 +468,7 @@ const openNotification = (notification: any) => {
     }
 }
 
-.bg-white.rounded-xl {
+.rounded-xl {
     animation: slideIn 0.3s ease-out;
 }
 

@@ -12,6 +12,7 @@ class ScheduledNotificationData extends Data
         public string $message,
         public ?string $url,
         public string $scheduled_at,
+        public bool $is_email,
         public bool $is_sent,
         public string $created_at,
         public ?string $formatted_scheduled_at = null,

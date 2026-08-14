@@ -6,15 +6,16 @@
             <div class="mb-6 md:mb-8">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">My Ads</h1>
-                        <p class="text-sm text-gray-600 mt-1">
+                        <h1 class="text-2xl md:text-3xl font-bold" :class="theme.text">My Ads</h1>
+                        <p class="text-sm mt-1" :class="theme.textMuted">
                             Manage and track all your marketplace listings
                         </p>
                     </div>
 
                     <!-- Create New Ad Button -->
                     <Link :href="route('user.ads.create')"
-                        class="inline-flex items-center justify-center gap-2 bg-brand-teal text-white px-4 py-2.5 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg text-sm font-medium">
+                        class="inline-flex items-center justify-center gap-2 text-white px-4 py-2.5 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg text-sm font-medium"
+                        :class="theme.button">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
@@ -24,45 +25,45 @@
 
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-6">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                    <div class="rounded-xl shadow-sm border p-4" :class="[theme.card, theme.border]">
                         <div>
-                            <p class="text-2xl font-bold text-gray-900">{{ totalAds }}</p>
-                            <p class="text-xs text-gray-600 mt-1">Total Ads</p>
+                            <p class="text-2xl font-bold" :class="theme.text">{{ totalAds }}</p>
+                            <p class="text-xs mt-1" :class="theme.textMuted">Total Ads</p>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                    <div class="rounded-xl shadow-sm border p-4" :class="[theme.card, theme.border]">
                         <div>
-                            <p class="text-2xl font-bold text-gray-900">{{ activeAds }}</p>
-                            <p class="text-xs text-gray-600 mt-1">Active</p>
+                            <p class="text-2xl font-bold" :class="theme.text">{{ activeAds }}</p>
+                            <p class="text-xs mt-1" :class="theme.textMuted">Active</p>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                    <div class="rounded-xl shadow-sm border p-4" :class="[theme.card, theme.border]">
                         <div>
-                            <p class="text-2xl font-bold text-gray-900">{{ pendingAds }}</p>
-                            <p class="text-xs text-gray-600 mt-1">Pending</p>
+                            <p class="text-2xl font-bold" :class="theme.text">{{ pendingAds }}</p>
+                            <p class="text-xs mt-1" :class="theme.textMuted">Pending</p>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                    <div class="rounded-xl shadow-sm border p-4" :class="[theme.card, theme.border]">
                         <div>
-                            <p class="text-2xl font-bold text-gray-900">{{ totalViews }}</p>
-                            <p class="text-xs text-gray-600 mt-1">Total Views</p>
+                            <p class="text-2xl font-bold" :class="theme.text">{{ totalViews }}</p>
+                            <p class="text-xs mt-1" :class="theme.textMuted">Total Views</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Filters Section -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+            <div class="rounded-xl shadow-sm border mb-6" :class="[theme.card, theme.border]">
                 <div class="p-4 md:p-5">
                     <!-- Search and Filter Row -->
                     <div class="flex flex-wrap gap-2 items-center">
                         <!-- Search Bar -->
                         <div class="flex-1 min-w-[150px] relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
+                                <svg class="h-5 w-5" :class="theme.textMuted" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -70,12 +71,14 @@
                             </div>
                             <input v-model="filters.global" type="text"
                                 placeholder="Search by title, description, location, or brand..."
-                                class="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none transition text-sm sm:text-xs" />
+                                class="w-full pl-10 pr-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none transition text-sm sm:text-xs"
+                                :class="[theme.input, theme.border]" />
                         </div>
 
                         <!-- Category Filter -->
                         <select v-model="filters.category" @change="handleCategoryChange"
-                            class="flex-shrink-0 px-2 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[110px]">
+                            class="flex-shrink-0 px-2 py-2 border rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[110px]"
+                            :class="[theme.input, theme.border]">
                             <option value="">All Categories</option>
                             <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                                 {{ cat.name }}
@@ -84,7 +87,8 @@
 
                         <!-- Sort Filter -->
                         <select v-model="sort"
-                            class="flex-shrink-0 px-2 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[120px]">
+                            class="flex-shrink-0 px-2 py-2 border rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none text-sm sm:text-xs min-w-[120px]"
+                            :class="[theme.input, theme.border]">
                             <option value="newest">Newest First</option>
                             <option value="price_low">Price: Low to High</option>
                             <option value="price_high">Price: High to Low</option>
@@ -92,24 +96,27 @@
 
                         <!-- Action Buttons -->
                         <button @click="applyFilters"
-                            class="flex-1 md:flex-none px-3 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition text-sm sm:text-xs">
+                            class="flex-1 md:flex-none px-3 py-2 text-white rounded-lg transition text-sm sm:text-xs"
+                            :class="theme.button">
                             Apply
                         </button>
                         <button v-if="isFiltered" @click="resetFilters"
-                            class="flex-1 md:flex-none px-3 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm sm:text-xs">
+                            class="flex-1 md:flex-none px-3 py-2 border rounded-lg transition text-sm sm:text-xs"
+                            :class="[theme.border, theme.text, theme.hover]">
                             Reset
                         </button>
                     </div>
 
                     <!-- Active Filters Tags -->
-                    <div v-if="isFiltered" class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
+                    <div v-if="isFiltered" class="flex flex-wrap gap-2 mt-3 pt-3 border-t" :class="theme.border">
                         <span v-if="filters.global"
-                            class="inline-flex items-center gap-1 px-3 py-1 bg-brand-teal/10 text-brand-teal rounded-full text-xs sm:text-[10px]">
+                            class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-[10px]"
+                            :class="[theme.bgLight, theme.textAccent]">
                             Search: "{{ truncateText(filters.global, 30) }}"
                             <button @click="
                                 filters.global = '';
                             applyFilters();
-                            " class="hover:text-brand-teal/80">
+                            " class="hover:opacity-80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -118,13 +125,14 @@
                         </span>
 
                         <span v-if="filters.category"
-                            class="inline-flex items-center gap-1 px-3 py-1 bg-brand-teal/10 text-brand-teal rounded-full text-xs sm:text-[10px]">
+                            class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-[10px]"
+                            :class="[theme.bgLight, theme.textAccent]">
                             Category: {{ getCategoryName(filters.category) }}
                             <button @click="
                                 filters.category = '';
                             handleCategoryChange();
                             applyFilters();
-                            " class="hover:text-brand-teal/80">
+                            " class="hover:opacity-80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -133,12 +141,13 @@
                         </span>
 
                         <span v-if="filters.brand"
-                            class="inline-flex items-center gap-1 px-3 py-1 bg-brand-blue/10 text-brand-blue rounded-full text-xs sm:text-[10px]">
+                            class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-[10px]"
+                            :class="[theme.bgLight, theme.textAccent]">
                             Brand: {{ getBrandName(filters.brand) }}
                             <button @click="
                                 filters.brand = '';
                             applyFilters();
-                            " class="hover:text-brand-blue/80">
+                            " class="hover:opacity-80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -147,14 +156,15 @@
                         </span>
 
                         <span v-if="filters.min_price || filters.max_price"
-                            class="inline-flex items-center gap-1 px-3 py-1 bg-brand-teal/10 text-brand-teal rounded-full text-xs sm:text-[10px]">
+                            class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-[10px]"
+                            :class="[theme.bgLight, theme.textAccent]">
                             Price: {{ formatPrice(filters.min_price) }} -
                             {{ formatPrice(filters.max_price) }}
                             <button @click="
                                 filters.min_price = '';
                             filters.max_price = '';
                             applyFilters();
-                            " class="hover:text-brand-teal/80">
+                            " class="hover:opacity-80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -163,12 +173,13 @@
                         </span>
 
                         <span v-if="sort !== 'newest'"
-                            class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-[10px]">
+                            class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-[10px]"
+                            :class="[theme.bgLight, theme.text]">
                             Sort: {{ getSortLabel(sort) }}
                             <button @click="
                                 sort = 'newest';
                             applyFilters();
-                            " class="hover:text-gray-900">
+                            " class="hover:opacity-80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -180,17 +191,17 @@
             </div>
 
             <!-- Results Count -->
-            <div class="mb-4 text-sm text-gray-600">
+            <div class="mb-4 text-sm" :class="theme.textMuted">
                 Showing {{ allLoadedAds.length }} of {{ totalAds }} ads
             </div>
             <!-- Status Tabs -->
-            <div class="border-b border-gray-200 my-4 sm:my-6">
+            <div class="border-b my-4 sm:my-6" :class="theme.border">
                 <nav class="-mb-px flex overflow-x-auto no-scrollbar space-x-4 sm:space-x-6 px-1" aria-label="Tabs">
                     <button v-for="tab in statusTabs" :key="tab.value" @click="setStatusFilter(tab.value)" :class="[
                         'flex items-center whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition',
                         activeStatusTab === tab.value
-                            ? 'border-brand-teal text-brand-teal'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                            ? `border-brand-teal ${theme.textAccent}`
+                            : `border-transparent ${theme.textMuted} ${theme.hover} hover:border-gray-300`,
                     ]">
                         {{ tab.label }}
                     </button>
@@ -199,27 +210,29 @@
 
             <!-- Loading Spinner (when filters applied and no ads yet) -->
             <div v-if="loading && allLoadedAds.length === 0" class="text-center py-12">
-                <svg class="animate-spin w-10 h-10 text-brand-teal mx-auto mb-3" fill="none" stroke="currentColor"
+                <svg class="animate-spin w-10 h-10 mx-auto mb-3" :class="theme.icon" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor"
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                     </path>
                 </svg>
-                <p class="text-sm text-gray-500">Loading ads...</p>
+                <p class="text-sm" :class="theme.textMuted">Loading ads...</p>
             </div>
 
             <!-- Ads Grid -->
             <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
                 <div v-for="ad in allLoadedAds" :key="ad.id"
-                    class="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-200">
+                    class="group rounded-xl shadow-sm border overflow-hidden hover:shadow-lg transition-all duration-200"
+                    :class="[theme.card, theme.border]">
                     <!-- Image Container -->
-                    <div class="relative aspect-square bg-gray-100">
+                    <div class="relative aspect-square" :class="theme.bgLight">
                         <img v-if="ad.images?.length" :src="`/storage/${ad.images.find((img) => img.is_primary)?.path || ad.images[0].path
                             }`" :alt="ad.ad_title"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         <div v-else class="w-full h-full flex items-center justify-center">
-                            <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-12 h-12" :class="theme.textMuted" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
@@ -300,11 +313,11 @@
                         <div v-if="ad.discount && ad.discount > 0" class="mb-2">
                             <!-- Discounted price (prominent) -->
                             <div class="flex items-center gap-2 mb-1">
-                                <span class="text-lg font-bold text-brand-teal">
+                                <span class="text-lg font-bold" :class="theme.textAccent">
                                     {{ formatPrice(ad.discount) }}
                                 </span>
                                 <!-- Original price (line-through) -->
-                                <span class="text-xs text-gray-400 line-through">
+                                <span class="text-xs line-through" :class="theme.textMuted">
                                     {{ formatPrice(ad.price) }}
                                 </span>
                                 <!-- Discount % badge -->
@@ -313,22 +326,23 @@
                                 </span>
                             </div>
                         </div>
-                        <div v-else class="text-lg font-bold text-brand-teal mb-1">
+                        <div v-else class="text-lg font-bold mb-1" :class="theme.textAccent">
                             {{ formatPrice(ad.price) }}
                         </div>
-                        <h3 class="font-medium text-gray-900 mb-1 line-clamp-2 text-sm">
+                        <h3 class="font-medium mb-1 line-clamp-2 text-sm" :class="theme.text">
                             {{ ad.ad_title }}
                         </h3>
                         <div class="flex flex-wrap gap-1 mb-2">
-                            <span v-if="ad.category"
-                                class="px-2 py-0.5 bg-brand-teal/10 text-brand-teal rounded text-xs">
+                            <span v-if="ad.category" class="px-2 py-0.5 rounded text-xs"
+                                :class="[theme.bgLight, theme.textAccent]">
                                 {{ ad.category.name }}
                             </span>
-                            <span v-if="ad.brand" class="px-2 py-0.5 bg-brand-blue/10 text-brand-blue rounded text-xs">
+                            <span v-if="ad.brand" class="px-2 py-0.5 rounded text-xs"
+                                :class="[theme.bgLight, theme.textAccent]">
                                 {{ ad.brand.name }}
                             </span>
                         </div>
-                        <div class="flex items-center justify-between text-xs text-gray-500">
+                        <div class="flex items-center justify-between text-xs" :class="theme.textMuted">
                             <div class="flex items-center gap-1">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -346,7 +360,7 @@
                                 {{ formatDate(ad.created_at) }}
                             </div>
                         </div>
-                        <div class="flex items-center gap-1 mt-2 text-xs text-gray-500">
+                        <div class="flex items-center gap-1 mt-2 text-xs" :class="theme.textMuted">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -361,8 +375,8 @@
 
             <!-- Infinite scroll loading indicator (bottom) -->
             <div v-if="loading && allLoadedAds.length > 0" class="text-center py-6">
-                <div class="inline-flex items-center gap-2 text-gray-500">
-                    <svg class="animate-spin h-5 w-5 text-brand-teal" xmlns="http://www.w3.org/2000/svg" fill="none"
+                <div class="inline-flex items-center gap-2" :class="theme.textMuted">
+                    <svg class="animate-spin h-5 w-5" :class="theme.icon" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
                         </circle>
@@ -381,20 +395,22 @@
             <div v-if="
                 !hasMorePages && allLoadedAds.length > 0 && allLoadedAds.length === totalAds
             " class="text-center py-6">
-                <p class="text-sm text-gray-400">You've seen all {{ totalAds }} ads</p>
+                <p class="text-sm" :class="theme.textMuted">You've seen all {{ totalAds }} ads</p>
             </div>
 
             <!-- No Ads State -->
-            <div v-if="allLoadedAds.length === 0 && !loading"
-                class="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
-                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div v-if="allLoadedAds.length === 0 && !loading" class="text-center py-12 rounded-xl shadow-sm border"
+                :class="[theme.card, theme.border]">
+                <svg class="w-16 h-16 mx-auto mb-4" :class="theme.textMuted" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                <h3 class="text-lg font-semibold text-gray-900 mb-1">No ads found</h3>
-                <p class="text-sm text-gray-600 mb-4">Get started by posting your first ad</p>
+                <h3 class="text-lg font-semibold mb-1" :class="theme.text">No ads found</h3>
+                <p class="text-sm mb-4" :class="theme.textMuted">Get started by posting your first ad</p>
                 <Link :href="route('user.ads.create')"
-                    class="inline-flex items-center gap-2 bg-gradient-to-r from-brand-teal to-brand-blue text-white px-4 py-2 rounded-lg hover:from-brand-teal/90 hover:to-brand-blue/90 transition text-sm font-medium">
+                    class="inline-flex items-center gap-2 text-white px-4 py-2 rounded-lg transition text-sm font-medium"
+                    :class="theme.button">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
@@ -414,6 +430,9 @@ import debounce from "lodash/debounce";
 import { useShadcnAlert } from "@/composables/useShadcnAlert";
 import ShadcnAlertDialog from "@/components/ShadcnAlertDialog.vue";
 import TopCategoriesBar from "@/components/TopCategoriesBar.vue";
+import { useTheme } from '@/Composables/useTheme'
+
+const { theme } = useTheme()
 
 interface Props {
     ads: {

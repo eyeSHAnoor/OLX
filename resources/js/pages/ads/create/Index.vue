@@ -2,8 +2,7 @@
     <OlxLayout>
         <div class="max-w-full px-4 md:px-0 md:max-w-8/10 mx-auto space-y-12 py-10">
             <!-- Subscription Check -->
-            <!-- Subscription Check -->
-            <div v-if="!canCreateAd" class="bg-white rounded-lg shadow-sm p-8 text-center">
+            <div v-if="!canCreateAd" class="rounded-lg shadow-sm p-8 text-center" :class="theme.card">
                 <div class="max-w-md mx-auto">
                     <!-- Pending Status -->
                     <template v-if="user?.subscription_status === 'pending'">
@@ -14,12 +13,12 @@
                             </svg>
                         </div>
 
-                        <h2 class="text-2xl font-semibold text-gray-900 mb-3">Almost There! 🎉</h2>
+                        <h2 class="text-2xl font-semibold mb-3" :class="theme.text">Almost There! 🎉</h2>
 
-                        <p class="text-gray-600 mb-2">
+                        <p class="mb-2" :class="theme.textMuted">
                             Your subscription is being processed.
                         </p>
-                        <p class="text-gray-500 text-sm mb-6">
+                        <p class="text-sm mb-6" :class="theme.textMuted">
                             This usually takes just a few moments. We'll notify you as soon as it's active, and then
                             you'll be ready to post your ads!
                         </p>
@@ -29,9 +28,10 @@
                                 ⏳ Status: Pending Approval
                             </div>
 
-                            <p class="text-xs text-gray-400">
+                            <p class="text-xs" :class="theme.textMuted">
                                 Thank you for your patience! If it takes longer than expected, feel free to
-                                <a href="/page/contact" class="text-primary hover:underline">contact support</a>.
+                                <a href="/page/contact" class="hover:underline" :class="theme.textAccent">contact
+                                    support</a>.
                             </p>
                         </div>
                     </template>
@@ -45,31 +45,33 @@
                             </svg>
                         </div>
 
-                        <h2 class="text-2xl font-semibold text-gray-900 mb-3">Ready to Start Selling?</h2>
+                        <h2 class="text-2xl font-semibold mb-3" :class="theme.text">Ready to Start Selling?</h2>
 
-                        <p class="text-gray-600 mb-2">
+                        <p class="mb-2" :class="theme.textMuted">
                             You're just one step away from reaching thousands of buyers!
                         </p>
-                        <p class="text-gray-500 text-sm mb-6">
+                        <p class="text-sm mb-6" :class="theme.textMuted">
                             An active subscription unlocks unlimited ad posting and helps your items get noticed.
                         </p>
 
                         <div class="space-y-3">
                             <Link :href="route('subscriptions.index')"
-                                class="inline-block w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm">
+                                class="inline-block w-full px-6 py-3 text-white rounded-lg transition-colors font-medium shadow-sm"
+                                :class="theme.button">
                                 ✨ Choose a Plan & Get Started
                             </Link>
 
-                            <p class="text-xs text-gray-400">
+                            <p class="text-xs" :class="theme.textMuted">
                                 Your current account status:
-                                <span class="font-medium capitalize text-gray-600">{{ user?.subscription_status ||
+                                <span class="font-medium capitalize" :class="theme.text">{{ user?.subscription_status ||
                                     'free' }}</span>
                             </p>
                         </div>
 
-                        <div class="mt-6 pt-6 border-t border-gray-100">
-                            <p class="text-xs text-gray-400">
-                                Need help? <a href="/page/contact" class="text-primary hover:underline">Contact
+                        <div class="mt-6 pt-6 border-t" :class="theme.border">
+                            <p class="text-xs" :class="theme.textMuted">
+                                Need help? <a href="/page/contact" class="hover:underline"
+                                    :class="theme.textAccent">Contact
                                     support</a>
                             </p>
                         </div>
@@ -87,18 +89,19 @@
                                 <div :class="[
                                     'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium',
                                     currentStep > index + 1 ? 'bg-green-500 text-white' :
-                                        currentStep === index + 1 ? 'bg-primary text-white' :
-                                            'bg-gray-200 text-gray-600'
+                                        currentStep === index + 1 ? theme.button :
+                                            `${theme.bgLight} ${theme.textMuted}`
                                 ]">
                                     <span v-if="currentStep > index + 1">✓</span>
                                     <span v-else>{{ index + 1 }}</span>
                                 </div>
                                 <span :class="[
                                     'ml-2 text-sm font-medium',
-                                    currentStep === index + 1 ? 'text-gray-900' : 'text-gray-500'
+                                    currentStep === index + 1 ? theme.text : theme.textMuted
                                 ]">{{ step }}</span>
                             </div>
-                            <div v-if="index < steps.length - 1" class="w-32 md:w-16 h-0.5 mx-4 bg-gray-200"></div>
+                            <div v-if="index < steps.length - 1" class="w-32 md:w-16 h-0.5 mx-4" :class="theme.bgLight">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -110,7 +113,7 @@
 
                 <!-- Step 2: Ad Details Form -->
                 <AdDetailsForm v-else-if="currentStep === 2" :selected-category="selectedCategory"
-                    :selected-brand="selectedBrand" @back="goToPreviousStep" @submit="handleSubmit" :user="user"
+                    :selected-brand="selectedBrand" @back="handleBackNavigation" @submit="handleSubmit" :user="user"
                     :features="features" :edit-mode="!!ad" :ad-data="ad" />
             </template>
         </div>
@@ -123,7 +126,9 @@ import { usePage, Link } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import CategoryNavigation from './CategoryNavigation.vue'
 import AdDetailsForm from './AdDetailsForm.vue'
+import { useTheme } from '@/Composables/useTheme'
 
+const { theme } = useTheme()
 useForceTheme('light');
 
 const props = defineProps({
@@ -179,6 +184,13 @@ const isLeafCategory = (category) => {
 const updateCategoryPath = (category) => {
     categoryPath.value = [category]
 }
+
+const handleBackNavigation = (shouldNavigate) => {
+    if (shouldNavigate) {
+        goToPreviousStep();
+    }
+    // If shouldNavigate is false, do nothing
+};
 
 const handleCategorySelect = (category) => {
     selectedCategory.value = category

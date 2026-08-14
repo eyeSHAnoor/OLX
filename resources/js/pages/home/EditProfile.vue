@@ -1,25 +1,25 @@
 <template>
     <OlxLayout>
-        <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 py-4 md:py-6">
+        <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 py-4 md:py-6" :class="theme.bg">
             <!-- Header with back button -->
             <div class="flex items-center gap-3 mb-4">
-                <Link :href="route('user.profile', { id: user.id })"
-                    class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <Link :href="route('user.profile', { id: user.id })" class="p-2 rounded-lg transition-colors"
+                    :class="theme.hover">
+                    <svg class="w-5 h-5" :class="theme.textMuted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
                 </Link>
-                <h1 class="text-xl md:text-2xl font-semibold text-gray-900">Edit Profile</h1>
+                <h1 class="text-xl md:text-2xl font-semibold" :class="theme.text">Edit Profile</h1>
             </div>
 
             <!-- Edit Profile Form -->
-            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="rounded-lg shadow-sm overflow-hidden" :class="theme.card">
                 <form @submit.prevent="submitForm" class="p-4 md:p-6">
                     <!-- Cover Photo Section -->
                     <div class="mb-6">
-                        <label class="block text-xs font-medium text-gray-700 mb-2">Cover Photo</label>
-                        <div class="relative h-32 bg-gray-100 rounded-lg overflow-hidden group">
+                        <label class="block text-xs font-medium mb-2" :class="theme.text">Cover Photo</label>
+                        <div class="relative h-32 rounded-lg overflow-hidden group" :class="theme.bgLight">
                             <img v-if="form.cover_image_preview || userProfile.cover_image"
                                 :src="form.cover_image_preview || userProfile.cover_image"
                                 class="w-full h-full object-cover" />
@@ -54,8 +54,8 @@
                     <!-- Profile Image Section -->
                     <div class="mb-6 -mt-10 flex justify-center">
                         <div class="relative group">
-                            <div
-                                class="w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100">
+                            <div class="w-24 h-24 rounded-full border-4 shadow-md overflow-hidden"
+                                :class="[theme.card, theme.border]">
                                 <img v-if="form.profile_image_preview || userProfile.profile_image"
                                     :src="form.profile_image_preview || userProfile.profile_image"
                                     class="w-full h-full object-cover" />
@@ -92,44 +92,50 @@
 
                     <!-- Name -->
                     <div class="mb-4">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
+                        <label class="block text-xs font-medium mb-1" :class="theme.text">Full Name</label>
                         <input v-model="form.name" type="text"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm" />
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm"
+                            :class="theme.input" />
                     </div>
 
                     <!-- Email (Read-only) -->
                     <div class="mb-4">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Email Address</label>
+                        <label class="block text-xs font-medium mb-1" :class="theme.text">Email Address</label>
                         <input type="email" :value="user.email" disabled
-                            class="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-600 cursor-not-allowed" />
-                        <p class="mt-1 text-xs text-gray-500">Email cannot be changed</p>
+                            class="w-full px-3 py-2 border rounded-lg text-sm cursor-not-allowed"
+                            :class="[theme.bgLight, theme.border, theme.textMuted]" />
+                        <p class="mt-1 text-xs" :class="theme.textMuted">Email cannot be changed</p>
                     </div>
 
                     <!-- Phone Number -->
                     <div class="mb-4">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Phone Number</label>
+                        <label class="block text-xs font-medium mb-1" :class="theme.text">Phone Number</label>
                         <input v-model="form.phone" type="tel"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm"
-                            :class="{ 'border-red-500': form.errors.phone }" placeholder="+92 300 1234567" />
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm"
+                            :class="[theme.input, { 'border-red-500': form.errors.phone }]"
+                            placeholder="+92 300 1234567" />
                         <p v-if="form.errors.phone" class="mt-1 text-xs text-red-600">
                             {{ form.errors.phone }}
                         </p>
-                        <p class="mt-1 text-xs text-gray-500">Enter your contact number (optional)</p>
+                        <p class="mt-1 text-xs" :class="theme.textMuted">Enter your contact number (optional)</p>
                     </div>
 
                     <!-- Username with availability check -->
                     <div class="mb-4">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Username</label>
+                        <label class="block text-xs font-medium mb-1" :class="theme.text">Username</label>
                         <div class="relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">@</span>
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
+                                :class="theme.textMuted">@</span>
                             <input v-model="form.username" type="text" @input="checkUsernameAvailability"
                                 @blur="validateUsername"
                                 class="w-full pl-7 pr-10 py-2 border rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm"
-                                :class="{
-                                    'border-green-500 ring-1 ring-green-500': usernameAvailable === true,
-                                    'border-red-500 ring-1 ring-red-500': usernameAvailable === false,
-                                    'border-gray-300': usernameAvailable === null,
-                                }" placeholder="username" />
+                                :class="[
+                                    theme.input,
+                                    {
+                                        'border-green-500 ring-1 ring-green-500': usernameAvailable === true,
+                                        'border-red-500 ring-1 ring-red-500': usernameAvailable === false,
+                                    }
+                                ]" placeholder="username" />
 
                             <!-- Availability indicators -->
                             <div class="absolute right-3 top-1/2 -translate-y-1/2">
@@ -170,32 +176,33 @@
                         </p>
 
                         <!-- Username rules -->
-                        <p class="mt-1 text-xs text-gray-500">
+                        <p class="mt-1 text-xs" :class="theme.textMuted">
                             Username can only contain letters, numbers, and underscores
                         </p>
                     </div>
 
                     <!-- Bio -->
                     <div class="mb-4">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Bio</label>
+                        <label class="block text-xs font-medium mb-1" :class="theme.text">Bio</label>
                         <textarea v-model="form.bio" rows="4"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm resize-none"
-                            :class="{ 'border-red-500': form.errors.bio }"
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm resize-none"
+                            :class="[theme.input, { 'border-red-500': form.errors.bio }]"
                             placeholder="Tell us about yourself..."></textarea>
                         <p v-if="form.errors.bio" class="mt-1 text-xs text-red-600">
                             {{ form.errors.bio }}
                         </p>
-                        <p class="mt-1 text-xs text-gray-500">
+                        <p class="mt-1 text-xs" :class="theme.textMuted">
                             {{ form.bio?.length || 0 }}/500 characters
                         </p>
                     </div>
 
                     <!-- Location -->
                     <div class="mb-4">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Location</label>
+                        <label class="block text-xs font-medium mb-1" :class="theme.text">Location</label>
                         <input v-model="form.location" type="text"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm"
-                            :class="{ 'border-red-500': form.errors.location }" placeholder="City, Country" />
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm"
+                            :class="[theme.input, { 'border-red-500': form.errors.location }]"
+                            placeholder="City, Country" />
                         <p v-if="form.errors.location" class="mt-1 text-xs text-red-600">
                             {{ form.errors.location }}
                         </p>
@@ -203,10 +210,11 @@
 
                     <!-- Website -->
                     <div class="mb-4">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Website</label>
+                        <label class="block text-xs font-medium mb-1" :class="theme.text">Website</label>
                         <input v-model="form.website" type="url"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm"
-                            :class="{ 'border-red-500': form.errors.website }" placeholder="https://example.com" />
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition text-sm"
+                            :class="[theme.input, { 'border-red-500': form.errors.website }]"
+                            placeholder="https://example.com" />
                         <p v-if="form.errors.website" class="mt-1 text-xs text-red-600">
                             {{ form.errors.website }}
                         </p>
@@ -214,31 +222,33 @@
 
                     <!-- Privacy Settings -->
                     <div class="mb-6">
-                        <label class="block text-xs font-medium text-gray-700 mb-2">Privacy</label>
+                        <label class="block text-xs font-medium mb-2" :class="theme.text">Privacy</label>
                         <div class="space-y-2">
                             <label class="flex items-center gap-2">
                                 <input v-model="form.is_public" type="radio" :value="true"
                                     class="text-brand-teal focus:ring-brand-teal" />
-                                <span class="text-sm text-gray-700">Public Profile</span>
-                                <span class="text-xs text-gray-500">- Anyone can see your profile</span>
+                                <span class="text-sm" :class="theme.text">Public Profile</span>
+                                <span class="text-xs" :class="theme.textMuted">- Anyone can see your profile</span>
                             </label>
                             <label class="flex items-center gap-2">
                                 <input v-model="form.is_public" type="radio" :value="false"
                                     class="text-brand-teal focus:ring-brand-teal" />
-                                <span class="text-sm text-gray-700">Private Profile</span>
-                                <span class="text-xs text-gray-500">- Only you can see your profile</span>
+                                <span class="text-sm" :class="theme.text">Private Profile</span>
+                                <span class="text-xs" :class="theme.textMuted">- Only you can see your profile</span>
                             </label>
                         </div>
                     </div>
 
                     <!-- Form Actions -->
-                    <div class="flex items-center justify-end gap-2 pt-4 border-t">
+                    <div class="flex items-center justify-end gap-2 pt-4 border-t" :class="theme.border">
                         <Link :href="route('user.profile', { id: user.id })"
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            class="px-4 py-2 border rounded-lg text-sm font-medium transition-colors"
+                            :class="[theme.buttonOutline, theme.border]">
                             Cancel
                         </Link>
                         <button type="submit" :disabled="form.processing"
-                            class="px-4 py-2 bg-brand-blue hover:bg-brand-blue/90 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                            class="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            :class="theme.button">
                             <svg v-if="form.processing" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                     stroke-width="4"></circle>
@@ -253,10 +263,10 @@
             </div>
 
             <!-- Danger Zone -->
-            <div class="mt-6 bg-white rounded-lg shadow-sm overflow-hidden border border-red-200">
+            <div class="mt-6 rounded-lg shadow-sm overflow-hidden border border-red-200" :class="theme.card">
                 <div class="p-4 md:p-6">
                     <h2 class="text-base font-semibold text-red-600 mb-2">Danger Zone</h2>
-                    <p class="text-xs text-gray-600 mb-4">
+                    <p class="text-xs mb-4" :class="theme.textMuted">
                         Once you delete your account, there is no going back. Please be certain.
                     </p>
                     <button @click="destroy"
@@ -274,7 +284,12 @@ import { ref, computed, onMounted, watch } from "vue";
 import { router, Link, useForm, usePage } from "@inertiajs/vue3";
 import OlxLayout from "@/layouts/OlxLayout.vue";
 import { useAlertDialog } from "@/composables/useAlertDialog";
+import { useTheme } from "@/Composables/useTheme";
+import { useForceTheme } from "@/composables/useForceTheme";
 import axios from "axios";
+
+// Theme
+const { theme } = useTheme();
 
 const page = usePage();
 
@@ -459,8 +474,6 @@ const submitForm = () => {
 
 const alert = useAlertDialog();
 const destroy = async () => {
-    //console.log('button pressed', props.user);
-
     form.delete(route("users.destroy", props.user.id), {
         preserveScroll: true,
         onSuccess: () => {

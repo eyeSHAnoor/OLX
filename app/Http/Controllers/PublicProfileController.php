@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Order;
+use App\Models\AdView;
 use App\Models\Ad;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -67,6 +68,8 @@ class PublicProfileController extends Controller
                     ->toArray();
             }
 
+        $totalAdViews = AdView::whereIn('ad_id', Ad::where('user_id', $user->id)->pluck('id'))->count();
+
 
         return Inertia::render('home/PublicProfile', [
             'profileUser' => [
@@ -80,6 +83,8 @@ class PublicProfileController extends Controller
                 'ratings' => $user->receivedRatings,
                 'orderStats' => $user->orderStats(),
                 'plan_permissions' => $planPermissions, 
+                'created_at' => $user->created_at,
+                'total_ad_views' => $totalAdViews, 
             ],
             'ads' => $ads,
             'filters' => [

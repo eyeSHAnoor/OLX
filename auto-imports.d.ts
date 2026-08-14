@@ -91,6 +91,7 @@ declare global {
   const useSlots: typeof import('vue')['useSlots']
   const useStorage: typeof import('@vueuse/core')['useStorage']
   const useTemplateRef: typeof import('vue')['useTemplateRef']
+  const useTheme: typeof import('./resources/js/composables/useTheme')['useTheme']
   const useToast: typeof import('./resources/js/composables/useToast')['useToast']
   const watch: typeof import('vue')['watch']
   const watchEffect: typeof import('vue')['watchEffect']

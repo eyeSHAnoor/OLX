@@ -22,6 +22,7 @@ const form = useForm({
     message: notification.value?.message || "",
     url: notification.value?.url || "",
     scheduled_at: notification.value?.scheduled_at || "",
+    is_email: notification.value?.is_email || false,
 });
 
 // Breadcrumbs
@@ -170,6 +171,19 @@ const formatDate = (date: string) => {
                             </div>
 
                             <div>
+                                <div class="flex items-center space-x-2">
+                                    <input type="checkbox" v-model="form.is_email" id="is_email"
+                                        class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                                    <label for="is_email" class="text-sm font-medium">
+                                        Send as Email
+                                    </label>
+                                </div>
+                                <p class="text-xs text-muted-foreground mt-1">
+                                    Check this box to send the notification as an email
+                                </p>
+                            </div>
+
+                            <div>
                                 <TextInput label="Link URL (Optional)" v-model="form.url" :error="form.errors.url"
                                     placeholder="https://example.com/page" />
                                 <p class="text-xs text-muted-foreground mt-1">
@@ -240,6 +254,7 @@ const formatDate = (date: string) => {
                                 <span class="font-medium">All Users</span>
                             </div>
                         </div>
+
                     </CardContent>
                 </Card>
 

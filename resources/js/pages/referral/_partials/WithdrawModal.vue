@@ -12,6 +12,7 @@ import { watch, ref, computed } from "vue";
 import AppButton from "@/components/Application/AppButton.vue";
 import { Wallet, Banknote, Phone, AlertCircle } from "lucide-vue-next";
 import { router } from "@inertiajs/vue3";
+import { useTheme } from '@/Composables/useTheme'
 
 const props = defineProps<{
   show?: boolean;
@@ -38,7 +39,31 @@ const getDefaultForm = () => ({
 });
 
 const form = useForm({ ...getDefaultForm() });
+const { theme } = useTheme()
 
+// Helper to get theme color with opacity
+const getThemeColorWithOpacity = (opacity: number) => {
+  // Extract color from theme classes or use default
+  const colorMap: Record<string, string> = {
+    'premium': '#f26822', // brand-orange
+    'pro': '#3b5fb5', // brand-blue
+    'free': '#00c2bb', // brand-teal
+  }
+
+  // Get active plan from theme
+  const activePlan = theme.value?.bg?.includes('black') ? 'premium'
+    : theme.value?.bg?.includes('blue') ? 'pro'
+      : 'free'
+
+  const color = colorMap[activePlan] || '#00c2bb'
+
+  // Convert hex to rgba
+  const r = parseInt(color.slice(1, 3), 16)
+  const g = parseInt(color.slice(3, 5), 16)
+  const b = parseInt(color.slice(5, 7), 16)
+
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`
+}
 // Sync open state from the parent prop and internal model
 watch(
   () => props.show,
@@ -240,12 +265,12 @@ const useToast = () => {
 
 <template>
   <Dialog v-model:open="model">
-    <DialogContent class="!w-6/12 max-h-[90vh] flex flex-col px-7">
+    <DialogContent class="!w-6/12 max-h-[90vh] flex flex-col px-7" :class="theme.card">
       <!-- Fixed Header -->
       <DialogHeader class="!px-0 !pb-0 flex-shrink-0">
         <DialogTitle class="flex items-center gap-2">
-          <Wallet class="w-5 h-5" style="color: var(--brand-teal)" />
-          Withdraw Points
+          <Wallet class="w-5 h-5" :class="theme.icon" />
+          <span :class="theme.text">Withdraw Points</span>
         </DialogTitle>
       </DialogHeader>
 
@@ -254,97 +279,73 @@ const useToast = () => {
         <div class="grid gap-y-4">
           <!-- Show validation errors at top -->
           <div v-if="Object.keys(errors).length > 0" class="space-y-1">
-            <div
-              v-for="(error, key) in errors"
-              :key="key"
-              class="text-sm text-red-600 bg-red-50 p-2 rounded"
-            >
+            <div v-for="(error, key) in errors" :key="key" class="text-sm text-red-600 bg-red-50 p-2 rounded">
               {{ error }}
             </div>
           </div>
 
           <!-- Available Points Card -->
-          <Card
-            class="border-2"
-            style="
-              border-color: var(--brand-teal);
-              background: linear-gradient(
-                135deg,
-                rgba(0, 194, 187, 0.08),
-                rgba(0, 194, 187, 0.02)
-              );
-            "
-          >
+          <Card class="border-2" :class="theme.card" :style="{
+            borderColor: theme.icon.split('-')[1] || '#00c2bb',
+            background: `linear-gradient(135deg, ${getThemeColorWithOpacity(0.08)}, ${getThemeColorWithOpacity(0.02)})`,
+          }">
             <CardContent class="p-4">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">Available Points</p>
-                  <p class="text-2xl font-bold" style="color: var(--brand-teal)">
+                  <p class="text-sm" :class="theme.textMuted">Available Points</p>
+                  <p class="text-2xl font-bold" :class="theme.textAccent">
                     {{ availablePointsDisplay }}
                   </p>
                 </div>
-                <div class="p-3 rounded-full" style="background: rgba(0, 194, 187, 0.12)">
-                  <Wallet class="w-6 h-6" style="color: var(--brand-teal)" />
+                <div class="p-3 rounded-full" :class="theme.bgLight">
+                  <Wallet class="w-6 h-6" :class="theme.icon" />
                 </div>
               </div>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <p class="text-xs mt-2" :class="theme.textMuted">
                 Minimum withdrawal: {{ minWithdrawal || 100 }} points
               </p>
             </CardContent>
           </Card>
 
           <!-- Withdrawal Form -->
-          <Card>
+          <Card :class="theme.card">
             <CardContent class="p-4">
               <div class="space-y-4">
                 <!-- Points Input -->
                 <div class="space-y-2">
-                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label class="text-sm font-medium" :class="theme.text">
                     Points to Withdraw
                   </label>
 
                   <!-- Quick select buttons -->
                   <div v-if="quickOptions.length > 0" class="flex flex-wrap gap-2 mb-2">
-                    <button
-                      v-for="option in quickOptions"
-                      :key="option"
-                      type="button"
-                      @click="quickSelectPoints(option)"
-                      class="px-3 py-1 text-xs rounded-full border transition-colors"
+                    <button v-for="option in quickOptions" :key="option" type="button"
+                      @click="quickSelectPoints(option)" class="px-3 py-1 text-xs rounded-full border transition-colors"
                       :class="{
-                        'bg-brand-teal/10 border-brand-teal text-brand-teal':
-                          form.points === option,
-                        'border-gray-200 dark:border-gray-700 hover:border-brand-teal hover:bg-brand-teal/5':
-                          form.points !== option,
-                      }"
-                    >
+                        [theme.button]: form.points === option,
+                        [theme.border]: form.points !== option,
+                        [theme.hover]: form.points !== option,
+                        [theme.text]: form.points !== option,
+                      }">
                       {{ option.toLocaleString() }}
                     </button>
                   </div>
 
-                  <input
-                    v-model.number="form.points"
-                    type="number"
-                    :min="minWithdrawal || 100"
-                    :max="availablePoints"
+                  <input v-model.number="form.points" type="number" :min="minWithdrawal || 100" :max="availablePoints"
                     class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal"
                     :class="{
                       'border-red-500': errors.points,
-                      'border-gray-200 dark:border-gray-700': !errors.points,
-                    }"
-                    placeholder="Enter points"
-                    @input="
+                      [theme.input]: !errors.points,
+                      [theme.border]: !errors.points,
+                    }" placeholder="Enter points" @input="
                       () => {
                         if (errors.points) delete errors.points;
                       }
-                    "
-                  />
-                  <div
-                    v-if="form.points > 0 && form.points <= availablePoints"
-                    class="text-xs text-gray-500"
-                  >
+                    " />
+                  <div v-if="form.points > 0 && form.points <= availablePoints" class="text-xs"
+                    :class="theme.textMuted">
                     You will receive:
-                    <span class="font-semibold" style="color: var(--brand-teal)">{{
+                    <span class="font-semibold" :class="theme.textAccent">{{
                       form.points.toLocaleString()
                     }}</span>
                     units
@@ -356,154 +357,100 @@ const useToast = () => {
 
                 <!-- Payment Method -->
                 <div class="space-y-2">
-                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label class="text-sm font-medium" :class="theme.text">
                     Payment Method
                   </label>
                   <div class="grid grid-cols-3 gap-2">
-                    <button
-                      v-for="method in ['bank_transfer', 'easypaisa', 'jazzcash']"
-                      :key="method"
-                      type="button"
-                      @click="form.payment_method = method"
-                      class="px-3 py-2 text-sm rounded-lg border transition-all"
+                    <button v-for="method in ['bank_transfer', 'easypaisa', 'jazzcash']" :key="method" type="button"
+                      @click="form.payment_method = method" class="px-3 py-2 text-sm rounded-lg border transition-all"
                       :class="{
-                        'border-brand-teal bg-brand-teal/10 text-brand-teal':
-                          form.payment_method === method,
-                        'border-gray-200 dark:border-gray-700 hover:border-brand-teal hover:bg-brand-teal/5':
-                          form.payment_method !== method,
-                      }"
-                    >
-                      <component
-                        :is="getPaymentMethodIcon(method)"
-                        class="w-4 h-4 mx-auto mb-1"
-                      />
+                        [theme.button]: form.payment_method === method,
+                        [theme.border]: form.payment_method !== method,
+                        [theme.hover]: form.payment_method !== method,
+                        [theme.text]: form.payment_method !== method,
+                      }">
+                      <component :is="getPaymentMethodIcon(method)" class="w-4 h-4 mx-auto mb-1" />
                       {{ getPaymentMethodLabel(method) }}
                     </button>
                   </div>
                 </div>
 
                 <!-- Bank Transfer Details -->
-                <div
-                  v-if="form.payment_method === 'bank_transfer'"
-                  class="space-y-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4"
-                >
+                <div v-if="form.payment_method === 'bank_transfer'" class="space-y-3 rounded-lg p-4"
+                  :class="theme.bgLight">
                   <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label class="text-sm font-medium" :class="theme.text">
                       Account Holder Name
                     </label>
-                    <input
-                      v-model="form.payment_details.account_holder"
-                      type="text"
+                    <input v-model="form.payment_details.account_holder" type="text"
                       class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal"
                       :class="{
                         'border-red-500': errors['payment_details.account_holder'],
-                        'border-gray-200 dark:border-gray-700': !errors[
-                          'payment_details.account_holder'
-                        ],
-                      }"
-                      placeholder="Enter account holder name"
-                    />
-                    <p
-                      v-if="errors['payment_details.account_holder']"
-                      class="text-xs text-red-600 mt-1"
-                    >
+                        [theme.input]: !errors['payment_details.account_holder'],
+                        [theme.border]: !errors['payment_details.account_holder'],
+                      }" placeholder="Enter account holder name" />
+                    <p v-if="errors['payment_details.account_holder']" class="text-xs text-red-600 mt-1">
                       {{ errors["payment_details.account_holder"] }}
                     </p>
                   </div>
                   <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label class="text-sm font-medium" :class="theme.text">
                       Account Number
                     </label>
-                    <input
-                      v-model="form.payment_details.account_number"
-                      type="text"
+                    <input v-model="form.payment_details.account_number" type="text"
                       class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal"
                       :class="{
                         'border-red-500': errors['payment_details.account_number'],
-                        'border-gray-200 dark:border-gray-700': !errors[
-                          'payment_details.account_number'
-                        ],
-                      }"
-                      placeholder="Enter account number"
-                    />
-                    <p
-                      v-if="errors['payment_details.account_number']"
-                      class="text-xs text-red-600 mt-1"
-                    >
+                        [theme.input]: !errors['payment_details.account_number'],
+                        [theme.border]: !errors['payment_details.account_number'],
+                      }" placeholder="Enter account number" />
+                    <p v-if="errors['payment_details.account_number']" class="text-xs text-red-600 mt-1">
                       {{ errors["payment_details.account_number"] }}
                     </p>
                   </div>
                   <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label class="text-sm font-medium" :class="theme.text">
                       Bank Name
                     </label>
-                    <input
-                      v-model="form.payment_details.bank_name"
-                      type="text"
+                    <input v-model="form.payment_details.bank_name" type="text"
                       class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal"
                       :class="{
                         'border-red-500': errors['payment_details.bank_name'],
-                        'border-gray-200 dark:border-gray-700': !errors[
-                          'payment_details.bank_name'
-                        ],
-                      }"
-                      placeholder="Enter bank name"
-                    />
-                    <p
-                      v-if="errors['payment_details.bank_name']"
-                      class="text-xs text-red-600 mt-1"
-                    >
+                        [theme.input]: !errors['payment_details.bank_name'],
+                        [theme.border]: !errors['payment_details.bank_name'],
+                      }" placeholder="Enter bank name" />
+                    <p v-if="errors['payment_details.bank_name']" class="text-xs text-red-600 mt-1">
                       {{ errors["payment_details.bank_name"] }}
                     </p>
                   </div>
                 </div>
 
                 <!-- Easypaisa / JazzCash Details -->
-                <div
-                  v-if="
-                    form.payment_method === 'easypaisa' ||
-                    form.payment_method === 'jazzcash'
-                  "
-                  class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4"
-                >
+                <div v-if="
+                  form.payment_method === 'easypaisa' ||
+                  form.payment_method === 'jazzcash'
+                " class="rounded-lg p-4" :class="theme.bgLight">
                   <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label class="text-sm font-medium" :class="theme.text">
                       Phone Number
                     </label>
-                    <input
-                      v-model="form.payment_details.phone_number"
-                      type="tel"
+                    <input v-model="form.payment_details.phone_number" type="tel"
                       class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal"
                       :class="{
                         'border-red-500': errors['payment_details.phone_number'],
-                        'border-gray-200 dark:border-gray-700': !errors[
-                          'payment_details.phone_number'
-                        ],
-                      }"
-                      placeholder="Enter phone number"
-                    />
-                    <p
-                      v-if="errors['payment_details.phone_number']"
-                      class="text-xs text-red-600 mt-1"
-                    >
+                        [theme.input]: !errors['payment_details.phone_number'],
+                        [theme.border]: !errors['payment_details.phone_number'],
+                      }" placeholder="Enter phone number" />
+                    <p v-if="errors['payment_details.phone_number']" class="text-xs text-red-600 mt-1">
                       {{ errors["payment_details.phone_number"] }}
                     </p>
                   </div>
                 </div>
 
                 <!-- Info Alert -->
-                <div
-                  class="flex items-start gap-2 p-3 rounded-lg border"
-                  style="
-                    background: rgba(0, 194, 187, 0.06);
-                    border-color: var(--brand-teal);
-                  "
-                >
-                  <AlertCircle
-                    class="w-4 h-4 mt-0.5 flex-shrink-0"
-                    style="color: var(--brand-teal)"
-                  />
-                  <p class="text-xs" style="color: var(--brand-teal)">
+                <div class="flex items-start gap-2 p-3 rounded-lg border" :class="[theme.bgLight, theme.border]">
+                  <AlertCircle class="w-4 h-4 mt-0.5 flex-shrink-0" :class="theme.icon" />
+                  <p class="text-xs" :class="theme.textAccent">
                     Withdrawal requests are processed within 24-48 hours. You will receive
                     a confirmation once processed.
                   </p>
@@ -515,40 +462,24 @@ const useToast = () => {
       </div>
 
       <!-- Fixed Footer -->
-      <DialogFooter
-        class="flex-shrink-0 pt-4 border-t border-gray-200 dark:border-gray-700 mt-4"
-      >
+      <DialogFooter class="flex-shrink-0 pt-4 border-t mt-4" :class="theme.border">
         <div class="flex items-center justify-between w-full gap-2">
-          <p class="text-xs text-gray-500 dark:text-gray-400">
+          <p class="text-xs" :class="theme.textMuted">
             Points after withdrawal:
-            <span class="font-semibold" style="color: var(--brand-teal)">{{
+            <span class="font-semibold" :class="theme.textAccent">{{
               (availablePoints - (form.points || 0)).toLocaleString()
             }}</span>
           </p>
           <div class="flex items-center gap-2">
-            <AppButton
-              size="sm"
-              variant="outline"
-              label="Cancel"
-              @click="closeModal"
-              :disabled="form.processing"
-            />
-            <AppButton
-              size="sm"
-              :processing="form.processing"
-              label="Submit Withdrawal"
-              :disabled="form.processing"
-              @click="submit"
-              style="background: var(--brand-teal); border-color: var(--brand-teal)"
-              class="hover:opacity-90"
-            />
+            <AppButton size="sm" variant="outline" label="Cancel" @click="closeModal" :disabled="form.processing" />
+            <AppButton size="sm" :processing="form.processing" label="Submit Withdrawal" :disabled="form.processing"
+              @click="submit" :class="theme.button" />
           </div>
         </div>
       </DialogFooter>
     </DialogContent>
   </Dialog>
 </template>
-
 <style scoped>
 /* Brand Colors */
 :root {

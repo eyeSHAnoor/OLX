@@ -171,4 +171,32 @@ class BannerController extends Controller
 
         return redirect()->back()->with('success', 'Banner status updated successfully.');
     }
+
+    public function getBanner(Request $request)
+    {
+        $request->validate([
+            'position' => 'required|string|in:homepage,category,sidebar,floating',
+            'category_id' => 'nullable|integer|exists:categories,id',
+        ]);
+
+        $query = Banner::active()
+            ->where('position', $request->position)
+            ->orderBy('sort_order', 'asc');
+
+        \Log::info('Fetching banners', [
+            'position' => $request->position,
+            'category_id' => $request->category_id,
+        ]);
+
+        // If category_id is provided, filter by category or show global banners
+        if ($request->filled('category_id')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('target_category_id', $request->category_id)
+                  ->orWhereNull('target_category_id');
+            });
+        }
+
+        return response()->json($query->get());
+    }
+
 }

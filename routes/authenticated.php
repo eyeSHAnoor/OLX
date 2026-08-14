@@ -19,6 +19,7 @@ use App\Http\Controllers\UserReportController;
 use App\Http\Controllers\UserReferralController;
 use App\Http\Controllers\WithdrawalController;
 use App\Http\Controllers\GiftDetailController;
+use App\Http\Controllers\BannerController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
@@ -144,5 +145,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/withdrawals', [WithdrawalController::class, 'store'])->name('withdrawals.store');
     Route::post('/withdrawals/{withdrawal}/confirm', [WithdrawalController::class, 'confirm'])->name('withdrawals.confirm');
     Route::get('/withdrawals/status', [WithdrawalController::class, 'status'])->name('withdrawals.status');
+
+    Route::get('/get/banners', [BannerController::class, 'getBanner'])->name('getbanners');
 
 });

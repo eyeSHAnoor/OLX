@@ -1,20 +1,23 @@
 <template>
     <!-- Mobile Bottom Navigation - Only visible on mobile -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
+    <div :class="['md:hidden fixed bottom-0 left-0 right-0 border-t z-50 shadow-lg',
+        theme.bg, theme.border]">
         <div class="flex justify-around items-center px-auto max-w-md mx-auto pl-2">
             <div class="flex justify-around items-center w-2/5">
                 <!-- Home -->
                 <Link href="/" class="flex flex-col items-center">
                     <img src="/images/logo.png" class="w-8 h-6 object-contain" />
-                    <span class="text-xs text-gray-600">Mercatus</span>
+                    <span :class="['text-xs', theme.textMuted]">Mercatus</span>
                 </Link>
 
                 <!-- Chats -->
                 <Link href="/chat" class="flex flex-col items-center px-3 py-1">
                     <Icon :icon="isActive('chat') ? 'mdi:chat' : 'mdi:chat-outline'" class="text-xl"
-                        :class="isActive('chat') ? 'text-blue-600' : 'text-gray-600'" />
+                        :class="isActive('chat') ? theme.textAccent : theme.textMuted" />
                     <span class="text-xs mt-1"
-                        :class="isActive('chat') ? 'text-blue-600 font-medium' : 'text-gray-600'">Chats</span>
+                        :class="isActive('chat') ? [theme.textAccent, 'font-medium'] : theme.textMuted">
+                        Chats
+                    </span>
                 </Link>
             </div>
 
@@ -35,17 +38,16 @@
             </div>
 
             <div class="flex justify-around items-center gap-0 w-2/5">
+                <!-- Notifications -->
                 <div class="relative">
                     <Link href="/notifications" class="flex flex-col items-center">
                         <Icon :icon="isActive('notifications') ? 'mdi:bell' : 'mdi:bell-outline'" class="text-xl"
-                            :class="isActive('notifications') ? 'text-blue-600' : 'text-gray-600'" />
-
-                        <span class="text-[11px] mt-1" :class="isActive('notifications') ? 'text-blue-600 font-medium' : 'text-gray-600'
-                            ">
+                            :class="isActive('notifications') ? theme.textAccent : theme.textMuted" />
+                        <span class="text-[11px] mt-1"
+                            :class="isActive('notifications') ? [theme.textAccent, 'font-medium'] : theme.textMuted">
                             Notifications
                         </span>
                     </Link>
-
                     <!-- Badge -->
                     <span v-if="unreadCount > 0"
                         class="absolute -top-1 right-1 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full">
@@ -54,28 +56,22 @@
                 </div>
 
                 <!-- Account -->
-                <!-- Account -->
                 <Link :href="accountLink" class="flex flex-col items-center px-3 py-1">
                     <!-- Avatar if logged in -->
                     <div v-if="user" class="w-6 h-6 rounded-full overflow-hidden border"
-                        :class="isActive('account') ? 'border-blue-600' : 'border-gray-300'">
-                        <!-- Profile Image -->
+                        :class="[isActive('account') ? theme.border : 'border-gray-300']">
                         <img v-if="user?.profile_image" :src="`/storage/${user.profile_image}`"
                             class="w-full h-full object-cover" />
-
-                        <!-- Initial fallback -->
                         <div v-else
                             class="w-full h-full flex items-center justify-center text-[10px] font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-600">
                             {{ user.name.charAt(0) }}
                         </div>
                     </div>
-
                     <!-- Icon if guest -->
                     <Icon v-else :icon="isActive('account') ? 'mdi:account' : 'mdi:account-outline'" class="text-xl"
-                        :class="isActive('account') ? 'text-blue-600' : 'text-gray-600'" />
-
+                        :class="isActive('account') ? theme.textAccent : theme.textMuted" />
                     <span class="text-xs mt-1"
-                        :class="isActive('account') ? 'text-blue-600 font-medium' : 'text-gray-600'">
+                        :class="isActive('account') ? [theme.textAccent, 'font-medium'] : theme.textMuted">
                         Account
                     </span>
                 </Link>
@@ -88,6 +84,8 @@
 import { computed } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
 import { Icon } from "@iconify/vue";
+import { useTheme } from "@/composables/useTheme";
+const { theme } = useTheme();
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);

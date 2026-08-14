@@ -1,80 +1,77 @@
 <template>
-    <div class="w-full bg-white border-t">
+    <div :class="['w-full border-t', theme.bg, theme.border]">
         <div class="max-w-full md:max-w-9/11 mx-auto px-4 md:px-3 py-4">
             <!-- Desktop layout -->
             <div class="hidden md:flex md:flex-col md:gap-2">
                 <!-- Row 1: Location + Search -->
                 <div class="flex md:flex-row md:items-stretch md:gap-3">
-                    <!-- Location Trigger (opens dropdown) -->
+                    <!-- Location Trigger -->
                     <div ref="dropdownContainer" class="relative w-full md:w-72">
-                        <div @click="toggleDropdown"
-                            class="flex items-center justify-between border border-gray-300 rounded-md px-2 py-3 bg-white hover:border-blue-400 transition-colors cursor-pointer">
+                        <div @click="toggleDropdown" :class="['flex items-center justify-between border rounded-md px-2 py-3 transition-colors cursor-pointer',
+                            theme.inputBg, theme.inputBorder, theme.borderHover]">
                             <div class="flex items-center">
-                                <Icon icon="mdi:map-marker-outline" class="text-sm text-blue-600 mr-2" />
-                                <span class="text-sm">{{ locationDisplay }}</span>
+                                <Icon icon="mdi:map-marker-outline" :class="['text-sm mr-2', theme.textAccent]" />
+                                <span :class="['text-sm', theme.text]">{{ locationDisplay }}</span>
                             </div>
-                            <Icon icon="mdi:chevron-down" class="text-gray-500 text-sm" />
+                            <Icon icon="mdi:chevron-down" :class="['text-sm', theme.textMuted]" />
                         </div>
 
                         <!-- Dropdown -->
-                        <div v-if="dropdownOpen"
-                            class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-20">
+                        <div v-if="dropdownOpen" :class="['absolute top-full left-0 right-0 mt-1 rounded-md shadow-lg z-20',
+                            theme.card, theme.cardBorder, theme.shadow]">
+
                             <!-- City selection view -->
                             <template v-if="!showRegionsInDropdown">
-                                <div class="p-2 border-b">
-                                    <input v-model="citySearchQuery" type="text" placeholder="Search city..."
-                                        class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-400"
-                                        autofocus />
+                                <div class="p-2 border-b" :class="theme.border">
+                                    <input v-model="citySearchQuery" type="text" placeholder="Search city..." :class="['w-full px-2 py-1.5 border rounded text-sm focus:outline-none',
+                                        theme.inputBg, theme.inputBorder, theme.text]" autofocus />
                                 </div>
                                 <div class="max-h-60 overflow-y-auto">
-                                    <!-- Use current location button -->
-                                    <div @click="useCurrentLocation"
-                                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm text-blue-600 border-b border-gray-100 flex items-center">
+                                    <div @click="useCurrentLocation" :class="['px-3 py-2 cursor-pointer text-sm flex items-center',
+                                        theme.hover, theme.textAccent]">
                                         <Icon icon="mdi:crosshairs-gps" class="mr-2" />
                                         Use current location
                                     </div>
-                                    <div @click="selectCity('Pakistan')"
-                                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm" :class="{
-                                            'bg-blue-50': selectedCity === 'Pakistan' && !selectedRegion,
-                                        }">
+                                    <div @click="selectCity('Pakistan')" :class="['px-3 py-2 cursor-pointer text-sm', theme.hover, theme.text,
+                                        { 'bg-blue-50': selectedCity === 'Pakistan' && !selectedRegion }]">
                                         Pakistan
                                     </div>
-                                    <div v-for="city in filteredCities" :key="city" @click="selectCity(city)"
-                                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
-                                        :class="{ 'bg-blue-50': selectedCity === city && !selectedRegion }">
+                                    <div v-for="city in filteredCities" :key="city" @click="selectCity(city)" :class="['px-3 py-2 cursor-pointer text-sm', theme.hover, theme.text,
+                                        { 'bg-blue-50': selectedCity === city && !selectedRegion }]">
                                         {{ city }}
                                     </div>
                                     <div v-if="filteredCities.length === 0"
-                                        class="px-3 py-2 text-gray-500 text-sm text-center">
+                                        :class="['px-3 py-2 text-sm text-center', theme.textMuted]">
                                         No cities found
                                     </div>
                                 </div>
                             </template>
+
                             <!-- Region selection view -->
                             <template v-else>
-                                <div class="p-2 border-b flex items-center">
+                                <div class="p-2 border-b flex items-center" :class="theme.border">
                                     <button @click="backToCitiesInDropdown"
-                                        class="mr-2 text-gray-600 hover:text-gray-800">
+                                        :class="['mr-2', theme.textMuted, theme.hover]">
                                         <Icon icon="mdi:arrow-left" class="text-lg" />
                                     </button>
-                                    <span class="text-sm font-medium">{{ selectedCity }}</span>
+                                    <span :class="['text-sm font-medium', theme.text]">{{ selectedCity }}</span>
                                 </div>
                                 <div class="max-h-60 overflow-y-auto">
-                                    <div @click="selectRegion(null)"
-                                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
-                                        :class="{ 'bg-blue-50': !selectedRegion }">
+                                    <div @click="selectRegion(null)" :class="['px-3 py-2 cursor-pointer text-sm', theme.hover, theme.text,
+                                        { 'bg-blue-50': !selectedRegion }]">
                                         All areas
                                     </div>
                                     <div v-for="region in regions" :key="region.id" @click="selectRegion(region.name)"
-                                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
-                                        :class="{ 'bg-blue-50': selectedRegion === region.name }">
+                                        :class="['px-3 py-2 cursor-pointer text-sm', theme.hover, theme.text,
+                                            { 'bg-blue-50': selectedRegion === region.name }]">
                                         {{ region.name }}
                                     </div>
                                     <div v-if="regions.length === 0 && !loadingRegions"
-                                        class="px-3 py-2 text-gray-500 text-sm text-center">
+                                        :class="['px-3 py-2 text-sm text-center', theme.textMuted]">
                                         No regions found
                                     </div>
-                                    <div v-if="loadingRegions" class="px-3 py-2 text-gray-500 text-sm text-center">
+                                    <div v-if="loadingRegions"
+                                        :class="['px-3 py-2 text-sm text-center', theme.textMuted]">
                                         Loading regions...
                                     </div>
                                 </div>
@@ -82,36 +79,36 @@
                         </div>
                     </div>
 
-                    <!-- DESKTOP Search Input with suggestions -->
+                    <!-- DESKTOP Search Input -->
                     <div class="flex flex-1 relative">
                         <input v-model="searchTerm" @keyup.enter="performSearch" @input="checkResetFilters"
-                            @focus="onSearchFocus" @blur="onSearchBlur"
-                            class="border border-r-0 px-3 py-3 text-sm rounded-l-md w-full focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+                            @focus="onSearchFocus" @blur="onSearchBlur" :class="['border border-r-0 px-3 py-3 text-sm rounded-l-md w-full focus:ring-1 focus:outline-none',
+                                theme.inputBg, theme.inputBorder, theme.text]"
                             placeholder="Search for item, brand, category..." />
 
                         <!-- SUGGESTIONS DROPDOWN -->
-                        <ul v-if="showSuggestions && suggestions.length > 0"
-                            class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-30 mt-1 max-h-60 overflow-y-auto">
+                        <ul v-if="showSuggestions && suggestions.length > 0" :class="['absolute top-full left-0 right-0 rounded-md shadow-lg z-30 mt-1 max-h-60 overflow-y-auto',
+                            theme.card, theme.cardBorder, theme.shadow]">
                             <li v-for="(suggestion, idx) in suggestions" :key="idx"
                                 @mousedown.prevent="selectSuggestion(suggestion)"
-                                class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex items-center">
-                                <Icon icon="mdi:magnify" class="text-gray-400 mr-2 text-sm" />
+                                :class="['px-3 py-2 cursor-pointer text-sm flex items-center', theme.hover, theme.text]">
+                                <Icon icon="mdi:magnify" :class="['mr-2 text-sm', theme.textMuted]" />
                                 {{ suggestion }}
                             </li>
                         </ul>
 
-                        <button @click="performSearch"
-                            class="bg-brand-blue -ml-4 px-4 text-white rounded-r-md flex items-center hover:bg-blue-700 transition-colors">
+                        <button @click="performSearch" :class="['-ml-4 px-4 rounded-r-md flex items-center transition-colors',
+                            theme.button]">
                             <Icon icon="mdi:magnify" class="text-base" />
                         </button>
                     </div>
                 </div>
 
-                <!-- Row 2: Filters (Wholesale checkbox – visible only when searching) -->
+                <!-- Wholesale Filter -->
                 <div v-if="searchTerm.length > 0" class="flex items-center gap-4 pl-80 m1-16">
-                    <label class="flex items-center text-sm text-gray-700 cursor-pointer select-none">
+                    <label :class="['flex items-center text-sm cursor-pointer select-none', theme.text]">
                         <input type="checkbox" v-model="wholesale" @change="performSearch"
-                            class="mr-1.5 rounded border-gray-300 text-brand-blue focus:ring-brand-blue" />
+                            :class="['mr-1.5 rounded focus:ring-1', theme.textAccent]" />
                         Wholesale
                     </label>
                 </div>
@@ -119,127 +116,119 @@
 
             <!-- MOBILE layout -->
             <div class="block md:hidden">
-                <!-- MOBILE Search Input with suggestions -->
+                <!-- MOBILE Search -->
                 <div class="flex w-full relative">
                     <input v-model="searchTerm" @keyup.enter="performSearch" @input="checkResetFilters"
-                        @focus="onSearchFocus" @blur="onSearchBlur"
-                        class="border border-r-0 px-3 py-3 text-sm rounded-l-md w-full focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+                        @focus="onSearchFocus" @blur="onSearchBlur" :class="['border border-r-0 px-3 py-3 text-sm rounded-l-md w-full focus:ring-1 focus:outline-none',
+                            theme.inputBg, theme.inputBorder, theme.text]"
                         placeholder="Search for item, brand, category..." />
 
-                    <!-- SUGGESTIONS DROPDOWN (mobile) -->
-                    <ul v-if="showSuggestions && suggestions.length > 0"
-                        class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-30 mt-1 max-h-60 overflow-y-auto">
+                    <ul v-if="showSuggestions && suggestions.length > 0" :class="['absolute top-full left-0 right-0 rounded-md shadow-lg z-30 mt-1 max-h-60 overflow-y-auto',
+                        theme.card, theme.cardBorder, theme.shadow]">
                         <li v-for="(suggestion, idx) in suggestions" :key="idx"
                             @mousedown.prevent="selectSuggestion(suggestion)"
-                            class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex items-center">
-                            <Icon icon="mdi:magnify" class="text-gray-400 mr-2 text-sm" />
+                            :class="['px-3 py-2 cursor-pointer text-sm flex items-center', theme.hover, theme.text]">
+                            <Icon icon="mdi:magnify" :class="['mr-2 text-sm', theme.textMuted]" />
                             {{ suggestion }}
                         </li>
                     </ul>
 
-                    <button @click="performSearch"
-                        class="bg-brand-blue -ml-4 px-4 text-white rounded-r-md flex items-center hover:bg-blue-700 transition-colors">
+                    <button @click="performSearch" :class="['-ml-4 px-4 rounded-r-md flex items-center transition-colors',
+                        theme.button]">
                         <Icon icon="mdi:magnify" class="text-base" />
                     </button>
                 </div>
 
-                <!-- Pakistan Button + City/Region Dropdown -->
+                <!-- Location Button -->
                 <div class="mt-2 flex flex-row gap-4 items-center justify-start">
                     <button @click="openModal"
-                        class="text-sm text-brand-teal hover:text-brand-teal/90 transition-colors flex items-center gap-1">
+                        :class="['text-sm transition-colors flex items-center gap-1', theme.textAccent, theme.hover]">
                         <Icon icon="mdi:map-marker-outline" class="text-md" />
                         <span class="text-sm">{{ locationDisplay || "Select location" }}</span>
                     </button>
                 </div>
 
-                <!-- Mobile Wholesale checkbox – visible only when searching -->
+                <!-- Mobile Wholesale -->
                 <div v-if="searchTerm.length > 0" class="mt-2 flex items-center">
-                    <label class="flex items-center text-sm text-gray-700 cursor-pointer select-none">
+                    <label :class="['flex items-center text-sm cursor-pointer select-none', theme.text]">
                         <input type="checkbox" v-model="wholesale" @change="performSearch"
-                            class="mr-1.5 rounded border-gray-300 text-brand-blue focus:ring-brand-blue" />
+                            :class="['mr-1.5 rounded focus:ring-1', theme.textAccent]" />
                         Wholesale
                     </label>
                 </div>
             </div>
         </div>
 
-        <!-- Mobile Modal (Teleported to body) -->
+        <!-- Mobile Modal -->
         <Teleport to="body">
             <div v-if="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black/50"
                 @click.self="closeModal">
-                <div class="bg-white rounded-lg w-full max-w-md max-h-[80vh] flex flex-col shadow-xl">
+                <div :class="['rounded-lg w-full max-w-md max-h-[80vh] flex flex-col shadow-xl',
+                    theme.card, theme.cardBorder]">
+
                     <!-- Modal Header -->
-                    <div class="flex items-center justify-between p-4 border-b">
+                    <div class="flex items-center justify-between p-4 border-b" :class="theme.border">
                         <div class="flex items-center">
                             <button v-if="modalView === 'regions'" @click="goBackToCitiesFromModal"
-                                class="mr-3 text-gray-600">
+                                :class="['mr-3', theme.textMuted, theme.hover]">
                                 <Icon icon="mdi:arrow-left" class="text-xl" />
                             </button>
-                            <h3 class="text-lg font-medium">
-                                {{
-                                    modalView === "cities"
-                                        ? "Select City"
-                                        : `Select Area in ${selectedCity}`
-                                }}
+                            <h3 :class="['text-lg font-medium', theme.text]">
+                                {{ modalView === "cities" ? "Select City" : `Select Area in ${selectedCity}` }}
                             </h3>
                         </div>
-                        <button @click="closeModal" class="text-gray-500 hover:text-gray-700">
+                        <button @click="closeModal" :class="[theme.textMuted, theme.hover]">
                             <Icon icon="mdi:close" class="text-xl" />
                         </button>
                     </div>
 
                     <!-- Search Input -->
-                    <div class="p-4 border-b">
+                    <div class="p-4 border-b" :class="theme.border">
                         <input v-model="modalSearchQuery" type="text"
-                            :placeholder="modalView === 'cities' ? 'Search city...' : 'Search area...'"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-400"
-                            autofocus />
+                            :placeholder="modalView === 'cities' ? 'Search city...' : 'Search area...'" :class="['w-full px-3 py-2 border rounded-md text-sm focus:outline-none',
+                                theme.inputBg, theme.inputBorder, theme.text]" autofocus />
                     </div>
 
                     <!-- Content -->
                     <div class="flex-1 overflow-y-auto p-2">
                         <!-- City List View -->
                         <template v-if="modalView === 'cities'">
-                            <!-- Use current location button -->
-                            <div @click="useCurrentLocationInModal"
-                                class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm text-blue-600 rounded-md flex items-center border-b border-gray-100">
+                            <div @click="useCurrentLocationInModal" :class="['px-3 py-2 cursor-pointer text-sm rounded-md flex items-center border-b',
+                                theme.hover, theme.textAccent, theme.border]">
                                 <Icon icon="mdi:crosshairs-gps" class="mr-2" />
                                 Use current location
                             </div>
-                            <div @click="selectCityFromModal('Pakistan')"
-                                class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm rounded-md"
-                                :class="{ 'bg-blue-50': selectedCity === 'Pakistan' && !selectedRegion }">
+                            <div @click="selectCityFromModal('Pakistan')" :class="['px-3 py-2 cursor-pointer text-sm rounded-md', theme.hover, theme.text,
+                                { 'bg-blue-50': selectedCity === 'Pakistan' && !selectedRegion }]">
                                 All Pakistan
                             </div>
                             <div v-for="city in filteredModalCities" :key="city" @click="selectCityFromModal(city)"
-                                class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm rounded-md"
-                                :class="{ 'bg-blue-50': selectedCity === city && !selectedRegion }">
+                                :class="['px-3 py-2 cursor-pointer text-sm rounded-md', theme.hover, theme.text,
+                                    { 'bg-blue-50': selectedCity === city && !selectedRegion }]">
                                 {{ city }}
                             </div>
                             <div v-if="filteredModalCities.length === 0"
-                                class="px-3 py-2 text-gray-500 text-sm text-center">
+                                :class="['px-3 py-2 text-sm text-center', theme.textMuted]">
                                 No cities found
                             </div>
                         </template>
 
                         <!-- Region List View -->
                         <template v-else>
-                            <div @click="selectRegionFromModal(null)"
-                                class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm rounded-md"
-                                :class="{ 'bg-blue-50': !selectedRegion }">
+                            <div @click="selectRegionFromModal(null)" :class="['px-3 py-2 cursor-pointer text-sm rounded-md', theme.hover, theme.text,
+                                { 'bg-blue-50': !selectedRegion }]">
                                 All areas
                             </div>
                             <div v-for="region in filteredModalRegions" :key="region.id"
-                                @click="selectRegionFromModal(region.name)"
-                                class="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm rounded-md"
-                                :class="{ 'bg-blue-50': selectedRegion === region.name }">
+                                @click="selectRegionFromModal(region.name)" :class="['px-3 py-2 cursor-pointer text-sm rounded-md', theme.hover, theme.text,
+                                    { 'bg-blue-50': selectedRegion === region.name }]">
                                 {{ region.name }}
                             </div>
                             <div v-if="filteredModalRegions.length === 0 && !loadingRegions"
-                                class="px-3 py-2 text-gray-500 text-sm text-center">
+                                :class="['px-3 py-2 text-sm text-center', theme.textMuted]">
                                 No areas found
                             </div>
-                            <div v-if="loadingRegions" class="px-3 py-2 text-gray-500 text-sm text-center">
+                            <div v-if="loadingRegions" :class="['px-3 py-2 text-sm text-center', theme.textMuted]">
                                 Loading areas...
                             </div>
                         </template>
@@ -249,15 +238,15 @@
         </Teleport>
     </div>
 </template>
-
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { router, usePage } from "@inertiajs/vue3";
 import { Icon } from "@iconify/vue";
+import { useTheme } from "@/composables/useTheme";
 import citiesList from "@/data/cities.json";
 
 const page = usePage();
-
+const { theme } = useTheme();
 // ────────────────────────────────────────────────────────
 //  Data
 // ────────────────────────────────────────────────────────

@@ -19,14 +19,8 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        // Log::info('home controller opened');
-
-        // Log::error('Home controller loads', ['city' => session('city'), 'region' => session('region')]);
-
         $selectedCity   = strtolower($request->cookie('user_city', 'Pakistan'));
         $selectedRegion = $request->cookie('user_region');
-
-        Log::error('Home controller loads', ['city' => $selectedCity, 'region' => $selectedRegion]);
 
         // Filters
         $searchTerm    = $request->input('filter.global');
@@ -190,12 +184,12 @@ class HomeController extends Controller
         */
         $brands = Brand::with(['categories.files'])->get();
 
-        $banners = Banner::where('position', 'homepage')
-            ->where('status', true)
-            ->where(fn($q) => $q->whereNull('start_date')->orWhere('start_date', '<=', now()))
-            ->where(fn($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', now()))
-            ->orderBy('sort_order')
-            ->get();
+        // $banners = Banner::where('position', 'homepage')
+        //     ->where('status', true)
+        //     ->where(fn($q) => $q->whereNull('start_date')->orWhere('start_date', '<=', now()))
+        //     ->where(fn($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', now()))
+        //     ->orderBy('sort_order')
+        //     ->get();
 
           /*
         |--------------------------------------------------------------------------
@@ -227,7 +221,7 @@ class HomeController extends Controller
 
         return Inertia::render('home/Index', [
             'categories' => $categories,
-            'banners' => $banners,
+            // 'banners' => $banners,
             'recentAds' => $recentAds,  
             'brands' => $brands,
             'filters' => [

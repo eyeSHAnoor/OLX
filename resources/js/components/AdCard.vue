@@ -1,12 +1,16 @@
 <template>
   <Link :href="route('ads.show', ad.id)" class="block h-full">
     <div :class="[
-      'h-full group bg-white border border-gray-200 rounded-xl hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-col',
+      'h-full group border rounded-xl hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-col',
+      theme.card,
+      theme.border,
+      theme.shadow,
       size === 'small' ? 'card-compact' : '',
     ]">
       <!-- Image Container -->
       <div :class="[
         'relative bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden flex-shrink-0',
+        theme.imageBg,
         size === 'small' ? 'h-42' : 'h-48 sm:h-52 md:h-56',
       ]">
         <img v-if="ad.images?.[0]?.path" :src="`/storage/${ad.images[0].path}`" :alt="ad.ad_title"
@@ -24,7 +28,8 @@
         <!-- Price Badge (ONLY final price when discount present, otherwise full price) -->
         <div class="absolute top-2 left-2">
           <span :class="[
-            'bg-white/95 backdrop-blur-sm rounded-full font-medium text-gray-900 shadow-sm',
+            ' backdrop-blur-sm rounded-full font-medium shadow-sm',
+            theme.text, theme.button, theme.shadow,
             size === 'small' ? 'px-2 py-1 text-[10px]' : 'px-3 py-1.5 text-xs',
           ]">
             Rs {{ formatPrice(ad.discount && ad.discount > 0 ? ad.discount : ad.price) }}
@@ -55,7 +60,8 @@
       <!-- Content -->
       <div :class="['flex flex-col flex-grow', size === 'small' ? 'p-2' : 'p-3 sm:p-4']">
         <h3 :class="[
-          'font-semibold text-gray-900 line-clamp-2 group-hover:text-brand-blue transition-colors leading-snug',
+          'font-semibold line-clamp-2 group-hover:text-brand-blue transition-colors leading-snug',
+          theme.text,
           size === 'small' ? 'text-xs mb-1' : 'text-sm sm:text-base mb-2',
         ]">
           {{ ad.ad_title || "Untitled" }}
@@ -98,7 +104,8 @@
           <div class="flex flex-col leading-tight gap-0">
             <!-- Discounted price (bold, bigger) -->
             <span :class="[
-              'font-bold text-gray-900',
+              'font-bold',
+              theme.text,
               size === 'small' ? 'text-xs' : 'text-sm sm:text-base',
             ]">
               Rs {{ formatPrice(ad.discount, false) }}
@@ -123,7 +130,8 @@
 
         <!-- Location & Category -->
         <div :class="[
-          'flex flex-col text-gray-600',
+          'flex flex-col',
+          theme.textMuted,
           size === 'small' ? 'gap-1 mb-2' : 'gap-1.5 mb-3',
         ]">
           <div class="flex items-center">
@@ -134,8 +142,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span :class="size === 'small' ? 'text-[10px] line-clamp-1' : 'text-xs line-clamp-1'
-              ">
+            <span :class="size === 'small' ? 'text-[10px] line-clamp-1' : 'text-xs line-clamp-1'">
               <span v-if="ad.region">{{ ad?.region }},</span>
               {{ ad.city || "Location not specified" }}
             </span>
@@ -153,8 +160,8 @@
         </div>
 
         <!-- Footer -->
-        <div class="flex items-center justify-between pt-1 mt-auto border-t border-gray-100">
-          <div class="flex items-center text-gray-500">
+        <div class="flex items-center justify-between pt-1 mt-auto border-t" :class="theme.border">
+          <div class="flex items-center" :class="theme.textMuted">
             <svg :class="size === 'small' ? 'w-3 h-3 mr-0.5' : 'w-3.5 h-3.5 mr-1'" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -164,7 +171,7 @@
               {{ timeAgo(ad.created_at) }}
             </span>
           </div>
-          <div v-if="isOwner" class="flex items-center text-gray-500">
+          <div v-if="isOwner" class="flex items-center" :class="theme.textMuted">
             <span :class="size === 'small' ? 'text-[9px]' : 'text-[10px] sm:text-xs'">
               {{ ad.views_count || 0 }} views
             </span>
@@ -177,8 +184,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { Link, router } from "@inertiajs/vue3";
+import { Link, router, usePage } from "@inertiajs/vue3";
 import useHelpers from "@/composables/useHelpers";
+import { useTheme } from "@/Composables/useTheme";
+
+// --- Theme ---
+const { theme } = useTheme();
 
 interface Ad {
   id: number;

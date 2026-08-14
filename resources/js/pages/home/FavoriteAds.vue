@@ -1,10 +1,11 @@
 <template>
     <OlxLayout>
         <TopCategoriesBar />
-        <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3  py-4 md:py-6">
+        <div class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 py-4 md:py-6" :class="theme.bg">
             <div class="pb-2 sm:hidden visible">
                 <button @click="goBack"
-                    class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
+                    class="inline-flex items-center gap-1 px-3 py-2 rounded-md border text-sm transition"
+                    :class="[theme.card, theme.border, theme.text, theme.hover]">
                     <Icon icon="mdi:arrow-left" class="text-base" />
                     Back
                 </button>
@@ -13,24 +14,22 @@
             <div class="mb-6 md:mb-8">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">My Favorite Ads</h1>
-                        <p class="text-sm text-gray-600 mt-1">View and manage your saved listings</p>
+                        <h1 class="text-2xl md:text-3xl font-bold" :class="theme.text">My Favorite Ads</h1>
+                        <p class="text-sm mt-1" :class="theme.textMuted">View and manage your saved listings</p>
                     </div>
                 </div>
             </div>
 
             <!-- Filters Section -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+            <div class="rounded-xl shadow-sm border mb-6" :class="[theme.card, theme.border]">
                 <div class="p-4 md:p-5">
                     <!-- Search and Filter Row -->
-                    <!-- Container -->
                     <div class="flex flex-col gap-2">
-
-                        <!-- 🔍 Row 1: Search (always full width on mobile) -->
+                        <!-- Search -->
                         <div class="w-full">
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
+                                    <svg class="h-5 w-5" :class="theme.textMuted" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -39,15 +38,15 @@
 
                                 <input v-model="filters.global" type="text"
                                     placeholder="Search by title, description..."
-                                    class="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none transition text-sm sm:text-xs" />
+                                    class="w-full pl-10 pr-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-brand-teal/20 focus:border-brand-teal outline-none transition text-sm sm:text-xs"
+                                    :class="theme.input" />
                             </div>
                         </div>
 
-                        <!-- ⚙️ Row 2: Filters -->
+                        <!-- Filters -->
                         <div class="flex flex-wrap gap-2 items-center">
-
                             <!-- Category -->
-                            <SelectInput v-model="filters.category" class="flex-1 " placeholder="Categories">
+                            <SelectInput v-model="filters.category" class="flex-1" placeholder="Categories">
                                 <SelectContent>
                                     <SelectItem v-for="cat in categories" :key="cat.id" :value="cat.id">
                                         {{ cat.name }}
@@ -75,25 +74,27 @@
 
                             <!-- Apply -->
                             <button @click="applyFilters"
-                                class="flex-1 sm:flex-none px-3 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition text-sm sm:text-xs">
+                                class="flex-1 sm:flex-none px-3 py-2 text-white rounded-lg transition text-sm sm:text-xs"
+                                :class="theme.button">
                                 Apply
                             </button>
 
                             <!-- Reset -->
                             <button v-if="isFiltered" @click="resetFilters"
-                                class="flex-1 sm:flex-none px-3 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm sm:text-xs">
+                                class="flex-1 sm:flex-none px-3 py-2 border rounded-lg transition text-sm sm:text-xs"
+                                :class="[theme.buttonOutline, theme.border]">
                                 Reset
                             </button>
                         </div>
-
                     </div>
 
                     <!-- Active Filters Tags -->
-                    <div v-if="isFiltered" class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
+                    <div v-if="isFiltered" class="flex flex-wrap gap-2 mt-3 pt-3 border-t" :class="theme.border">
                         <span v-if="filters.global"
-                            class="inline-flex items-center gap-1 px-3 py-1 bg-brand-teal/10 text-brand-teal rounded-full text-xs sm:text-[10px]">
+                            class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-[10px]"
+                            :class="theme.badge">
                             Search: "{{ truncateText(filters.global, 30) }}"
-                            <button @click="filters.global = ''; applyFilters()" class="hover:text-brand-teal/80">
+                            <button @click="filters.global = ''; applyFilters()" class="hover:opacity-80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -102,9 +103,10 @@
                         </span>
 
                         <span v-if="filters.category"
-                            class="inline-flex items-center gap-1 px-3 py-1 bg-brand-teal/10 text-brand-teal rounded-full text-xs sm:text-[10px]">
+                            class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-[10px]"
+                            :class="theme.badge">
                             Category: {{ getCategoryName(filters.category) }}
-                            <button @click="filters.category = ''; applyFilters()" class="hover:text-brand-teal/80">
+                            <button @click="filters.category = ''; applyFilters()" class="hover:opacity-80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -113,9 +115,10 @@
                         </span>
 
                         <span v-if="filters.brand"
-                            class="inline-flex items-center gap-1 px-3 py-1 bg-brand-blue/10 text-brand-blue rounded-full text-xs sm:text-[10px]">
+                            class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-[10px]"
+                            :class="theme.badge">
                             Brand: {{ getBrandName(filters.brand) }}
-                            <button @click="filters.brand = ''; applyFilters()" class="hover:text-brand-blue/80">
+                            <button @click="filters.brand = ''; applyFilters()" class="hover:opacity-80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -124,10 +127,11 @@
                         </span>
 
                         <span v-if="filters.min_price || filters.max_price"
-                            class="inline-flex items-center gap-1 px-3 py-1 bg-brand-teal/10 text-brand-teal rounded-full text-xs sm:text-[10px]">
+                            class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-[10px]"
+                            :class="theme.badge">
                             Price: {{ formatPrice(filters.min_price) }} - {{ formatPrice(filters.max_price) }}
                             <button @click="filters.min_price = ''; filters.max_price = ''; applyFilters()"
-                                class="hover:text-brand-teal/80">
+                                class="hover:opacity-80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -136,9 +140,10 @@
                         </span>
 
                         <span v-if="sort !== 'newest'"
-                            class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-[10px]">
+                            class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-[10px]"
+                            :class="theme.badge">
                             Sort: {{ getSortLabel(sort) }}
-                            <button @click="sort = 'newest'; applyFilters()" class="hover:text-gray-900">
+                            <button @click="sort = 'newest'; applyFilters()" class="hover:opacity-80">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -150,13 +155,13 @@
             </div>
 
             <!-- Results Count -->
-            <div class="mb-4 text-sm text-gray-600">
+            <div class="mb-4 text-sm" :class="theme.textMuted">
                 Showing {{ allLoadedAds.length }} of {{ totalAds }} favorite ads
             </div>
 
-            <!-- Loading Spinner (when filters applied and no ads yet) -->
+            <!-- Loading Spinner -->
             <div v-if="loading && allLoadedAds.length === 0" class="text-center py-12">
-                <svg class="animate-spin w-10 h-10 text-brand-teal mx-auto mb-3" fill="none" stroke="currentColor"
+                <svg class="animate-spin w-10 h-10 mx-auto mb-3" :class="theme.icon" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
                     </circle>
@@ -164,7 +169,7 @@
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                     </path>
                 </svg>
-                <p class="text-sm text-gray-500">Loading favorites...</p>
+                <p class="text-sm" :class="theme.textMuted">Loading favorites...</p>
             </div>
 
             <!-- Favorite Ads Grid -->
@@ -174,8 +179,8 @@
 
             <!-- Loading indicator for infinite scroll -->
             <div v-if="loading && allLoadedAds.length > 0" class="text-center py-6">
-                <div class="inline-flex items-center gap-2 text-gray-500">
-                    <svg class="animate-spin h-5 w-5 text-brand-teal" xmlns="http://www.w3.org/2000/svg" fill="none"
+                <div class="inline-flex items-center gap-2" :class="theme.textMuted">
+                    <svg class="animate-spin h-5 w-5" :class="theme.icon" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
                         </circle>
@@ -193,20 +198,22 @@
             <!-- No more items message -->
             <div v-if="!hasMorePages && allLoadedAds.length > 0 && allLoadedAds.length === totalAds"
                 class="text-center py-6">
-                <p class="text-sm text-gray-400">You've seen all {{ totalAds }} favorite ads</p>
+                <p class="text-sm" :class="theme.textMuted">You've seen all {{ totalAds }} favorite ads</p>
             </div>
 
             <!-- No Favorites State -->
-            <div v-if="allLoadedAds.length === 0 && !loading"
-                class="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
-                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div v-if="allLoadedAds.length === 0 && !loading" class="text-center py-12 rounded-xl shadow-sm border"
+                :class="[theme.card, theme.border]">
+                <svg class="w-16 h-16 mx-auto mb-4" :class="theme.textMuted" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
-                <h3 class="text-lg font-semibold text-gray-900 mb-1">No favorite ads yet</h3>
-                <p class="text-sm text-gray-600 mb-4">Start exploring and save ads you're interested in</p>
+                <h3 class="text-lg font-semibold mb-1" :class="theme.text">No favorite ads yet</h3>
+                <p class="text-sm mb-4" :class="theme.textMuted">Start exploring and save ads you're interested in</p>
                 <Link :href="route('home')"
-                    class="inline-flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-brand-blue/90 transition text-sm font-medium">
+                    class="inline-flex items-center gap-2 text-white px-4 py-2 rounded-lg transition text-sm font-medium"
+                    :class="theme.button">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -227,6 +234,10 @@ import axios from 'axios'
 import debounce from 'lodash/debounce'
 import { Icon } from '@iconify/vue'
 import TopCategoriesBar from '@/components/TopCategoriesBar.vue'
+import { useTheme } from '@/Composables/useTheme'
+
+// Theme
+const { theme } = useTheme()
 
 interface Props {
     favoriteAds: {
@@ -264,7 +275,7 @@ const allLoadedAds = ref<any[]>([])
 const currentPage = ref(1)
 const totalPages = ref(1)
 const totalAds = ref(0)
-const loading = ref(false)  // <-- added loading ref
+const loading = ref(false)
 
 // Update all loaded favorites when initial data arrives
 watch(() => props.favoriteAds, (newData) => {
@@ -277,7 +288,7 @@ watch(() => props.favoriteAds, (newData) => {
         currentPage.value = newData.current_page
         totalPages.value = newData.last_page
         totalAds.value = newData.total
-        loading.value = false  // ensure loading is turned off
+        loading.value = false
     }
 }, { immediate: true, deep: true })
 
@@ -402,7 +413,7 @@ const loadMore = () => {
 const applyFilters = () => {
     allLoadedAds.value = []
     currentPage.value = 1
-    loading.value = true   // show loading spinner
+    loading.value = true
 
     router.get(route('user.favorites'), {
         filter: {

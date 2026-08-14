@@ -1,16 +1,17 @@
 <template>
-    <div v-if="category.ads && category.ads.length > 0" class="my-6 sm:my-8">
+    <div v-if="category.ads && category.ads.length > 0" class="py-6 sm:py-8">
         <!-- Category Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2 sm:gap-4">
             <div class="flex-1">
-                <h2 class="text-base sm:text-lg font-semibold text-gray-800">
+                <h2 class="text-base sm:text-lg font-semibold" :class="theme.text">
                     {{ category.name }}
                     <span class="text-[10px] sm:text-xs text-gray-500 ml-1">({{ filteredAds.length }})</span>
                 </h2>
             </div>
             <div class="flex items-center gap-1.5">
                 <button @click="navigateToCategory(category)"
-                    class="inline-flex items-center text-[10px] sm:text-xs font-medium text-white bg-brand-blue hover:bg-brand-teal transition-colors px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md shadow-sm">
+                    class="inline-flex items-center text-[10px] sm:text-xs font-medium transition-colors px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md shadow-sm"
+                    :class="theme.button">
                     View All
                     <svg class="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -48,6 +49,8 @@
 import { ref, computed, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AdCard from '@/components/AdCard.vue'
+import { useTheme } from '@/composables/useTheme'
+const { theme } = useTheme()
 
 const props = defineProps({
     category: Object,

@@ -1,7 +1,7 @@
 <template>
     <Link :href="route('ads.show', ad.id)" class="block h-full">
-        <div
-            class="h-full group bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer">
+        <div class="h-full group border rounded-lg hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
+            :class="[theme.card, theme.border, theme.shadow]">
             <div class="flex flex-col sm:flex-row h-full">
                 <!-- Image Container - Smaller fixed dimensions -->
                 <div
@@ -33,8 +33,8 @@
 
                     <!-- Price Badge - Mobile only, shows final price -->
                     <div class="absolute bottom-2 left-2 sm:hidden">
-                        <span
-                            class="bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full font-medium text-gray-900 text-[10px] shadow">
+                        <span class="bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full font-medium text-[10px] shadow"
+                            :class="theme.text">
                             Rs
                             {{
                                 formatPrice(ad.discount && ad.discount > 0 ? discountedPrice : ad.price)
@@ -54,7 +54,7 @@
                                     <!-- Mobile Price & Discount -->
                                     <div class="sm:hidden mb-0.5">
                                         <div v-if="ad.discount && ad.discount > 0" class="flex items-center gap-1.5">
-                                            <span class="font-medium text-gray-900 text-xs">
+                                            <span class="font-medium text-xs" :class="theme.text">
                                                 Rs {{ formatPrice(discountedPrice) }}
                                             </span>
                                             <span class="text-gray-400 line-through text-[10px]">
@@ -65,20 +65,20 @@
                                                 -{{ ad.discount }}%
                                             </span>
                                         </div>
-                                        <span v-else class="font-medium text-gray-900 text-xs">
+                                        <span v-else class="font-medium text-xs" :class="theme.text">
                                             Rs {{ formatPrice(ad.price) }}
                                         </span>
                                     </div>
 
-                                    <h3
-                                        class="font-medium text-gray-900 text-sm sm:text-base line-clamp-2 group-hover:text-brand-blue transition-colors leading-tight">
+                                    <h3 class="font-medium text-sm sm:text-base line-clamp-2 group-hover:text-brand-blue transition-colors leading-tight"
+                                        :class="theme.text">
                                         {{ ad.ad_title || "Untitled" }}
                                     </h3>
 
                                     <!-- Desktop Price & Condition -->
                                     <div class="hidden sm:flex items-center gap-2 mt-1">
                                         <div v-if="ad.discount && ad.discount > 0" class="flex items-center gap-1.5">
-                                            <span class="font-medium text-gray-900 text-sm">
+                                            <span class="font-medium text-sm" :class="theme.text">
                                                 Rs {{ formatPrice(discountedPrice) }}
                                             </span>
                                             <span class="text-gray-400 line-through text-xs">
@@ -89,18 +89,19 @@
                                                 -{{ ad.discount }}%
                                             </span>
                                         </div>
-                                        <span v-else class="font-medium text-gray-900 text-sm">
+                                        <span v-else class="font-medium text-sm" :class="theme.text">
                                             Rs {{ formatPrice(ad.price) }}
                                         </span>
-                                        <span v-if="ad.condition"
-                                            class="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+                                        <span v-if="ad.condition" class="text-xs px-2 py-0.5 rounded-full"
+                                            :class="[theme.textMuted, theme.badge]">
                                             {{ ad.condition }}
                                         </span>
                                     </div>
 
                                     <!-- Mobile Condition -->
                                     <div v-if="ad.condition" class="sm:hidden mt-1">
-                                        <span class="text-[10px] text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded-full"
+                                            :class="[theme.textMuted, theme.badge]">
                                             {{ ad.condition }}
                                         </span>
                                     </div>
@@ -108,8 +109,8 @@
 
                                 <!-- Favorite Button - Tiny -->
                                 <button @click.stop="toggleFavorite"
-                                    class="flex-shrink-0 bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full transition-colors duration-200"
-                                    :class="isFavorited ? 'text-red-500' : 'text-gray-400'">
+                                    class="flex-shrink-0 p-1.5 rounded-full transition-colors duration-200"
+                                    :class="[theme.badge, theme.hover, isFavorited ? 'text-red-500' : theme.textMuted]">
                                     <svg v-if="isFavorited" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd"
                                             d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
@@ -124,14 +125,14 @@
                             </div>
 
                             <!-- Description - Small -->
-                            <p v-if="ad.description"
-                                class="text-gray-600 text-xs sm:text-sm mb-2 line-clamp-2 leading-relaxed">
+                            <p v-if="ad.description" class="text-xs sm:text-sm mb-2 line-clamp-2 leading-relaxed"
+                                :class="theme.textMuted">
                                 {{ ad.description }}
                             </p>
 
                             <!-- Location & Category - Compact -->
                             <div class="flex flex-wrap gap-2 mb-2">
-                                <div class="flex items-center text-gray-600 text-[10px] sm:text-xs">
+                                <div class="flex items-center text-[10px] sm:text-xs" :class="theme.textMuted">
                                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5 text-gray-400" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -143,7 +144,8 @@
                                         ad.location || "Location not specified"
                                         }}</span>
                                 </div>
-                                <div v-if="ad.category" class="flex items-center text-gray-600 text-[10px] sm:text-xs">
+                                <div v-if="ad.category" class="flex items-center text-[10px] sm:text-xs"
+                                    :class="theme.textMuted">
                                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5 text-gray-400" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -151,7 +153,8 @@
                                     </svg>
                                     <span>{{ ad.category.name }}</span>
                                 </div>
-                                <div v-if="ad.brand" class="flex items-center text-gray-600 text-[10px] sm:text-xs">
+                                <div v-if="ad.brand" class="flex items-center text-[10px] sm:text-xs"
+                                    :class="theme.textMuted">
                                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5 text-gray-400" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -163,10 +166,10 @@
                         </div>
 
                         <!-- Footer - Compact -->
-                        <div
-                            class="flex flex-col xs:flex-row xs:items-center justify-between gap-2 pt-2 border-t border-gray-100">
+                        <div class="flex flex-col xs:flex-row xs:items-center justify-between gap-2 pt-2 border-t"
+                            :class="theme.border">
                             <div class="flex items-center justify-between xs:justify-start gap-3">
-                                <div class="flex items-center text-[10px] sm:text-xs text-gray-500">
+                                <div class="flex items-center text-[10px] sm:text-xs" :class="theme.textMuted">
                                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -174,7 +177,7 @@
                                     </svg>
                                     <span>{{ timeAgo(ad.created_at) }}</span>
                                 </div>
-                                <div class="flex items-center text-[10px] sm:text-xs text-gray-500">
+                                <div class="flex items-center text-[10px] sm:text-xs" :class="theme.textMuted">
                                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -186,7 +189,8 @@
                                 </div>
                             </div>
                             <button
-                                class="w-full xs:w-auto px-3 py-1.5 bg-brand-blue text-white text-xs font-medium rounded-md hover:bg-brand-teal transition-colors duration-200">
+                                class="w-full xs:w-auto px-3 py-1.5 text-white text-xs font-medium rounded-md transition-colors duration-200"
+                                :class="theme.button">
                                 Contact
                             </button>
                         </div>
@@ -200,6 +204,10 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { Link } from "@inertiajs/vue3";
+import { useTheme } from "@/Composables/useTheme";
+
+// Theme
+const { theme } = useTheme();
 
 interface Brand {
     name: string;
@@ -225,6 +233,7 @@ interface Ad {
 
 interface Props {
     ad: Ad;
+    size?: string;
 }
 
 const props = defineProps<Props>();

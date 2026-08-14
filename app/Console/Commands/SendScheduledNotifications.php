@@ -26,7 +26,8 @@ class SendScheduledNotifications extends Command
                 $user->notify(new ScheduledNotificationClass(
                     $notification->title,
                     $notification->message,
-                    $notification->url
+                    $notification->url,
+                    $notification->is_email 
                 ));
             }
 

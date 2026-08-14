@@ -1,20 +1,19 @@
 <template>
-    <div
-        class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center p-3 sm:p-4">
+    <div class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-4" :class="theme.bg">
         <!-- Logo -->
         <div class="mb-6 md:mb-8">
             <img src="/images/logo.png" alt="AMO Mercatus" class="h-10 md:h-14 w-auto mx-auto" />
-            <h1 class="mt-2 text-xl md:text-2xl font-semibold text-center text-gray-800">
+            <h1 class="mt-2 text-xl md:text-2xl font-semibold text-center" :class="theme.text">
                 Order Management
             </h1>
-            <p class="text-gray-600 text-center mt-1 text-xs md:text-sm">
+            <p class="text-center mt-1 text-xs md:text-sm" :class="theme.textMuted">
                 Review and update your order status
             </p>
         </div>
 
         <!-- Order Card -->
         <div class="w-full max-w-md">
-            <div class="bg-white rounded-xl shadow-md p-5 md:p-6">
+            <div class="rounded-xl shadow-md p-5 md:p-6" :class="theme.card">
                 <!-- Order Status Badge -->
                 <div class="mb-5 flex justify-center">
                     <span :class="{
@@ -28,35 +27,35 @@
 
                 <!-- Order Details -->
                 <div class="space-y-4 mb-6">
-                    <div class="border-b border-gray-100 pb-3">
-                        <label class="block text-xs font-medium text-gray-500 mb-1">
+                    <div class="border-b pb-3" :class="theme.border">
+                        <label class="block text-xs font-medium mb-1" :class="theme.textMuted">
                             Order Number
                         </label>
-                        <p class="text-lg font-bold text-gray-900">#{{ order.id }}</p>
+                        <p class="text-lg font-bold" :class="theme.text">#{{ order.id }}</p>
                     </div>
 
-                    <div class="border-b border-gray-100 pb-3">
-                        <label class="block text-xs font-medium text-gray-500 mb-1"> Product </label>
-                        <p class="text-gray-800 font-medium">{{ order.ad?.ad_title || "N/A" }}</p>
+                    <div class="border-b pb-3" :class="theme.border">
+                        <label class="block text-xs font-medium mb-1" :class="theme.textMuted"> Product </label>
+                        <p class="font-medium" :class="theme.text">{{ order.ad?.ad_title || "N/A" }}</p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4 border-b border-gray-100 pb-3">
+                    <div class="grid grid-cols-2 gap-4 border-b pb-3" :class="theme.border">
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">
+                            <label class="block text-xs font-medium mb-1" :class="theme.textMuted">
                                 Quantity
                             </label>
-                            <p class="text-gray-800">{{ order.qty }}</p>
+                            <p :class="theme.text">{{ order.qty }}</p>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1"> Price </label>
-                            <p class="text-gray-800">Rs. {{ formatPrice(order.price) }}</p>
+                            <label class="block text-xs font-medium mb-1" :class="theme.textMuted"> Price </label>
+                            <p :class="theme.text">Rs. {{ formatPrice(order.price) }}</p>
                         </div>
                     </div>
 
                     <div class="pt-2">
                         <div class="flex justify-between items-center">
-                            <span class="text-sm font-semibold text-gray-700">Total Amount</span>
-                            <span class="text-xl font-bold text-brand-blue">
+                            <span class="text-sm font-semibold" :class="theme.text">Total Amount</span>
+                            <span class="text-xl font-bold" :class="theme.textAccent">
                                 Rs. {{ formatPrice(order.price * order.qty) }}
                             </span>
                         </div>
@@ -79,8 +78,8 @@
                             <span>{{
                                 processing && actionType === "complete"
                                     ? "Processing..."
-                                : "Complete Order"
-                                }}</span>
+                                    : "Complete Order"
+                            }}</span>
                         </div>
                     </button>
 
@@ -103,14 +102,14 @@
                 </div>
 
                 <!-- Already Processed Message -->
-                <div v-else class="text-center p-4 bg-gray-50 rounded-lg">
-                    <p class="text-gray-600 text-sm">
+                <div v-else class="text-center p-4 rounded-lg" :class="theme.bgLight">
+                    <p class="text-sm" :class="theme.textMuted">
                         This order has been
                         <span :class="order.status === 'completed' ? 'text-green-600' : 'text-red-600'">
                             {{ order.status }}
                         </span>
                     </p>
-                    <p class="text-xs text-gray-500 mt-1">No further actions available</p>
+                    <p class="text-xs mt-1" :class="theme.textMuted">No further actions available</p>
                 </div>
 
                 <!-- Flash Messages -->
@@ -129,22 +128,22 @@
 
             <!-- Help Text -->
             <div class="mt-6 text-center">
-                <p class="text-xs text-gray-500">
+                <p class="text-xs" :class="theme.textMuted">
                     Need help?
-                    <a href="/page/contact" class="text-brand-teal hover:text-brand-teal/80">Contact support</a>
+                    <a href="/page/contact" class="hover:opacity-80" :class="theme.textAccent">Contact support</a>
                 </p>
             </div>
         </div>
 
         <!-- Footer Links -->
         <div class="mt-6 md:mt-8 text-center">
-            <div class="flex flex-wrap justify-center gap-3 text-[10px] text-gray-500">
-                <a href="/page/help" class="hover:text-gray-700 transition-colors">Help</a>
-                <a href="/page/privacy" class="hover:text-gray-700 transition-colors">Privacy</a>
-                <a href="/page/terms" class="hover:text-gray-700 transition-colors">Terms</a>
-                <a href="/page/about" class="hover:text-gray-700 transition-colors">About</a>
+            <div class="flex flex-wrap justify-center gap-3 text-[10px]" :class="theme.textMuted">
+                <a href="/page/help" class="transition-colors" :class="theme.hover">Help</a>
+                <a href="/page/privacy" class="transition-colors" :class="theme.hover">Privacy</a>
+                <a href="/page/terms" class="transition-colors" :class="theme.hover">Terms</a>
+                <a href="/page/about" class="transition-colors" :class="theme.hover">About</a>
             </div>
-            <p class="mt-2 text-[10px] text-gray-500">
+            <p class="mt-2 text-[10px]" :class="theme.textMuted">
                 © {{ new Date().getFullYear() }} Amo Mercatus. All rights reserved.
             </p>
         </div>
@@ -154,10 +153,13 @@
 <script setup>
 import { ref } from "vue";
 import { router } from "@inertiajs/vue3";
+import { useTheme } from '@/Composables/useTheme'
 
 const props = defineProps({
     order: Object,
 });
+
+const { theme } = useTheme()
 
 const processing = ref(false);
 const actionType = ref("");
@@ -232,7 +234,7 @@ button:not(:disabled):hover {
     }
 }
 
-.bg-white {
+.rounded-xl {
     animation: gentleScale 0.3s ease-out;
 }
 

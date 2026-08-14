@@ -262,6 +262,7 @@ function getReferralScoreValue(
 
 <template>
   <AppContainer>
+
     <Head title="Referrals Management" />
 
     <PageHeading>
@@ -270,16 +271,9 @@ function getReferralScoreValue(
         Assign referral codes, track user referral performance, and manage withdrawals
       </template>
       <template #links>
-        <AppButton
-          label="Assign Referral Code"
-          icon="radix-icons:plus-circled"
-          @click="handleCreateReferral"
-        />
-        <!-- <AppButton
-          label="Assign Referral Code to all users"
-          icon="radix-icons:plus-circled"
-          @click="handleAssignReferral"
-        /> -->
+        <AppButton label="Assign Referral Code" icon="radix-icons:plus-circled" @click="handleCreateReferral" />
+        <AppButton label="Assign Referral Code to all users" icon="radix-icons:plus-circled"
+          @click="handleAssignReferral" />
       </template>
     </PageHeading>
 
@@ -341,10 +335,7 @@ function getReferralScoreValue(
               <p class="text-3xl font-bold text-orange-900">
                 {{ (stats.total_withdrawn || 0).toLocaleString() }}
               </p>
-              <p
-                v-if="stats.total_pending_points > 0"
-                class="text-xs text-yellow-600 mt-1"
-              >
+              <p v-if="stats.total_pending_points > 0" class="text-xs text-yellow-600 mt-1">
                 {{ stats.total_pending_points.toLocaleString() }} points pending
               </p>
             </div>
@@ -359,15 +350,12 @@ function getReferralScoreValue(
     <!-- Tabs -->
     <div class="border-b border-gray-200 mb-6">
       <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-        <button
-          @click="activeTab = 'referrals'"
-          :class="[
-            'py-2 px-1 text-sm font-medium border-b-2 transition-colors',
-            activeTab === 'referrals'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-          ]"
-        >
+        <button @click="activeTab = 'referrals'" :class="[
+          'py-2 px-1 text-sm font-medium border-b-2 transition-colors',
+          activeTab === 'referrals'
+            ? 'border-blue-500 text-blue-600'
+            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+        ]">
           <span class="flex items-center gap-2">
             <Icon name="lucide:users" class="size-4" />
             Referrals
@@ -376,22 +364,17 @@ function getReferralScoreValue(
             </span>
           </span>
         </button>
-        <button
-          @click="activeTab = 'withdrawals'"
-          :class="[
-            'py-2 px-1 text-sm font-medium border-b-2 transition-colors',
-            activeTab === 'withdrawals'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-          ]"
-        >
+        <button @click="activeTab = 'withdrawals'" :class="[
+          'py-2 px-1 text-sm font-medium border-b-2 transition-colors',
+          activeTab === 'withdrawals'
+            ? 'border-blue-500 text-blue-600'
+            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+        ]">
           <span class="flex items-center gap-2">
             <Icon name="lucide:wallet" class="size-4" />
             Withdrawals
-            <span
-              v-if="stats.pending_withdrawals > 0"
-              class="ml-1 py-0.5 px-2 rounded-full text-xs bg-yellow-100 text-yellow-800"
-            >
+            <span v-if="stats.pending_withdrawals > 0"
+              class="ml-1 py-0.5 px-2 rounded-full text-xs bg-yellow-100 text-yellow-800">
               {{ stats.pending_withdrawals }}
             </span>
           </span>
@@ -403,16 +386,9 @@ function getReferralScoreValue(
     <div v-if="activeTab === 'referrals'">
       <Card class="mt-4">
         <CardContent>
-          <AppDataTableNew
-            :columns="columns"
-            :data="referrers?.data"
-            search-placeholder="Search users by name, email, or referral code..."
-            v-model:search="form.filter.global"
-            :pagination-data="referrers"
-            v-model:perPage="form.perPage"
-            @resetFilter="reset()"
-            :isFiltered="isFiltered"
-          >
+          <AppDataTableNew :columns="columns" :data="referrers?.data"
+            search-placeholder="Search users by name, email, or referral code..." v-model:search="form.filter.global"
+            :pagination-data="referrers" v-model:perPage="form.perPage" @resetFilter="reset()" :isFiltered="isFiltered">
             <template #name-cell="{ row }">
               <div class="flex flex-col">
                 <span class="font-semibold">{{ row.original.name }}</span>
@@ -424,10 +400,7 @@ function getReferralScoreValue(
 
             <template #referral_code-cell="{ row }">
               <div class="flex items-center gap-2">
-                <code
-                  v-if="row.original.referral_code"
-                  class="text-xs bg-muted px-2 py-1 rounded font-mono"
-                >
+                <code v-if="row.original.referral_code" class="text-xs bg-muted px-2 py-1 rounded font-mono">
                   {{ row.original.referral_code }}
                 </code>
                 <span v-else class="text-xs text-muted-foreground italic">No code</span>
@@ -435,13 +408,10 @@ function getReferralScoreValue(
             </template>
 
             <template #total_referrals_count-cell="{ row }">
-              <span
-                class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold"
-                :class="{
-                  'bg-green-100 text-green-700': row.original.total_referrals_count > 0,
-                  'bg-gray-100 text-gray-500': row.original.total_referrals_count === 0,
-                }"
-              >
+              <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold" :class="{
+                'bg-green-100 text-green-700': row.original.total_referrals_count > 0,
+                'bg-gray-100 text-gray-500': row.original.total_referrals_count === 0,
+              }">
                 {{ row.original.total_referrals_count }}
               </span>
             </template>
@@ -459,66 +429,37 @@ function getReferralScoreValue(
             </template>
 
             <template #can_assign_code-cell="{ row }">
-              <span
-                :class="[
-                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                  row.original.can_assign_code
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-100 text-gray-500',
-                ]"
-              >
-                <svg
-                  v-if="row.original.can_assign_code"
-                  class="w-3 h-3 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M5 13l4 4L19 7"
-                  />
+              <span :class="[
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                row.original.can_assign_code
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-500',
+              ]">
+                <svg v-if="row.original.can_assign_code" class="w-3 h-3 mr-1" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-                <svg
-                  v-else
-                  class="w-3 h-3 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg v-else class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
                 {{ row.original.can_assign_code ? "Yes" : "No" }}
               </span>
             </template>
 
             <template #points_balance-cell="{ row }">
-              <span
-                class="font-semibold"
-                :class="{
-                  'text-blue-600': row.original.points_balance > 0,
-                  'text-muted-foreground': row.original.points_balance === 0,
-                }"
-              >
+              <span class="font-semibold" :class="{
+                'text-blue-600': row.original.points_balance > 0,
+                'text-muted-foreground': row.original.points_balance === 0,
+              }">
                 {{ row.original.points_balance.toLocaleString() }} Pkr
               </span>
             </template>
 
             <template #total_points_earned-cell="{ row }">
-              <span
-                class="font-bold"
-                :class="{
-                  'text-purple-600': row.original.total_points_earned > 0,
-                  'text-muted-foreground': row.original.total_points_earned === 0,
-                }"
-              >
+              <span class="font-bold" :class="{
+                'text-purple-600': row.original.total_points_earned > 0,
+                'text-muted-foreground': row.original.total_points_earned === 0,
+              }">
                 {{ row.original.total_points_earned.toLocaleString() }} Pkr
               </span>
             </template>
@@ -532,32 +473,16 @@ function getReferralScoreValue(
 
             <template #actions-cell="{ row }">
               <div class="flex items-center justify-end gap-2">
-                <AppDataTableActionButton
-                  v-if="row.original.referral_code"
-                  :icon="copiedId === row.original.id ? 'lucide:check' : 'lucide:copy'"
-                  :tooltip="
-                    copiedId === row.original.id ? 'Link Copied!' : 'Copy Referral Link'
-                  "
-                  :class="copiedId === row.original.id ? 'text-green-600' : ''"
-                  @click="copyReferralLink(row.original.referral_code, row.original.id)"
-                />
-                <AppDataTableActionButton
-                  icon="lucide:users"
-                  tooltip="View Referrals"
-                  @click="handleViewReferral(row.original)"
-                />
-                <AppDataTableActionButton
-                  icon="lucide:edit"
-                  tooltip="Edit Referral Code & Points"
-                  @click="handleEditReferral(row.original)"
-                />
-                <AppDataTableActionButton
-                  v-if="row.original.referral_code"
-                  icon="lucide:trash-2"
-                  tooltip="Remove Referral Code"
-                  variant="danger"
-                  @click="handleRemoveReferral(row.original)"
-                />
+                <AppDataTableActionButton v-if="row.original.referral_code"
+                  :icon="copiedId === row.original.id ? 'lucide:check' : 'lucide:copy'" :tooltip="copiedId === row.original.id ? 'Link Copied!' : 'Copy Referral Link'
+                    " :class="copiedId === row.original.id ? 'text-green-600' : ''"
+                  @click="copyReferralLink(row.original.referral_code, row.original.id)" />
+                <AppDataTableActionButton icon="lucide:users" tooltip="View Referrals"
+                  @click="handleViewReferral(row.original)" />
+                <AppDataTableActionButton icon="lucide:edit" tooltip="Edit Referral Code & Points"
+                  @click="handleEditReferral(row.original)" />
+                <AppDataTableActionButton v-if="row.original.referral_code" icon="lucide:trash-2"
+                  tooltip="Remove Referral Code" variant="danger" @click="handleRemoveReferral(row.original)" />
               </div>
             </template>
           </AppDataTableNew>
@@ -597,13 +522,9 @@ function getReferralScoreValue(
             </div>
           </div>
 
-          <AppDataTableNew
-            :columns="withdrawalColumns"
-            :data="withdrawalRequests?.data"
-            search-placeholder="Search by user name or email..."
-            :pagination-data="withdrawalRequests"
-            v-model:perPage="form.perPage"
-          >
+          <AppDataTableNew :columns="withdrawalColumns" :data="withdrawalRequests?.data"
+            search-placeholder="Search by user name or email..." :pagination-data="withdrawalRequests"
+            v-model:perPage="form.perPage">
             <template #user.name-cell="{ row }">
               <div class="flex flex-col">
                 <span class="font-semibold">{{ row.original.user?.name }}</span>
@@ -626,10 +547,8 @@ function getReferralScoreValue(
             </template>
 
             <template #status-cell="{ row }">
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                :class="getStatusColor(row.original.status)"
-              >
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                :class="getStatusColor(row.original.status)">
                 {{ getStatusLabel(row.original.status) }}
               </span>
             </template>
@@ -642,11 +561,8 @@ function getReferralScoreValue(
 
             <template #actions-cell="{ row }">
               <div class="flex items-center justify-end gap-2">
-                <AppDataTableActionButton
-                  icon="lucide:eye"
-                  tooltip="View & Manage"
-                  @click="openWithdrawalModal(row.original)"
-                />
+                <AppDataTableActionButton icon="lucide:eye" tooltip="View & Manage"
+                  @click="openWithdrawalModal(row.original)" />
               </div>
             </template>
           </AppDataTableNew>
@@ -655,11 +571,7 @@ function getReferralScoreValue(
     </div>
 
     <!-- Withdrawal Manage Modal -->
-    <WithdrawalManageModal
-      :show="showWithdrawalModal"
-      :withdrawal="selectedWithdrawal"
-      @close="showWithdrawalModal = false"
-      @updated="handleWithdrawalUpdate"
-    />
+    <WithdrawalManageModal :show="showWithdrawalModal" :withdrawal="selectedWithdrawal"
+      @close="showWithdrawalModal = false" @updated="handleWithdrawalUpdate" />
   </AppContainer>
 </template>

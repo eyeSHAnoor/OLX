@@ -17,7 +17,7 @@ class ScheduledNotificationController extends Controller
      */
     public function index()
     {
-        $columns = ['title', 'scheduled_at', 'is_sent', 'created_at'];
+        $columns = ['title', 'scheduled_at', 'is_sent', 'created_at', 'is_email'];
 
         $globalSearch = getGlobalSearchFilter([...$columns]);
 
@@ -27,6 +27,7 @@ class ScheduledNotificationController extends Controller
             ->allowedFilters([
                 $globalSearch,
                 AllowedFilter::exact('is_sent'),
+                AllowedFilter::exact('is_email'),
             ])
             ->paginate(getPaginate())
             ->withQueryString();
@@ -53,6 +54,7 @@ class ScheduledNotificationController extends Controller
             'title' => 'required|string|max:255',
             'message' => 'required|string',
             'url' => 'nullable|url',
+            'is_email' => 'sometimes|boolean', 
             'scheduled_at' => 'required|date',
         ]);
 
@@ -95,6 +97,7 @@ class ScheduledNotificationController extends Controller
             'message' => 'required|string',
             'url' => 'nullable|url',
             'scheduled_at' => 'required|date|after:now',
+             'is_email' => 'sometimes|boolean',
         ]);
 
         $notification->update($validated);

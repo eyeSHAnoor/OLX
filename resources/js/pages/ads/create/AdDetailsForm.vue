@@ -2,19 +2,19 @@
     <div class="max-w-full mx-auto">
         <!-- Header -->
         <div class="mb-8">
-            <button @click="handleBack"
-                class="flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors">
+            <button @click="handleBack" class="flex items-center mb-4 transition-colors"
+                :class="[theme.textMuted, theme.hover]">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
                 Back to Categories
             </button>
 
-            <div class="border-b border-gray-200 pb-4 px-3">
-                <h2 class="text-3xl font-light text-gray-900">
+            <div class="border-b pb-4 px-3" :class="theme.border">
+                <h2 class="text-3xl font-light" :class="theme.text">
                     {{ editMode ? "Edit Ad" : "Ad Details" }}
                 </h2>
-                <p class="text-gray-500 mt-1 text-sm">
+                <p class="mt-1 text-sm" :class="theme.textMuted">
                     {{
                         editMode
                             ? "Update your ad information below"
@@ -25,21 +25,22 @@
         </div>
 
         <!-- Category + Brand Summary -->
-        <div v-if="selectedCategory" class="bg-gray-50 rounded-lg p-4 mb-8 flex items-center justify-between text-sm">
+        <div v-if="selectedCategory" class="rounded-lg p-4 mb-8 flex items-center justify-between text-sm"
+            :class="theme.bgLight">
             <div class="flex items-center space-x-6">
                 <div class="flex items-center space-x-2">
-                    <span class="text-gray-500">Category:</span>
-                    <span class="font-medium text-gray-900">{{ selectedCategory.name }}</span>
+                    <span :class="theme.textMuted">Category:</span>
+                    <span class="font-medium" :class="theme.text">{{ selectedCategory.name }}</span>
                 </div>
 
                 <div v-if="localSelectedBrand" class="flex items-center space-x-2">
-                    <span class="text-gray-500">Brand:</span>
-                    <span class="font-medium text-gray-900">{{ localSelectedBrand.name }}</span>
+                    <span :class="theme.textMuted">Brand:</span>
+                    <span class="font-medium" :class="theme.text">{{ localSelectedBrand.name }}</span>
                 </div>
 
                 <div v-if="localSelectedModel" class="flex items-center space-x-2">
-                    <span class="text-gray-500">Model:</span>
-                    <span class="font-medium text-gray-900">{{ localSelectedModel.name }}</span>
+                    <span :class="theme.textMuted">Model:</span>
+                    <span class="font-medium" :class="theme.text">{{ localSelectedModel.name }}</span>
                 </div>
             </div>
         </div>
@@ -47,18 +48,19 @@
         <!-- Form (hidden while submitting) -->
         <form v-if="!form.processing" @submit.prevent="handleSubmit" class="space-y-8">
             <!-- Basic Information Section -->
-            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <h3 class="font-medium text-gray-900">Basic Information</h3>
+            <div class="rounded-lg border overflow-hidden" :class="[theme.card, theme.border]">
+                <div class="px-6 py-4 border-b" :class="[theme.bgLight, theme.border]">
+                    <h3 class="font-medium" :class="theme.text">Basic Information</h3>
                 </div>
 
                 <div class="p-6 space-y-6">
                     <!-- Ad Title -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Ad Title <span
+                        <label class="block text-sm font-medium mb-2" :class="theme.text">Ad Title <span
                                 class="text-red-500">*</span></label>
                         <input v-model="form.ad_title" type="text"
-                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                            class="w-full px-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                            :class="[theme.input, theme.border]"
                             placeholder="e.g., iPhone 12 Pro Max - 256GB - Silver" />
                         <p v-if="form.errors.ad_title" class="text-red-500 text-xs mt-1.5">
                             {{ form.errors.ad_title }}
@@ -67,10 +69,11 @@
 
                     <!-- Description -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description <span
+                        <label class="block text-sm font-medium mb-2" :class="theme.text">Description <span
                                 class="text-red-500">*</span></label>
                         <textarea v-model="form.description" rows="5"
-                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors resize-none"
+                            class="w-full px-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors resize-none"
+                            :class="[theme.input, theme.border]"
                             placeholder="Describe your product in detail..."></textarea>
                         <p v-if="form.errors.description" class="text-red-500 text-xs mt-1.5">
                             {{ form.errors.description }}
@@ -79,7 +82,7 @@
 
                     <!-- Brand -->
                     <div v-if="availableBrands?.length">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Brand <span
+                        <label class="block text-sm font-medium mb-2" :class="theme.text">Brand <span
                                 class="text-red-500">*</span></label>
                         <SelectInput v-model="localSelectedBrand" @update:modelValue="handleBrandChange"
                             placeholder="Select Brand" class="w-full">
@@ -97,10 +100,10 @@
 
                     <!-- Model -->
                     <div v-if="brandModels.length > 0">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                        <label class="block text-sm font-medium mb-2" :class="theme.text">Model</label>
                         <SelectInput v-model="localSelectedModel" @update:modelValue="handleModelChange"
                             placeholder="Select Model" :disabled="isLoadingModels"
-                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white">
+                            class="w-full px-4 py-2.5 border rounded-lg" :class="[theme.input, theme.border]">
                             <SelectContent>
                                 <SelectItem :value="null">Select Model</SelectItem>
                                 <SelectItem v-for="model in brandModels" :key="model.id" :value="model">
@@ -115,15 +118,15 @@
 
                     <!-- Price -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium mb-2" :class="theme.text">
                             <template v-if="isJobAd">Salary <span class="text-red-500">*</span></template>
                             <template v-else>Price <span class="text-red-500">*</span></template>
                         </label>
                         <div class="relative">
-                            <span class="absolute left-4 top-2.5 text-gray-500"></span>
+                            <span class="absolute left-4 top-2.5" :class="theme.textMuted"></span>
                             <input v-model.number="form.price" type="number" min="0" step="0.01"
-                                class="w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
-                                placeholder="0.00" />
+                                class="w-full pl-8 pr-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                                :class="[theme.input, theme.border]" placeholder="0.00" />
                         </div>
                         <p v-if="form.errors.price" class="text-red-500 text-xs mt-1.5">
                             {{ form.errors.price }}
@@ -132,17 +135,17 @@
 
                     <!-- Discount (NEW) -->
                     <div v-if="!isJobAd">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium mb-2" :class="theme.text">
                             Discount (%)
-                            <span class="text-gray-400 text-xs font-normal">(optional)</span>
+                            <span class="text-xs font-normal" :class="theme.textMuted">(optional)</span>
                         </label>
                         <div class="flex items-start gap-4">
                             <div class="flex-1">
                                 <div class="relative">
                                     <input v-model.number="form.discount" type="number" min="0" max="100" step="0.01"
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
-                                        placeholder="e.g. 10" />
-                                    <span class="absolute right-4 top-2.5 text-gray-500">%</span>
+                                        class="w-full px-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                                        :class="[theme.input, theme.border]" placeholder="e.g. 10" />
+                                    <span class="absolute right-4 top-2.5" :class="theme.textMuted">%</span>
                                 </div>
                                 <p v-if="form.errors.discount" class="text-red-500 text-xs mt-1.5">
                                     {{ form.errors.discount }}
@@ -154,9 +157,9 @@
                                 form.price !== '' &&
                                 form.discount !== null &&
                                 form.discount !== ''
-                            " class="flex-shrink-0 bg-gray-50 rounded-lg px-4">
-                                <p class="text-xs text-gray-500">After discount</p>
-                                <p class="text-sm font-semibold text-gray-900">
+                            " class="flex-shrink-0 rounded-lg px-4" :class="theme.bgLight">
+                                <p class="text-xs" :class="theme.textMuted">After discount</p>
+                                <p class="text-sm font-semibold" :class="theme.text">
                                     {{ discountedPrice }}
                                 </p>
                             </div>
@@ -165,7 +168,7 @@
 
                     <!-- Price Type -->
                     <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium mb-2" :class="theme.text">
                             Price Type <span class="text-red-500">*</span>
                         </label>
 
@@ -184,25 +187,26 @@
             </div>
 
             <!-- Specifications (collapsible) -->
-            <div v-if="categoryAttributes.length > 0"
-                class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div v-if="categoryAttributes.length > 0" class="rounded-lg border overflow-hidden"
+                :class="[theme.card, theme.border]">
                 <!-- Header – click to toggle -->
                 <button type="button" @click="showAttributes = !showAttributes"
-                    class="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors flex justify-between items-center">
+                    class="w-full px-6 py-4 transition-colors flex justify-between items-center"
+                    :class="[theme.bgLight, theme.hover]">
                     <div class="text-left">
-                        <h3 class="font-medium text-gray-900">
+                        <h3 class="font-medium" :class="theme.text">
                             {{ isJobAd ? "Job Details" : "Product Specifications" }}
                         </h3>
-                        <p class="text-xs text-gray-500 mt-1">
+                        <p class="text-xs mt-1" :class="theme.textMuted">
                             {{
                                 showAttributes ? "Hide specifications" : "Add detailed specs (optional)"
                             }}
                         </p>
                     </div>
-                    <!-- Chevron icon that rotates -->
-                    <svg :class="showAttributes ? 'rotate-180' : ''"
-                        class="w-5 h-5 text-gray-500 transition-transform duration-200" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
+                    <!-- Chevron icon that rotates - FIXED: removed duplicate :class -->
+                    <svg :class="[showAttributes ? 'rotate-180' : '', theme.textMuted]"
+                        class="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                 </button>
@@ -214,18 +218,19 @@
                             <div v-for="attr in categoryAttributes" :key="attr.id"
                                 class="grid grid-cols-3 gap-4 items-start">
                                 <div class="col-span-1">
-                                    <label class="block text-sm font-medium text-gray-700">
+                                    <label class="block text-sm font-medium" :class="theme.text">
                                         {{ attr.name }}
                                         <span v-if="attr.is_required" class="text-red-500">*</span>
                                     </label>
-                                    <div v-if="attr.group?.name" class="text-xs text-gray-400 mt-0.5">
+                                    <div v-if="attr.group?.name" class="text-xs mt-0.5" :class="theme.textMuted">
                                         {{ attr.group.name }}
                                     </div>
                                 </div>
                                 <div class="col-span-2">
                                     <!-- Select type -->
                                     <select v-if="attr.type === 'select'" v-model="selectedAttributeValues[attr.id]"
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors bg-white">
+                                        class="w-full px-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                                        :class="[theme.input, theme.border]">
                                         <option value="">Select {{ attr.name }}</option>
                                         <option v-for="option in attr.options" :key="option.id" :value="option.id">
                                             {{ option.value }}
@@ -235,20 +240,22 @@
                                     <!-- Text type -->
                                     <input v-else-if="attr.type === 'text'" v-model="selectedAttributeValues[attr.id]"
                                         type="text" :placeholder="`Enter ${attr.name.toLowerCase()}`"
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors" />
+                                        class="w-full px-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                                        :class="[theme.input, theme.border]" />
 
                                     <!-- Number type -->
                                     <input v-else-if="attr.type === 'number'" v-model="selectedAttributeValues[attr.id]"
                                         type="number" step="any" :placeholder="`Enter ${attr.name.toLowerCase()}`"
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors" />
+                                        class="w-full px-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                                        :class="[theme.input, theme.border]" />
 
                                     <!-- Boolean type -->
                                     <div v-else-if="attr.type === 'boolean'" class="flex items-center">
                                         <label class="flex items-center cursor-pointer">
                                             <input type="checkbox" v-model="selectedAttributeValues[attr.id]"
                                                 :true-value="1" :false-value="0"
-                                                class="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-400" />
-                                            <span class="ml-2 text-sm text-gray-700">Yes</span>
+                                                class="w-4 h-4 border-gray-300 rounded focus:ring-gray-400" />
+                                            <span class="ml-2 text-sm" :class="theme.text">Yes</span>
                                         </label>
                                     </div>
 
@@ -256,12 +263,14 @@
                                     <textarea v-else-if="attr.type === 'textarea'"
                                         v-model="selectedAttributeValues[attr.id]" rows="3"
                                         :placeholder="`Enter ${attr.name.toLowerCase()}`"
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors resize-none"></textarea>
+                                        class="w-full px-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors resize-none"
+                                        :class="[theme.input, theme.border]"></textarea>
 
                                     <!-- Default input -->
                                     <input v-else v-model="selectedAttributeValues[attr.id]" type="text"
                                         :placeholder="`Enter ${attr.name.toLowerCase()}`"
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors" />
+                                        class="w-full px-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                                        :class="[theme.input, theme.border]" />
                                 </div>
                             </div>
                         </div>
@@ -270,26 +279,26 @@
             </div>
 
             <!-- Location Section -->
-            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <h3 class="font-medium text-gray-900">Location</h3>
+            <div class="rounded-lg border overflow-hidden" :class="[theme.card, theme.border]">
+                <div class="px-6 py-4 border-b" :class="[theme.bgLight, theme.border]">
+                    <h3 class="font-medium" :class="theme.text">Location</h3>
                 </div>
 
                 <div class="p-6">
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Location <span
+                            <label class="block text-sm font-medium mb-2" :class="theme.text">Location <span
                                     class="text-red-500">*</span></label>
                             <input v-model="form.location"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
-                                placeholder="e.g., DHA Phase 5" />
+                                class="w-full px-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                                :class="[theme.input, theme.border]" placeholder="e.g., DHA Phase 5" />
                             <p v-if="form.errors.location" class="text-red-500 text-xs mt-1.5">
                                 {{ form.errors.location }}
                             </p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <label class="block text-sm font-medium mb-2" :class="theme.text">
                                 City <span class="text-red-500">*</span>
                             </label>
                             <SearchableSelectInput v-model="form.city" :items="cityOptions" key-by="id"
@@ -310,9 +319,9 @@
                         </div>
                         <!-- Region (appears after city selected) -->
                         <div v-if="form.city">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <label class="block text-sm font-medium mb-2" :class="theme.text">
                                 Region / Area
-                                <span class="text-gray-400 text-xs font-normal">(optional)</span>
+                                <span class="text-xs font-normal" :class="theme.textMuted">(optional)</span>
                             </label>
                             <SearchableSelectInput v-model="form.region" :items="regionOptions" key-by="name"
                                 :searchable-fields="['name']" placeholder="Select Region" :disabled="isLoadingRegions">
@@ -336,9 +345,9 @@
             </div>
 
             <!-- Seller Information Section -->
-            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <h3 class="font-medium text-gray-900">
+            <div class="rounded-lg border overflow-hidden" :class="[theme.card, theme.border]">
+                <div class="px-6 py-4 border-b" :class="[theme.bgLight, theme.border]">
+                    <h3 class="font-medium" :class="theme.text">
                         {{ !isJobAd ? "Seller Information" : "Contact Information" }}
                     </h3>
                 </div>
@@ -346,25 +355,25 @@
                 <div class="p-6">
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ !isJobAd ? "Seller Name" :
-                                "Contact Name"
-                                }}
+                            <label class="block text-sm font-medium mb-2" :class="theme.text">{{ !isJobAd ?
+                                "Seller Name" : "Contact Name"
+                            }}
                                 <span class="text-red-500">*</span></label>
                             <input v-model="form.seller_name"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
-                                placeholder="Full name" />
+                                class="w-full px-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                                :class="[theme.input, theme.border]" placeholder="Full name" />
                             <p v-if="form.errors.seller_name" class="text-red-500 text-xs mt-1.5">
                                 {{ form.errors.seller_name }}
                             </p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <label class="block text-sm font-medium mb-2" :class="theme.text">
                                 {{ !isJobAd ? "Seller Phone" : "Contact Phone" }}
                                 <span class="text-red-500">*</span></label>
                             <input v-model="form.seller_phone"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
-                                placeholder="+92 XXX XXXXXXX" />
+                                class="w-full px-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                                :class="[theme.input, theme.border]" placeholder="+92 XXX XXXXXXX" />
                             <p v-if="form.errors.seller_phone" class="text-red-500 text-xs mt-1.5">
                                 {{ form.errors.seller_phone }}
                             </p>
@@ -374,12 +383,12 @@
             </div>
 
             <!-- Images Section -->
-            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <h3 class="font-medium text-gray-900">
+            <div class="rounded-lg border overflow-hidden" :class="[theme.card, theme.border]">
+                <div class="px-6 py-4 border-b" :class="[theme.bgLight, theme.border]">
+                    <h3 class="font-medium" :class="theme.text">
                         Images <span class="text-red-500">*</span>
                     </h3>
-                    <p class="text-xs text-gray-500 mt-1">
+                    <p class="text-xs mt-1" :class="theme.textMuted">
                         Upload up to 10 images (JPEG, PNG, JPG, GIF) – images are compressed
                         automatically
                     </p>
@@ -390,24 +399,25 @@
                         <input type="file" multiple accept="image/*" @change="handleImageUpload" class="hidden"
                             ref="fileInput" />
                         <button type="button" @click="$refs.fileInput.click()" :disabled="isCompressing"
-                            class="w-full px-4 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors flex flex-col items-center justify-center"
-                            :class="{ 'opacity-50 cursor-not-allowed': isCompressing }">
-                            <svg v-if="!isCompressing" class="w-8 h-8 text-gray-400 mb-2" fill="none"
+                            class="w-full px-4 py-8 border-2 border-dashed rounded-lg transition-colors flex flex-col items-center justify-center"
+                            :class="[theme.border, theme.hover, { 'opacity-50 cursor-not-allowed': isCompressing }]">
+                            <svg v-if="!isCompressing" class="w-8 h-8 mb-2" :class="theme.textMuted" fill="none"
                                 stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            <svg v-else class="animate-spin h-8 w-8 text-gray-400 mb-2"
+                            <svg v-else class="animate-spin h-8 w-8 mb-2" :class="theme.textMuted"
                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                     stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
                                 </path>
                             </svg>
-                            <span class="text-sm text-gray-600">
+                            <span class="text-sm" :class="theme.textMuted">
                                 {{ isCompressing ? "Compressing images..." : "Click to upload images" }}
                             </span>
-                            <span v-if="!isCompressing" class="text-xs text-gray-400 mt-1">or drag and drop</span>
+                            <span v-if="!isCompressing" class="text-xs mt-1" :class="theme.textMuted">or drag and
+                                drop</span>
                         </button>
                         <p v-if="compressionError" class="text-red-500 text-xs mt-2">
                             {{ compressionError }}
@@ -417,7 +427,7 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         <div v-for="image in existingImages" :key="`existing-${image.id}`" class="relative group">
                             <img :src="`/storage/${image.path}`"
-                                class="w-full aspect-square object-cover rounded-lg border border-gray-200" />
+                                class="w-full aspect-square object-cover rounded-lg border" :class="theme.border" />
                             <button type="button" @click="removeExistingImage(image.id)"
                                 class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -432,8 +442,8 @@
                         </div>
 
                         <div v-for="(preview, index) in imagePreviews" :key="`new-${index}`" class="relative group">
-                            <img :src="preview"
-                                class="w-full aspect-square object-cover rounded-lg border border-gray-200" />
+                            <img :src="preview" class="w-full aspect-square object-cover rounded-lg border"
+                                :class="theme.border" />
                             <button type="button" @click="removeImage(index)"
                                 class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -444,9 +454,9 @@
                         </div>
 
                         <template v-for="n in Math.max(0, 10 - totalImages)" :key="`empty-${n}`">
-                            <div
-                                class="aspect-square border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor"
+                            <div class="aspect-square border-2 border-dashed rounded-lg flex items-center justify-center"
+                                :class="theme.border">
+                                <svg class="w-6 h-6" :class="theme.textMuted" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -462,10 +472,10 @@
             </div>
 
             <!-- Keywords Section -->
-            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <h3 class="font-medium text-gray-900">Search Keywords</h3>
-                    <p class="text-xs text-gray-500 mt-1">
+            <div class="rounded-lg border overflow-hidden" :class="[theme.card, theme.border]">
+                <div class="px-6 py-4 border-b" :class="[theme.bgLight, theme.border]">
+                    <h3 class="font-medium" :class="theme.text">Search Keywords</h3>
+                    <p class="text-xs mt-1" :class="theme.textMuted">
                         Add keywords to help people find your ad (max 20)
                     </p>
                 </div>
@@ -473,21 +483,23 @@
                 <div class="p-6">
                     <div class="flex gap-2 mb-4">
                         <input v-model="newKeyword" @keydown.enter.prevent="addKeyword"
-                            class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
-                            placeholder="Type a keyword and press Enter" />
+                            class="flex-1 px-4 py-2.5 border rounded-lg focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-colors"
+                            :class="[theme.input, theme.border]" placeholder="Type a keyword and press Enter" />
                         <button type="button" @click="addKeyword"
                             :disabled="!newKeyword.trim() || form.search_keywords.length >= 20"
-                            class="px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            class="px-4 py-2.5 border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            :class="[theme.border, theme.hover]">
                             Add
                         </button>
                     </div>
 
                     <div class="flex flex-wrap gap-2">
                         <span v-for="(keyword, index) in form.search_keywords" :key="index"
-                            class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm">
+                            class="inline-flex items-center px-3 py-1.5 rounded-full text-sm"
+                            :class="[theme.bgLight, theme.text]">
                             {{ keyword }}
-                            <button type="button" @click="removeKeyword(index)"
-                                class="ml-2 text-gray-500 hover:text-gray-700">
+                            <button type="button" @click="removeKeyword(index)" class="ml-2"
+                                :class="[theme.textMuted, theme.hover]">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -505,10 +517,11 @@
             <!-- Submit Button -->
             <div class="flex justify-end pt-4">
                 <button type="submit" :disabled="form.processing || isCompressing"
-                    class="px-8 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium">
+                    class="px-8 py-3 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                    :class="theme.button">
                     <span v-if="form.processing">{{
                         editMode ? "Updating..." : "Posting..."
-                        }}</span>
+                    }}</span>
                     <span v-else>{{ editMode ? "Update Ad" : "Post Ad" }}</span>
                 </button>
             </div>
@@ -517,23 +530,25 @@
         <!-- Full‑page loading spinner (shown during submission) -->
         <div v-else class="min-h-[calc(100vh-4rem)] flex items-center justify-center">
             <div class="text-center">
-                <svg class="animate-spin h-12 w-12 text-brand-blue mx-auto" xmlns="http://www.w3.org/2000/svg"
+                <svg class="animate-spin h-12 w-12 mx-auto" :class="theme.icon" xmlns="http://www.w3.org/2000/svg"
                     fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                 </svg>
-                <p class="mt-4 text-sm text-gray-600">Saving your ad, please wait...</p>
+                <p class="mt-4 text-sm" :class="theme.textMuted">Saving your ad, please wait...</p>
             </div>
         </div>
     </div>
 </template>
-
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import imageCompression from "browser-image-compression";
 import { useForm, router } from "@inertiajs/vue3";
 import axios from "axios";
 import cities from "@/data/cities.json";
+import { useTheme } from "@/composables/useTheme";
+
+const { theme } = useTheme();
 
 const props = defineProps({
     selectedCategory: Object,
@@ -956,13 +971,17 @@ const handleBack = () => {
             );
             if (confirmClear) {
                 clearDraftData();
-            } else {
-                emit("back");
+                emit('back', true); // Emit true to confirm navigation
+                window.location.href = "/user/ads/create"; // Navigate to ads page
                 return;
             }
+            // User cancelled - emit false
+            emit('back', false);
+            return;
         }
     }
-    emit("back");
+    // No draft data or in edit mode - allow navigation
+    emit('back', true);
 };
 
 const handleSubmit = () => {

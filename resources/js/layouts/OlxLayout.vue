@@ -6,7 +6,7 @@
     </header>
 
     <!-- Main Content - Add padding bottom for mobile to account for sticky footer -->
-    <main class="flex-1 pb-16 md:pb-8">
+    <main class="flex-1 pb-16 md:pb-8" :class="theme.bg">
       <ValidationErrors />
       <slot />
     </main>
@@ -20,18 +20,9 @@
     <!-- Mobile Bottom Navigation - Sticky Footer -->
     <MobileBottomNav />
     <div v-if="userId">
-      <OrderPopup
-        v-if="popupOrder && popupType"
-        :order="popupOrder"
-        :type="popupType"
-        @close="popupOrder = null"
-      />
+      <OrderPopup v-if="popupOrder && popupType" :order="popupOrder" :type="popupType" @close="popupOrder = null" />
       <TermsPopup v-if="page.props.auth.user.terms_accepted === 0" />
-      <BroadcastPopup
-        v-if="popupBroadcast"
-        :message="popupBroadcast"
-        @close="popupBroadcast = null"
-      />
+      <BroadcastPopup v-if="popupBroadcast" :message="popupBroadcast" @close="popupBroadcast = null" />
     </div>
   </div>
 </template>
@@ -48,6 +39,9 @@ import OrderPopup from "@/components/Popup.vue";
 import TermsPopup from "@/components/TermsPopup.vue";
 import BroadcastPopup from "@/components/BroadcastPopup.vue";
 import GiftFloatingIcon from "@/components/GiftFloatingIcon.vue";
+import { useTheme } from "@/composables/useTheme";
+
+const { theme } = useTheme();
 
 const props = defineProps({
   hideSearchBar: {

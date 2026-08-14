@@ -4,6 +4,9 @@ import { router, Link } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
 import { Icon } from '@iconify/vue'
 import { usePage } from '@inertiajs/vue3'
+import { useTheme } from '@/Composables/useTheme'
+
+const { theme } = useTheme()
 
 const props = defineProps({
     conversation: Object,
@@ -187,23 +190,24 @@ const getAvatarColor = (id) => {
 
 <template>
     <OlxLayout :hide-search-bar="true">
-        <div
-            class="h-[calc(100vh-73px)] bg-gradient-to-br from-gray-50 to-gray-100 sm:max-w-5xl mx-auto rounded-2xl shadow-lg overflow-hidden">
+        <div class="h-[calc(100vh-73px)] sm:max-w-5xl mx-auto rounded-2xl shadow-lg overflow-hidden" :class="theme.bg">
             <div class="h-full max-w-[1600px] mx-auto px-4 py-4">
                 <!-- Desktop Layout -->
                 <div class="hidden md:flex h-full overflow-hidden">
                     <!-- Conversations Sidebar -->
-                    <div class="w-96 border-r border-gray-200 flex flex-col bg-white">
+                    <div class="w-96 border-r flex flex-col" :class="[theme.border, theme.card]">
                         <!-- Sidebar Header -->
-                        <div class="p-5 border-b border-gray-200 bg-white">
-                            <h2 class="text-xl font-semibold text-gray-800 mb-3">Messages</h2>
+                        <div class="p-5 border-b" :class="[theme.border, theme.card]">
+                            <h2 class="text-xl font-semibold mb-3" :class="theme.text">Messages</h2>
 
                             <!-- Search Bar -->
                             <div class="relative">
                                 <Icon icon="lucide:search"
-                                    class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
+                                    class="absolute left-3 top-1/2 transform -translate-y-1/2 size-4"
+                                    :class="theme.textMuted" />
                                 <input v-model="searchQuery" type="text" placeholder="Search conversations..."
-                                    class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+                                    class="w-full pl-9 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    :class="[theme.input, theme.border]" />
                             </div>
 
                             <!-- Filter Tabs -->
@@ -211,16 +215,16 @@ const getAvatarColor = (id) => {
                                 <button @click="selectedFilter = 'all'" :class="[
                                     'flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
                                     selectedFilter === 'all'
-                                        ? 'bg-brand-blue text-white shadow-sm'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? theme.button
+                                        : `${theme.bgLight} ${theme.textMuted} ${theme.hover}`
                                 ]">
                                     All
                                 </button>
                                 <button @click="selectedFilter = 'unread'" :class="[
                                     'flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
                                     selectedFilter === 'unread'
-                                        ? 'bg-brand-blue text-white shadow-sm'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? theme.button
+                                        : `${theme.bgLight} ${theme.textMuted} ${theme.hover}`
                                 ]">
                                     Unread
                                 </button>
@@ -231,13 +235,15 @@ const getAvatarColor = (id) => {
                         <div class="flex-1 overflow-y-auto">
                             <div v-if="!filteredConversations.length"
                                 class="flex flex-col items-center justify-center h-full p-8">
-                                <Icon icon="lucide:inbox" class="size-12 text-gray-300 mb-3" />
-                                <p class="text-gray-500 text-sm">No conversations found</p>
+                                <Icon icon="lucide:inbox" class="size-12 mb-3" :class="theme.textMuted" />
+                                <p class="text-sm" :class="theme.textMuted">No conversations found</p>
                             </div>
 
                             <Link v-for="conv in filteredConversations" :key="conv.id" :href="`/chat/${conv.id}`"
-                                class="group flex items-start gap-3 p-4 hover:bg-gray-50 transition-all cursor-pointer border-b border-gray-100"
-                                :class="conv.id === conversation?.id ? 'bg-brand-blue/20' : ''">
+                                class="group flex items-start gap-3 p-4 transition-all cursor-pointer border-b" :class="[
+                                    conv.id === conversation?.id ? theme.bgLight : theme.hover,
+                                    theme.border
+                                ]">
 
                                 <!-- Avatar -->
                                 <div class="relative flex-shrink-0">
@@ -248,35 +254,36 @@ const getAvatarColor = (id) => {
                                         {{ getInitials(conv.seller_id === page.props.auth.user.id ? conv.buyer.name :
                                             conv.seller.name) }}
                                     </div>
-                                    <div
-                                        class="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-white">
+                                    <div class="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2"
+                                        :class="theme.card">
                                     </div>
                                 </div>
 
                                 <!-- Content -->
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between mb-1">
-                                        <h3 class="font-semibold text-gray-900 truncate">
+                                        <h3 class="font-semibold truncate" :class="theme.text">
                                             {{ conv.seller_id === page.props.auth.user.id ? conv.buyer.name :
                                                 conv.seller.name }}
                                         </h3>
-                                        <span class="text-xs text-gray-400 whitespace-nowrap ml-2">
+                                        <span class="text-xs whitespace-nowrap ml-2" :class="theme.textMuted">
                                             {{ formatTime(getLastMessage(conv)?.created_at || conv.created_at) }}
                                         </span>
                                     </div>
 
-                                    <p class="text-sm text-gray-600 truncate">
+                                    <p class="text-sm truncate" :class="theme.textMuted">
                                         {{ getLastMessage(conv)?.body || 'No messages yet' }}
                                     </p>
 
                                     <div class="flex items-center justify-between mt-1.5">
-                                        <span
-                                            class="text-xs text-gray-400 truncate max-w-[180px] flex items-center gap-1">
+                                        <span class="text-xs truncate max-w-[180px] flex items-center gap-1"
+                                            :class="theme.textMuted">
                                             <Icon icon="lucide:package" class="size-3" />
                                             {{ conv.product?.ad_title || 'Product' }}
                                         </span>
                                         <span v-if="getUnreadCount(conv) > 0"
-                                            class="bg-brand-blue text-white text-xs font-medium px-2 py-0.5 rounded-full shadow-sm">
+                                            class="text-white text-xs font-medium px-2 py-0.5 rounded-full shadow-sm"
+                                            :class="theme.button">
                                             {{ getUnreadCount(conv) }}
                                         </span>
                                     </div>
@@ -290,27 +297,30 @@ const getAvatarColor = (id) => {
                 <div class="md:hidden h-full">
                     <!-- Mobile Conversations List -->
                     <div v-if="showMobileSidebar || (!showMobileChat && !conversation)"
-                        class="h-full bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden">
-                        <div class="p-4 border-b border-gray-200 bg-white">
-                            <h2 class="text-xl font-semibold text-gray-800 mb-3">Messages</h2>
+                        class="h-full rounded-2xl shadow-xl flex flex-col overflow-hidden" :class="theme.card">
+                        <div class="p-4 border-b" :class="[theme.border, theme.card]">
+                            <h2 class="text-xl font-semibold mb-3" :class="theme.text">Messages</h2>
                             <div class="relative">
                                 <Icon icon="lucide:search"
-                                    class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
+                                    class="absolute left-3 top-1/2 transform -translate-y-1/2 size-4"
+                                    :class="theme.textMuted" />
                                 <input v-model="searchQuery" type="text" placeholder="Search..."
-                                    class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                    class="w-full pl-9 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    :class="[theme.input, theme.border]" />
                             </div>
                         </div>
 
                         <div class="flex-1 overflow-y-auto">
                             <div v-if="!filteredConversations.length"
                                 class="flex flex-col items-center justify-center h-full p-8">
-                                <Icon icon="lucide:inbox" class="size-12 text-gray-300 mb-3" />
-                                <p class="text-gray-500 text-sm">No conversations</p>
+                                <Icon icon="lucide:inbox" class="size-12 mb-3" :class="theme.textMuted" />
+                                <p class="text-sm" :class="theme.textMuted">No conversations</p>
                             </div>
 
                             <button v-for="conv in filteredConversations" :key="conv.id"
                                 @click="router.visit(`/chat/${conv.id}`)"
-                                class="w-full flex items-start gap-3 p-4 hover:bg-gray-50 transition-all border-b border-gray-100 text-left">
+                                class="w-full flex items-start gap-3 p-4 transition-all border-b text-left"
+                                :class="[theme.hover, theme.border]">
 
                                 <div class="relative flex-shrink-0">
                                     <div :class="[
@@ -320,32 +330,33 @@ const getAvatarColor = (id) => {
                                         {{ getInitials(conv.seller_id === page.props.auth.user.id ? conv.buyer.name :
                                             conv.seller.name) }}
                                     </div>
-                                    <div
-                                        class="absolute bottom-0 right-0 size-3 bg-brand-teal rounded-full border-2 border-white">
+                                    <div class="absolute bottom-0 right-0 size-3 bg-brand-teal rounded-full border-2"
+                                        :class="theme.card">
                                     </div>
                                 </div>
 
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between mb-1">
-                                        <h3 class="font-semibold text-gray-900 truncate">
+                                        <h3 class="font-semibold truncate" :class="theme.text">
                                             {{ conv.seller_id === page.props.auth.user.id ? conv.buyer.name :
                                                 conv.seller.name }}
                                         </h3>
-                                        <span class="text-xs text-gray-400 whitespace-nowrap ml-2">
+                                        <span class="text-xs whitespace-nowrap ml-2" :class="theme.textMuted">
                                             {{ formatTime(conv.last_message_at || conv.created_at) }}
                                         </span>
                                     </div>
-                                    <p class="text-sm text-gray-600 truncate">
+                                    <p class="text-sm truncate" :class="theme.textMuted">
                                         {{ conv.last_message?.body || 'No messages yet' }}
                                     </p>
                                     <div class="flex items-center justify-between mt-1">
-                                        <span
-                                            class="text-xs text-gray-400 truncate max-w-[150px] flex items-center gap-1">
+                                        <span class="text-xs truncate max-w-[150px] flex items-center gap-1"
+                                            :class="theme.textMuted">
                                             <Icon icon="lucide:package" class="size-3" />
                                             {{ conv.product?.ad_title }}
                                         </span>
                                         <span v-if="getUnreadCount(conv) > 0"
-                                            class="bg-brand-blue text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                                            class="text-white text-xs font-medium px-2 py-0.5 rounded-full"
+                                            :class="theme.button">
                                             {{ getUnreadCount(conv) }}
                                         </span>
                                     </div>
@@ -355,15 +366,16 @@ const getAvatarColor = (id) => {
                     </div>
 
                     <!-- Mobile Empty State -->
-                    <div v-else
-                        class="h-full bg-white rounded-2xl shadow-xl flex flex-col items-center justify-center p-6">
-                        <div class="size-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                            <Icon icon="lucide:message-circle" class="size-10 text-gray-400" />
+                    <div v-else class="h-full rounded-2xl shadow-xl flex flex-col items-center justify-center p-6"
+                        :class="theme.card">
+                        <div class="size-20 rounded-full flex items-center justify-center mb-4" :class="theme.bgLight">
+                            <Icon icon="lucide:message-circle" class="size-10" :class="theme.textMuted" />
                         </div>
-                        <p class="text-lg font-medium text-gray-700 mb-2">No conversation selected</p>
-                        <p class="text-sm text-gray-500 mb-6 text-center">Choose a conversation to start messaging</p>
+                        <p class="text-lg font-medium mb-2" :class="theme.text">No conversation selected</p>
+                        <p class="text-sm mb-6 text-center" :class="theme.textMuted">Choose a conversation to start
+                            messaging</p>
                         <button @click="showMobileSidebar = true"
-                            class="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-medium shadow-sm">
+                            class="px-6 py-3 text-white rounded-xl font-medium shadow-sm" :class="theme.button">
                             View Conversations
                         </button>
                     </div>

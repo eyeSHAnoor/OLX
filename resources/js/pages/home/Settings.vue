@@ -3,17 +3,17 @@
 
         <Head title="Account Settings" />
 
-        <div class="py-12">
+        <div class="py-12" :class="theme.bg">
             <div class="max-w-full px-4 md:px-0 md:max-w-8/10 mx-auto space-y-12">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="overflow-hidden shadow-sm sm:rounded-lg" :class="theme.card">
                     <!-- Tabs Header -->
-                    <div class="border-b border-gray-200">
+                    <div class="border-b" :class="theme.border">
                         <nav class="flex -mb-px">
                             <button @click="activeTab = 'password'" :class="[
                                 'px-6 py-4 text-sm font-medium transition-colors duration-200',
                                 activeTab === 'password'
                                     ? 'border-b-2 border-brand-teal text-brand-teal'
-                                    : 'text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                                    : theme.textMuted,
                             ]">
                                 Change Password
                             </button>
@@ -21,7 +21,7 @@
                                 'px-6 py-4 text-sm font-medium transition-colors duration-200',
                                 activeTab === 'notifications'
                                     ? 'border-b-2 border-brand-teal text-brand-teal'
-                                    : 'text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                                    : theme.textMuted,
                             ]">
                                 Notifications
                             </button>
@@ -45,16 +45,18 @@
                             <form @submit.prevent="submitPassword">
                                 <!-- Current Password -->
                                 <div class="mb-4">
-                                    <label for="current_password" class="block text-sm font-medium text-gray-700 mb-1">
+                                    <label for="current_password" class="block text-sm font-medium mb-1"
+                                        :class="theme.text">
                                         Current Password
                                     </label>
                                     <div class="relative">
                                         <input :type="showCurrentPassword ? 'text' : 'password'" id="current_password"
                                             v-model="passwordForm.current_password"
                                             class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-teal focus:ring-1 focus:ring-brand-teal"
-                                            :class="{ 'border-red-500': passwordForm.errors.current_password }" />
+                                            :class="[theme.input, { 'border-red-500': passwordForm.errors.current_password }]" />
                                         <button type="button" @click="showCurrentPassword = !showCurrentPassword"
-                                            class="absolute right-3 top-2.5 text-gray-500 hover:text-brand-teal">
+                                            class="absolute right-3 top-2.5 hover:text-brand-teal"
+                                            :class="theme.textMuted">
                                             <svg v-if="!showCurrentPassword" xmlns="http://www.w3.org/2000/svg"
                                                 class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -76,16 +78,18 @@
 
                                 <!-- New Password -->
                                 <div class="mb-4">
-                                    <label for="new_password" class="block text-sm font-medium text-gray-700 mb-1">
+                                    <label for="new_password" class="block text-sm font-medium mb-1"
+                                        :class="theme.text">
                                         New Password
                                     </label>
                                     <div class="relative">
                                         <input :type="showNewPassword ? 'text' : 'password'" id="new_password"
                                             v-model="passwordForm.new_password"
                                             class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-teal focus:ring-1 focus:ring-brand-teal"
-                                            :class="{ 'border-red-500': passwordForm.errors.new_password }" />
+                                            :class="[theme.input, { 'border-red-500': passwordForm.errors.new_password }]" />
                                         <button type="button" @click="showNewPassword = !showNewPassword"
-                                            class="absolute right-3 top-2.5 text-gray-500 hover:text-brand-teal">
+                                            class="absolute right-3 top-2.5 hover:text-brand-teal"
+                                            :class="theme.textMuted">
                                             <svg v-if="!showNewPassword" xmlns="http://www.w3.org/2000/svg"
                                                 class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -115,7 +119,7 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <p class="mt-1 text-xs text-gray-500">Minimum 8 characters</p>
+                                    <p class="mt-1 text-xs" :class="theme.textMuted">Minimum 8 characters</p>
                                     <p v-if="passwordForm.errors.new_password" class="mt-1 text-sm text-red-500">
                                         {{ passwordForm.errors.new_password }}
                                     </p>
@@ -123,8 +127,8 @@
 
                                 <!-- Confirm New Password -->
                                 <div class="mb-6">
-                                    <label for="new_password_confirmation"
-                                        class="block text-sm font-medium text-gray-700 mb-1">
+                                    <label for="new_password_confirmation" class="block text-sm font-medium mb-1"
+                                        :class="theme.text">
                                         Confirm New Password
                                     </label>
                                     <div class="relative">
@@ -132,16 +136,17 @@
                                             id="new_password_confirmation"
                                             v-model="passwordForm.new_password_confirmation"
                                             class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-teal focus:ring-1 focus:ring-brand-teal"
-                                            :class="{
+                                            :class="[theme.input, {
                                                 'border-red-500': passwordForm.errors.new_password_confirmation,
                                                 'border-green-500':
                                                     passwordForm.new_password_confirmation &&
                                                     passwordForm.new_password ===
                                                     passwordForm.new_password_confirmation &&
                                                     passwordForm.new_password.length >= 8,
-                                            }" />
+                                            }]" />
                                         <button type="button" @click="showConfirmPassword = !showConfirmPassword"
-                                            class="absolute right-3 top-2.5 text-gray-500 hover:text-brand-teal">
+                                            class="absolute right-3 top-2.5 hover:text-brand-teal"
+                                            :class="theme.textMuted">
                                             <svg v-if="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg"
                                                 class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -162,8 +167,8 @@
                                             passwordForm.new_password ===
                                             passwordForm.new_password_confirmation &&
                                             passwordForm.new_password.length >= 8
-                                        " xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-teal" viewBox="0 0 20 20"
-                                            fill="currentColor">
+                                        " xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-teal"
+                                            viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd"
                                                 d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                                 clip-rule="evenodd" />
@@ -188,7 +193,7 @@
                                                     passwordForm.new_password_confirmation &&
                                                     passwordForm.new_password.length >= 8
                                                     ? "Passwords match"
-                                            : "Passwords do not match"
+                                                    : "Passwords do not match"
                                             }}
                                         </span>
                                     </div>
@@ -199,7 +204,8 @@
                                 </div>
 
                                 <button type="submit" :disabled="passwordForm.processing"
-                                    class="w-full bg-brand-teal text-white py-2 px-4 rounded-lg hover:bg-brand-teal/80 transition-colors duration-200 disabled:opacity-50">
+                                    class="w-full text-white py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                                    :class="theme.button">
                                     {{
                                         passwordForm.processing ? "Changing Password..." : "Change Password"
                                     }}
@@ -223,15 +229,14 @@
                                 </div>
 
                                 <!-- Subscription Status -->
-                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div class="flex items-center justify-between p-4 rounded-lg" :class="theme.bgLight">
                                     <div>
-                                        <h3 class="font-medium">Push Notifications</h3>
-                                        <p class="text-sm text-gray-500 mt-1">
+                                        <h3 class="font-medium" :class="theme.text">Push Notifications</h3>
+                                        <p class="text-sm mt-1" :class="theme.textMuted">
                                             {{ notificationStatus }}
                                         </p>
                                     </div>
                                     <div class="flex gap-2">
-                                        <!-- Subscribe button (shown when NOT subscribed) -->
                                         <button v-if="!isSubscribed" @click="subscribeToPush"
                                             :disabled="isSubscribing || !isPushSupported"
                                             class="px-4 py-2 rounded-lg text-white transition-colors" :class="{
@@ -243,7 +248,6 @@
                                             {{ isSubscribing ? "Subscribing..." : "Enable Notifications" }}
                                         </button>
 
-                                        <!-- Unsubscribe button (shown when subscribed) -->
                                         <button v-if="isSubscribed" @click="unsubscribeFromPush"
                                             :disabled="isUnsubscribing"
                                             class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50">
@@ -252,14 +256,14 @@
                                     </div>
                                 </div>
 
-                                <!-- Browser Support Warning (contextual) -->
+                                <!-- Browser Support Warning -->
                                 <div v-if="!isPushSupported"
                                     class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                                     <p class="text-sm text-yellow-700">{{ supportReason }}</p>
                                     <p v-if="supportReason.includes('Home Screen')"
                                         class="text-xs text-yellow-600 mt-1">
                                         To enable notifications on iOS: open this page in Safari, tap the
-                                        Share icon, then “Add to Home Screen”.
+                                        Share icon, then "Add to Home Screen".
                                     </p>
                                     <p v-if="supportReason.includes('HTTPS')" class="text-xs text-yellow-600 mt-1">
                                         You are currently on HTTP. Switch to the HTTPS version of the site to
@@ -275,9 +279,9 @@
                         </div>
 
                         <!-- Common Back Link -->
-                        <div class="mt-6 text-center pt-4 border-t border-gray-100">
-                            <a :href="route('home')"
-                                class="text-sm text-brand-blue hover:text-brand-teal transition-colors duration-200">
+                        <div class="mt-6 text-center pt-4 border-t" :class="theme.border">
+                            <a :href="route('home')" class="text-sm transition-colors duration-200"
+                                :class="theme.textAccent">
                                 ← Back to Home
                             </a>
                         </div>
@@ -295,8 +299,12 @@ import OlxLayout from "@/layouts/OlxLayout.vue";
 import { Icon } from "@iconify/vue";
 import axios from "axios";
 import { useForceTheme } from "@/composables/useForceTheme";
+import { useTheme } from "@/Composables/useTheme";
 
 useForceTheme("light");
+
+// Theme
+const { theme } = useTheme();
 
 // Active tab state
 const activeTab = ref("password");
@@ -348,10 +356,9 @@ const isSubscribed = ref(false);
 const isSubscribing = ref(false);
 const isUnsubscribing = ref(false);
 const notificationStatus = ref("Checking browser compatibility...");
-const supportReason = ref(""); // contextual reason for lack of support
+const supportReason = ref("");
 
 const checkPushSupport = () => {
-    // 1. Secure context (HTTPS required)
     if (window.isSecureContext === false) {
         isPushSupported.value = false;
         supportReason.value =
@@ -360,7 +367,6 @@ const checkPushSupport = () => {
         return false;
     }
 
-    // 2. Check API availability
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
         isPushSupported.value = false;
         const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -375,7 +381,6 @@ const checkPushSupport = () => {
         return false;
     }
 
-    // 3. All good – API exists and context secure
     isPushSupported.value = true;
     supportReason.value = "";
     notificationStatus.value = "Click the button to enable notifications";
@@ -434,7 +439,6 @@ const subscribeToPush = async () => {
         let subscription = await registration.pushManager.getSubscription();
 
         if (subscription) {
-            // console.log('Old subscription found → removing...')
             await subscription.unsubscribe();
         }
 
@@ -483,15 +487,6 @@ const unsubscribeFromPush = async () => {
 
 // Initialize service worker on mount
 onMounted(async () => {
-    // if ('serviceWorker' in navigator) {
-    //     try {
-    //         await navigator.serviceWorker.register('/sw.js')
-    //         console.log('Service Worker registered')
-    //     } catch (err) {
-    //         console.error('Service Worker registration failed:', err)
-    //     }
-    // }
-
     if (checkPushSupport()) {
         await checkExistingSubscription();
     }

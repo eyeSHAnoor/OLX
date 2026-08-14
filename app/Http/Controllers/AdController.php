@@ -504,7 +504,7 @@ class AdController extends Controller
     public function show(Ad $ad)
     {
         $ad->load([
-            'user:id,name,email',
+            'user:id,name,email,created_at',
             'user.activeSubscription.plan.permissions',
             'images',
             'category:id,name',

@@ -8,6 +8,7 @@ import AdListItem from '@/components/AdListItem.vue'
 import debounce from 'lodash/debounce'
 import citiesList from '@/data/cities.json'
 import TopCategoriesBar from '@/components/TopCategoriesBar.vue'
+import { useTheme } from '@/Composables/useTheme'
 // Shadcn/ui components for modal
 import { Button } from '@/components/ui/button'
 import {
@@ -17,6 +18,9 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog'
+
+// Theme
+const { theme } = useTheme()
 
 // Props
 const props = defineProps<{
@@ -546,24 +550,26 @@ const priceRanges = [
         <TopCategoriesBar />
 
         <!-- Top Carousel for Generic Banners -->
-        <section v-if="genericBanners.length"
-            class="relative bg-gray-100 h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden">
+        <section v-if="genericBanners.length" class="relative h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden"
+            :class="theme.bgLight">
             <div v-for="(banner, index) in genericBanners" :key="banner.id"
                 class="absolute inset-0 transition-opacity duration-700"
                 :class="{ 'opacity-100 z-10': currentSlide === index, 'opacity-0': currentSlide !== index }">
                 <a :href="banner.link || '#'" :target="banner.link ? '_blank' : '_self'" class="block w-full h-full">
-                    <img :src="banner.image_url" :alt="banner.title" class="w-full h-full object-cover" />
+                    <img :src="banner.image_url" :alt="banner.title" class="w-full h-full object-contain" />
                 </a>
             </div>
 
             <!-- Navigation Buttons -->
             <button v-if="genericBanners.length > 1" @click="prevSlide"
-                class="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 rounded-full p-3 shadow-md hover:bg-white transition">
-                <Icon icon="mdi:chevron-left" class="text-2xl" />
+                class="absolute left-4 top-1/2 -translate-y-1/2 z-20 rounded-full p-3 shadow-md transition"
+                :class="theme.card">
+                <Icon icon="mdi:chevron-left" class="text-2xl" :class="theme.text" />
             </button>
             <button v-if="genericBanners.length > 1" @click="nextSlide"
-                class="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 rounded-full p-3 shadow-md hover:bg-white transition">
-                <Icon icon="mdi:chevron-right" class="text-2xl" />
+                class="absolute right-4 top-1/2 -translate-y-1/2 z-20 rounded-full p-3 shadow-md transition"
+                :class="theme.card">
+                <Icon icon="mdi:chevron-right" class="text-2xl" :class="theme.text" />
             </button>
 
             <!-- Dots -->
@@ -575,11 +581,12 @@ const priceRanges = [
             </div>
         </section>
 
-        <div>
-            <section class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3  sm:px-4 py-4 md:py-6">
+        <div :class="theme.bg">
+            <section class="max-w-full md:max-w-8/10 mx-auto px-4 md:px-3 sm:px-4 py-4 md:py-6">
                 <div class="py-3">
                     <button @click="goBack"
-                        class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
+                        class="inline-flex items-center gap-1 px-3 py-2 rounded-md border text-sm transition"
+                        :class="[theme.card, theme.border, theme.text, theme.hover]">
                         <Icon icon="mdi:arrow-left" class="text-base" />
                         Back
                     </button>
@@ -588,16 +595,17 @@ const priceRanges = [
                 <!-- Mobile Filter Toggle -->
                 <div class="lg:hidden mb-3">
                     <button @click="showMobileFilters = true"
-                        class="w-full flex items-center justify-between bg-white p-3 rounded-lg shadow-sm border border-gray-200">
-                        <span class="flex items-center gap-2 text-sm font-medium text-gray-700">
-                            <Icon icon="mdi:filter-outline" class="text-lg" :style="{ color: 'var(--brand-teal)' }" />
+                        class="w-full flex items-center justify-between p-3 rounded-lg shadow-sm border"
+                        :class="[theme.card, theme.border]">
+                        <span class="flex items-center gap-2 text-sm font-medium" :class="theme.text">
+                            <Icon icon="mdi:filter-outline" class="text-lg" :class="theme.icon" />
                             Filters
                             <span v-if="activeFilterCount > 0"
                                 class="bg-brand-blue text-white text-xs px-2 py-0.5 rounded-full">
                                 {{ activeFilterCount }}
                             </span>
                         </span>
-                        <Icon icon="mdi:chevron-right" class="text-lg text-gray-400" />
+                        <Icon icon="mdi:chevron-right" class="text-lg" :class="theme.textMuted" />
                     </button>
                 </div>
 
@@ -605,24 +613,24 @@ const priceRanges = [
                     <!-- Sidebar Filters (Desktop) -->
                     <aside class="lg:col-span-1 space-y-4 hidden lg:block">
                         <!-- Categories Filter (Accordion) -->
-                        <div class="bg-white rounded-lg shadow-sm p-4">
-                            <div class="flex items-center gap-1.5 text-xs text-gray-600 pb-3 border-b border-gray-100">
+                        <div class="rounded-lg shadow-sm p-4" :class="theme.card">
+                            <div class="flex items-center gap-1.5 text-xs pb-3 border-b"
+                                :class="[theme.textMuted, theme.border]">
                                 <Link :href="route('home')" class="hover:text-brand-teal">Home</Link>
                                 <Icon icon="mdi:chevron-right" class="text-gray-400 text-sm" />
-                                <span v-if="category" class="text-gray-900 font-medium text-xs">{{ category.name
-                                    }}</span>
-                                <span v-else class="text-gray-900 font-medium text-xs">All Categories</span>
+                                <span v-if="category" class="font-medium text-xs" :class="theme.text">{{ category.name
+                                }}</span>
+                                <span v-else class="font-medium text-xs" :class="theme.text">All Categories</span>
                             </div>
                             <div class="mt-3">
-                                <h3 class="font-medium text-sm text-gray-800 mb-3 flex items-center gap-1.5">
-                                    <Icon icon="mdi:folder-outline" class="text-base"
-                                        :style="{ color: 'var(--brand-teal)' }" />
+                                <h3 class="font-medium text-sm mb-3 flex items-center gap-1.5" :class="theme.text">
+                                    <Icon icon="mdi:folder-outline" class="text-base" :class="theme.icon" />
                                     Categories
                                 </h3>
                                 <div class="space-y-1">
                                     <Link :href="route('category.show')"
                                         class="block text-xs py-1.5 px-2 rounded transition-all duration-200"
-                                        :class="[!category ? 'bg-brand-blue/10 text-brand-blue font-medium border-l-2 border-brand-blue' : 'hover:bg-gray-50 hover:pl-3']">
+                                        :class="[!category ? 'bg-brand-blue/10 text-brand-blue font-medium border-l-2 border-brand-blue' : theme.hover]">
                                         All Categories
                                     </Link>
 
@@ -632,25 +640,25 @@ const priceRanges = [
                                         <div class="flex items-center justify-between group">
                                             <Link :href="route('category.show', parent.slug)"
                                                 class="block flex-1 text-xs py-1.5 px-2 rounded transition-all duration-200"
-                                                :class="[category?.id === parent.id ? 'bg-brand-blue/10 text-brand-blue font-medium border-l-2 border-brand-blue' : 'hover:bg-gray-50 hover:pl-3']">
+                                                :class="[category?.id === parent.id ? 'bg-brand-blue/10 text-brand-blue font-medium border-l-2 border-brand-blue' : theme.hover, theme.text]">
                                                 {{ parent.name }}
                                             </Link>
                                             <button v-if="parent.children_recursive?.length"
-                                                @click="toggleCategory(parent.id)"
-                                                class="p-1 mr-1 rounded hover:bg-gray-100 transition">
+                                                @click="toggleCategory(parent.id)" class="p-1 mr-1 rounded transition"
+                                                :class="theme.hover">
                                                 <Icon
                                                     :icon="expandedCategories.has(parent.id) ? 'mdi:chevron-up' : 'mdi:chevron-down'"
-                                                    class="text-gray-500 text-sm" />
+                                                    class="text-sm" :class="theme.textMuted" />
                                             </button>
                                         </div>
 
                                         <!-- Child categories (visible only if expanded) -->
                                         <div v-if="parent.children_recursive?.length && expandedCategories.has(parent.id)"
-                                            class="ml-4 space-y-0.5 mt-0.5 border-l border-gray-100 pl-2">
+                                            class="ml-4 space-y-0.5 mt-0.5 border-l pl-2" :class="theme.border">
                                             <Link v-for="subCat in parent.children_recursive" :key="subCat.id"
                                                 :href="route('category.show', subCat.slug)"
                                                 class="block text-xs py-1 px-2 rounded transition-all duration-200"
-                                                :class="[category?.id === subCat.id ? 'bg-brand-blue/10 text-brand-blue' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900']">
+                                                :class="[category?.id === subCat.id ? 'bg-brand-blue/10 text-brand-blue' : theme.hover, theme.textMuted]">
                                                 {{ subCat.name }}
                                             </Link>
                                         </div>
@@ -659,7 +667,8 @@ const priceRanges = [
                                     <!-- View More / View Less button -->
                                     <button v-if="topLevelCategories.length > initialCategoriesToShow"
                                         @click="toggleCategoriesView"
-                                        class="w-full mt-2 text-xs text-brand-teal hover:text-brand-teal/80 font-medium flex items-center justify-center gap-1 py-1.5 border-t border-gray-100">
+                                        class="w-full mt-2 text-xs font-medium flex items-center justify-center gap-1 py-1.5 border-t"
+                                        :class="[theme.border, theme.textAccent]">
                                         <Icon :icon="showAllCategories ? 'mdi:chevron-up' : 'mdi:chevron-down'"
                                             class="text-sm" />
                                         {{ showAllCategories ? 'View Less' : `View ${topLevelCategories.length -
@@ -670,42 +679,44 @@ const priceRanges = [
                         </div>
 
                         <!-- Brand Filter -->
-                        <div class="bg-white rounded-lg shadow-sm p-4" v-if="brands.length">
-                            <h3 class="font-medium text-sm text-gray-800 mb-3 flex items-center gap-1.5">
-                                <Icon icon="mdi:tag-outline" class="text-base"
-                                    :style="{ color: 'var(--brand-teal)' }" />
+                        <div class="rounded-lg shadow-sm p-4" :class="theme.card" v-if="brands.length">
+                            <h3 class="font-medium text-sm mb-3 flex items-center gap-1.5" :class="theme.text">
+                                <Icon icon="mdi:tag-outline" class="text-base" :class="theme.icon" />
                                 Brands
                             </h3>
                             <div class="space-y-1 max-h-48 overflow-y-auto">
                                 <label v-for="brand in brands" :key="brand.id"
-                                    class="flex items-center gap-2 p-1.5 rounded hover:bg-gray-50 cursor-pointer">
+                                    class="flex items-center gap-2 p-1.5 rounded cursor-pointer" :class="theme.hover">
                                     <input type="checkbox" :value="brand.id" v-model="selectedBrands"
                                         @change="applyBrandFilter"
                                         class="w-3.5 h-3.5 rounded border-gray-300 text-brand-teal focus:ring-brand-teal">
-                                    <span class="text-xs text-gray-700 flex-1">{{ brand.name }}</span>
-                                    <span class="text-[10px] text-gray-500">{{ getBrandAdCount(brand.id) }}</span>
+                                    <span class="text-xs flex-1" :class="theme.text">{{ brand.name }}</span>
+                                    <span class="text-[10px]" :class="theme.textMuted">{{ getBrandAdCount(brand.id)
+                                    }}</span>
                                 </label>
                             </div>
                         </div>
 
                         <!-- Model Filter -->
-                        <div class="bg-white rounded-lg shadow-sm p-4" v-if="brands.some(b => b.models?.length)">
-                            <h3 class="font-medium text-sm text-gray-800 mb-3 flex items-center gap-1.5">
-                                <Icon icon="mdi:car-outline" class="text-base"
-                                    :style="{ color: 'var(--brand-teal)' }" />
+                        <div class="rounded-lg shadow-sm p-4" :class="theme.card"
+                            v-if="brands.some(b => b.models?.length)">
+                            <h3 class="font-medium text-sm mb-3 flex items-center gap-1.5" :class="theme.text">
+                                <Icon icon="mdi:car-outline" class="text-base" :class="theme.icon" />
                                 Models
                             </h3>
                             <div class="space-y-1 max-h-48 overflow-y-auto">
                                 <template v-for="brand in brands" :key="brand.id">
                                     <div v-if="brand.models?.length">
-                                        <div class="text-xs font-medium text-gray-600 mb-1">{{ brand.name }}</div>
+                                        <div class="text-xs font-medium mb-1" :class="theme.textMuted">{{ brand.name }}
+                                        </div>
                                         <div class="ml-2 space-y-0.5">
                                             <label v-for="model in brand.models" :key="model.id"
-                                                class="flex items-center gap-2 p-1 rounded hover:bg-gray-50 cursor-pointer">
+                                                class="flex items-center gap-2 p-1 rounded cursor-pointer"
+                                                :class="theme.hover">
                                                 <input type="checkbox" :value="model.id" v-model="selectedModels"
                                                     @change="applyFilters"
                                                     class="w-3 h-3 rounded border-gray-300 text-brand-teal focus:ring-brand-teal">
-                                                <span class="text-xs text-gray-700 flex-1">{{ model.name }}</span>
+                                                <span class="text-xs flex-1" :class="theme.text">{{ model.name }}</span>
                                             </label>
                                         </div>
                                     </div>
@@ -714,35 +725,37 @@ const priceRanges = [
                         </div>
 
                         <!-- Price Filter -->
-                        <div class="bg-white rounded-lg shadow-sm p-4">
-                            <h3 class="font-medium text-sm text-gray-800 mb-3 flex items-center gap-1.5">
-                                <Icon icon="mdi:currency-usd" class="text-base"
-                                    :style="{ color: 'var(--brand-teal)' }" />
+                        <div class="rounded-lg shadow-sm p-4" :class="theme.card">
+                            <h3 class="font-medium text-sm mb-3 flex items-center gap-1.5" :class="theme.text">
+                                <Icon icon="mdi:currency-usd" class="text-base" :class="theme.icon" />
                                 Price Range
                             </h3>
                             <div class="space-y-3">
-                                <div class="flex items-center justify-between text-xs text-gray-600">
+                                <div class="flex items-center justify-between text-xs" :class="theme.textMuted">
                                     <span>Min: {{ minPrice || priceRange?.min || 0 }}</span>
                                     <span>Max: {{ maxPrice || priceRange?.max || 10000 }}</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2">
                                     <div>
-                                        <label class="block text-[10px] text-gray-500 mb-0.5">Minimum</label>
+                                        <label class="block text-[10px] mb-0.5" :class="theme.textMuted">Minimum</label>
                                         <input type="number" placeholder="Min" v-model.number="minPrice"
                                             @input="debouncedApplyPriceFilter"
-                                            class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none text-xs" />
+                                            class="w-full px-2 py-1.5 border rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none text-xs"
+                                            :class="theme.input" />
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] text-gray-500 mb-0.5">Maximum</label>
+                                        <label class="block text-[10px] mb-0.5" :class="theme.textMuted">Maximum</label>
                                         <input type="number" placeholder="Max" v-model.number="maxPrice"
                                             @input="debouncedApplyPriceFilter"
-                                            class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none text-xs" />
+                                            class="w-full px-2 py-1.5 border rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none text-xs"
+                                            :class="theme.input" />
                                     </div>
                                 </div>
                                 <div class="flex flex-wrap gap-1.5">
                                     <button v-for="range in priceRanges" :key="range.label"
                                         @click="setQuickPriceRange(range.min, range.max)"
-                                        class="text-[10px] px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full">
+                                        class="text-[10px] px-2 py-1 rounded-full transition"
+                                        :class="[theme.badge, theme.hover]">
                                         {{ range.label }}
                                     </button>
                                 </div>
@@ -750,10 +763,9 @@ const priceRanges = [
                         </div>
 
                         <!-- Location Filter -->
-                        <div class="bg-white rounded-lg shadow-sm p-4">
-                            <h3 class="font-medium text-sm text-gray-800 mb-3 flex items-center gap-1.5">
-                                <Icon icon="mdi:map-marker-outline" class="text-base"
-                                    :style="{ color: 'var(--brand-teal)' }" />
+                        <div class="rounded-lg shadow-sm p-4" :class="theme.card">
+                            <h3 class="font-medium text-sm mb-3 flex items-center gap-1.5" :class="theme.text">
+                                <Icon icon="mdi:map-marker-outline" class="text-base" :class="theme.icon" />
                                 Location
                             </h3>
                             <div class="relative">
@@ -768,20 +780,21 @@ const priceRanges = [
                                         </SelectItem>
                                     </SelectContent>
                                 </SelectInput>
-                                <Icon icon="mdi:chevron-down"
-                                    class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+                                <Icon icon="mdi:chevron-down" class="absolute right-2 top-1/2 -translate-y-1/2 text-sm"
+                                    :class="theme.textMuted" />
                             </div>
                         </div>
 
                         <!-- More Filters Button (opens attribute modal) -->
-                        <div class="bg-white rounded-lg shadow-sm p-4">
+                        <div class="rounded-lg shadow-sm p-4" :class="theme.card">
                             <button @click="openAttributeModal"
-                                class="w-full flex items-center justify-center gap-2 bg-brand-teal/10 text-brand-teal font-medium py-2.5 rounded-lg hover:bg-brand-teal/20 transition">
+                                class="w-full flex items-center justify-center gap-2 font-medium py-2.5 rounded-lg transition"
+                                :class="theme.button">
                                 <Icon icon="mdi:filter-variant" class="text-lg" />
                                 More Filters
                                 <span
                                     v-if="Object.values(attributeFilters).some(v => v && (Array.isArray(v) ? v.length : true))"
-                                    class="ml-1 bg-brand-teal text-white text-xs px-1.5 py-0.5 rounded-full">
+                                    class="ml-1 text-xs px-1.5 py-0.5 rounded-full" :class="theme.badge">
                                     {{Object.values(attributeFilters).filter(v => v && (Array.isArray(v) ? v.length :
                                         true)).length}}
                                 </span>
@@ -789,32 +802,37 @@ const priceRanges = [
                         </div>
 
                         <!-- Active Filters Summary -->
-                        <div v-if="activeFilterCount > 0" class="bg-brand-blue/5 rounded-lg p-3">
-                            <h4 class="text-xs font-medium text-gray-700 mb-2">Active Filters:</h4>
+                        <div v-if="activeFilterCount > 0" class="rounded-lg p-3" :class="theme.card">
+                            <h4 class="text-xs font-medium mb-2" :class="theme.text">Active Filters:</h4>
                             <div class="flex flex-wrap gap-1.5">
                                 <span v-if="selectedBrands.length"
-                                    class="inline-flex items-center gap-1 bg-white text-[10px] px-2 py-1 rounded-full shadow-sm">
+                                    class="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full shadow-sm"
+                                    :class="theme.badge">
                                     {{ selectedBrands.length }} brands <button @click="clearBrandFilter"
                                         class="ml-0.5 hover:text-brand-teal">×</button>
                                 </span>
                                 <span v-if="selectedModels.length"
-                                    class="inline-flex items-center gap-1 bg-white text-[10px] px-2 py-1 rounded-full shadow-sm">
+                                    class="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full shadow-sm"
+                                    :class="theme.badge">
                                     {{ selectedModels.length }} models <button @click="clearModelFilter"
                                         class="ml-0.5 hover:text-brand-teal">×</button>
                                 </span>
                                 <span v-if="minPrice || maxPrice"
-                                    class="inline-flex items-center gap-1 bg-white text-[10px] px-2 py-1 rounded-full shadow-sm">
+                                    class="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full shadow-sm"
+                                    :class="theme.badge">
                                     {{ minPrice || 0 }} - {{ maxPrice || '∞' }} <button @click="clearPriceFilter"
                                         class="ml-0.5 hover:text-brand-teal">×</button>
                                 </span>
                                 <span v-if="selectedCity !== 'all'"
-                                    class="inline-flex items-center gap-1 bg-white text-[10px] px-2 py-1 rounded-full shadow-sm">
+                                    class="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full shadow-sm"
+                                    :class="theme.badge">
                                     {{ selectedCityLabel }} <button @click="resetCityFilter"
                                         class="ml-0.5 hover:text-brand-teal">×</button>
                                 </span>
                                 <template v-for="(value, key) in attributeFilters" :key="key">
                                     <span v-if="value && (Array.isArray(value) ? value.length > 0 : true)"
-                                        class="inline-flex items-center gap-1 bg-white text-[10px] px-2 py-1 rounded-full shadow-sm">
+                                        class="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full shadow-sm"
+                                        :class="theme.badge">
                                         {{attributes?.find(attr => `attribute_${attr.id}` === key)?.name ||
                                             key.replace('attribute_', '')}}
                                         <button
@@ -823,8 +841,8 @@ const priceRanges = [
                                     </span>
                                 </template>
                             </div>
-                            <button @click="resetAllFilters"
-                                class="mt-2 text-xs text-brand-teal hover:text-brand-teal/80 font-medium">Clear all
+                            <button @click="resetAllFilters" class="mt-2 text-xs font-medium"
+                                :class="theme.textAccent">Clear all
                                 filters</button>
                         </div>
                     </aside>
@@ -835,54 +853,45 @@ const priceRanges = [
                         <div class="mb-4 md:mb-5">
                             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div>
-                                    <h1 class="text-xl md:text-2xl font-semibold text-gray-900 mb-1">{{ category?.name
-                                        || 'All Categories'
-                                        }}</h1>
-                                    <p class="text-gray-600 text-xs md:text-sm flex items-center gap-1.5">
+                                    <h1 class="text-xl md:text-2xl font-semibold mb-1" :class="theme.text">
+                                        {{ category?.name || 'All Categories' }}</h1>
+                                    <p class="text-xs md:text-sm flex items-center gap-1.5" :class="theme.textMuted">
                                         <span>{{ totalAds }} ads found</span>
-                                        <span v-if="selectedCity !== 'all'" class="text-brand-teal">• in {{
+                                        <span v-if="selectedCity !== 'all'" :class="theme.textAccent">• in {{
                                             selectedCityLabel }}</span>
-                                        <span v-if="allLoadedAds.length > 0" class="text-brand-teal">• Showing {{
-                                            allLoadedAds.length }} of
-                                            {{ totalAds }}</span>
+                                        <span v-if="allLoadedAds.length > 0" :class="theme.textAccent">• Showing {{
+                                            allLoadedAds.length }}
+                                            of {{ totalAds }}</span>
                                     </p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Toolbar -->
-                        <div class="bg-white rounded-lg shadow-sm p-3 mb-4">
+                        <div class="rounded-lg shadow-sm p-3 mb-4" :class="theme.card">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div class="flex items-center justify-between sm:justify-start">
                                     <div class="flex items-center space-x-1">
                                         <button @click="viewMode = 'grid'"
-                                            :class="viewMode === 'grid' ? 'bg-brand-blue/10 text-brand-blue' : 'text-gray-400 hover:text-gray-600'"
+                                            :class="viewMode === 'grid' ? 'bg-brand-blue/10 text-brand-blue' : theme.textMuted"
                                             class="p-1.5 rounded transition">
                                             <Icon icon="mdi:grid-large" class="w-4 h-4" />
                                         </button>
                                         <button @click="viewMode = 'list'"
-                                            :class="viewMode === 'list' ? 'bg-brand-blue/10 text-brand-blue' : 'text-gray-400 hover:text-gray-600'"
+                                            :class="viewMode === 'list' ? 'bg-brand-blue/10 text-brand-blue' : theme.textMuted"
                                             class="p-1.5 rounded transition">
                                             <Icon icon="mdi:format-list-bulleted" class="w-4 h-4" />
                                         </button>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-gray-600 text-xs hidden sm:block">Sort:</span>
+                                    <span class="text-xs hidden sm:block" :class="theme.textMuted">Sort:</span>
                                     <SelectInput v-model="sortBy" @update:modelValue="applySort" placeholder="Sort By"
                                         class="min-w-[140px]">
                                         <SelectContent>
-                                            <SelectItem value="newest">
-                                                Newest First
-                                            </SelectItem>
-
-                                            <SelectItem value="price_low">
-                                                Price: Low to High
-                                            </SelectItem>
-
-                                            <SelectItem value="price_high">
-                                                Price: High to Low
-                                            </SelectItem>
+                                            <SelectItem value="newest">Newest First</SelectItem>
+                                            <SelectItem value="price_low">Price: Low to High</SelectItem>
+                                            <SelectItem value="price_high">Price: High to Low</SelectItem>
                                         </SelectContent>
                                     </SelectInput>
                                 </div>
@@ -891,7 +900,7 @@ const priceRanges = [
 
                         <!-- Loading State -->
                         <div v-if="isLoading && !hasAds" class="text-center py-12">
-                            <svg class="animate-spin w-10 h-10 text-brand-teal mx-auto mb-3" fill="none"
+                            <svg class="animate-spin w-10 h-10 mx-auto mb-3" :class="theme.icon" fill="none"
                                 stroke="currentColor" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                     stroke-width="4">
@@ -900,7 +909,7 @@ const priceRanges = [
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                 </path>
                             </svg>
-                            <p class="text-sm text-gray-500">Loading ads...</p>
+                            <p class="text-sm" :class="theme.textMuted">Loading ads...</p>
                         </div>
 
                         <!-- Results with Inline Banners -->
@@ -944,30 +953,32 @@ const priceRanges = [
 
                             <!-- Infinite Scroll Loading -->
                             <div v-if="loadingMore" class="text-center py-4">
-                                <Icon icon="mdi:loading" class="animate-spin text-2xl text-brand-teal mx-auto" />
-                                <p class="text-xs text-gray-500 mt-2">Loading more ads...</p>
+                                <Icon icon="mdi:loading" class="animate-spin text-2xl mx-auto" :class="theme.icon" />
+                                <p class="text-xs mt-2" :class="theme.textMuted">Loading more ads...</p>
                             </div>
                             <div ref="loadMoreTrigger" v-if="hasMorePages && !loadingMore && hasAds" class="h-10"></div>
                             <div v-if="!hasMorePages && hasAds && allLoadedAds.length === totalAds"
                                 class="text-center py-4">
-                                <p class="text-xs text-gray-400">You've seen all {{ totalAds }} ads</p>
+                                <p class="text-xs" :class="theme.textMuted">You've seen all {{ totalAds }} ads</p>
                             </div>
                         </template>
 
                         <!-- No Results -->
-                        <div v-else-if="!isLoading && !hasAds"
-                            class="text-center py-8 md:py-10 bg-white rounded-lg shadow-sm">
+                        <div v-else-if="!isLoading && !hasAds" class="text-center py-8 md:py-10 rounded-lg shadow-sm"
+                            :class="theme.card">
                             <div class="max-w-md mx-auto px-4">
-                                <Icon icon="mdi:package-variant-closed" class="text-4xl text-gray-300 mx-auto mb-3" />
-                                <h3 class="text-lg md:text-xl font-semibold text-gray-900 mb-2">No ads found</h3>
-                                <p class="text-gray-600 text-xs md:text-sm mb-4">Try adjusting your filters or browse
-                                    other categories</p>
+                                <Icon icon="mdi:package-variant-closed" class="text-4xl mx-auto mb-3"
+                                    :class="theme.textMuted" />
+                                <h3 class="text-lg md:text-xl font-semibold mb-2" :class="theme.text">No ads found</h3>
+                                <p class="text-xs md:text-sm mb-4" :class="theme.textMuted">Try adjusting your filters
+                                    or browse other
+                                    categories</p>
                                 <div class="flex flex-col sm:flex-row gap-2 justify-center">
-                                    <Link :href="route('home')"
-                                        class="px-4 py-2 bg-brand-blue text-white font-medium rounded hover:bg-brand-blue/90 text-xs shadow-sm">
+                                    <Link :href="route('home')" class="px-4 py-2 font-medium rounded text-xs shadow-sm"
+                                        :class="theme.button">
                                         Go To Home</Link>
-                                    <Link :href="route('home')"
-                                        class="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded hover:bg-gray-50 text-xs">
+                                    <Link :href="route('home')" class="px-4 py-2 border font-medium rounded text-xs"
+                                        :class="[theme.buttonOutline, theme.border]">
                                         Browse All</Link>
                                 </div>
                             </div>
@@ -977,36 +988,31 @@ const priceRanges = [
             </section>
         </div>
 
-        <!-- Mobile Filters (unchanged) -->
-        <div v-if="showMobileFilters" class="fixed inset-0 bg-white z-50 overflow-y-auto lg:hidden">
-            <div class="sticky top-0 bg-white border-b border-gray-200">
+        <!-- Mobile Filters -->
+        <div v-if="showMobileFilters" class="fixed inset-0 z-50 overflow-y-auto lg:hidden" :class="theme.bg">
+            <div class="sticky top-0 border-b" :class="[theme.card, theme.border]">
                 <div class="flex items-center justify-between p-4">
                     <button @click="showMobileFilters = false" class="p-1 -ml-1">
-                        <Icon icon="mdi:arrow-left" class="text-2xl text-gray-700" />
+                        <Icon icon="mdi:arrow-left" class="text-2xl" :class="theme.text" />
                     </button>
-                    <h2 class="font-semibold text-lg">Filters</h2>
-                    <button @click="resetAllFilters" class="text-brand-teal text-sm font-medium px-2 py-1">Reset
+                    <h2 class="font-semibold text-lg" :class="theme.text">Filters</h2>
+                    <button @click="resetAllFilters" class="text-sm font-medium px-2 py-1"
+                        :class="theme.textAccent">Reset
                         all</button>
                 </div>
             </div>
-            <div class="divide-y divide-gray-100 pb-24">
+            <div class="divide-y pb-24" :class="theme.border">
+                <!-- Mobile filter sections with theme classes -->
                 <div class="p-4">
-                    <p class="text-sm font-semibold text-gray-900 mb-3">Category</p>
+                    <p class="text-sm font-semibold mb-3" :class="theme.text">Category</p>
                     <SelectInput v-model="selectedMobileCategory"
                         @update:modelValue="() => { selectedBrands = []; selectedModels = []; applyFilters() }"
                         placeholder="All Categories">
                         <SelectContent>
-                            <SelectItem :value="null">
-                                All Categories
-                            </SelectItem>
-
+                            <SelectItem :value="null">All Categories</SelectItem>
                             <template v-for="group in mobileCategoryGroups" :key="group.label">
-                                <!-- Group Label -->
-                                <div class="px-2 py-1 text-xs font-semibold text-gray-500">
-                                    {{ group.label }}
+                                <div class="px-2 py-1 text-xs font-semibold" :class="theme.textMuted">{{ group.label }}
                                 </div>
-
-                                <!-- Group Items -->
                                 <SelectItem v-for="cat in group.options" :key="cat.id" :value="cat.id">
                                     {{ cat.name }}
                                 </SelectItem>
@@ -1015,30 +1021,30 @@ const priceRanges = [
                     </SelectInput>
                 </div>
                 <div class="p-4" v-if="brands.length">
-                    <p class="text-sm font-semibold text-gray-900 mb-3">Brand</p>
+                    <p class="text-sm font-semibold mb-3" :class="theme.text">Brand</p>
                     <div class="space-y-1 max-h-48 overflow-y-auto">
-                        <label v-for="brand in brands" :key="brand.id"
-                            class="flex items-center gap-2 p-1.5 rounded hover:bg-gray-50">
+                        <label v-for="brand in brands" :key="brand.id" class="flex items-center gap-2 p-1.5 rounded"
+                            :class="theme.hover">
                             <input type="checkbox" :value="brand.id" v-model="selectedBrands" @change="applyBrandFilter"
                                 class="w-3.5 h-3.5 rounded border-gray-300 text-brand-teal">
-                            <span class="text-xs text-gray-700 flex-1">{{ brand.name }}</span>
-                            <span class="text-[10px] text-gray-500">{{ getBrandAdCount(brand.id) }}</span>
+                            <span class="text-xs flex-1" :class="theme.text">{{ brand.name }}</span>
+                            <span class="text-[10px]" :class="theme.textMuted">{{ getBrandAdCount(brand.id) }}</span>
                         </label>
                     </div>
                 </div>
                 <div class="p-4" v-if="brands.some(b => b.models?.length)">
-                    <p class="text-sm font-semibold text-gray-900 mb-3">Model</p>
+                    <p class="text-sm font-semibold mb-3" :class="theme.text">Model</p>
                     <div class="space-y-1 max-h-48 overflow-y-auto">
                         <template v-for="brand in brands" :key="brand.id">
                             <div v-if="brand.models?.length">
-                                <div class="text-xs font-medium text-gray-600 mb-1">{{ brand.name }}</div>
+                                <div class="text-xs font-medium mb-1" :class="theme.textMuted">{{ brand.name }}</div>
                                 <div class="ml-2 space-y-0.5">
                                     <label v-for="model in brand.models" :key="model.id"
-                                        class="flex items-center gap-2 p-1 rounded hover:bg-gray-50">
+                                        class="flex items-center gap-2 p-1 rounded" :class="theme.hover">
                                         <input type="checkbox" :value="model.id" v-model="selectedModels"
                                             @change="applyFilters"
                                             class="w-3 h-3 rounded border-gray-300 text-brand-teal">
-                                        <span class="text-xs text-gray-700 flex-1">{{ model.name }}</span>
+                                        <span class="text-xs flex-1" :class="theme.text">{{ model.name }}</span>
                                     </label>
                                 </div>
                             </div>
@@ -1046,7 +1052,7 @@ const priceRanges = [
                     </div>
                 </div>
                 <div class="p-4">
-                    <p class="text-sm font-semibold text-gray-900 mb-3">Location</p>
+                    <p class="text-sm font-semibold mb-3" :class="theme.text">Location</p>
                     <SelectInput v-model="selectedCity" @update:modelValue="applyCityFilter" placeholder="Select City">
                         <SelectContent>
                             <SelectItem v-for="city in [
@@ -1059,25 +1065,27 @@ const priceRanges = [
                     </SelectInput>
                 </div>
                 <div class="p-4">
-                    <p class="text-sm font-semibold text-gray-900 mb-3">Price Range</p>
+                    <p class="text-sm font-semibold mb-3" :class="theme.text">Price Range</p>
                     <div class="flex gap-3 mb-4">
                         <div class="flex-1">
-                            <label class="block text-xs text-gray-500 mb-1">Min (Pkr)</label>
+                            <label class="block text-xs mb-1" :class="theme.textMuted">Min (Pkr)</label>
                             <input type="number" placeholder="Min" v-model.number="minPrice"
                                 @input="debouncedApplyPriceFilter"
-                                class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-teal focus:border-transparent" />
+                                class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-teal focus:border-transparent"
+                                :class="theme.input" />
                         </div>
                         <div class="flex-1">
-                            <label class="block text-xs text-gray-500 mb-1">Max (Pkr)</label>
+                            <label class="block text-xs mb-1" :class="theme.textMuted">Max (Pkr)</label>
                             <input type="number" placeholder="Max" v-model.number="maxPrice"
                                 @input="debouncedApplyPriceFilter"
-                                class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-teal focus:border-transparent" />
+                                class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-teal focus:border-transparent"
+                                :class="theme.input" />
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <button v-for="range in priceRanges" :key="range.label"
                             @click="setQuickPriceRange(range.min, range.max)"
-                            class="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full hover:bg-gray-200">
+                            class="px-3 py-1.5 text-xs rounded-full transition" :class="[theme.badge, theme.hover]">
                             {{ range.label }}
                         </button>
                     </div>
@@ -1085,7 +1093,7 @@ const priceRanges = [
                 <div v-if="attributes?.filter(attr => attr.is_filterable).length" class="p-4">
                     <div v-for="attribute in (attributes?.filter(attr => attr.is_filterable) || [])" :key="attribute.id"
                         class="mb-6 last:mb-0">
-                        <p class="text-sm font-semibold text-gray-900 mb-3">{{ attribute.name }}</p>
+                        <p class="text-sm font-semibold mb-3" :class="theme.text">{{ attribute.name }}</p>
                         <div v-if="attribute.type === 'select' && attribute.options?.length"
                             class="flex flex-wrap gap-2">
                             <button v-for="option in attribute.options" :key="option.id" @click="() => {
@@ -1099,7 +1107,7 @@ const priceRanges = [
                                 'px-4 py-2 rounded-full text-sm font-medium transition-all',
                                 attributeFilters[`attribute_${attribute.id}`]?.includes(option.id)
                                     ? 'bg-brand-teal text-white shadow-sm'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    : theme.badge
                             ]">
                                 {{ option.value }}
                             </button>
@@ -1107,14 +1115,15 @@ const priceRanges = [
                         <div v-else-if="attribute.type === 'text'">
                             <input type="text" :placeholder="`Enter ${attribute.name.toLowerCase()}`"
                                 v-model="attributeFilters[`attribute_${attribute.id}`]" @input="applyFilters"
-                                class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-teal focus:border-transparent" />
+                                class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-brand-teal focus:border-transparent"
+                                :class="theme.input" />
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
+            <div class="fixed bottom-0 left-0 right-0 border-t p-4 shadow-lg" :class="[theme.card, theme.border]">
                 <button @click="showMobileFilters = false"
-                    class="w-full bg-brand-teal text-white py-3 rounded-lg font-semibold text-base shadow-md hover:bg-brand-teal/90">
+                    class="w-full py-3 rounded-lg font-semibold text-base shadow-md transition" :class="theme.button">
                     Show {{ totalAds }} results
                 </button>
             </div>

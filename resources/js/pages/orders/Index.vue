@@ -3,6 +3,8 @@
 import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import OlxLayout from '@/layouts/OlxLayout.vue'
+import { Icon } from '@iconify/vue'
+import { useTheme } from '@/Composables/useTheme'
 
 const props = defineProps({
     orders: Object,
@@ -11,6 +13,9 @@ const props = defineProps({
     buyingStats: Object,
     sellingStats: Object
 })
+
+const { theme } = useTheme()
+
 const goBack = () => {
     router.visit(route('account'), {
         preserveState: true,
@@ -170,24 +175,24 @@ const canRequestReview = (order) => {
     <OlxLayout>
         <div class="max-w-full md:max-w-9/11 mx-auto py-6 sm:py-8 px-6 sm:px-6 lg:px-8">
             <div class="pb-2 sm:hidden visible">
-                <button @click="goBack"
-                    class="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
+                <button @click="goBack" class="inline-flex items-center gap-1 px-3 py-2 rounded-md border transition"
+                    :class="[theme.card, theme.border, theme.text, theme.hover]">
                     <Icon icon="mdi:arrow-left" class="text-base" />
                     Back
                 </button>
             </div>
             <!-- Header -->
             <div class="mb-6 sm:mb-8">
-                <h1 class="text-xl sm:text-2xl font-bold text-gray-900">My Orders</h1>
-                <p class="mt-1 text-xs sm:text-sm text-gray-500">Track what you're buying and selling</p>
+                <h1 class="text-xl sm:text-2xl font-bold" :class="theme.text">My Orders</h1>
+                <p class="mt-1 text-xs sm:text-sm" :class="theme.textMuted">Track what you're buying and selling</p>
             </div>
 
             <!-- View Toggle (Buying vs Selling) with permanent totals -->
-            <div class="mb-6 border-b border-gray-200">
+            <div class="mb-6 border-b" :class="theme.border">
                 <div class="flex space-x-8">
                     <button @click="switchView('buying')"
                         class="py-3 px-1 font-medium text-sm focus:outline-none relative"
-                        :class="activeTab === 'buying' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
+                        :class="activeTab === 'buying' ? theme.textAccent : `${theme.textMuted} hover:${theme.text}`">
                         <div class="flex flex-col items-start">
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,7 +211,7 @@ const canRequestReview = (order) => {
 
                     <button @click="switchView('selling')"
                         class="py-3 px-1 font-medium text-sm focus:outline-none relative"
-                        :class="activeTab === 'selling' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'">
+                        :class="activeTab === 'selling' ? theme.textAccent : `${theme.textMuted} hover:${theme.text}`">
                         <div class="flex flex-col items-start">
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,14 +231,14 @@ const canRequestReview = (order) => {
             </div>
 
             <!-- Status Tabs with counts -->
-            <div class="border-b border-gray-200 overflow-x-auto hide-scrollbar">
+            <div class="border-b overflow-x-auto hide-scrollbar" :class="theme.border">
                 <nav class="flex space-x-4 sm:space-x-8 min-w-max sm:min-w-0 px-1" aria-label="Tabs">
                     <button v-for="status in statuses" :key="status" @click="changeStatus(status)"
                         class="group relative py-3 sm:py-4 px-2 sm:px-1 font-medium text-xs sm:text-sm capitalize focus:outline-none whitespace-nowrap"
                         :class="[
                             currentStatus === status
-                                ? 'text-blue-600'
-                                : 'text-gray-500 hover:text-gray-700'
+                                ? theme.textAccent
+                                : `${theme.textMuted} hover:${theme.text}`
                         ]">
 
                         <div class="flex gap-1 items-center">
@@ -252,22 +257,25 @@ const canRequestReview = (order) => {
             <!-- Orders List -->
             <div class="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
                 <div v-if="currentOrders.length === 0"
-                    class="text-center py-12 sm:py-16 bg-white rounded-xl sm:rounded-2xl border-2 border-dashed">
-                    <div class="text-gray-400 mb-3">
+                    class="text-center py-12 sm:py-16 rounded-xl sm:rounded-2xl border-2 border-dashed"
+                    :class="[theme.card, theme.border]">
+                    <div class="mb-3" :class="theme.textMuted">
                         <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                 d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                         </svg>
                     </div>
-                    <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-1">{{ getEmptyMessage() }}</h3>
-                    <p class="text-xs sm:text-sm text-gray-500">Orders will appear here when you {{ activeTab ===
+                    <h3 class="text-base sm:text-lg font-medium mb-1" :class="theme.text">{{ getEmptyMessage() }}</h3>
+                    <p class="text-xs sm:text-sm" :class="theme.textMuted">Orders will appear here when you {{ activeTab
+                        ===
                         'buying' ? 'make a purchase' : 'receive orders' }}</p>
                 </div>
 
                 <transition-group name="list" tag="div" class="space-y-3 sm:space-y-4">
                     <div v-for="order in currentOrders" :key="order.id"
-                        class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200">
+                        class="rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-all duration-200"
+                        :class="[theme.card, theme.border]">
 
                         <!-- Compact View - Always Visible -->
                         <div class="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 cursor-pointer"
@@ -285,15 +293,15 @@ const canRequestReview = (order) => {
 
                                 <!-- Ad Image -->
                                 <div class="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
-                                    <div
-                                        class="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl opacity-10">
+                                    <div class="absolute inset-0 rounded-xl opacity-10" :class="theme.gradient">
                                     </div>
-                                    <div class="relative w-full h-full bg-gray-100 rounded-xl overflow-hidden">
+                                    <div class="relative w-full h-full rounded-xl overflow-hidden"
+                                        :class="theme.bgLight">
                                         <img v-if="getPrimaryImage(order.ad)"
                                             :src="`/storage/${getPrimaryImage(order.ad).path}`"
                                             :alt="order.ad?.ad_title" class="w-full h-full object-cover">
                                         <div v-else class="w-full h-full flex items-center justify-center">
-                                            <svg class="w-6 h-6 sm:w-8 sm:h-8 text-gray-300" fill="none"
+                                            <svg class="w-6 h-6 sm:w-8 sm:h-8" :class="theme.textMuted" fill="none"
                                                 stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
@@ -305,11 +313,12 @@ const canRequestReview = (order) => {
 
                                 <!-- Mobile: Title and Order ID -->
                                 <div class="flex-1 min-w-0 sm:hidden">
-                                    <h3 class="font-semibold text-gray-900 truncate">{{ order.ad?.ad_title }}</h3>
+                                    <h3 class="font-semibold truncate" :class="theme.text">{{ order.ad?.ad_title }}</h3>
                                     <div class="flex items-center gap-2 mt-1">
-                                        <span class="text-xs text-gray-400">#{{ order.id }}</span>
-                                        <span class="text-xs font-medium text-gray-900">Rs. {{ order.price * order.qty
-                                            }}</span>
+                                        <span class="text-xs" :class="theme.textMuted">#{{ order.id }}</span>
+                                        <span class="text-xs font-medium" :class="theme.text">Rs. {{ order.price *
+                                            order.qty
+                                        }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -324,13 +333,13 @@ const canRequestReview = (order) => {
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-2 mb-1.5">
-                                    <h3 class="font-semibold text-gray-900 truncate">{{ order.ad?.ad_title }}</h3>
-                                    <span class="text-xs text-gray-400">#{{ order.id }}</span>
+                                    <h3 class="font-semibold truncate" :class="theme.text">{{ order.ad?.ad_title }}</h3>
+                                    <span class="text-xs" :class="theme.textMuted">#{{ order.id }}</span>
                                 </div>
 
                                 <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
                                     <!-- Counter Party -->
-                                    <div class="flex items-center gap-1.5 text-gray-600">
+                                    <div class="flex items-center gap-1.5" :class="theme.textMuted">
                                         <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -341,7 +350,7 @@ const canRequestReview = (order) => {
                                     </div>
 
                                     <!-- Quantity -->
-                                    <div class="flex items-center gap-1.5 text-gray-600">
+                                    <div class="flex items-center gap-1.5" :class="theme.textMuted">
                                         <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -362,7 +371,7 @@ const canRequestReview = (order) => {
                                     </div>
 
                                     <!-- Location -->
-                                    <div class="flex items-center gap-1.5 text-gray-600">
+                                    <div class="flex items-center gap-1.5" :class="theme.textMuted">
                                         <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -380,7 +389,7 @@ const canRequestReview = (order) => {
                                 class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0">
                                 <!-- Mobile: Basic info (hidden on desktop) -->
                                 <div class="sm:hidden w-full">
-                                    <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                                    <div class="flex flex-wrap items-center gap-2 text-xs" :class="theme.textMuted">
                                         <span class="flex items-center gap-1">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -399,16 +408,18 @@ const canRequestReview = (order) => {
                                 <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3">
                                     <!-- Price on mobile -->
                                     <div class="sm:hidden">
-                                        <div class="text-xs text-gray-400">Total</div>
-                                        <div class="text-base font-bold text-gray-900">Rs. {{ order.price * order.qty }}
+                                        <div class="text-xs" :class="theme.textMuted">Total</div>
+                                        <div class="text-base font-bold" :class="theme.text">Rs. {{ order.price *
+                                            order.qty }}
                                         </div>
                                     </div>
 
                                     <!-- Desktop Price -->
                                     <div class="hidden sm:block text-right">
-                                        <div class="text-lg font-bold text-gray-900">Rs. {{ order.price * order.qty }}
+                                        <div class="text-lg font-bold" :class="theme.text">Rs. {{ order.price *
+                                            order.qty }}
                                         </div>
-                                        <div class="text-xs text-gray-400">Total</div>
+                                        <div class="text-xs" :class="theme.textMuted">Total</div>
                                     </div>
 
                                     <!-- Action Buttons -->
@@ -428,17 +439,11 @@ const canRequestReview = (order) => {
                                         <!-- Buyer Actions: Complete/Cancel (opens review page) -->
                                         <div v-else-if="canCompleteCancel(order)" class="flex gap-2">
                                             <button @click="openReviewPage(order.id)"
-                                                class="px-2 sm:px-3 py-1 sm:py-1.5 bg-brand-blue text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg whitespace-nowrap">
+                                                class="px-2 sm:px-3 py-1 sm:py-1.5 text-white text-xs sm:text-sm font-medium rounded-lg transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg whitespace-nowrap"
+                                                :class="theme.button">
                                                 Review Order
                                             </button>
                                         </div>
-
-                                        <!-- <div v-else-if="canRequestReview(order)">
-                                            <button @click="requestReview(order.id)"
-                                                class="px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-indigo-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg whitespace-nowrap">
-                                                Request Review
-                                            </button>
-                                        </div> -->
 
                                         <!-- Status Badge for other statuses -->
                                         <span v-else
@@ -449,10 +454,10 @@ const canRequestReview = (order) => {
                                     </div>
 
                                     <!-- Expand Icon -->
-                                    <button class="p-1.5 sm:p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transition-transform duration-300 ease-in-out"
-                                            :class="{ 'rotate-180': expandedOrder === order.id }" fill="none"
-                                            stroke="currentColor" viewBox="0 0 24 24">
+                                    <button class="p-1.5 sm:p-2 rounded-lg transition-colors" :class="theme.hover">
+                                        <svg class="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 ease-in-out"
+                                            :class="[{ 'rotate-180': expandedOrder === order.id }, theme.textMuted]"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M19 9l-7 7-7-7"></path>
                                         </svg>
@@ -467,22 +472,23 @@ const canRequestReview = (order) => {
                             leave-active-class="transition-all duration-200 ease-in"
                             leave-from-class="opacity-100 max-h-[2000px]" leave-to-class="opacity-0 max-h-0">
 
-                            <div v-show="expandedOrder === order.id"
-                                class="border-t border-gray-100 bg-gradient-to-br from-gray-50 to-white">
+                            <div v-show="expandedOrder === order.id" class="border-t"
+                                :class="[theme.border, theme.bgLight]">
                                 <div class="p-4 sm:p-6">
                                     <!-- Header with role -->
                                     <div class="flex items-center justify-between mb-4 sm:mb-6">
                                         <div class="flex items-center gap-2">
                                             <div class="w-1 h-5 sm:h-6 bg-blue-500 rounded-full"></div>
-                                            <h3
-                                                class="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                            <h3 class="text-xs sm:text-sm font-semibold uppercase tracking-wider"
+                                                :class="theme.text">
                                                 Order Details
                                             </h3>
                                         </div>
                                         <div class="flex gap-2">
                                             <!-- Review button in expanded view for buyers -->
                                             <button v-if="canCompleteCancel(order)" @click="openReviewPage(order.id)"
-                                                class="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200">
+                                                class="px-3 py-1.5 text-xs font-medium rounded-lg text-white transition-all duration-200"
+                                                :class="theme.button">
                                                 Review Order
                                             </button>
                                             <span class="px-3 py-1 text-xs font-medium rounded-full capitalize"
@@ -497,10 +503,10 @@ const canRequestReview = (order) => {
                                         <!-- Left Column -->
                                         <div class="space-y-4 sm:space-y-6">
                                             <!-- Counter Party Card -->
-                                            <div
-                                                class="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100">
-                                                <h4
-                                                    class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-2">
+                                            <div class="rounded-lg sm:rounded-xl p-4 sm:p-5 shadow-sm border"
+                                                :class="[theme.card, theme.border]">
+                                                <h4 class="text-xs font-semibold uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-2"
+                                                    :class="theme.textMuted">
                                                     <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -510,25 +516,29 @@ const canRequestReview = (order) => {
                                                     {{ activeTab === 'buying' ? 'Seller' : 'Buyer' }} Information
                                                 </h4>
                                                 <div class="space-y-2 sm:space-y-3">
-                                                    <div
-                                                        class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-gray-50">
-                                                        <span class="text-xs sm:text-sm text-gray-500">Name</span>
-                                                        <span
-                                                            class="text-xs sm:text-sm font-medium text-gray-900 break-words">{{
+                                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b"
+                                                        :class="theme.border">
+                                                        <span class="text-xs sm:text-sm"
+                                                            :class="theme.textMuted">Name</span>
+                                                        <span class="text-xs sm:text-sm font-medium break-words"
+                                                            :class="theme.text">{{
                                                                 activeTab === 'buying' ? order.seller?.name :
                                                                     order.buyer?.name }}</span>
                                                     </div>
-                                                    <div
-                                                        class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-gray-50">
-                                                        <span class="text-xs sm:text-sm text-gray-500">Contact</span>
-                                                        <span class="text-xs sm:text-sm font-medium text-gray-900">{{
-                                                            order.contact_number }}</span>
+                                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b"
+                                                        :class="theme.border">
+                                                        <span class="text-xs sm:text-sm"
+                                                            :class="theme.textMuted">Contact</span>
+                                                        <span class="text-xs sm:text-sm font-medium"
+                                                            :class="theme.text">{{
+                                                                order.contact_number }}</span>
                                                     </div>
                                                     <div
                                                         class="flex flex-col sm:flex-row sm:items-center justify-between py-2">
-                                                        <span class="text-xs sm:text-sm text-gray-500">Email</span>
-                                                        <span
-                                                            class="text-xs sm:text-sm font-medium text-gray-900 break-words">{{
+                                                        <span class="text-xs sm:text-sm"
+                                                            :class="theme.textMuted">Email</span>
+                                                        <span class="text-xs sm:text-sm font-medium break-words"
+                                                            :class="theme.text">{{
                                                                 activeTab === 'buying' ? order.seller?.email :
                                                                     order.buyer?.email || 'N/A' }}</span>
                                                     </div>
@@ -536,10 +546,10 @@ const canRequestReview = (order) => {
                                             </div>
 
                                             <!-- Delivery Card -->
-                                            <div
-                                                class="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100">
-                                                <h4
-                                                    class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-2">
+                                            <div class="rounded-lg sm:rounded-xl p-4 sm:p-5 shadow-sm border"
+                                                :class="[theme.card, theme.border]">
+                                                <h4 class="text-xs font-semibold uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-2"
+                                                    :class="theme.textMuted">
                                                     <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -548,9 +558,10 @@ const canRequestReview = (order) => {
                                                     Delivery Details
                                                 </h4>
                                                 <div class="space-y-2 sm:space-y-3">
-                                                    <div
-                                                        class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-gray-50">
-                                                        <span class="text-xs sm:text-sm text-gray-500">Method</span>
+                                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b"
+                                                        :class="theme.border">
+                                                        <span class="text-xs sm:text-sm"
+                                                            :class="theme.textMuted">Method</span>
                                                         <span
                                                             class="text-xs sm:text-sm font-medium capitalize px-2 sm:px-3 py-1 rounded-full w-fit sm:w-auto"
                                                             :class="order.delivery_option === 'pickup' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'">
@@ -558,10 +569,10 @@ const canRequestReview = (order) => {
                                                         </span>
                                                     </div>
                                                     <div v-if="order.delivery_address" class="py-2">
-                                                        <span
-                                                            class="text-xs sm:text-sm text-gray-500 block mb-1">Address</span>
-                                                        <p
-                                                            class="text-xs sm:text-sm text-gray-900 bg-gray-50 p-2 sm:p-3 rounded-lg break-words">
+                                                        <span class="text-xs sm:text-sm block mb-1"
+                                                            :class="theme.textMuted">Address</span>
+                                                        <p class="text-xs sm:text-sm p-2 sm:p-3 rounded-lg break-words"
+                                                            :class="[theme.text, theme.bgLight]">
                                                             {{ order.delivery_address }}</p>
                                                     </div>
                                                 </div>
@@ -571,10 +582,10 @@ const canRequestReview = (order) => {
                                         <!-- Right Column -->
                                         <div class="space-y-4 sm:space-y-6">
                                             <!-- Order Card -->
-                                            <div
-                                                class="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100">
-                                                <h4
-                                                    class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-2">
+                                            <div class="rounded-lg sm:rounded-xl p-4 sm:p-5 shadow-sm border"
+                                                :class="[theme.card, theme.border]">
+                                                <h4 class="text-xs font-semibold uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-2"
+                                                    :class="theme.textMuted">
                                                     <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -584,37 +595,46 @@ const canRequestReview = (order) => {
                                                     Order Summary
                                                 </h4>
                                                 <div class="space-y-2 sm:space-y-3">
-                                                    <div
-                                                        class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-gray-50">
-                                                        <span class="text-xs sm:text-sm text-gray-500">Order ID</span>
-                                                        <span class="text-xs sm:text-sm font-medium text-gray-900">#{{
-                                                            order.id }}</span>
+                                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b"
+                                                        :class="theme.border">
+                                                        <span class="text-xs sm:text-sm" :class="theme.textMuted">Order
+                                                            ID</span>
+                                                        <span class="text-xs sm:text-sm font-medium"
+                                                            :class="theme.text">#{{
+                                                                order.id }}</span>
                                                     </div>
-                                                    <div
-                                                        class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-gray-50">
-                                                        <span class="text-xs sm:text-sm text-gray-500">Quantity</span>
-                                                        <span class="text-xs sm:text-sm font-medium text-gray-900">{{
-                                                            order.qty }}</span>
+                                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b"
+                                                        :class="theme.border">
+                                                        <span class="text-xs sm:text-sm"
+                                                            :class="theme.textMuted">Quantity</span>
+                                                        <span class="text-xs sm:text-sm font-medium"
+                                                            :class="theme.text">{{
+                                                                order.qty }}</span>
                                                     </div>
-                                                    <div
-                                                        class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-gray-50">
-                                                        <span class="text-xs sm:text-sm text-gray-500">Price per
+                                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b"
+                                                        :class="theme.border">
+                                                        <span class="text-xs sm:text-sm" :class="theme.textMuted">Price
+                                                            per
                                                             item</span>
-                                                        <span class="text-xs sm:text-sm font-medium text-gray-900">Rs.
+                                                        <span class="text-xs sm:text-sm font-medium"
+                                                            :class="theme.text">Rs.
                                                             {{ order.price }}</span>
                                                     </div>
-                                                    <div
-                                                        class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-gray-50">
-                                                        <span class="text-xs sm:text-sm text-gray-500">Ordered on</span>
-                                                        <span class="text-xs sm:text-sm font-medium text-gray-900">{{
-                                                            formatDate(order.created_at) }}</span>
+                                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b"
+                                                        :class="theme.border">
+                                                        <span class="text-xs sm:text-sm"
+                                                            :class="theme.textMuted">Ordered on</span>
+                                                        <span class="text-xs sm:text-sm font-medium"
+                                                            :class="theme.text">{{
+                                                                formatDate(order.created_at) }}</span>
                                                     </div>
-                                                    <div
-                                                        class="flex flex-col sm:flex-row sm:items-center justify-between py-3 sm:py-4 bg-blue-50 -m-4 sm:-m-5 mt-2 p-4 sm:p-5 rounded-b-lg sm:rounded-b-xl">
-                                                        <span
-                                                            class="text-xs sm:text-sm font-semibold text-gray-700">Total
+                                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-3 sm:py-4 -m-4 sm:-m-5 mt-2 p-4 sm:p-5 rounded-b-lg sm:rounded-b-xl"
+                                                        :class="theme.bgLight">
+                                                        <span class="text-xs sm:text-sm font-semibold"
+                                                            :class="theme.text">Total
                                                             Amount</span>
-                                                        <span class="text-base sm:text-lg font-bold text-blue-600">Rs.
+                                                        <span class="text-base sm:text-lg font-bold"
+                                                            :class="theme.textAccent">Rs.
                                                             {{ order.price * order.qty }}</span>
                                                     </div>
                                                 </div>
@@ -622,9 +642,10 @@ const canRequestReview = (order) => {
 
                                             <!-- Notes Card -->
                                             <div v-if="order.notes"
-                                                class="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100">
-                                                <h4
-                                                    class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-2">
+                                                class="rounded-lg sm:rounded-xl p-4 sm:p-5 shadow-sm border"
+                                                :class="[theme.card, theme.border]">
+                                                <h4 class="text-xs font-semibold uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-2"
+                                                    :class="theme.textMuted">
                                                     <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -633,50 +654,56 @@ const canRequestReview = (order) => {
                                                     </svg>
                                                     Additional Notes
                                                 </h4>
-                                                <p
-                                                    class="text-xs sm:text-sm text-gray-600 bg-gray-50 p-3 sm:p-4 rounded-lg italic break-words">
+                                                <p class="text-xs sm:text-sm p-3 sm:p-4 rounded-lg italic break-words"
+                                                    :class="[theme.textMuted, theme.bgLight]">
                                                     {{ order.notes }}</p>
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Ad Details Section -->
-                                    <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+                                    <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t" :class="theme.border">
                                         <div class="flex items-center gap-2 mb-3 sm:mb-4">
                                             <div class="w-1 h-4 sm:h-5 bg-purple-500 rounded-full"></div>
-                                            <h4
-                                                class="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                            <h4 class="text-xs sm:text-sm font-semibold uppercase tracking-wider"
+                                                :class="theme.text">
                                                 Advertisement Details
                                             </h4>
                                         </div>
 
                                         <div
                                             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-                                            <div class="bg-white rounded-lg p-3 sm:p-4 border border-gray-100">
-                                                <span class="text-xs text-gray-400 block mb-1">Category</span>
-                                                <span
-                                                    class="text-xs sm:text-sm font-medium text-gray-900 break-words">{{
+                                            <div class="rounded-lg p-3 sm:p-4 border"
+                                                :class="[theme.card, theme.border]">
+                                                <span class="text-xs block mb-1"
+                                                    :class="theme.textMuted">Category</span>
+                                                <span class="text-xs sm:text-sm font-medium break-words"
+                                                    :class="theme.text">{{
                                                         order.ad?.category_id }}</span>
                                             </div>
-                                            <div class="bg-white rounded-lg p-3 sm:p-4 border border-gray-100">
-                                                <span class="text-xs text-gray-400 block mb-1">Location</span>
-                                                <span
-                                                    class="text-xs sm:text-sm font-medium text-gray-900 break-words">{{
+                                            <div class="rounded-lg p-3 sm:p-4 border"
+                                                :class="[theme.card, theme.border]">
+                                                <span class="text-xs block mb-1"
+                                                    :class="theme.textMuted">Location</span>
+                                                <span class="text-xs sm:text-sm font-medium break-words"
+                                                    :class="theme.text">{{
                                                         order.ad?.city }}, {{ order.ad?.location }}</span>
                                             </div>
-                                            <div
-                                                class="bg-white rounded-lg p-3 sm:p-4 border border-gray-100 sm:col-span-2 lg:col-span-1">
-                                                <span class="text-xs text-gray-400 block mb-1">Seller</span>
-                                                <span
-                                                    class="text-xs sm:text-sm font-medium text-gray-900 break-words">{{
+                                            <div class="rounded-lg p-3 sm:p-4 border sm:col-span-2 lg:col-span-1"
+                                                :class="[theme.card, theme.border]">
+                                                <span class="text-xs block mb-1" :class="theme.textMuted">Seller</span>
+                                                <span class="text-xs sm:text-sm font-medium break-words"
+                                                    :class="theme.text">{{
                                                         order.ad?.seller_name }}</span>
                                             </div>
                                         </div>
 
-                                        <div class="mt-3 sm:mt-4 bg-white rounded-lg p-3 sm:p-4 border border-gray-100">
-                                            <span class="text-xs text-gray-400 block mb-2">Description</span>
-                                            <p class="text-xs sm:text-sm text-gray-600 leading-relaxed break-words">{{
-                                                order.ad?.description }}</p>
+                                        <div class="mt-3 sm:mt-4 rounded-lg p-3 sm:p-4 border"
+                                            :class="[theme.card, theme.border]">
+                                            <span class="text-xs block mb-2" :class="theme.textMuted">Description</span>
+                                            <p class="text-xs sm:text-sm leading-relaxed break-words"
+                                                :class="theme.textMuted">{{
+                                                    order.ad?.description }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -688,15 +715,15 @@ const canRequestReview = (order) => {
 
             <!-- Pagination -->
             <div v-if="orders.last_page > 1" class="mt-6 sm:mt-8 flex justify-center overflow-x-auto hide-scrollbar">
-                <div
-                    class="flex gap-1 sm:gap-2 bg-white p-1 rounded-lg shadow-sm border border-gray-100 min-w-max sm:min-w-0">
+                <div class="flex gap-1 sm:gap-2 p-1 rounded-lg shadow-sm border min-w-max sm:min-w-0"
+                    :class="[theme.card, theme.border]">
                     <button v-for="link in orders.links" :key="link.label"
                         @click="link.url && router.get(link.url + `&view=${activeTab.value}&status=${currentStatus}`)"
                         v-html="link.label" :disabled="!link.url" :class="[
                             'px-2 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-200',
                             link.active
                                 ? 'bg-blue-600 text-white shadow-md'
-                                : 'text-gray-600 hover:bg-gray-50',
+                                : `${theme.textMuted} ${theme.hover}`,
                             !link.url && 'opacity-50 cursor-not-allowed'
                         ]">
                     </button>

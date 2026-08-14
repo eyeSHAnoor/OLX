@@ -56,6 +56,7 @@
     --color-brand-blue: var(--brand-blue);
     --color-brand-teal: var(--brand-teal);
     --color-brand-black: var(--brand-black);
+     --color-brand-navy: var(--brand-navy);
 
     --color-sidebar-dark: var(--sidebar-dark);
     --color-sidebar-dark-foreground: var(--sidebar-dark-foreground);
@@ -175,6 +176,7 @@
     --brand-teal: #00a6a0;
     --brand-teal-light: color-mix(in srgb, #a4d3d2 80%, white);
     --brand-black: #000000;
+    --brand-navy: #001f3f;
 }
 
 .dark {
